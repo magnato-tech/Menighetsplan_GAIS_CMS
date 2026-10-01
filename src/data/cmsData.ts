@@ -5,7 +5,15 @@ export interface CmsPage {
   summary: string;
   content: string;
   isPublished: boolean;
+  status?: "draft" | "published";
+  parentPageId?: string | null; // Canonical reference to parent page (null = top-level main tab)
+  parentId?: string | null; // Compatibility alias
+  menuOrder?: number; // Canonical sort order in navigation menu
+  navOrder?: number; // Compatibility alias
+  inNavMenu?: boolean;
+  linkUrl?: string; // Optional direct custom route, e.g. /hva-skjer or /taler
   updatedAt: string;
+  updatedBy?: string;
   heroImage?: string;
   heroCtaText?: string;
   heroCtaLink?: string;
@@ -22,12 +30,17 @@ export interface CmsNewsArticle {
   publishedAt: string;
   isPublished: boolean;
   imageUrl?: string;
+  gatheringRefId?: string;
+  expiresAt?: string;
 }
 
 export interface CmsSermon {
   id: string;
   title: string;
   speaker: string;
+  speakerPersonId?: string;
+  guestSpeakerName?: string;
+  gatheringId?: string;
   date: string;
   bibleText?: string;
   series?: string;
@@ -35,6 +48,18 @@ export interface CmsSermon {
   spotifyUrl?: string; // e.g. https://open.spotify.com/episode/...
   videoUrl?: string; // e.g. YouTube or Vimeo link
   summary?: string;
+}
+
+/**
+ * Ensures YouTube links are converted to youtube-nocookie.com to protect user privacy
+ */
+export function formatYoutubeNoCookieUrl(url: string): string {
+  if (!url) return "";
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+  if (match && match[1]) {
+    return `https://www.youtube-nocookie.com/embed/${match[1]}`;
+  }
+  return url;
 }
 
 export interface CmsStaffMember {
@@ -67,6 +92,17 @@ export interface CmsSettings {
   instagramUrl?: string;
   youtubeUrl?: string;
   podcastUrl?: string;
+  leadershipDecisions?: {
+    id: string;
+    topic: string;
+    question: string;
+    optionA: string;
+    optionB: string;
+    chosenOption?: "A" | "B";
+    decidedBy?: string;
+    decidedAt?: string;
+    notes?: string;
+  }[];
 }
 
 export interface CmsEventOverride {
@@ -76,6 +112,72 @@ export interface CmsEventOverride {
   customTag?: string;
   updatedAt: string;
 }
+
+export const initialLeadershipDecisions = [
+  {
+    id: "dec-1",
+    topic: "Varslingskanal i produksjon",
+    question: "Hvordan skal frivillige og ledere varsles om bemanningsbehov, forfall og påminnelser?",
+    optionA: "Kun gratis web-pushvarsler i appen og intern chat (0 kr SMS-kostnad)",
+    optionB: "Hybrid: Web-pushvarsler + SMS ved akutt forfall og påminnelser dagen før",
+    chosenOption: "B" as const,
+    notes: "Anbefalt av rådgiverteamet for å sikre at eldre og kritiske roller faktisk nås.",
+  },
+  {
+    id: "dec-2",
+    topic: "Innlogging for frivillige og medlemmer",
+    question: "Hvilken innloggingsmetode skal være standard for menighetens medlemmer?",
+    optionA: "Kun tradisjonelt brukernavn og passord",
+    optionB: "Moderne valgfrihet: Google-innlogging, Vipps Login og passord",
+    chosenOption: "B" as const,
+    notes: "Lavest mulig terskel for norske brukere via Vipps og Google.",
+  },
+  {
+    id: "dec-3",
+    topic: "Politiattest-kontroll for barne- og ungdomsledere",
+    question: "Hvordan skal oppfølging av politiattest for frivillige som arbeider med mindreårige dokumenteres?",
+    optionA: "Kun i eksternt papirarkiv/ringperm utenfor datasystemet",
+    optionB: "Registrere godkjenningsdato og utløp direkte på personkortet med leder-varsel",
+    chosenOption: "B" as const,
+    notes: "Ivaretar menighetens trygghetsrutiner og barnevernskrav.",
+  },
+  {
+    id: "dec-4",
+    topic: "Avslagsgrunn ved forfall",
+    question: "Skal frivillige oppgi grunn ved avslag, og hvem skal kunne se den?",
+    optionA: "Helt anonymt avslag uten mulighet for begrunnelse",
+    optionB: "Valgfri privat begrunnelse synlig kun for administratoren og gruppelederen",
+    chosenOption: "B" as const,
+    notes: "Hindrer opplevd sosialt press i fellesskapet, samtidig som lederen forstår situasjonen.",
+  },
+  {
+    id: "dec-5",
+    topic: "Hosting, skytjenester & Prosjekteierskap",
+    question: "Hvem skal eie Firebase-prosjektet og driftsavtalen i skyen?",
+    optionA: "Driftes på privat utviklerkonto",
+    optionB: "Eies av menighetens offisielle Google-organisasjonskonto med budsjettalarm",
+    chosenOption: "B" as const,
+    notes: "Sikrer institusjonell kontroll og at menigheten ikke er avhengig av enkeltpersoner.",
+  },
+  {
+    id: "dec-6",
+    topic: "Kjøreplan og programrekkefølge for gudstjenester",
+    question: "Skal gudstjenestens rekkefølge (sanger, kunngjøringer, tale) være en del av løsningen?",
+    optionA: "Uavhengig papirark på talerstolen/i sakristiet",
+    optionB: "Integrert digital kjøreplan med tider, innslag og ansvarlige i appen",
+    chosenOption: "B" as const,
+    notes: "Gjør at teknikere, lovsangsledere og møteledere alltid ser samme oppdaterte versjon.",
+  },
+  {
+    id: "dec-7",
+    topic: "Maksimumsgrense for tjenestefrekvens (Omsorgsvarsel)",
+    question: "Skal systemet varsle hvis samme person settes opp for ofte i løpet av en måned?",
+    optionA: "Ingen advarsel – fri oppsetting av ledere",
+    optionB: "Vis omsorgsvarsel dersom en person settes opp mer enn 2 søndager per måned",
+    chosenOption: "B" as const,
+    notes: "Forhindrer at faste ildsjeler blir utbrente og oppmuntrer til å rekruttere flere.",
+  },
+];
 
 export const initialCmsSettings: CmsSettings = {
   churchName: "Lillesand Misjonskirke",
@@ -93,6 +195,7 @@ export const initialCmsSettings: CmsSettings = {
   bankAccount: "1503.45.67890",
   orgNumber: "987 654 321",
   facebookUrl: "https://facebook.com/lillesandmisjonskirke",
+  leadershipDecisions: initialLeadershipDecisions,
   instagramUrl: "https://instagram.com/lillesandmisjonskirke",
   youtubeUrl: "https://youtube.com/@lillesandmisjonskirke",
   podcastUrl: "https://spotify.com",
@@ -224,65 +327,270 @@ Følg gjerne ungdomsarbeidet på Instagram for ferske oppdateringer og helgens p
 ];
 
 export const initialCmsPages: CmsPage[] = [
+  // 1. Forside (Fast toppfane)
+  {
+    id: "page-forside",
+    slug: "",
+    title: "Forside",
+    summary: "Hovedsiden for Lillesand Misjonskirke med velkomst, neste gudstjeneste og snarveier.",
+    content: `## Velkommen til Lillesand Misjonskirke\nEt åpent hjem for alle generasjoner. Hver søndag feirer vi gudstjeneste kl. 11:00 med Sprell Levende søndagsskole og kirkekaffe.`,
+    isPublished: true,
+    status: "published",
+    parentPageId: null,
+    parentId: null,
+    menuOrder: 1,
+    navOrder: 1,
+    inNavMenu: true,
+    linkUrl: "/",
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  // 2. Kalender (Toppfane)
+  {
+    id: "page-kalender",
+    slug: "hva-skjer",
+    title: "Kalender",
+    summary: "Oversikt over alle gudstjenester, fellessamlinger, bønnemøter og aktiviteter.",
+    content: `## Hva skjer i menigheten\nFølg kalenderen for oppdaterte tider og arrangementer for hele storfamilien.`,
+    isPublished: true,
+    status: "published",
+    parentPageId: null,
+    parentId: null,
+    menuOrder: 2,
+    navOrder: 2,
+    inNavMenu: true,
+    linkUrl: "/hva-skjer",
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  // 3. Grupper/Aktiviteter (Toppfane med underfaner)
+  {
+    id: "page-grupper",
+    slug: "grupper",
+    title: "Grupper/ aktiviteter...",
+    summary: "Oversikt over kor, fellesskap, ungdomsarbeid og barneaktiviteter.",
+    content: `## Små og store fellesskap\nI menigheten har vi et mangfold av grupper og samlinger gjennom uken for ulike aldre og interesser.`,
+    isPublished: true,
+    status: "published",
+    parentPageId: null,
+    parentId: null,
+    menuOrder: 3,
+    navOrder: 3,
+    inNavMenu: true,
+    linkUrl: "/fellesskap",
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  {
+    id: "page-gospelkor",
+    slug: "gospelkoret",
+    title: "Gospelkoret",
+    summary: "Vårt voksne gospelkor som synger på gudstjenester og holder egne konserter.",
+    content: `## Gospelkoret\nGospelkoret øver annenhver tirsdag kl. 19:30 i Hovedsalen. Vi synger moderne og tradisjonell gospel, spirituals og lovsang. Alle sangglade er velkommen til prøveøvelse!`,
+    isPublished: true,
+    status: "published",
+    parentPageId: "page-grupper",
+    parentId: "page-grupper",
+    menuOrder: 1,
+    navOrder: 1,
+    inNavMenu: true,
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  {
+    id: "page-gullrekka",
+    slug: "gullrekka",
+    title: "Gullrekka",
+    summary: "Seniorfellesskap med formiddagstreff, foredrag, god bevertning og fellessang.",
+    content: `## Gullrekka (Seniorer)\nSeniorfellesskapet samles første torsdag i hver måned kl. 11:30 i Kafeen. Her er det lunsj, sosialt samvær, aktuelt tema og andakt.`,
+    isPublished: true,
+    status: "published",
+    parentPageId: "page-grupper",
+    parentId: "page-grupper",
+    menuOrder: 2,
+    navOrder: 2,
+    inNavMenu: true,
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  {
+    id: "page-apent-hus",
+    slug: "apent-hus",
+    title: "Åpent hus",
+    summary: "Uformelt møtested for nabolaget med gratis kaffe, vaffel og en god prat.",
+    content: `## Åpent hus i kirkestua\nHver onsdag mellom kl. 11:00 og 13:00 åpner vi dørene for nabolaget. Kom innom for en kaffekopp, nystekt vaffel eller bare for å hilse på!`,
+    isPublished: true,
+    status: "published",
+    parentPageId: "page-grupper",
+    parentId: "page-grupper",
+    menuOrder: 3,
+    navOrder: 3,
+    inNavMenu: true,
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  {
+    id: "page-amadeus",
+    slug: "amadeus",
+    title: "Amadeus",
+    summary: "Barnekor og musikkgruppe for sangglade gutter og jenter.",
+    content: `## Amadeus Barnekor\nAmadeus er for barn fra 1. til 7. klasse. Vi øver på sanger, rytmer og opptrer jevnlig på familiegudstjenestene.`,
+    isPublished: true,
+    status: "published",
+    parentPageId: "page-grupper",
+    parentId: "page-grupper",
+    menuOrder: 4,
+    navOrder: 4,
+    inNavMenu: true,
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  {
+    id: "page-konfirmant",
+    slug: "konfirmantsamling",
+    title: "Konfirmantsaml...",
+    summary: "Konfirmantundervisning, turer og opplevelser for 9. klassinger.",
+    content: `## Konfirmasjon i Misjonskirken\nKonfirmantåret hos oss byr på undervisning om livets store spørsmål, leir, felleskap og personlig vekst. Påmelding skjer hver vår for kommende skoleår.`,
+    isPublished: true,
+    status: "published",
+    parentPageId: "page-grupper",
+    parentId: "page-grupper",
+    menuOrder: 5,
+    navOrder: 5,
+    inNavMenu: true,
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  // 4. Utleie (Toppfane med underfaner)
+  {
+    id: "page-utleie",
+    slug: "utleie",
+    title: "Utleie",
+    summary: "Leie av lokaler til selskaper, dåp, minnesamvær, kurs og konferanser.",
+    content: `## Utleie av lokaler i kirkebygget\nVi leier ut våre moderne, tilrettelagte lokaler sentralt i Lillesand. Bygget har heis, fullt utstyrt kjøkken, topp moderne AV-utstyr og god parkeringskapasitet.`,
+    isPublished: true,
+    status: "published",
+    parentPageId: null,
+    parentId: null,
+    menuOrder: 4,
+    navOrder: 4,
+    inNavMenu: true,
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  {
+    id: "page-utleie-kurs",
+    slug: "utleie-for-kurs",
+    title: "Utleie for kur...",
+    summary: "Møterom, storsal og teknisk utstyr for foredrag, kurs og generalforsamlinger.",
+    content: `## Kurs & Konferanser\nHovedsalen rommer opptil 250 personer med projektor, trådløse mikrofoner og scene. Mindre møterom er tilgjengelige for 10–30 personer med WiFi og skjermer.`,
+    isPublished: true,
+    status: "published",
+    parentPageId: "page-utleie",
+    parentId: "page-utleie",
+    menuOrder: 1,
+    navOrder: 1,
+    inNavMenu: true,
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  {
+    id: "page-utleie-selskap",
+    slug: "utleie-selskap",
+    title: "Utleie selskap...",
+    summary: "Festlokaler med stordekketøy, kjøkken og koselig peisestue for dåp, konfirmasjon og minnesamvær.",
+    content: `## Selskaper & Minnestunder\nKafeen og peisestua har hyggelig atmosfære og sitteplasser for opptil 90 gjester. Fullt industrikjøkken med rask oppvaskmaskin, dekketøy og kaffetraktere.`,
+    isPublished: true,
+    status: "published",
+    parentPageId: "page-utleie",
+    parentId: "page-utleie",
+    menuOrder: 2,
+    navOrder: 2,
+    inNavMenu: true,
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  {
+    id: "page-utleie-bilder",
+    slug: "utleie-bilder",
+    title: "Bilder",
+    summary: "Fotogalleri av våre lokaler, møterom, kjøkken og uteområder.",
+    content: `## Se bilder av lokalene våre\nHer kan du få et inntrykk av Hovedsalen, Kafeen, Peisestua, Møterommene og Kjøkkenet før du bestiller leie.`,
+    isPublished: true,
+    status: "published",
+    parentPageId: "page-utleie",
+    parentId: "page-utleie",
+    menuOrder: 3,
+    navOrder: 3,
+    inNavMenu: true,
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  // 5. Om (Toppfane med underfaner)
   {
     id: "page-om-oss",
     slug: "om-oss",
-    title: "Om menigheten",
+    title: "Om",
     summary: "Bli kjent med hvem vi er, hva vi tror på og vårt hjerte for byen og nærmiljøet.",
-    content: `## Velkommen til fellesskapet
-Vi er en levende, flergenerasjons menighet tilknyttet Misjonskirken Norge. Vi ønsker å være et åpent hjem for alle mennesker. Uansett hvor du er på din trosreise, er du hjertelig velkommen hos oss.
-
-## Vår visjon
-«Guds ære – menneskers frelse». Vi drømmer om en menighet der mennesker opplever Jesu kjærlighet, finner tilhørighet og blir utrustet til å tjene sine medmennesker.
-
-## Hva vi står for
-- **Varmt fellesskap:** Vi tror på nære relasjoner, omsorg for hverandre og at ingen skal måtte gå alene.
-- **Tydelig tro:** Gudstjenestene våre preges av bibelnær forkynnelse, variert sang og lovsang, og rom for bønn.
-- **Engasjement i nærmiljøet:** Vi ønsker å utgjøre en positiv forskjell for barn, unge, familier og eldre i lokalsamfunnet.
-
-## Gudstjenesteliv
-Hver søndag kl. 11:00 samles vi til gudstjeneste med søndagsskole for barna, etterfulgt av en god og sosial kirkekaffe i kafeen vår.`,
+    content: `## Velkommen til fellesskapet\nVi er en levende, flergenerasjons menighet tilknyttet Misjonskirken Norge. Vi ønsker å være et åpent hjem for alle mennesker. Uansett hvor du er på din trosreise, er du hjertelig velkommen hos oss.\n\n## Vår visjon\n«Guds ære – menneskers frelse». Vi drømmer om en menighet der mennesker opplever Jesu kjærlighet, finner tilhørighet og blir utrustet til å tjene sine medmennesker.`,
     isPublished: true,
+    status: "published",
+    parentPageId: null,
+    parentId: null,
+    menuOrder: 5,
+    navOrder: 5,
+    inNavMenu: true,
     updatedAt: "2026-09-28T10:00:00.000Z",
   },
   {
-    id: "page-barn-og-unge",
-    slug: "barn-og-unge",
-    title: "Barn og unge",
-    summary: "Et trygt, morsomt og engasjerende miljø for barn, tweens og ungdommer.",
-    content: `## For de minste og skolebarna
-Hver søndag under gudstjenesten har vi **Sprell Levende Søndagsskole**. Her er det lek, bibelhistorier formidlet i barnehøyde, sang og masse moro!
-
-- **Gullgruppa (0–4 år):** Tilrettelagt lekerom med lydoverføring for foreldre og småbarn.
-- **Bibeldetektivene (5–9 år):** Sang, tegning og spennende historier.
-- **Tweensklubben (10–13 år):** Kule aktiviteter, brettspill og samtaler om livets store spørsmål.
-
-## Ungdomsarbeidet (Fredager kl. 19:00)
-Ungdomsmiljøet samles annenhver fredag til lovsang, sosialt samvær, kiosk, bordtennis og aktuelle temakvelder. Følg oss gjerne på sosiale medier for oppdaterte helgeplaner!`,
+    id: "page-om-aktuelt",
+    slug: "aktuelt",
+    title: "Aktuelt",
+    summary: "Ferske artikler, hilsener fra pastoren og rapporter fra arbeidet.",
+    content: `## Aktuelt og nyheter\nFølg med på hva som skjer i menigheten. Se også vår forside for kommende arrangementer.`,
     isPublished: true,
+    status: "published",
+    parentPageId: "page-om-oss",
+    parentId: "page-om-oss",
+    menuOrder: 1,
+    navOrder: 1,
+    inNavMenu: true,
+    linkUrl: "/#aktuelt",
     updatedAt: "2026-09-28T10:00:00.000Z",
   },
+  {
+    id: "page-om-normisjon",
+    slug: "normisjon",
+    title: "Normisjon",
+    summary: "Vårt fellesskap og samarbeid med Misjonskirken Norge og Normisjon.",
+    content: `## Tilhørighet og samarbeid\nMenigheten samarbeider tett med misjonsorganisasjoner lokalt og internasjonalt for å utbre evangeliet og drive diakonalt arbeid.`,
+    isPublished: true,
+    status: "published",
+    parentPageId: "page-om-oss",
+    parentId: "page-om-oss",
+    menuOrder: 2,
+    navOrder: 2,
+    inNavMenu: true,
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  // 6. Kontakt (Toppfane)
   {
     id: "page-kontakt",
     slug: "kontakt",
-    title: "Kontakt oss & Gi",
-    summary: "Vi hører gjerne fra deg! Ta kontakt for samtaler, dåp, vielse, givertjeneste eller praktiske spørsmål.",
-    content: `## Besøksadresse og kontor
-Lillesand Misjonskirke  
-Sentrumsgata 12, 4790 Lillesand  
-Kontortid: Tirsdag – Torsdag kl. 10:00 – 14:00
-
-## Nøkkelpersoner
-- **Pastor:** Kari Nordmann (tlf: 912 34 567, e-post: pastor@lillesandmisjonskirke.no)
-- **Daglig leder / Koordinator:** Ola Hansen (tlf: 923 45 678, e-post: post@lillesandmisjonskirke.no)
-- **Barne- og ungdomsarbeider:** Ingrid Berg (tlf: 934 56 789, e-post: ung@lillesandmisjonskirke.no)
-
-## Gaver og kollekt
-Tusen takk for enhver gave til menighetens arbeid og misjonsprosjekter!  
-- **Vipps-nummer:** #12345 (Lillesand Misjonskirke)  
-- **Bankkonto:** 1503.45.67890  
-- **Skattefradrag:** Gaver over 500 kr i året gir rett til skattefradrag. Registrer personnummer hos kasserer.`,
+    title: "Kontakt",
+    summary: "Besøksadresse, telefon, e-post, kontortider og Vipps for givertjeneste.",
+    content: `## Besøksadresse og kontor\nLillesand Misjonskirke\nSentrumsgata 12, 4790 Lillesand\nKontortid: Tirsdag – Torsdag kl. 10:00 – 14:00\n\n## Gaver og kollekt\nTusen takk for enhver gave til menighetens arbeid!\nVipps: #12345 · Bankkonto: 1503.45.67890`,
     isPublished: true,
+    status: "published",
+    parentPageId: null,
+    parentId: null,
+    menuOrder: 6,
+    navOrder: 6,
+    inNavMenu: true,
+    updatedAt: "2026-09-28T10:00:00.000Z",
+  },
+  // 7. Personvern (Skjult fra hovedmeny, men aktiv på URL)
+  {
+    id: "page-personvern",
+    slug: "personvern",
+    title: "Personvern",
+    summary: "Informasjon om hvordan menigheten behandler personopplysninger i henhold til GDPR.",
+    content: `## Personvernerklæring (GDPR)\nLillesand Misjonskirke behandler personopplysninger i henhold til personopplysningsloven og EUs personvernforordning (GDPR). Opplysninger om medlemmer og frivillige lagres trygt i europeiske skytjenester og utleveres aldri til tredjepart uten samtykke.`,
+    isPublished: true,
+    status: "published",
+    parentPageId: null,
+    parentId: null,
+    menuOrder: 7,
+    navOrder: 7,
+    inNavMenu: false, // Skjult fra toppmeny (oransje X)
     updatedAt: "2026-09-28T10:00:00.000Z",
   },
 ];

@@ -1,34 +1,59 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        get(/databases/$(database)/documents/persons/$(request.auth.uid)).data.globalRole == 'admin'
+      );
+    }
+
+    function isValidAuditUpdate() {
+      return !('updatedBy' in request.resource.data) ||
+             (request.auth != null && request.resource.data.updatedBy == request.auth.uid) ||
+             (request.auth == null);
+    }
+
     // Connection test document
     match /test/{docId} {
       allow read, write: if true;
     }
 
     // Persons collection
+    // Public profile fields can only be marked public/consented by Admin.
     match /persons/{personId} {
       allow read: if true;
-      allow write: if true;
+      allow create: if isValidAuditUpdate();
+      allow update: if isValidAuditUpdate() && (
+        // Changing public profile visibility requires admin or unauthenticated dev fallback
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['isPublicProfile', 'publicPhone', 'publicEmail', 'consentToPublishGivenAt', 'consentGivenBy']) ||
+         isAdmin() ||
+         !isAuthenticated())
+      );
+      allow delete: if isAdmin() || !isAuthenticated();
     }
 
     // Groups collection
     match /groups/{groupId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isValidAuditUpdate();
     }
 
-    // Gatherings collection
+    // Gatherings (Arrangementer) collection
     match /gatherings/{gatheringId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isValidAuditUpdate();
     }
 
     // Tasks collection
     match /tasks/{taskId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isValidAuditUpdate();
     }
 
     // Assignments collection
@@ -52,37 +77,31 @@ service cloud.firestore {
     // Public CMS Pages collection
     match /cms_pages/{pageId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isValidAuditUpdate();
     }
 
     // Public CMS News Articles collection
     match /cms_news/{articleId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isValidAuditUpdate();
     }
 
     // Public CMS Sermons collection
     match /cms_sermons/{sermonId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isValidAuditUpdate();
     }
 
     // Public CMS Staff collection
     match /cms_staff/{staffId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isValidAuditUpdate();
     }
 
-    // Public CMS Settings collection
-    match /cms_settings/{settingId} {
+    // CMS Settings collection
+    match /settings/{docId} {
       allow read: if true;
-      allow write: if true;
-    }
-
-    // CMS Overrides collection
-    match /cms_overrides/{overrideId} {
-      allow read: if true;
-      allow write: if true;
+      allow write: if isValidAuditUpdate();
     }
   }
 }

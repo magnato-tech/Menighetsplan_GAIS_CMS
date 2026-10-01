@@ -18,6 +18,7 @@ import {
   Person,
   Group,
   Gathering,
+  GatheringVisibility,
   Task,
   Assignment,
   GroupMessage,
@@ -506,6 +507,10 @@ export async function createGathering(data: {
   theme?: string;
   bibleText?: string;
   hostPersonId?: string;
+  visibility?: GatheringVisibility;
+  isPublic?: boolean;
+  isGudstjeneste?: boolean;
+  cancelled?: boolean;
   sendInvitationImmediately?: boolean;
 }): Promise<{ success: boolean; gathering?: Gathering; error?: string }> {
   try {
@@ -523,6 +528,10 @@ export async function createGathering(data: {
       hostPersonId: data.hostPersonId,
       invitationSent: !!data.sendInvitationImmediately,
       invitationSentAt: data.sendInvitationImmediately ? new Date().toISOString() : undefined,
+      visibility: data.visibility || (data.type === "gruppesamling" ? "intern" : "offentlig"),
+      isPublic: data.visibility ? data.visibility !== "intern" : data.type !== "gruppesamling",
+      isGudstjeneste: data.isGudstjeneste ?? (data.type === "arrangement"),
+      cancelled: data.cancelled ?? false,
     };
     await setDoc(doc(db, COLLECTIONS.GATHERINGS, id), sanitizeForFirestore(newGathering));
     return { success: true, gathering: newGathering };
@@ -578,6 +587,7 @@ export async function createTask(data: {
   title: string;
   description?: string;
   instruction?: string;
+  status?: Task["status"];
   neededCount?: number;
 }): Promise<{ success: boolean; task?: Task; error?: string }> {
   try {
@@ -589,7 +599,7 @@ export async function createTask(data: {
       title: data.title.trim(),
       description: data.description,
       instruction: data.instruction,
-      status: "open",
+      status: data.status || "open",
       neededCount: data.neededCount || 1,
     };
     await setDoc(doc(db, COLLECTIONS.TASKS, id), sanitizeForFirestore(newTask));
@@ -825,11 +835,16 @@ export interface FirebaseDataContextType {
     groupId?: string;
     title: string;
     startsAt: string;
+    endsAt?: string;
     location?: string;
     type?: "arrangement" | "gruppesamling";
     theme?: string;
     bibleText?: string;
     hostPersonId?: string;
+    visibility?: GatheringVisibility;
+    isPublic?: boolean;
+    isGudstjeneste?: boolean;
+    cancelled?: boolean;
     sendInvitationImmediately?: boolean;
   }) => { success: boolean; gathering?: Gathering; error?: string };
   updateGathering: (gatheringId: string, updates: Partial<Gathering>) => { success: boolean; gathering?: Gathering; error?: string };
@@ -844,7 +859,10 @@ export interface FirebaseDataContextType {
   updateGroup: (groupId: string, updates: Partial<Group>) => { success: boolean; error?: string };
   createGroup: (data: {
     name: string;
+    description?: string;
     category?: GroupCategory;
+    tags?: string[];
+    isPublic?: boolean;
     leaderIds?: string[];
     deputyLeaderIds?: string[];
     memberIds?: string[];
@@ -854,7 +872,15 @@ export interface FirebaseDataContextType {
   updatePerson: (personId: string, updates: Partial<Person>) => { success: boolean; error?: string };
   addGroupMember: (groupId: string, personId: string) => { success: boolean; error?: string };
   removeGroupMember: (groupId: string, personId: string) => { success: boolean; error?: string };
-  createTask: (data: { gatheringId: string; groupId: string; title: string; description?: string; instruction?: string; neededCount?: number }) => { success: boolean; task?: Task; error?: string };
+  createTask: (data: {
+    gatheringId: string;
+    groupId: string;
+    title: string;
+    description?: string;
+    instruction?: string;
+    status?: Task["status"];
+    neededCount?: number;
+  }) => { success: boolean; task?: Task; error?: string };
   deleteTask: (taskId: string) => { success: boolean; error?: string };
   updateTask: (taskId: string, updates: Partial<Task>) => { success: boolean; error?: string };
   updateTaskInstruction: (taskId: string, instruction: string) => { success: boolean; error?: string };
@@ -1073,17 +1099,21 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     [groups, currentUserId]
   );
 
-  // High-level Actions delegating to Firestore directly
   const handleCreateGathering = useCallback(
     (data: {
       groupId?: string;
       title: string;
       startsAt: string;
+      endsAt?: string;
       location?: string;
       type?: "arrangement" | "gruppesamling";
       theme?: string;
       bibleText?: string;
       hostPersonId?: string;
+      visibility?: GatheringVisibility;
+      isPublic?: boolean;
+      isGudstjeneste?: boolean;
+      cancelled?: boolean;
       sendInvitationImmediately?: boolean;
     }) => {
       const id = `gathering-${Date.now()}`;
@@ -1092,6 +1122,7 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
         groupId: data.groupId || groups[0]?.id || "group-lyd",
         title: data.title.trim(),
         startsAt: data.startsAt,
+        endsAt: data.endsAt,
         location: data.location || "Menighetssalen",
         type: data.type || "arrangement",
         theme: data.theme,
@@ -1099,6 +1130,10 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
         hostPersonId: data.hostPersonId,
         invitationSent: !!data.sendInvitationImmediately,
         invitationSentAt: data.sendInvitationImmediately ? new Date().toISOString() : undefined,
+        visibility: data.visibility || (data.type === "gruppesamling" ? "intern" : "offentlig"),
+        isPublic: data.visibility ? data.visibility !== "intern" : (data.isPublic ?? (data.type !== "gruppesamling")),
+        isGudstjeneste: data.isGudstjeneste ?? (data.type === "arrangement"),
+        cancelled: data.cancelled ?? false,
       };
       setGatherings((prev) => [...prev, newGathering]);
       createGathering(data).catch(console.error);
@@ -1279,6 +1314,7 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       title: string;
       description?: string;
       instruction?: string;
+      status?: Task["status"];
       neededCount?: number;
     }) => {
       const id = `task-${Date.now()}`;
@@ -1289,7 +1325,7 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
         title: data.title.trim(),
         description: data.description,
         instruction: data.instruction,
-        status: "open",
+        status: data.status || "open",
         neededCount: data.neededCount || 1,
       };
       setTasks((prev) => [...prev, newTask]);

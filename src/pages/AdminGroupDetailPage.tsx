@@ -48,6 +48,8 @@ export const AdminGroupDetailPage: React.FC = () => {
   // Form states
   const [name, setName] = useState<string>("");
   const [category, setCategory] = useState<GroupCategory>("tjenestegruppe");
+  const [description, setDescription] = useState<string>("");
+  const [tags, setTags] = useState<string>("");
   const [selectedLeaderId, setSelectedLeaderId] = useState<string>("");
   const [selectedDeputyId, setSelectedDeputyId] = useState<string>("");
   const [weekday, setWeekday] = useState<string>("Søndag");
@@ -60,6 +62,8 @@ export const AdminGroupDetailPage: React.FC = () => {
   useEffect(() => {
     if (group) {
       setName(group.name);
+      setDescription(group.description || "");
+      setTags((group.tags || []).join(", "));
       setCategory(group.category || "tjenestegruppe");
       setSelectedLeaderId(group.leaderIds[0] || "");
       setSelectedDeputyId(group.deputyLeaderIds?.[0] || "");
@@ -85,8 +89,15 @@ export const AdminGroupDetailPage: React.FC = () => {
       return;
     }
 
+    const tagsArray = tags
+      .split(",")
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
+
     const res = updateGroup(group.id, {
       name: name.trim(),
+      description: description.trim() || undefined,
+      tags: tagsArray,
       category,
       leaderIds: selectedLeaderId ? [selectedLeaderId] : [],
       deputyLeaderIds: selectedDeputyId ? [selectedDeputyId] : [],
@@ -275,6 +286,44 @@ export const AdminGroupDetailPage: React.FC = () => {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Tagger */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="input-edit-group-tags"
+                className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+              >
+                <Tag className="w-3.5 h-3.5 text-indigo-600" />
+                Tagger (kommaseparert, f.eks. vekstgruppe, menighetsskole, bønn):
+              </label>
+              <input
+                type="text"
+                id="input-edit-group-tags"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="f.eks. vekstgruppe, menighetsskole, bønn"
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+              />
+            </div>
+
+            {/* Beskrivelse */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="input-edit-group-description"
+                className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+              >
+                <FolderKanban className="w-3.5 h-3.5 text-indigo-600" />
+                Beskrivelse / formål:
+              </label>
+              <textarea
+                id="input-edit-group-description"
+                rows={2}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Beskriv gruppens formål og målgruppe..."
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+              />
             </div>
 
             {/* 3. Leder & 4. Nestleder */}

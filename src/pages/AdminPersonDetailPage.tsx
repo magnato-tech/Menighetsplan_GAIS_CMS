@@ -16,6 +16,10 @@ import {
   Save,
   CheckSquare,
   BadgeCheck,
+  Calendar,
+  CalendarX,
+  Plus,
+  Trash2,
 } from "lucide-react";
 
 export const AdminPersonDetailPage: React.FC = () => {
@@ -37,6 +41,13 @@ export const AdminPersonDetailPage: React.FC = () => {
   const [name, setName] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [email, setEmail] = useState<string>("");
+  const [globalRole, setGlobalRole] = useState<"member" | "admin">("member");
+  const [policeCert, setPoliceCert] = useState<string>("");
+  const [unavailablePeriods, setUnavailablePeriods] = useState<{ from: string; to: string; reason?: string }[]>([]);
+  const [newUnavailFrom, setNewUnavailFrom] = useState<string>("");
+  const [newUnavailTo, setNewUnavailTo] = useState<string>("");
+  const [newUnavailReason, setNewUnavailReason] = useState<string>("");
+
   const [feedback, setFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
@@ -44,12 +55,39 @@ export const AdminPersonDetailPage: React.FC = () => {
       setName(person.name);
       setPhone(person.phone || "");
       setEmail(person.email || "");
+      setGlobalRole(person.globalRole || "member");
+      setPoliceCert(person.policeCertificateValidUntil || "");
+      setUnavailablePeriods(person.unavailablePeriods || []);
     }
   }, [person]);
 
   const showFeedback = (text: string, type: "success" | "error" = "success") => {
     setFeedback({ text, type });
     setTimeout(() => setFeedback(null), 3500);
+  };
+
+  const handleAddUnavailablePeriod = () => {
+    if (!newUnavailFrom || !newUnavailTo) {
+      showFeedback("Både fra- og til-dato må oppgis for fravær.", "error");
+      return;
+    }
+    const updated = [
+      ...unavailablePeriods,
+      {
+        from: newUnavailFrom,
+        to: newUnavailTo,
+        reason: newUnavailReason.trim() || undefined,
+      },
+    ];
+    setUnavailablePeriods(updated);
+    setNewUnavailFrom("");
+    setNewUnavailTo("");
+    setNewUnavailReason("");
+    showFeedback("Fraværsperiode lagt til!");
+  };
+
+  const handleRemoveUnavailablePeriod = (idx: number) => {
+    setUnavailablePeriods(unavailablePeriods.filter((_, i) => i !== idx));
   };
 
   const handleSave = (e?: React.FormEvent) => {
@@ -65,10 +103,13 @@ export const AdminPersonDetailPage: React.FC = () => {
       name: name.trim(),
       phone: phone.trim() || undefined,
       email: email.trim() || undefined,
+      globalRole,
+      policeCertificateValidUntil: policeCert || undefined,
+      unavailablePeriods,
     });
 
     if (res.success) {
-      showFeedback("Personopplysninger ble lagret!");
+      showFeedback("Personopplysninger og tilganger ble lagret!");
     } else {
       showFeedback(res.error || "Kunne ikke lagre person.", "error");
     }
@@ -245,15 +286,144 @@ export const AdminPersonDetailPage: React.FC = () => {
               />
             </div>
 
+            {/* 4. Global Rolle (Sikrer støtte for flere co-admins) */}
+            <div className="space-y-1.5 pt-1 border-t border-slate-100">
+              <label
+                htmlFor="select-edit-person-role"
+                className="text-xs font-bold text-slate-700 flex items-center justify-between"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-indigo-600" />
+                  Global systemrolle:
+                </span>
+                <span className="text-[10px] text-slate-400 font-normal">
+                  (Muliggjør 2+ likestilte administratorer)
+                </span>
+              </label>
+              <select
+                id="select-edit-person-role"
+                value={globalRole}
+                onChange={(e) => setGlobalRole(e.target.value as "member" | "admin")}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+              >
+                <option value="member">Medlem / Frivillig (standard tilgang)</option>
+                <option value="admin">Administrator (full tilgang til Admin Studio & CMS)</option>
+              </select>
+            </div>
+
+            {/* 5. Politiattest for barne- og ungdomsarbeid */}
+            <div className="space-y-1.5 pt-1 border-t border-slate-100">
+              <label
+                htmlFor="input-edit-person-police"
+                className="text-xs font-bold text-slate-700 flex items-center justify-between"
+              >
+                <span className="flex items-center gap-1.5">
+                  <BadgeCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  Politiattest (gyldig til dato):
+                </span>
+                {policeCert ? (
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                    Registrert ({policeCert})
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-slate-400 font-normal">Ikke registrert</span>
+                )}
+              </label>
+              <input
+                type="date"
+                id="input-edit-person-police"
+                value={policeCert}
+                onChange={(e) => setPoliceCert(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+              />
+              <p className="text-[10px] text-slate-500">
+                Påkrevd for frivillige som arbeider med mindreårige (søndagsskole og barneleir).
+              </p>
+            </div>
+
+            {/* 6. Utilgjengelighetskalender ("Borte fra–til") */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <CalendarX className="w-3.5 h-3.5 text-amber-600" />
+                  Utilgjengelig / Bortreist:
+                </span>
+                <span className="text-[10px] text-slate-400">
+                  {unavailablePeriods.length} perioder registrert
+                </span>
+              </div>
+
+              {unavailablePeriods.length > 0 && (
+                <div className="space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                  {unavailablePeriods.map((p, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between text-xs py-1 px-2 bg-white rounded-lg border border-slate-200/60"
+                    >
+                      <div>
+                        <strong className="text-slate-800">
+                          {p.from} til {p.to}
+                        </strong>
+                        {p.reason && <span className="text-slate-500 ml-1.5">({p.reason})</span>}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveUnavailablePeriod(idx)}
+                        className="text-rose-500 hover:text-rose-700 text-[11px] p-1 cursor-pointer"
+                        title="Fjern fraværsperiode"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add Period Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-xs">
+                <input
+                  type="date"
+                  value={newUnavailFrom}
+                  onChange={(e) => setNewUnavailFrom(e.target.value)}
+                  placeholder="Fra dato"
+                  className="px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs"
+                />
+                <input
+                  type="date"
+                  value={newUnavailTo}
+                  onChange={(e) => setNewUnavailTo(e.target.value)}
+                  placeholder="Til dato"
+                  className="px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs"
+                />
+                <div className="flex gap-1">
+                  <input
+                    type="text"
+                    value={newUnavailReason}
+                    onChange={(e) => setNewUnavailReason(e.target.value)}
+                    placeholder="Årsak (f.eks. Ferie)"
+                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddUnavailablePeriod}
+                    className="px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg shrink-0 cursor-pointer"
+                    title="Legg til fravær"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Save Button */}
-            <div className="pt-2">
+            <div className="pt-3">
               <button
                 type="submit"
                 id="btn-save-person-detail"
                 className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
               >
                 <Save className="w-4 h-4" />
-                Lagre personopplysninger
+                Lagre alle personopplysninger & tilganger
               </button>
             </div>
           </div>

@@ -1,11 +1,41 @@
 // Exact Domain Models requested for Menighetsplan
 
+export interface UnavailablePeriod {
+  from: string; // ISO date YYYY-MM-DD
+  to: string;   // ISO date YYYY-MM-DD
+  reason?: string;
+}
+
 export interface Person {
   id: string;
   name: string;
   phone?: string;
   email?: string;
   globalRole: "member" | "admin";
+  policeCertificateValidUntil?: string; // ISO date YYYY-MM-DD
+  unavailablePeriods?: UnavailablePeriod[];
+  // GDPR & Public Stabs-profil
+  isPublicProfile?: boolean;
+  publicTitle?: string;
+  publicPhone?: string;
+  publicEmail?: string;
+  avatarUrl?: string;
+  consentToPublishGivenAt?: string; // ISO timestamp
+  consentGivenBy?: string; // UID of admin who registered consent
+  updatedBy?: string;
+  updatedAt?: string;
+}
+
+export interface LeadershipDecision {
+  id: string;
+  topic: string;
+  question: string;
+  optionA: string;
+  optionB: string;
+  chosenOption?: "A" | "B";
+  decidedBy?: string;
+  decidedAt?: string;
+  notes?: string;
 }
 
 export type GroupCategory = "tjenestegruppe" | "husgruppe" | "strategigruppe" | "ledergruppe" | "interessegruppe";
@@ -21,8 +51,8 @@ export interface Group {
   name: string;
   description?: string;
   category?: GroupCategory;
-  tags?: string[]; // e.g. "vekstgruppe", "menighetsskole", "stab", "friluft"
-  isPublic?: boolean; // whether it is featured on the public website
+  tags?: string[];
+  isPublic?: boolean;
   memberIds: string[];
   leaderIds: string[];
   deputyLeaderIds?: string[];
@@ -40,6 +70,8 @@ export interface ProgramItem {
   groupId?: string;
 }
 
+export type GatheringVisibility = "intern" | "offentlig" | "fremhevet";
+
 export interface Gathering {
   id: string;
   groupId: string;
@@ -53,11 +85,17 @@ export interface Gathering {
   hostPersonId?: string;
   invitationSent?: boolean;
   invitationSentAt?: string;
-  isPublic?: boolean; // Whether event can be shown publicly on website
+  // Unified single source of visibility
+  visibility: GatheringVisibility;
+  isPublic?: boolean; // backwards compatibility alias for visibility !== "intern"
   isGudstjeneste?: boolean; // Whether this is a church service
   cancelled?: boolean; // Whether event is cancelled
   programSchedule?: ProgramItem[];
+  updatedBy?: string;
+  updatedAt?: string;
 }
+
+export type Event = Gathering;
 
 export interface GatheringAttendance {
   id: string;
@@ -85,7 +123,10 @@ export interface Task {
   description?: string;
   instruction?: string;
   status: "open" | "assigned" | "confirmed" | "vacant" | "cancelled";
-  neededCount?: number;
+  neededCount: number;
+  lastReminded?: string; // ISO timestamp when reminder was sent/copied
+  updatedBy?: string;
+  updatedAt?: string;
 }
 
 export interface Assignment {
@@ -93,6 +134,9 @@ export interface Assignment {
   taskId: string;
   personId: string;
   response: "pending" | "confirmed" | "declined" | "withdrawn";
+  assignedAt?: string;
+  respondedAt?: string;
+  withdrawalReason?: string;
 }
 
 // Presentation Model for reusable ActionCard component
@@ -122,3 +166,5 @@ export interface QueryResult<T> {
   error: string | null;
   permissionDenied?: boolean;
 }
+
+export type { CmsPage } from "./data/cmsData";

@@ -1,6 +1,6 @@
 {
-  "summary":  "Oppdatert strategisk plan etter benchmarking mot www.fløymk.no og www.lillesandmisjonskirke.no. Inkluderer Taler/Prekener-modul, Lederskap/Stab-oversikt, utvidet navigasjon, og interaktiv \"Bli med i tjeneste\"-flyt som kompletterer Min Side og CMS-et.",
-  "updatedAt":  "2026-10-01T15:50:54.773595401Z",
+  "summary":  "Plan for å koble CMS-sider direkte til nettsidens navigasjonsmeny med hierarkisk trestruktur (hovedfaner og underfaner/dropdowns) både i Admin Studio og på den offentlige nettsiden.",
+  "updatedAt":  "2026-10-01T17:42:33.180237634Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

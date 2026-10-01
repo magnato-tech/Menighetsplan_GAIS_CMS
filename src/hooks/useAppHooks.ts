@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { useMockData } from "../context/MockDataContext";
 import { Task, Person, Group, Gathering, Assignment, ActionCardModel, QueryResult, BadgeVariant } from "../types";
+import { validateGathering } from "../utils/validation";
 
 // Helper function to format Norwegian dates nicely
 export function formatNorwegianDateTime(isoString: string): string {
@@ -531,6 +532,38 @@ export interface StaffingStatusResult {
   needsAttention: boolean;
 }
 
+export interface AdminGatheringItem {
+  gathering: Gathering;
+  group?: Group;
+  tasks: Task[];
+  tasksWithStaffing: Array<{ task: Task; taskStaffing: TaskStaffingStatus }>;
+  totalTasks: number;
+  coveredTasksCount: number;
+  missingStaffingCount: number;
+  staffing: StaffingStatusResult;
+}
+
+export interface AdminTaskItem {
+  task: Task;
+  gathering?: Gathering;
+  group?: Group;
+  assignment: Assignment | null;
+  assignedPerson: Person | null;
+  assignedPersonsList: Array<{
+    assignment: Assignment;
+    person: Person | null;
+    statusLabel: string;
+    response: Assignment["response"];
+  }>;
+  neededCount: number;
+  confirmedCount: number;
+  pendingCount: number;
+  availableSpots: number;
+  isFullyCovered: boolean;
+  missingCount: number;
+  taskStaffing: TaskStaffingStatus;
+}
+
 /**
  * Standardized 3-color staffing status for a gathering (collection of tasks):
  * 🟢 Grønn = behovet er fullt dekket ("Dekket")
@@ -761,11 +794,12 @@ export function useModuleConfig() {
 }
 
 // Constants for Group Category and Meeting Schedule
-export const GROUP_CATEGORIES: { id: "tjenestegruppe" | "husgruppe" | "strategigruppe" | "ledergruppe"; label: string }[] = [
-  { id: "tjenestegruppe", label: "Tjenestegruppe" },
-  { id: "husgruppe", label: "Husgruppe" },
-  { id: "strategigruppe", label: "Strategigruppe" },
-  { id: "ledergruppe", label: "Ledergruppe" },
+export const GROUP_CATEGORIES: { id: "tjenestegruppe" | "husgruppe" | "strategigruppe" | "ledergruppe" | "interessegruppe"; label: string }[] = [
+  { id: "ledergruppe", label: "Ledergruppe (Stab, menighetsråd, gruppeledere)" },
+  { id: "strategigruppe", label: "Strategigruppe (Vekstgrupper: Bønn, Kommunikasjon, Historie)" },
+  { id: "tjenestegruppe", label: "Tjenestegruppe (Lyd, kirkekaffe, søndagsskole)" },
+  { id: "husgruppe", label: "Husgruppe (Husfellesskap i hjemmene)" },
+  { id: "interessegruppe", label: "Interessegruppe (Turgruppe, kor, hobby, senior)" },
 ];
 
 export const MEETING_FREQUENCIES: { id: "hver uke" | "annenhver uke" | "hver måned"; label: string }[] = [
@@ -806,6 +840,9 @@ export function useAdminDashboard() {
     createGathering,
     updateGathering,
     deleteGathering,
+    createTask,
+    updateTask,
+    assignTaskToPerson,
   } = useMockData();
 
   const isAdmin = currentUser.globalRole === "admin";
@@ -848,6 +885,7 @@ export function useAdminDashboard() {
         return group?.category !== "husgruppe";
       })
       .map((gathering) => {
+        validateGathering(gathering);
         const group = getGroupById(gathering.groupId);
         const gatheringTasks = tasks.filter((t) => t.gatheringId === gathering.id);
         const staffing = getStaffingStatus(gatheringTasks, assignments);
@@ -908,6 +946,11 @@ export function useAdminDashboard() {
       });
 
       const taskStaffing = calculateTaskStaffingStatus(task, taskAssignments);
+      const neededCount = task.neededCount !== undefined ? task.neededCount : 1;
+      const confirmedCount = taskStaffing.confirmedCount;
+      const pendingCount = taskStaffing.pendingCount;
+      // Formula: Ledige plasser = Behov - Bekreftet - Venter
+      const availableSpots = Math.max(0, neededCount - confirmedCount - pendingCount);
 
       return {
         task,
@@ -916,7 +959,10 @@ export function useAdminDashboard() {
         assignment: primaryAssignment,
         assignedPerson,
         assignedPersonsList,
-        confirmedCount: taskStaffing.confirmedCount,
+        neededCount,
+        confirmedCount,
+        pendingCount,
+        availableSpots,
         isFullyCovered: taskStaffing.isFullyCovered,
         missingCount: taskStaffing.missingCount,
         taskStaffing,
@@ -940,6 +986,10 @@ export function useAdminDashboard() {
     createGathering,
     updateGathering,
     deleteGathering,
+    createTask,
+    updateTask,
+    assignTaskToPerson,
+    tasks,
   };
 }
 

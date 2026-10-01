@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
 import { useMockData } from "../../context/MockDataContext";
@@ -19,21 +19,54 @@ import {
 
 export const PublicNavbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openMobileSubmenus, setOpenMobileSubmenus] = useState<Record<string, boolean>>({});
   const location = useLocation();
-  const { settings } = useCms();
+  const { settings, pages } = useCms();
   const { currentUser } = useMockData();
 
   const isAdmin = currentUser.globalRole === "admin";
 
-  const navLinks = [
-    { to: "/", label: "Hjem", active: location.pathname === "/" },
-    { to: "/hva-skjer", label: "Hva skjer", active: location.pathname.startsWith("/hva-skjer") || location.pathname.startsWith("/kalender") },
-    { to: "/taler", label: "Taler", active: location.pathname.startsWith("/taler") },
-    { to: "/fellesskap", label: "Grupper", active: location.pathname.startsWith("/fellesskap") },
-    { to: "/om-oss", label: "Om oss", active: location.pathname === "/om-oss" },
-    { to: "/lederskap", label: "Stab & Lederskap", active: location.pathname === "/lederskap" || location.pathname === "/stab" },
-    { to: "/kontakt", label: "Kontakt & Gi", active: location.pathname === "/kontakt" },
-  ];
+  const toggleMobileSubmenu = (pageId: string) => {
+    setOpenMobileSubmenus((prev) => ({
+      ...prev,
+      [pageId]: !prev[pageId],
+    }));
+  };
+
+  // Build hierarchical navigation items from CmsContext pages
+  const navigationItems = useMemo(() => {
+    const activePages = pages.filter((p) => p.isPublished !== false && p.inNavMenu !== false);
+
+    const topLevel = activePages
+      .filter((p) => !p.parentId)
+      .sort((a, b) => (a.navOrder ?? 99) - (b.navOrder ?? 99));
+
+    return topLevel.map((parent) => {
+      const children = activePages
+        .filter((p) => p.parentId === parent.id)
+        .sort((a, b) => (a.navOrder ?? 99) - (b.navOrder ?? 99));
+
+      const targetUrl = parent.linkUrl || (parent.slug ? `/${parent.slug}` : "/");
+      const isParentActive =
+        location.pathname === targetUrl ||
+        (targetUrl !== "/" && location.pathname.startsWith(targetUrl)) ||
+        children.some((c) => {
+          const cUrl = c.linkUrl || `/${c.slug}`;
+          return location.pathname === cUrl;
+        });
+
+      return {
+        page: parent,
+        targetUrl,
+        isActive: isParentActive,
+        children: children.map((c) => ({
+          page: c,
+          targetUrl: c.linkUrl || `/${c.slug}`,
+          isActive: location.pathname === (c.linkUrl || `/${c.slug}`),
+        })),
+      };
+    });
+  }, [pages, location.pathname]);
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200/80 shadow-xs transition-all">
@@ -59,21 +92,66 @@ export const PublicNavbar: React.FC = () => {
             </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
+          {/* Desktop Navigation Links with Dropdown for Subpages */}
           <nav className="hidden lg:flex items-center space-x-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  link.active
-                    ? "text-indigo-900 bg-indigo-50/80 font-bold"
-                    : "text-stone-600 hover:text-stone-900 hover:bg-stone-100/70"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navigationItems.map((item) => {
+              if (item.children.length === 0) {
+                return (
+                  <Link
+                    key={item.page.id}
+                    to={item.targetUrl}
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                      item.isActive
+                        ? "text-indigo-900 bg-indigo-50/80 font-bold"
+                        : "text-stone-600 hover:text-stone-900 hover:bg-stone-100/70"
+                    }`}
+                  >
+                    {item.page.title}
+                  </Link>
+                );
+              }
+
+              return (
+                <div className="relative group" key={item.page.id}>
+                  <Link
+                    to={item.targetUrl}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                      item.isActive
+                        ? "text-indigo-900 bg-indigo-50/80 font-bold"
+                        : "text-stone-600 hover:text-stone-900 hover:bg-stone-100/70"
+                    }`}
+                  >
+                    <span>{item.page.title}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-stone-400 rotate-90 group-hover:rotate-270 group-hover:text-indigo-700 transition-transform" />
+                  </Link>
+
+                  {/* Dropdown Menu */}
+                  <div className="absolute left-0 top-full pt-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 z-50">
+                    <div className="bg-white/98 backdrop-blur-md rounded-2xl shadow-xl border border-stone-200/90 py-2 min-w-[210px] space-y-0.5">
+                      <Link
+                        to={item.targetUrl}
+                        className="block px-3.5 py-2 text-xs font-bold text-stone-900 hover:bg-indigo-50/80 hover:text-indigo-900 rounded-lg mx-1.5 transition-colors border-b border-stone-100 mb-1"
+                      >
+                        Oversikt: {item.page.title}
+                      </Link>
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.page.id}
+                          to={child.targetUrl}
+                          className={`block px-3.5 py-2 text-xs font-medium rounded-lg mx-1.5 transition-colors ${
+                            child.isActive
+                              ? "bg-indigo-50 text-indigo-950 font-bold"
+                              : "text-stone-600 hover:text-stone-900 hover:bg-stone-100/80"
+                          }`}
+                        >
+                          {child.page.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </nav>
 
           {/* Right Action buttons: Min Side & Admin Studio */}
@@ -128,22 +206,63 @@ export const PublicNavbar: React.FC = () => {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-stone-200 bg-white px-4 pt-3 pb-6 space-y-3 shadow-lg">
+        <div className="lg:hidden border-t border-stone-200 bg-white px-4 pt-3 pb-6 space-y-3 shadow-lg max-h-[80vh] overflow-y-auto">
           <div className="space-y-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block px-3 py-2.5 rounded-lg text-base font-semibold ${
-                  link.active
-                    ? "bg-indigo-50 text-indigo-900 font-bold"
-                    : "text-stone-700 hover:bg-stone-50"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navigationItems.map((item) => {
+              const hasSub = item.children.length > 0;
+              const isExpanded = openMobileSubmenus[item.page.id] ?? item.isActive;
+
+              return (
+                <div key={item.page.id} className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <Link
+                      to={item.targetUrl}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`block flex-1 px-3 py-2 rounded-lg text-sm font-semibold ${
+                        item.isActive
+                          ? "bg-indigo-50 text-indigo-900 font-bold"
+                          : "text-stone-700 hover:bg-stone-50"
+                      }`}
+                    >
+                      {item.page.title}
+                    </Link>
+
+                    {hasSub && (
+                      <button
+                        type="button"
+                        onClick={() => toggleMobileSubmenu(item.page.id)}
+                        className="p-2 text-stone-500 hover:text-stone-900 rounded-lg"
+                        aria-label="Fold ut underfane"
+                      >
+                        <ChevronRight
+                          className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-90 text-indigo-600" : ""}`}
+                        />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Mobile Submenu Accordion */}
+                  {hasSub && isExpanded && (
+                    <div className="pl-4 ml-2 border-l-2 border-indigo-100 space-y-1 pb-1">
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.page.id}
+                          to={child.targetUrl}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={`block px-3 py-1.5 rounded-lg text-xs font-medium ${
+                            child.isActive
+                              ? "bg-indigo-50 text-indigo-950 font-bold"
+                              : "text-stone-600 hover:bg-stone-50"
+                          }`}
+                        >
+                          {child.page.title}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <div className="pt-3 border-t border-stone-100 space-y-2">

@@ -60,7 +60,12 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [pages, setPages] = useState<CmsPage[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_PAGES);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length >= 5) {
+          return parsed;
+        }
+      }
     } catch {}
     return initialCmsPages;
   });
@@ -221,6 +226,11 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       summary: pageData.summary || "",
       content: pageData.content || "",
       isPublished: pageData.isPublished !== false,
+      status: pageData.isPublished !== false ? "published" : "draft",
+      navOrder: typeof pageData.navOrder === "number" ? pageData.navOrder : 99,
+      inNavMenu: pageData.inNavMenu !== false,
+      parentId: pageData.parentId || null,
+      linkUrl: pageData.linkUrl || undefined,
       updatedAt: now,
       heroImage: pageData.heroImage || "",
       heroCtaText: pageData.heroCtaText || "",
@@ -241,7 +251,10 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const deletePage = async (pageId: string) => {
     setPages((prev) => {
-      const next = prev.filter((p) => p.id !== pageId);
+      // Re-parent any direct children so they become top-level if parent is deleted
+      const next = prev
+        .filter((p) => p.id !== pageId)
+        .map((p) => (p.parentId === pageId ? { ...p, parentId: null } : p));
       localStorage.setItem(STORAGE_KEY_PAGES, JSON.stringify(next));
       return next;
     });

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#312e81"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#grad)"/>
+  <!-- Stylized Church / Fellowship Cross with rays -->
+  <path d="M256 100 L256 380" stroke="#ffffff" stroke-width="36" stroke-linecap="round"/>
+  <path d="M160 200 L352 200" stroke="#ffffff" stroke-width="36" stroke-linecap="round"/>
+  <circle cx="256" cy="180" r="16" fill="#fbbf24"/>
+  <path d="M200 390 C220 370, 292 370, 312 390" stroke="#a5b4fc" stroke-width="18" fill="none" stroke-linecap="round"/>
+</svg>
