@@ -3,6 +3,15 @@ import { createServer as createViteServer } from 'vite';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json' with { type: 'json' };
+import {
+  type GatheringDoc,
+  type GroupDoc,
+  toPublicGatherings,
+  toContractV1,
+  toV11,
+  toPublicGroups,
+  toRecurringEvents,
+} from './server/publicApi';
 
 const app = express();
 const port = 3000;
@@ -22,120 +31,26 @@ app.use((req, res, next) => {
   next();
 });
 
-/**
- * Helper to fetch and normalize gatherings
- */
-async function fetchPublicGatherings() {
+async function loadGatheringDocs(): Promise<GatheringDoc[]> {
   const snap = await getDocs(collection(db, 'gatherings'));
-  const items: any[] = [];
-
-  snap.forEach((docSnap) => {
+  return snap.docs.map((docSnap) => {
     const data = docSnap.data();
-    if (data.isPublic === false) return;
-
-    const title = data.title || 'Samling';
-    const isWorship = Boolean(
-      data.type === 'worship_service' ||
-      title.toLowerCase().includes('gudstjeneste')
-    );
-
-    const categories: string[] = [];
-    if (isWorship) categories.push('gudstjeneste');
-    if (data.type && data.type !== 'worship_service') categories.push(data.type);
-    if (title.toLowerCase().includes('ungdom')) categories.push('ungdom');
-    if (title.toLowerCase().includes('barn') || title.toLowerCase().includes('familie')) categories.push('barn og unge');
-    if (title.toLowerCase().includes('husfellesskap') || title.toLowerCase().includes('gruppe')) categories.push('smågrupper');
-    if (title.toLowerCase().includes('kaffe') || title.toLowerCase().includes('lunsj') || title.toLowerCase().includes('måltid')) categories.push('fellesskap');
-
-    items.push({
-      uid: data.id || docSnap.id,
-      id: data.id || docSnap.id,
-      groupId: data.groupId || '',
-      tittel: title,
-      title: title,
-      start: data.startsAt || data.date || '',
-      slutt: data.endsAt || '',
-      sted: data.location || 'Kirkesalen',
-      location: data.location || 'Kirkesalen',
-      beskrivelse: data.description || '',
-      tema: data.theme || '',
-      kategorier: categories.length > 0 ? categories : ['samling'],
-      erGudstjeneste: isWorship,
-      erAvlyst: Boolean(data.cancelled),
-      cancelled: Boolean(data.cancelled),
-    });
+    return { ...data, id: data.id || docSnap.id };
   });
-
-  items.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
-  return items;
 }
 
-/**
- * Helper to fetch public groups and recurring schedules
- */
-async function fetchPublicGroupsAndRecurring() {
+async function loadGroupDocs(): Promise<GroupDoc[]> {
   const snap = await getDocs(collection(db, 'groups'));
-  const groups: any[] = [];
-  const recurringEvents: any[] = [];
-
-  // Default recurring events for church life if not in DB
-  recurringEvents.push({
-    id: 'recurring-gudstjeneste',
-    tittel: 'Søndagsgudstjeneste & kirkekaffe',
-    ukedag: 'Søndag',
-    klokkeslett: '11:00',
-    frekvens: 'hver uke',
-    sted: 'Hovedsalen og kafeen',
-    kategori: 'gudstjeneste',
-    beskrivelse: 'Felles gudstjeneste for hele familien med barnekirke/søndagsskole og påfølgende kirkekaffe.',
-  });
-
-  recurringEvents.push({
-    id: 'recurring-ungdom',
-    tittel: 'Ungdomskveld & lovsang',
-    ukedag: 'Fredag',
-    klokkeslett: '19:00',
-    frekvens: 'annenhver uke',
-    sted: 'Ungdomssalen',
-    kategori: 'ungdom',
-    beskrivelse: 'Sosialt samvær, kiosk, lovsang og fellesskap for ungdom fra 8. klasse og oppover.',
-  });
-
-  snap.forEach((docSnap) => {
+  return snap.docs.map((docSnap) => {
     const data = docSnap.data();
-    // Do not expose internal member lists or phone numbers
-    const category = data.category || 'gruppe';
-    const groupName = data.name || 'Gruppe';
-
-    const groupObj = {
-      id: data.id || docSnap.id,
-      navn: groupName,
-      name: groupName,
-      kategori: category,
-      category: category,
-      moteplan: data.meetingSchedule || null,
-      meetingSchedule: data.meetingSchedule || null,
-      antallMedlemmer: Array.isArray(data.memberIds) ? data.memberIds.length : undefined,
-    };
-    groups.push(groupObj);
-
-    // If group has meeting schedule, register it as a recurring event
-    if (data.meetingSchedule && data.meetingSchedule.weekday) {
-      recurringEvents.push({
-        id: `recurring-group-${data.id || docSnap.id}`,
-        groupId: data.id || docSnap.id,
-        tittel: groupName,
-        ukedag: data.meetingSchedule.weekday,
-        klokkeslett: data.meetingSchedule.time || '19:00',
-        frekvens: data.meetingSchedule.frequency || 'annenhver uke',
-        sted: category === 'husgruppe' ? 'Hjemmene' : 'Kirken',
-        kategori: category,
-        beskrivelse: `Faste samlinger for ${groupName} (${data.meetingSchedule.frequency}).`,
-      });
-    }
+    return { ...data, id: data.id || docSnap.id };
   });
+}
 
-  return { groups, recurringEvents };
+function parseDateQuery(value: unknown): number | null {
+  if (typeof value !== 'string' || !value) return null;
+  const time = new Date(value).getTime();
+  return isNaN(time) ? null : time;
 }
 
 /**
@@ -144,87 +59,18 @@ async function fetchPublicGroupsAndRecurring() {
  */
 app.get('/api/offentlig/arrangementer', async (req: Request, res: Response) => {
   try {
-    const snap = await getDocs(collection(db, 'gatherings'));
-    const items: any[] = [];
-    const fraQuery = req.query.fra ? new Date(req.query.fra as string).getTime() : null;
-    const tilQuery = req.query.til ? new Date(req.query.til as string).getTime() : null;
-
-    snap.forEach((docSnap) => {
-      const data = docSnap.data();
-      if (data.isPublic === false) return;
-      if (data.type === 'gruppesamling') return; // gruppesamling er aldri offentlig iflg. kontrakt
-
-      const title = data.title || 'Gudstjeneste';
-      const isWorship = Boolean(
-        data.kind === 'gudstjeneste' ||
-        data.type === 'worship_service' ||
-        title.toLowerCase().includes('gudstjeneste')
-      );
-
-      const startDate = data.startsAt ? new Date(data.startsAt) : new Date();
-      const startTime = startDate.getTime();
-
-      if (fraQuery && startTime < fraQuery) return;
-      if (tilQuery && startTime > tilQuery) return;
-
-      const endDate = data.endsAt
-        ? new Date(data.endsAt)
-        : new Date(startDate.getTime() + 90 * 60 * 1000); // 90 min fallback
-
-      // Oslo ISO formatter with timezone offset
-      const toOsloIso = (d: Date) => {
-        try {
-          const parts = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Europe/Oslo',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false,
-          }).formatToParts(d);
-          const p = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-          // Determine DST for Europe/Oslo (UTC+2 in summer, UTC+1 in winter)
-          const jan = new Date(d.getFullYear(), 0, 1).getTimezoneOffset();
-          const jul = new Date(d.getFullYear(), 6, 1).getTimezoneOffset();
-          const isDst = Math.min(jan, jul) === d.getTimezoneOffset();
-          const offset = isDst ? '+02:00' : '+01:00';
-          return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}${offset}`;
-        } catch {
-          return d.toISOString();
-        }
-      };
-
-      const categories: string[] = [];
-      if (isWorship) categories.push('gudstjeneste');
-      if (title.toLowerCase().includes('ungdom')) categories.push('ungdom');
-      if (title.toLowerCase().includes('barn') || title.toLowerCase().includes('familie')) categories.push('barn og unge');
-
-      items.push({
-        id: data.id || docSnap.id,
-        type: isWorship ? 'gudstjeneste' : 'arrangement',
-        tittel: title,
-        tema: data.theme || '',
-        bibeltekst: data.bibleText || '',
-        beskrivelse: data.publicDescription || data.description || '',
-        start: toOsloIso(startDate),
-        slutt: toOsloIso(endDate),
-        heldag: Boolean(data.allDay),
-        sted: data.location || 'Lillesand Misjonskirke',
-        status: data.cancelled ? 'avlyst' : 'planlagt',
-        tagger: categories,
-        sistEndret: data.updatedAt || new Date().toISOString(),
-      });
-    });
-
-    items.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+    const now = new Date();
+    const items = toPublicGatherings(await loadGatheringDocs(), {
+      excludeGroupGatherings: true, // gruppesamling er aldri offentlig iflg. kontrakt
+      from: parseDateQuery(req.query.fra),
+      to: parseDateQuery(req.query.til),
+    }).map((item) => toContractV1(item, now));
 
     res.header('Cache-Control', 'public, max-age=300');
     res.json({
       versjon: 1,
       kilde: 'menighetsplan',
-      generert: new Date().toISOString(),
+      generert: now.toISOString(),
       tidssone: 'Europe/Oslo',
       arrangementer: items,
     });
@@ -239,8 +85,10 @@ app.get('/api/offentlig/arrangementer', async (req: Request, res: Response) => {
  */
 app.get('/api/public/gatherings', async (req: Request, res: Response) => {
   try {
-    const items = await fetchPublicGatherings();
-    const { groups, recurringEvents } = await fetchPublicGroupsAndRecurring();
+    const [gatheringDocs, groupDocs] = await Promise.all([loadGatheringDocs(), loadGroupDocs()]);
+    const items = toPublicGatherings(gatheringDocs).map(toV11);
+    const groups = toPublicGroups(groupDocs);
+    const recurringEvents = toRecurringEvents(groupDocs);
 
     res.json({
       versjon: '1.1',
@@ -269,7 +117,7 @@ app.get('/api/public/gatherings', async (req: Request, res: Response) => {
  */
 app.get('/api/public/groups', async (req: Request, res: Response) => {
   try {
-    const { groups } = await fetchPublicGroupsAndRecurring();
+    const groups = toPublicGroups(await loadGroupDocs());
     res.json({
       versjon: '1.1',
       status: 'ok',
@@ -289,7 +137,7 @@ app.get('/api/public/groups', async (req: Request, res: Response) => {
  */
 app.get('/api/public/recurring', async (req: Request, res: Response) => {
   try {
-    const { recurringEvents } = await fetchPublicGroupsAndRecurring();
+    const recurringEvents = toRecurringEvents(await loadGroupDocs());
     res.json({
       versjon: '1.1',
       status: 'ok',
@@ -309,15 +157,14 @@ app.get('/api/public/recurring', async (req: Request, res: Response) => {
  */
 app.get('/api/public/all', async (req: Request, res: Response) => {
   try {
-    const items = await fetchPublicGatherings();
-    const { groups, recurringEvents } = await fetchPublicGroupsAndRecurring();
+    const [gatheringDocs, groupDocs] = await Promise.all([loadGatheringDocs(), loadGroupDocs()]);
     res.json({
       versjon: '1.1',
       status: 'ok',
       generert: new Date().toISOString(),
-      arrangementer: items,
-      grupper: groups,
-      gjentagende_eventer: recurringEvents,
+      arrangementer: toPublicGatherings(gatheringDocs).map(toV11),
+      grupper: toPublicGroups(groupDocs),
+      gjentagende_eventer: toRecurringEvents(groupDocs),
     });
   } catch (err: any) {
     console.error('Error fetching all public data for CMS:', err);
