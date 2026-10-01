@@ -9,7 +9,6 @@ import {
   toV11,
   toPublicGroups,
   toRecurringEvents,
-  HARDCODED_RECURRING_EVENTS,
 } from "../server/publicApi";
 
 function runTests() {
@@ -152,8 +151,9 @@ function runTests() {
   assert(!JSON.stringify(publicGroups).includes("p1"), "Grupper: medlems-ID-er eksponeres ikke");
 
   const recurring = toRecurringEvents(groups);
-  assert(recurring.length === HARDCODED_RECURRING_EVENTS.length + 1, "Faste aktiviteter: kun grupper med møteplan legges til");
-  const fromGroup = recurring[recurring.length - 1];
+  assert(recurring.length === 1, "Faste aktiviteter: kun grupper med møteplan er med");
+  assert(toRecurringEvents([]).length === 0, "Faste aktiviteter: ingen grupper gir tom liste");
+  const fromGroup = recurring[0];
   assert(
     fromGroup.id === "recurring-group-group-hus-1" && fromGroup.sted === "Hjemmene" && fromGroup.klokkeslett === "19:30",
     "Faste aktiviteter: husgruppe får sted 'Hjemmene' og tid fra møteplanen"

@@ -187,30 +187,6 @@ export interface RecurringEvent {
   beskrivelse: string;
 }
 
-// Not in Firestore yet: these two are returned regardless of what the database contains.
-export const HARDCODED_RECURRING_EVENTS: RecurringEvent[] = [
-  {
-    id: "recurring-gudstjeneste",
-    tittel: "Søndagsgudstjeneste & kirkekaffe",
-    ukedag: "Søndag",
-    klokkeslett: "11:00",
-    frekvens: "hver uke",
-    sted: "Hovedsalen og kafeen",
-    kategori: "gudstjeneste",
-    beskrivelse: "Felles gudstjeneste for hele familien med barnekirke/søndagsskole og påfølgende kirkekaffe.",
-  },
-  {
-    id: "recurring-ungdom",
-    tittel: "Ungdomskveld & lovsang",
-    ukedag: "Fredag",
-    klokkeslett: "19:00",
-    frekvens: "annenhver uke",
-    sted: "Ungdomssalen",
-    kategori: "ungdom",
-    beskrivelse: "Sosialt samvær, kiosk, lovsang og fellesskap for ungdom fra 8. klasse og oppover.",
-  },
-];
-
 /** Member lists and contact details are never exposed, only the member count. */
 export function toPublicGroups(docs: GroupDoc[]) {
   return docs.map((g) => {
@@ -229,14 +205,15 @@ export function toPublicGroups(docs: GroupDoc[]) {
   });
 }
 
+/** Recurring events come from the groups' meeting schedules in Firestore, nothing else. */
 export function toRecurringEvents(docs: GroupDoc[]): RecurringEvent[] {
-  const fromGroups: RecurringEvent[] = [];
+  const events: RecurringEvent[] = [];
   for (const g of docs) {
     if (!g.id || !g.meetingSchedule?.weekday) continue;
     const name = g.name || "Gruppe";
     const category = g.category || "gruppe";
     const frequency = g.meetingSchedule.frequency || "annenhver uke";
-    fromGroups.push({
+    events.push({
       id: `recurring-group-${g.id}`,
       groupId: g.id,
       tittel: name,
@@ -248,5 +225,5 @@ export function toRecurringEvents(docs: GroupDoc[]): RecurringEvent[] {
       beskrivelse: `Faste samlinger for ${name} (${frequency}).`,
     });
   }
-  return [...HARDCODED_RECURRING_EVENTS, ...fromGroups];
+  return events;
 }
