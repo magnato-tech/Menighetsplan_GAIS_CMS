@@ -26,29 +26,14 @@ import {
   GroupCategory,
   MeetingSchedule,
 } from "./types";
-import {
-  initialPersons,
-  initialGroups,
-  initialGatherings,
-  initialTasks,
-  initialAssignments,
-  initialGroupMessages,
-  initialGatheringAttendances,
-} from "./data/mockData";
+import { initialPersons } from "./data/mockData";
+import { COLLECTIONS } from "./data/collections";
 
 // ============================================================================
 // Firestore Collections & Helpers
 // ============================================================================
 
-export const COLLECTIONS = {
-  PERSONS: "persons",
-  GROUPS: "groups",
-  GATHERINGS: "gatherings",
-  TASKS: "tasks",
-  ASSIGNMENTS: "assignments",
-  GROUP_MESSAGES: "groupMessages",
-  GATHERING_ATTENDANCES: "gatheringAttendances",
-} as const;
+export { COLLECTIONS };
 
 /**
  * Sanitizes object to remove undefined values since Firestore rejects them.
@@ -73,7 +58,7 @@ export function sanitizeForFirestore<T>(obj: T): T {
 }
 
 // ============================================================================
-// Connection and Seeding Functions
+// Connection
 // ============================================================================
 
 /**
@@ -81,65 +66,6 @@ export function sanitizeForFirestore<T>(obj: T): T {
  */
 export async function testConnection(): Promise<boolean> {
   return await verifyFirebaseConnection();
-}
-
-/**
- * Seeds Firestore with initial church domain data if the database is empty.
- */
-export async function seedFirestoreIfEmpty(): Promise<boolean> {
-  try {
-    const personsSnap = await getDocs(collection(db, COLLECTIONS.PERSONS));
-    if (!personsSnap.empty) {
-      return false;
-    }
-
-    await forceSeedFirestore();
-    return true;
-  } catch (error) {
-    console.error("Error during initial Firestore seed check:", error);
-    return false;
-  }
-}
-
-/**
- * Force-replaces or updates all mock items into Firestore.
- */
-export async function forceSeedFirestore(): Promise<{ success: boolean; count: number; error?: string }> {
-  try {
-    let count = 0;
-    for (const person of initialPersons) {
-      await setDoc(doc(db, COLLECTIONS.PERSONS, person.id), sanitizeForFirestore(person));
-      count++;
-    }
-    for (const group of initialGroups) {
-      await setDoc(doc(db, COLLECTIONS.GROUPS, group.id), sanitizeForFirestore(group));
-      count++;
-    }
-    for (const gathering of initialGatherings) {
-      await setDoc(doc(db, COLLECTIONS.GATHERINGS, gathering.id), sanitizeForFirestore(gathering));
-      count++;
-    }
-    for (const task of initialTasks) {
-      await setDoc(doc(db, COLLECTIONS.TASKS, task.id), sanitizeForFirestore(task));
-      count++;
-    }
-    for (const assignment of initialAssignments) {
-      await setDoc(doc(db, COLLECTIONS.ASSIGNMENTS, assignment.id), sanitizeForFirestore(assignment));
-      count++;
-    }
-    for (const message of initialGroupMessages) {
-      await setDoc(doc(db, COLLECTIONS.GROUP_MESSAGES, message.id), sanitizeForFirestore(message));
-      count++;
-    }
-    for (const attendance of initialGatheringAttendances) {
-      await setDoc(doc(db, COLLECTIONS.GATHERING_ATTENDANCES, attendance.id), sanitizeForFirestore(attendance));
-      count++;
-    }
-    return { success: true, count };
-  } catch (error) {
-    console.error("Force seed failed:", error);
-    return { success: false, count: 0, error: error instanceof Error ? error.message : String(error) };
-  }
 }
 
 /**
@@ -889,19 +815,19 @@ export interface FirebaseDataContextType {
   deleteGroupMessage: (messageId: string, personId?: string) => { success: boolean; error?: string };
   toggleGroupNotifications: (groupId: string, personId?: string, forceState?: boolean) => { success: boolean; enabled: boolean };
   respondToGathering: (gatheringId: string, personId: string, status: "attending" | "declined") => Promise<{ success: boolean; error?: string }>;
-  reseedDatabase: () => Promise<{ success: boolean; count: number; error?: string }>;
 }
 
 export const FirebaseDataContext = createContext<FirebaseDataContextType | undefined>(undefined);
 
 export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [persons, setPersons] = useState<Person[]>(initialPersons);
-  const [groups, setGroups] = useState<Group[]>(initialGroups);
-  const [gatherings, setGatherings] = useState<Gathering[]>(initialGatherings);
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [assignments, setAssignments] = useState<Assignment[]>(initialAssignments);
-  const [groupMessages, setGroupMessages] = useState<GroupMessage[]>(initialGroupMessages);
-  const [attendances, setAttendances] = useState<GatheringAttendance[]>(initialGatheringAttendances);
+  // Firestore is the only source of data: everything is empty until the first snapshot arrives
+  const [persons, setPersons] = useState<Person[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [gatherings, setGatherings] = useState<Gathering[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [groupMessages, setGroupMessages] = useState<GroupMessage[]>([]);
+  const [attendances, setAttendances] = useState<GatheringAttendance[]>([]);
   const [isFirestoreConnected, setIsFirestoreConnected] = useState<boolean>(false);
   const [currentUserId, setCurrentUserId] = useState<string>("person-1");
 
@@ -915,16 +841,13 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return { kalender: "on", meldinger: "on" };
   });
 
-  // Check connection and seed if empty on mount
+  // Check connection on mount
   useEffect(() => {
     let isMounted = true;
     (async () => {
       try {
         const connected = await testConnection();
         if (isMounted) setIsFirestoreConnected(connected);
-        if (connected) {
-          await seedFirestoreIfEmpty();
-        }
       } catch (err) {
         console.warn("Firestore connection check:", err);
       }
@@ -936,27 +859,13 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Listen in real-time to Firestore collections
   useEffect(() => {
-    const unsubPersons = subscribePersons((items) => {
-      if (items.length > 0) setPersons(items);
-    });
-    const unsubGroups = subscribeGroups((items) => {
-      if (items.length > 0) setGroups(items);
-    });
-    const unsubGatherings = subscribeGatherings((items) => {
-      if (items.length > 0) setGatherings(items);
-    });
-    const unsubTasks = subscribeTasks((items) => {
-      if (items.length > 0) setTasks(items);
-    });
-    const unsubAssignments = subscribeAssignments((items) => {
-      if (items.length > 0) setAssignments(items);
-    });
-    const unsubMessages = subscribeGroupMessages((items) => {
-      if (items.length > 0) setGroupMessages(items);
-    });
-    const unsubAttendances = subscribeAttendances((items) => {
-      if (items.length > 0) setAttendances(items);
-    });
+    const unsubPersons = subscribePersons(setPersons);
+    const unsubGroups = subscribeGroups(setGroups);
+    const unsubGatherings = subscribeGatherings(setGatherings);
+    const unsubTasks = subscribeTasks(setTasks);
+    const unsubAssignments = subscribeAssignments(setAssignments);
+    const unsubMessages = subscribeGroupMessages(setGroupMessages);
+    const unsubAttendances = subscribeAttendances(setAttendances);
 
     return () => {
       unsubPersons();
@@ -969,6 +878,8 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
   }, []);
 
+  // Until real sign-in exists, the mock admin stands in when the database has no persons,
+  // so the admin pages stay reachable on an empty database.
   const currentUser = useMemo(() => {
     return persons.find((p) => p.id === currentUserId) || persons[0] || initialPersons[0];
   }, [persons, currentUserId]);
@@ -1435,11 +1346,6 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     []
   );
 
-  const handleReseedDatabase = useCallback(async () => {
-    const result = await forceSeedFirestore();
-    return result;
-  }, []);
-
   const contextValue: FirebaseDataContextType = useMemo(
     () => ({
       isFirestoreConnected,
@@ -1498,7 +1404,6 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       deleteGroupMessage: handleDeleteGroupMessage,
       toggleGroupNotifications: handleToggleGroupNotifications,
       respondToGathering: handleRespondToGathering,
-      reseedDatabase: handleReseedDatabase,
     }),
     [
       isFirestoreConnected,
@@ -1556,7 +1461,6 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       handleDeleteGroupMessage,
       handleToggleGroupNotifications,
       handleRespondToGathering,
-      handleReseedDatabase,
     ]
   );
 

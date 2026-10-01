@@ -57,17 +57,13 @@ const STORAGE_KEY_SETTINGS = "menighetsplan_cms_settings_v3";
 const STORAGE_KEY_OVERRIDES = "menighetsplan_cms_overrides_v3";
 
 export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // The lists start from the local cache of the last Firestore snapshot, never from mock data
   const [pages, setPages] = useState<CmsPage[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_PAGES);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length >= 5) {
-          return parsed;
-        }
-      }
+      if (saved) return JSON.parse(saved);
     } catch {}
-    return initialCmsPages;
+    return [];
   });
 
   const [news, setNews] = useState<CmsNewsArticle[]>(() => {
@@ -75,7 +71,7 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const saved = localStorage.getItem(STORAGE_KEY_NEWS);
       if (saved) return JSON.parse(saved);
     } catch {}
-    return initialCmsNews;
+    return [];
   });
 
   const [sermons, setSermons] = useState<CmsSermon[]>(() => {
@@ -83,7 +79,7 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const saved = localStorage.getItem(STORAGE_KEY_SERMONS);
       if (saved) return JSON.parse(saved);
     } catch {}
-    return initialCmsSermons;
+    return [];
   });
 
   const [staff, setStaff] = useState<CmsStaffMember[]>(() => {
@@ -91,7 +87,7 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const saved = localStorage.getItem(STORAGE_KEY_STAFF);
       if (saved) return JSON.parse(saved);
     } catch {}
-    return initialCmsStaff;
+    return [];
   });
 
   const [settings, setSettings] = useState<CmsSettings>(() => {
@@ -112,7 +108,7 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [isFirestoreSyncing, setIsFirestoreSyncing] = useState(false);
 
-  // Firestore real-time subscriptions & auto-seed
+  // Firestore real-time subscriptions
   useEffect(() => {
     let unsubPages: (() => void) | undefined;
     let unsubNews: (() => void) | undefined;
@@ -127,55 +123,39 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         // 1. Pages
         unsubPages = onSnapshot(collection(db, "cms_pages"), (snapshot) => {
-          if (!snapshot.empty) {
-            const list: CmsPage[] = [];
-            snapshot.forEach((docSnap) => list.push(docSnap.data() as CmsPage));
-            setPages(list);
-            localStorage.setItem(STORAGE_KEY_PAGES, JSON.stringify(list));
-          } else {
-            initialCmsPages.forEach((p) => setDoc(doc(db, "cms_pages", p.id), p).catch(() => {}));
-          }
+          const list: CmsPage[] = [];
+          snapshot.forEach((docSnap) => list.push(docSnap.data() as CmsPage));
+          setPages(list);
+          localStorage.setItem(STORAGE_KEY_PAGES, JSON.stringify(list));
         });
 
         // 2. News
         unsubNews = onSnapshot(collection(db, "cms_news"), (snapshot) => {
-          if (!snapshot.empty) {
-            const list: CmsNewsArticle[] = [];
-            snapshot.forEach((docSnap) => list.push(docSnap.data() as CmsNewsArticle));
-            list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-            setNews(list);
-            localStorage.setItem(STORAGE_KEY_NEWS, JSON.stringify(list));
-          } else {
-            initialCmsNews.forEach((n) => setDoc(doc(db, "cms_news", n.id), n).catch(() => {}));
-          }
+          const list: CmsNewsArticle[] = [];
+          snapshot.forEach((docSnap) => list.push(docSnap.data() as CmsNewsArticle));
+          list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+          setNews(list);
+          localStorage.setItem(STORAGE_KEY_NEWS, JSON.stringify(list));
         });
 
         // 3. Sermons (Taler)
         unsubSermons = onSnapshot(collection(db, "cms_sermons"), (snapshot) => {
-          if (!snapshot.empty) {
-            const list: CmsSermon[] = [];
-            snapshot.forEach((docSnap) => list.push(docSnap.data() as CmsSermon));
-            list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            setSermons(list);
-            localStorage.setItem(STORAGE_KEY_SERMONS, JSON.stringify(list));
-          } else {
-            initialCmsSermons.forEach((s) => setDoc(doc(db, "cms_sermons", s.id), s).catch(() => {}));
-          }
+          const list: CmsSermon[] = [];
+          snapshot.forEach((docSnap) => list.push(docSnap.data() as CmsSermon));
+          list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          setSermons(list);
+          localStorage.setItem(STORAGE_KEY_SERMONS, JSON.stringify(list));
         });
 
         // 4. Staff (Lederskap & Stab)
         unsubStaff = onSnapshot(collection(db, "cms_staff"), (snapshot) => {
-          if (!snapshot.empty) {
-            const list: CmsStaffMember[] = [];
-            snapshot.forEach((docSnap) => list.push(docSnap.data() as CmsStaffMember));
-            setStaff(list);
-            localStorage.setItem(STORAGE_KEY_STAFF, JSON.stringify(list));
-          } else {
-            initialCmsStaff.forEach((st) => setDoc(doc(db, "cms_staff", st.id), st).catch(() => {}));
-          }
+          const list: CmsStaffMember[] = [];
+          snapshot.forEach((docSnap) => list.push(docSnap.data() as CmsStaffMember));
+          setStaff(list);
+          localStorage.setItem(STORAGE_KEY_STAFF, JSON.stringify(list));
         });
 
-        // 5. Settings
+        // 5. Settings (the built-in defaults apply while no settings document exists)
         const settingsDocRef = doc(db, "cms_settings", "global");
         unsubSettings = onSnapshot(settingsDocRef, (docSnap) => {
           if (docSnap.exists()) {
@@ -183,7 +163,8 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setSettings(data);
             localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(data));
           } else {
-            setDoc(settingsDocRef, initialCmsSettings).catch(() => {});
+            setSettings(initialCmsSettings);
+            localStorage.removeItem(STORAGE_KEY_SETTINGS);
           }
         });
 

@@ -926,6 +926,17 @@ export const AdminStudio: React.FC = () => {
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
 
+          <Link
+            to="/admin/settings"
+            className="flex items-center justify-between w-full px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              <span>Database & innstillinger</span>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+
           <div className="pt-2 border-t border-slate-800/60 text-[11px] text-slate-400 flex items-center justify-between">
             <span>Innlogget som:</span>
             <strong className="text-white truncate max-w-[120px]">{currentUser.name}</strong>

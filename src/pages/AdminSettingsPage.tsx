@@ -2,8 +2,13 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useModuleConfig, useAdminDashboard } from "../hooks/useAppHooks";
 import { useMockData } from "../context/MockDataContext";
+import { useCms } from "../context/CmsContext";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { populateWithMockData, deleteAllData, type DatabaseAdminResult } from "../services/databaseAdmin";
 import {
+  Trash2,
+  AlertTriangle,
   Shield,
   ArrowLeft,
   Settings,
@@ -22,6 +27,21 @@ import {
   Code,
 } from "lucide-react";
 
+const CONFIRM_DELETE_WORD = "SLETT";
+
+type DatabaseFeedback = { type: "success" | "warning" | "error"; message: string };
+
+function describeResult(result: DatabaseAdminResult, successText: string): DatabaseFeedback {
+  if (result.failures.length === 0) {
+    return { type: "success", message: `${successText} (${result.total} dokumenter).` };
+  }
+  const failed = result.failures.map((f) => `${f.collection}: ${f.message}`).join(" · ");
+  return {
+    type: result.total > 0 ? "warning" : "error",
+    message: `${successText} (${result.total} dokumenter), men ${result.failures.length} samling(er) feilet: ${failed}`,
+  };
+}
+
 export const AdminSettingsPage: React.FC = () => {
   const { isAdmin, currentUser } = useAdminDashboard();
   const { kalender, meldinger, toggleKalender, toggleMeldinger } = useModuleConfig();
@@ -31,11 +51,16 @@ export const AdminSettingsPage: React.FC = () => {
     groups,
     gatherings,
     tasks,
-    reseedDatabase,
+    assignments,
+    groupMessages,
+    attendances,
   } = useMockData();
+  const { pages, news, sermons, staff } = useCms();
 
-  const [isReseeding, setIsReseeding] = useState(false);
-  const [reseedFeedback, setReseedFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  // Which confirmation is open. Deleting takes two separate confirmations.
+  const [dialog, setDialog] = useState<"populate" | "delete" | "delete-final" | null>(null);
+  const [isWorking, setIsWorking] = useState(false);
+  const [databaseFeedback, setDatabaseFeedback] = useState<DatabaseFeedback | null>(null);
   const [testingApi, setTestingApi] = useState(false);
   const [apiResult, setApiResult] = useState<{ status: string; count: number } | null>(null);
 
@@ -52,31 +77,39 @@ export const AdminSettingsPage: React.FC = () => {
     }
   };
 
-  const handleReseed = async () => {
-    setIsReseeding(true);
-    setReseedFeedback(null);
+  const runDatabaseAction = async (action: () => Promise<DatabaseAdminResult>, successText: string) => {
+    setIsWorking(true);
+    setDatabaseFeedback(null);
     try {
-      const res = await reseedDatabase();
-      if (res.success) {
-        setReseedFeedback({
-          type: "success",
-          message: `Databasen er oppdatert med mockdata (${res.count} elementer skrevet).`,
-        });
-      } else {
-        setReseedFeedback({
-          type: "error",
-          message: res.error || "Kunne ikke fylle databasen med mockdata.",
-        });
-      }
+      setDatabaseFeedback(describeResult(await action(), successText));
     } catch (err: unknown) {
-      setReseedFeedback({
+      setDatabaseFeedback({
         type: "error",
-        message: err instanceof Error ? err.message : "En feil oppstod under lagring til Firestore.",
+        message: err instanceof Error ? err.message : "En feil oppstod mot Firestore.",
       });
     } finally {
-      setIsReseeding(false);
+      setIsWorking(false);
+      setDialog(null);
     }
   };
+
+  const handlePopulate = () => runDatabaseAction(populateWithMockData, "Databasen er fylt med mockdata");
+  const handleDeleteAll = () => runDatabaseAction(deleteAllData, "Alle data er slettet");
+
+  const databaseContents: [string, number][] = [
+    ["Personer", allPersons.length],
+    ["Grupper", groups.length],
+    ["Samlinger", gatherings.length],
+    ["Oppgaver", tasks.length],
+    ["Tildelinger", assignments.length],
+    ["Gruppemeldinger", groupMessages.length],
+    ["Påmeldinger", attendances.length],
+    ["Nettsider", pages.length],
+    ["Nyheter", news.length],
+    ["Taler", sermons.length],
+    ["Stab", staff.length],
+  ];
+  const totalDocuments = databaseContents.reduce((sum, [, count]) => sum + count, 0);
 
   // Friendly access denied screen if user is not admin
   if (!isAdmin) {
@@ -334,39 +367,111 @@ export const AdminSettingsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Action button */}
-            <div className="pt-2">
+            {/* Action buttons */}
+            <div className="pt-2 space-y-2">
               <button
                 type="button"
-                id="btn-reseed-firestore"
-                onClick={handleReseed}
-                disabled={isReseeding}
+                id="btn-populate-firestore"
+                onClick={() => setDialog("populate")}
+                disabled={isWorking}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
               >
-                <RefreshCw className={`w-4 h-4 ${isReseeding ? "animate-spin" : ""}`} />
-                {isReseeding ? "Fyller Firestore..." : "Fyll Firestore med mockdata på nytt"}
+                <RefreshCw className={`w-4 h-4 ${isWorking && dialog === "populate" ? "animate-spin" : ""}`} />
+                Fyll databasen med mockdata
+              </button>
+              <button
+                type="button"
+                id="btn-delete-all-firestore"
+                onClick={() => setDialog("delete")}
+                disabled={isWorking}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-red-50 disabled:opacity-50 text-red-700 font-bold text-xs rounded-xl border border-red-300 transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                Slett alle data i databasen
               </button>
             </div>
 
             {/* Feedback alert */}
-            {reseedFeedback && (
+            {databaseFeedback && (
               <div
+                role="status"
                 className={`p-3 rounded-xl border text-xs flex items-start gap-2 ${
-                  reseedFeedback.type === "success"
+                  databaseFeedback.type === "success"
                     ? "bg-emerald-50 text-emerald-900 border-emerald-200"
+                    : databaseFeedback.type === "warning"
+                    ? "bg-amber-50 text-amber-900 border-amber-200"
                     : "bg-red-50 text-red-900 border-red-200"
                 }`}
               >
-                {reseedFeedback.type === "success" ? (
+                {databaseFeedback.type === "success" ? (
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                ) : databaseFeedback.type === "warning" ? (
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 ) : (
                   <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                 )}
-                <span>{reseedFeedback.message}</span>
+                <span className="min-w-0 break-words">{databaseFeedback.message}</span>
               </div>
             )}
           </div>
         </section>
+
+        {dialog === "populate" && (
+          <ConfirmDialog
+            key="populate"
+            title="Fylle databasen med mockdata?"
+            confirmLabel={isWorking ? "Fyller..." : "Fyll med mockdata"}
+            busy={isWorking}
+            onConfirm={handlePopulate}
+            onCancel={() => setDialog(null)}
+          >
+            <p>
+              Mockdata skrives til Firestore. Dokumenter med samme ID blir overskrevet, så endringer du har gjort i
+              testdataene går tapt. Andre dokumenter blir stående.
+            </p>
+          </ConfirmDialog>
+        )}
+
+        {dialog === "delete" && (
+          <ConfirmDialog
+            key="delete"
+            title="Slette alle data i databasen?"
+            tone="danger"
+            confirmLabel="Fortsett"
+            onConfirm={() => setDialog("delete-final")}
+            onCancel={() => setDialog(null)}
+          >
+            <p>
+              Dette sletter <strong>{totalDocuments} dokumenter</strong> fra Firestore, for alle brukere:
+            </p>
+            <ul className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+              {databaseContents.map(([label, count]) => (
+                <li key={label} className="flex justify-between gap-2">
+                  <span>{label}</span>
+                  <span className="font-semibold text-slate-800">{count}</span>
+                </li>
+              ))}
+            </ul>
+          </ConfirmDialog>
+        )}
+
+        {dialog === "delete-final" && (
+          <ConfirmDialog
+            key="delete-final"
+            title="Siste advarsel: dette kan ikke angres"
+            tone="danger"
+            confirmLabel={isWorking ? "Sletter..." : "Slett alt permanent"}
+            requireText={CONFIRM_DELETE_WORD}
+            busy={isWorking}
+            onConfirm={handleDeleteAll}
+            onCancel={() => setDialog(null)}
+          >
+            <p>
+              Alle personer, grupper, samlinger, oppgaver, meldinger og alt innhold på nettsiden blir slettet permanent.
+              Det finnes ingen sikkerhetskopi i appen.
+            </p>
+          </ConfirmDialog>
+        )}
 
         {/* Public Website & CMS Integration Section */}
         <section

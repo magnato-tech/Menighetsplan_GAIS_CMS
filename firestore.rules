@@ -99,7 +99,7 @@ service cloud.firestore {
     }
 
     // CMS Settings collection
-    match /settings/{docId} {
+    match /cms_settings/{docId} {
       allow read: if true;
       allow write: if isValidAuditUpdate();
     }
