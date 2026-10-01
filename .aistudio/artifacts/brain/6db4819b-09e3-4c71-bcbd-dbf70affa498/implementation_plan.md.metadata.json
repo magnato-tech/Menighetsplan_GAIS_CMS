@@ -1,0 +1,6 @@
+{
+  "summary":  "Arbeidsflyt og integrasjonsplan for to separate repositories: Menighetsplan 2.0 (app og API) og menighetsplan_ClaudeCMS (offentlig nettside for Lillesand Misjonskirke). Beskriver ansvarsfordeling mellom Google AI Studio, Claude og Product Owner, synkroniseringsrutiner, API-kontraktsstyring og produksjonssetting på lillesandmisjonskirke.no.",
+  "updatedAt":  "2026-09-28T11:39:57.895293208Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

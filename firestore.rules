@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Connection test document
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+
+    // Persons collection
+    match /persons/{personId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Groups collection
+    match /groups/{groupId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Gatherings collection
+    match /gatherings/{gatheringId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Tasks collection
+    match /tasks/{taskId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Assignments collection
+    match /assignments/{assignmentId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Group messages collection
+    match /groupMessages/{messageId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Gathering attendances collection
+    match /gatheringAttendances/{attendanceId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

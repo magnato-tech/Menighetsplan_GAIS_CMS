@@ -1,0 +1,140 @@
+{
+  "entities": {
+    "Person": {
+      "title": "Person",
+      "description": "Church member, leader, or administrator profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "globalRole": { "type": "string", "enum": ["member", "admin"] }
+      },
+      "required": ["id", "name", "globalRole"]
+    },
+    "Group": {
+      "title": "Group",
+      "description": "Ministry group, house fellowship, strategy, or leadership group",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["tjenestegruppe", "husgruppe", "strategigruppe", "ledergruppe"] },
+        "memberIds": { "type": "array" },
+        "leaderIds": { "type": "array" },
+        "deputyLeaderIds": { "type": "array" }
+      },
+      "required": ["id", "name", "memberIds", "leaderIds"]
+    },
+    "Gathering": {
+      "title": "Gathering",
+      "description": "Church service or group gathering event",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "groupId": { "type": "string" },
+        "title": { "type": "string" },
+        "startsAt": { "type": "string" },
+        "endsAt": { "type": "string" },
+        "location": { "type": "string" },
+        "type": { "type": "string", "enum": ["arrangement", "gruppesamling"] },
+        "theme": { "type": "string" },
+        "bibleText": { "type": "string" },
+        "hostPersonId": { "type": "string" },
+        "invitationSent": { "type": "boolean" },
+        "invitationSentAt": { "type": "string" },
+        "isPublic": { "type": "boolean" },
+        "isGudstjeneste": { "type": "boolean" },
+        "cancelled": { "type": "boolean" }
+      },
+      "required": ["id", "groupId", "title", "startsAt"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "Volunteer or service task on a gathering",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "gatheringId": { "type": "string" },
+        "groupId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "instruction": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "assigned", "confirmed", "vacant", "cancelled"] },
+        "neededCount": { "type": "number" }
+      },
+      "required": ["id", "gatheringId", "groupId", "title", "status"]
+    },
+    "Assignment": {
+      "title": "Assignment",
+      "description": "Task assigned to a person",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "taskId": { "type": "string" },
+        "personId": { "type": "string" },
+        "response": { "type": "string", "enum": ["pending", "confirmed", "declined", "withdrawn"] }
+      },
+      "required": ["id", "taskId", "personId", "response"]
+    },
+    "GroupMessage": {
+      "title": "GroupMessage",
+      "description": "Chat message posted within a group",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "groupId": { "type": "string" },
+        "senderPersonId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "content": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "groupId", "senderPersonId", "senderName", "content", "createdAt"]
+    },
+    "GatheringAttendance": {
+      "title": "GatheringAttendance",
+      "description": "Attendance RSVP for a gathering",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "gatheringId": { "type": "string" },
+        "personId": { "type": "string" },
+        "status": { "type": "string", "enum": ["attending", "declined"] },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "gatheringId", "personId", "status"]
+    }
+  },
+  "firestore": {
+    "/persons/{personId}": {
+      "schema": "Person",
+      "description": "Collection of church members and profiles"
+    },
+    "/groups/{groupId}": {
+      "schema": "Group",
+      "description": "Collection of service groups and fellowships"
+    },
+    "/gatherings/{gatheringId}": {
+      "schema": "Gathering",
+      "description": "Collection of church gatherings and services"
+    },
+    "/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Collection of tasks linked to gatherings"
+    },
+    "/assignments/{assignmentId}": {
+      "schema": "Assignment",
+      "description": "Collection of assignments connecting tasks and people"
+    },
+    "/groupMessages/{messageId}": {
+      "schema": "GroupMessage",
+      "description": "Collection of group chat messages"
+    },
+    "/gatheringAttendances/{attendanceId}": {
+      "schema": "GatheringAttendance",
+      "description": "Collection of gathering RSVP responses"
+    }
+  }
+}
