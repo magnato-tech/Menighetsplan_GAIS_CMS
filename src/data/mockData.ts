@@ -32,13 +32,98 @@ export const initialPersons: Person[] = [
 ];
 
 export const initialGroups: Group[] = [
+  // 1. Ledergruppe
+  {
+    id: "group-stab",
+    name: "Stabsgruppe",
+    description: "Menighetens ansatte stab som koordinerer daglig drift, gudstjenester og oppfølging.",
+    category: "ledergruppe",
+    tags: ["stab", "ansatte"],
+    isPublic: true,
+    memberIds: ["person-1", "person-2", "person-3"],
+    leaderIds: ["person-1"], // Kari Nordmann (Hovedpastor)
+    deputyLeaderIds: ["person-2"], // Ola Hansen (Daglig leder)
+  },
+  {
+    id: "group-lederskap",
+    name: "Lederskapsgruppe (Menighetsråd)",
+    description: "Valgt menighetsråd og åndelig lederskap som staker ut strategi og visjon.",
+    category: "ledergruppe",
+    tags: ["lederskap", "styre", "eldsteråd"],
+    isPublic: true,
+    memberIds: ["person-1", "person-2", "person-4"],
+    leaderIds: ["person-4"], // Jonas Lie (Styreleder)
+    deputyLeaderIds: ["person-1"],
+  },
+  {
+    id: "group-gruppeledere",
+    name: "Gruppeledergruppe",
+    description: "Felles ressursgruppe og samlingspunkt for alle ledere av husgrupper, tjenestegrupper og interessegrupper.",
+    category: "ledergruppe",
+    tags: ["gruppeledere", "ledertreff"],
+    isPublic: false,
+    memberIds: ["person-1", "person-2", "person-3", "person-4"],
+    leaderIds: ["person-2"],
+  },
+
+  // 2. Strategigruppe (Vekstgrupper gjennom Menighetsskolen)
+  {
+    id: "group-vekst-bonn",
+    name: "Vekstgruppe Bønn & Forbønn",
+    description: "Strategisk satsing gjennom Menighetsskolen for å styrke bønnelivet og bønnemøter i menigheten.",
+    category: "strategigruppe",
+    tags: ["vekstgruppe", "menighetsskole", "bønn"],
+    isPublic: true,
+    memberIds: ["person-1", "person-4"],
+    leaderIds: ["person-1"],
+    meetingSchedule: {
+      weekday: "Torsdag",
+      time: "19:00",
+      frequency: "annenhver uke",
+    },
+  },
+  {
+    id: "group-vekst-komm",
+    name: "Vekstgruppe Kommunikasjon",
+    description: "Arbeider strategisk med synlighet i nærmiljøet, nettside, sosiale medier og grafisk profil.",
+    category: "strategigruppe",
+    tags: ["vekstgruppe", "menighetsskole", "kommunikasjon"],
+    isPublic: true,
+    memberIds: ["person-2", "person-3"],
+    leaderIds: ["person-2"],
+    meetingSchedule: {
+      weekday: "Tirsdag",
+      time: "18:00",
+      frequency: "hver måned",
+    },
+  },
+  {
+    id: "group-vekst-historie",
+    name: "Vekstgruppe Menighetens historie & identitet",
+    description: "Kartlegger menighetens røtter og formidler arven og verdigrunnlaget til nye generasjoner.",
+    category: "strategigruppe",
+    tags: ["vekstgruppe", "menighetsskole", "historie"],
+    isPublic: true,
+    memberIds: ["person-4", "person-1"],
+    leaderIds: ["person-4"],
+    meetingSchedule: {
+      weekday: "Onsdag",
+      time: "19:00",
+      frequency: "hver måned",
+    },
+  },
+
+  // 3. Tjenestegruppe
   {
     id: "group-lyd",
     name: "Lyd og bilde",
+    description: "Teknisk team for miksing av lyd, lys og storskjerm under gudstjenestene.",
     category: "tjenestegruppe",
+    tags: ["teknikk", "gudstjeneste"],
+    isPublic: true,
     memberIds: ["person-1", "person-2"],
-    leaderIds: ["person-2"], // Ola Hansen is leader
-    deputyLeaderIds: ["person-1"], // Kari Nordmann is deputy leader
+    leaderIds: ["person-2"], // Ola Hansen
+    deputyLeaderIds: ["person-1"],
     meetingSchedule: {
       weekday: "Søndag",
       time: "09:30",
@@ -48,10 +133,13 @@ export const initialGroups: Group[] = [
   {
     id: "group-kaffe",
     name: "Kirkekaffe & vertskap",
+    description: "Lager i stand gratis kaffe, te og bakst etter søndagens gudstjeneste og ønsker velkommen i døra.",
     category: "tjenestegruppe",
+    tags: ["vertskap", "fellesskap"],
+    isPublic: true,
     memberIds: ["person-1", "person-2", "person-4"],
-    leaderIds: ["person-1"], // Kari Nordmann is leader
-    deputyLeaderIds: ["person-2"], // Ola Hansen is deputy leader
+    leaderIds: ["person-1"],
+    deputyLeaderIds: ["person-2"],
     meetingSchedule: {
       weekday: "Søndag",
       time: "10:30",
@@ -61,9 +149,12 @@ export const initialGroups: Group[] = [
   {
     id: "group-barn",
     name: "Søndagsskole & barn",
+    description: "Ledere for Sprell Levende søndagsskole i tre aldersgrupper under gudstjenesten.",
     category: "tjenestegruppe",
+    tags: ["barn", "familie", "sprell-levende"],
+    isPublic: true,
     memberIds: ["person-3"],
-    leaderIds: ["person-3"], // Ingrid Berg is leader
+    leaderIds: ["person-3"],
     deputyLeaderIds: [],
     meetingSchedule: {
       weekday: "Søndag",
@@ -71,29 +162,85 @@ export const initialGroups: Group[] = [
       frequency: "annenhver uke",
     },
   },
+
+  // 4. Husgruppe
   {
     id: "group-hus-1",
     name: "Husfellesskap Sentrum",
+    description: "Nært og trygt fellesskap i hjemmene med enkel kveldsmat, bønn og samtale.",
     category: "husgruppe",
+    tags: ["husgruppe", "smågruppe"],
+    isPublic: true,
     memberIds: ["person-1", "person-2", "person-3", "person-4"],
-    leaderIds: ["person-2"], // Ola Hansen (Leder)
-    deputyLeaderIds: ["person-1"], // Kari Nordmann (Nestleder)
-    memberJoinedAt: {
-      "person-1": "2026-08-01T00:00:00.000Z",
-      "person-2": "2026-08-01T00:00:00.000Z",
-      "person-3": "2026-08-01T00:00:00.000Z",
-      "person-4": "2026-08-01T00:00:00.000Z",
-    },
-    notificationPreferences: {
-      "person-1": true,
-      "person-2": true,
-      "person-3": true,
-      "person-4": true,
-    },
+    leaderIds: ["person-2"],
+    deputyLeaderIds: ["person-1"],
     meetingSchedule: {
       weekday: "Onsdag",
       time: "19:30",
       frequency: "annenhver uke",
+    },
+  },
+  {
+    id: "group-hus-2",
+    name: "Husfellesskap Øst (Barnefamilier)",
+    description: "Husgruppe tilrettelagt for barnefamilier med felles middag og opplegg for barna.",
+    category: "husgruppe",
+    tags: ["husgruppe", "barnefamilier"],
+    isPublic: true,
+    memberIds: ["person-1", "person-3", "person-4"],
+    leaderIds: ["person-4"],
+    deputyLeaderIds: ["person-3"],
+    meetingSchedule: {
+      weekday: "Torsdag",
+      time: "17:30",
+      frequency: "annenhver uke",
+    },
+  },
+
+  // 5. Interessegruppe (Ny!)
+  {
+    id: "group-interesse-tur",
+    name: "Turgruppe & Friluft",
+    description: "Lavterskel friluftsliv og turglede. Vi møtes til fotturer i skog og hei med bålkaffe og niste.",
+    category: "interessegruppe",
+    tags: ["friluft", "tur", "helg"],
+    isPublic: true,
+    memberIds: ["person-2", "person-4"],
+    leaderIds: ["person-2"],
+    meetingSchedule: {
+      weekday: "Lørdag",
+      time: "11:00",
+      frequency: "annenhver uke",
+    },
+  },
+  {
+    id: "group-interesse-musikk",
+    name: "Lovsangskor & Vokalgruppe",
+    description: "For alle som er glad i å synge flerstemt. Vi synger gospel, salmer og moderne lovsang.",
+    category: "interessegruppe",
+    tags: ["musikk", "lovsang", "kor"],
+    isPublic: true,
+    memberIds: ["person-1", "person-3"],
+    leaderIds: ["person-3"],
+    meetingSchedule: {
+      weekday: "Tirsdag",
+      time: "19:30",
+      frequency: "annenhver uke",
+    },
+  },
+  {
+    id: "group-interesse-senior",
+    name: "Gullalderen (Seniortreff)",
+    description: "Hyggelig formiddagstreff for seniorer med kaffe, allsang, ord for dagen og godt sosialt samvær.",
+    category: "interessegruppe",
+    tags: ["senior", "formiddag"],
+    isPublic: true,
+    memberIds: ["person-4", "person-1"],
+    leaderIds: ["person-4"],
+    meetingSchedule: {
+      weekday: "Torsdag",
+      time: "11:00",
+      frequency: "hver måned",
     },
   },
 ];

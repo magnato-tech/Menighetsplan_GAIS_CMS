@@ -8,7 +8,7 @@ export interface Person {
   globalRole: "member" | "admin";
 }
 
-export type GroupCategory = "tjenestegruppe" | "husgruppe" | "strategigruppe" | "ledergruppe";
+export type GroupCategory = "tjenestegruppe" | "husgruppe" | "strategigruppe" | "ledergruppe" | "interessegruppe";
 
 export interface MeetingSchedule {
   weekday: string;
@@ -19,7 +19,10 @@ export interface MeetingSchedule {
 export interface Group {
   id: string;
   name: string;
+  description?: string;
   category?: GroupCategory;
+  tags?: string[]; // e.g. "vekstgruppe", "menighetsskole", "stab", "friluft"
+  isPublic?: boolean; // whether it is featured on the public website
   memberIds: string[];
   leaderIds: string[];
   deputyLeaderIds?: string[];

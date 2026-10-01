@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { UserSwitcher } from "./UserSwitcher";
 import { useLeaderDashboard, useModuleConfig } from "../hooks/useAppHooks";
-import { Globe } from "lucide-react";
+import { Globe, ArrowLeft, Shield, LayoutDashboard } from "lucide-react";
 
 export const Header: React.FC = () => {
   const location = useLocation();
@@ -12,25 +12,40 @@ export const Header: React.FC = () => {
   const isAdmin = currentUser.globalRole === "admin";
 
   const isLeaderPath = location.pathname.startsWith("/leder");
-  const isCmsPath = location.pathname.startsWith("/admin/cms");
-  const isAdminPath = location.pathname.startsWith("/admin") && !isCmsPath;
+  const isAdminPath = location.pathname.startsWith("/admin");
   const isKalenderPath = location.pathname.startsWith("/kalender");
   const isMeldingerPath = location.pathname.startsWith("/meldinger");
-  const isMyPagePath =
-    !isLeaderPath && !isAdminPath && !isCmsPath && !isKalenderPath && !isMeldingerPath;
+  const isMyPagePath = location.pathname === "/minside" || location.pathname === "/";
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-slate-100 shadow-xs">
-      <div className="max-w-md mx-auto px-5 pt-4 pb-2">
+    <header className="sticky top-0 z-40 bg-white border-b border-slate-200/80 shadow-xs">
+      {/* Top Banner with link back to public website */}
+      <div className="bg-slate-900 text-slate-300 px-4 py-1.5 text-xs flex items-center justify-between">
+        <Link
+          to="/"
+          className="flex items-center gap-1.5 text-indigo-300 hover:text-white font-semibold transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Gå til offentlig nettside</span>
+        </Link>
+        <span className="text-[11px] text-slate-400 hidden sm:inline">
+          Min Side · Planlegger & Frivilligportal
+        </span>
+      </div>
+
+      <div className="max-w-md mx-auto px-5 pt-3 pb-2">
         <div className="flex items-center justify-between">
           {/* Brand Logo & Name */}
           <Link
-            to="/"
+            to="/minside"
             id="app-logo-link"
             className="flex flex-col group transition-opacity hover:opacity-90"
           >
-            <h1 className="text-xl font-bold text-slate-800 tracking-tight">
-              Menighetsplan
+            <h1 className="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-1.5">
+              <span>Menighetsplan</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                Min Side
+              </span>
             </h1>
             <p className="text-[11px] text-slate-500 font-medium">
               Varmt fellesskap. Enkel tjeneste.
@@ -41,12 +56,12 @@ export const Header: React.FC = () => {
           <UserSwitcher />
         </div>
 
-        {/* Navigation Tabs (Min side / Gruppeleder / Admin / Valgfrie moduler) */}
+        {/* Navigation Tabs (Min side / Gruppeleder / Admin Studio) */}
         <nav className="flex items-center gap-1.5 mt-3 pt-2 border-t border-slate-100/80 overflow-x-auto pb-0.5 scrollbar-none">
           <Link
-            to="/"
+            to="/minside"
             id="nav-tab-min-side"
-            className={`text-xs font-bold px-2.5 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
+            className={`text-xs font-bold px-3 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
               isMyPagePath
                 ? "bg-slate-900 text-white shadow-xs"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
@@ -59,7 +74,7 @@ export const Header: React.FC = () => {
             <Link
               to="/leder"
               id="nav-tab-leder"
-              className={`text-xs font-bold px-2.5 py-1.5 rounded-xl whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`text-xs font-bold px-3 py-1.5 rounded-xl whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
                 isLeaderPath
                   ? "bg-emerald-700 text-white shadow-xs"
                   : "text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60"
@@ -81,76 +96,18 @@ export const Header: React.FC = () => {
             <Link
               to="/admin"
               id="nav-tab-admin"
-              className={`text-xs font-bold px-2.5 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
+              className={`text-xs font-bold px-3 py-1.5 rounded-xl whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
                 isAdminPath
                   ? "bg-indigo-700 text-white shadow-xs"
                   : "text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100 border border-indigo-200/60"
               }`}
             >
-              Admin
+              <Shield className="w-3.5 h-3.5" />
+              <span>Admin & CMS Studio</span>
             </Link>
           )}
-
-          {/* Valgfri modul: Kalender */}
-          {isKalenderOn && (
-            <Link
-              to="/kalender"
-              id="nav-tab-kalender"
-              className={`text-xs font-bold px-2.5 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
-                isKalenderPath
-                  ? "bg-emerald-800 text-white shadow-xs"
-                  : "text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60"
-              }`}
-            >
-              Kalender
-            </Link>
-          )}
-
-          {/* Valgfri modul: Meldinger */}
-          {isMeldingerOn && (
-            <Link
-              to="/meldinger"
-              id="nav-tab-meldinger"
-              className={`text-xs font-bold px-2.5 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
-                isMeldingerPath
-                  ? "bg-blue-700 text-white shadow-xs"
-                  : "text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/60"
-              }`}
-            >
-              Meldinger
-            </Link>
-          )}
-
-          {/* CMS Admin tab for admins */}
-          {isAdmin && (
-            <Link
-              to="/admin/cms"
-              id="nav-tab-admin-cms"
-              className={`text-xs font-bold px-2.5 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
-                isCmsPath
-                  ? "bg-indigo-900 text-white shadow-xs"
-                  : "text-indigo-800 bg-indigo-50/80 hover:bg-indigo-100 border border-indigo-200/60"
-              }`}
-            >
-              CMS
-            </Link>
-          )}
-
-          {/* Public Website button */}
-          <Link
-            to="/nettside"
-            id="nav-tab-public-nettside"
-            target="_blank"
-            className="text-xs font-bold px-2.5 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 ml-auto"
-            title="Åpne menighetens offentlige nettside i ny fane"
-          >
-            <Globe className="w-3.5 h-3.5 text-amber-700" />
-            <span>Nettside</span>
-          </Link>
         </nav>
       </div>
     </header>
   );
 };
-
-

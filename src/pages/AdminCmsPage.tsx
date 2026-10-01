@@ -45,8 +45,8 @@ export const AdminCmsPage: React.FC = () => {
 
   // Stats
   const publicGatheringsCount = gatherings.filter((g) => g.isPublic !== false).length;
-  const featuredCount = Object.values(overrides).filter((o) => o.featured).length;
-  const hiddenCount = Object.values(overrides).filter((o) => o.hidden).length;
+  const featuredCount = Object.values(overrides).filter((o: any) => o?.featured).length;
+  const hiddenCount = Object.values(overrides).filter((o: any) => o?.hidden).length;
 
   const handleOpenEdit = (page: CmsPage) => {
     setEditingPage({ ...page });

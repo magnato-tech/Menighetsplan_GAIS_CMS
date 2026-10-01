@@ -48,5 +48,41 @@ service cloud.firestore {
       allow read: if true;
       allow write: if true;
     }
+
+    // Public CMS Pages collection
+    match /cms_pages/{pageId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Public CMS News Articles collection
+    match /cms_news/{articleId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Public CMS Sermons collection
+    match /cms_sermons/{sermonId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Public CMS Staff collection
+    match /cms_staff/{staffId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Public CMS Settings collection
+    match /cms_settings/{settingId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // CMS Overrides collection
+    match /cms_overrides/{overrideId} {
+      allow read: if true;
+      allow write: if true;
+    }
   }
 }

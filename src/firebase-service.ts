@@ -400,7 +400,10 @@ export async function deletePerson(personId: string): Promise<{ success: boolean
 // Groups
 export async function createGroup(data: {
   name: string;
+  description?: string;
   category?: GroupCategory;
+  tags?: string[];
+  isPublic?: boolean;
   leaderIds?: string[];
   deputyLeaderIds?: string[];
   memberIds?: string[];
@@ -411,7 +414,10 @@ export async function createGroup(data: {
     const newGroup: Group = {
       id,
       name: data.name.trim(),
+      description: data.description?.trim(),
       category: data.category || "tjenestegruppe",
+      tags: data.tags || [],
+      isPublic: data.isPublic !== false,
       leaderIds: data.leaderIds || [],
       deputyLeaderIds: data.deputyLeaderIds || [],
       memberIds: data.memberIds || [],
@@ -1184,7 +1190,10 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const handleCreateGroup = useCallback(
     (data: {
       name: string;
+      description?: string;
       category?: GroupCategory;
+      tags?: string[];
+      isPublic?: boolean;
       leaderIds?: string[];
       deputyLeaderIds?: string[];
       memberIds?: string[];
@@ -1194,7 +1203,10 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const newGroup: Group = {
         id,
         name: data.name.trim(),
+        description: data.description?.trim(),
         category: data.category || "tjenestegruppe",
+        tags: data.tags || [],
+        isPublic: data.isPublic !== false,
         leaderIds: data.leaderIds || [],
         deputyLeaderIds: data.deputyLeaderIds || [],
         memberIds: data.memberIds || [],

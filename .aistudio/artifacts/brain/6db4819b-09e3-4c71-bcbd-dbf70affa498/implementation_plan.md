@@ -1,116 +1,40 @@
-# Arbeidsflytplan: To Separate Repositories (App & CMS-Nettside)
+# Strategisk Plan: Menighetsplan som Alt-i-ett Plattform & CMS (v2)
 
-Denne planen beskriver den operative arbeidsflyten mellom menighetsappen (**Menighetsplan 2.0**) og den offentlige nettsiden (**menighetsplan_ClaudeCMS**), med tydelig ansvarsdeling mellom Google AI Studio, Claude og Product Owner.
-
----
-
-## 1. System- og Repo-Oversikt
-
-| Egenskap | Repo 1: Menighetsplan 2.0 (Appen) | Repo 2: menighetsplan_ClaudeCMS (Nettsiden) |
-| :--- | :--- | :--- |
-| **GitHub Repo** | `magnato-tech/Menighetsplan2.0_mobil` | `magnato-tech/menighetsplan_ClaudeCMS` |
-| **Hovedfunksjon** | Intern planlegger, gudstjenesteoppsett, frivillige, husfellesskap, grupper | Offentlig nettside for menigheten, kalendervisning, faste sider («Om oss», «Kontakt») |
-| **Plattform / Drift** | Google AI Studio / Cloud Run + Firestore | Node.js (Vercel, Render eller Cloud Run) |
-| **Fremtidig domene** | `app.lillesandmisjonskirke.no` (eller intern URL) | `lillesandmisjonskirke.no` (erstatter eRedaktør) |
-| **Hovedansvarlig AI** | **Google AI Studio (GAIS)** | **Claude (i GitHub/VS Code/Terminal)** |
-| **Kildedata (Fasit)** | **Single Source of Truth** for alle datoer, samlinger og grupper | Forbruker (leser kun offentlige felt, skriver aldri) |
+**Referanser:** Benchmark mot [Flekkerøy Misjonskirke (fløymk.no)](https://www.fløymk.no) og [Lillesand Misjonskirke (lillesandmisjonskirke.no)](https://www.lillesandmisjonskirke.no).
 
 ---
 
-## 2. Ansvarsfordeling mellom AI-assistentene
+## 1. Benchmark-analyse mot reelle menighetsnettsider
 
-### Google AI Studio (denne appen):
-1. **Vedlikeholder appen og databasen:** Videreutvikler arrangementsplanlegging, sanger, liturgiavgjørelser, grupper og frivilligkoordinering.
-2. **Eier og drifter API-et:**
-   * Serverer `GET /api/offentlig/arrangementer?fra=...&til=...` i tråd med `INTEGRASJON-MENIGHETSPLAN.md`.
-   * Serverer `GET /api/public/all` (med grupper og faste møteplaner).
-   * Sikrer at personopplysninger (telefon, e-post, interne oppgaver) aldri lekker ut.
-3. **Oppdaterer kontraktdokumentene:** Produserer oppdaterte versjoner av `INTEGRASJON-MENIGHETSPLAN.md` når nye offentlige felter gjøres tilgjengelige.
+En gjennomgang av de to referansesidene bekrefter at vår arkitektur treffer blink på kjerneprinsippene, og avdekker 3 konkrete funksjoner vi må ha i CMS-et for å matche og overgå disse:
 
-### Claude (i `menighetsplan_ClaudeCMS`):
-1. **Utvikler nettsidens design og maler:** Bygger responsive sider for forsiden («Neste gudstjeneste», «Denne uken», «Månedsoversikt») og faste undersider («Om oss», «Barn & unge», «Kontakt/Vipps»).
-2. **Programmerer adapteren (`lib/kilder/menighetsplan.js`):**
-   * Kaller API-et på `https://ais-dev-bpwtuilescw22tmh5zztaw-138177352715.europe-west3.run.app/api/offentlig/arrangementer`.
-   * Beholder lokal mock (`data/menighetsplan-mock.json`) slik at alle 88 automatiske tester kjører grønt offline.
-3. **Håndterer lokale overstyringer:** Lar menighetsredaktøren fremheve eller skjule arrangementer på nettsidens forside via `innhold/arrangement-overstyringer.json`.
-
-### Product Owner (Magnar):
-1. **Styrer prioriteringer:** Bestiller nye funksjoner enten på app-siden eller nettside-siden.
-2. **Kopierer oppdaterte filer ved behov:** Overfører `INTEGRASJON-MENIGHETSPLAN.md` og endringer mellom repoene.
-3. **Godkjenner pull requests:** Merger endringer i GitHub.
+| Funksjonsområde | Funnet på `fløymk.no` & `lillesandmisjonskirke.no` | Løsning i Menighetsplan |
+|---|---|---|
+| **1. "Min Side" i hovedmenyen** | `fløymk.no` har «Min side» direkte i toppmenyen for medlemmer og frivillige. | **100 % samsvar.** Vi har lagt Min Side i toppmenyen som tar frivillige og ledere inn i vaktplaner, sanger og grupper. |
+| **2. Taler & Prekener (Lyd/Video/YouTube)** | Begge menighetene har en dedikert fane/podkast for opptak av søndagens taler. | **Nytt CMS-verktøy:** Legge til `cms_sermons` i Firestore, med tittel, taler, bibeltekst, serie og YouTube/Spotify-lenke, samt offentlig `/taler`-side. |
+| **3. Livet i kirka & Grupper** | Seksjoner for barnekirke, ungdomsarbeid, husfellesskap og bønn. | Dekket via `/fellesskap`, `/hva-skjer` og temasider. |
+| **4. Lederskap & Stab** | Bilder, titler og kontaktinformasjon for pastor og ansatte. | **Nytt CMS-verktøy:** Visning av stab og lederskap med bilder og kontaktinfo under «Om oss». |
+| **5. Bli med & Tjeneste** | Oppfordring til å bli med i frivillig tjeneste eller dåp/medlemskap. | Kobling mot Min Side og interesse-skjema for oppgaver. |
+| **6. Givertjeneste & Vipps** | Svært fremtredende Vipps-nummer og kontonummer for kollekt. | Dekket via `cms_settings` og forside-/footer-blokker. |
 
 ---
 
-## 3. Trinnvis Arbeidsprosess ved Endringer
+## 2. Utvidet CMS-arkitektur for Neste Trinn
 
-Når det skal gjøres endringer som berører begge systemer (f.eks. nytt felt for prest, nytt arrangementstype, eller grupper):
+For å gi menigheten et fullverdig publiseringsverktøy i Admin Studio utvider vi med:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. KONTRAKT FIRST:                                         │
-│    Oppdater spesifikasjonen i INTEGRASJON-MENIGHETSPLAN.md  │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│ 2. APP-ENDRING (Google AI Studio):                          │
-│    Eksponer det nye feltet i server.ts under /api/offentlig │
-│    Verifiser med: curl -s .../api/offentlig/arrangementer   │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│ 3. NETTSIDE-ENDRING (Claude i CMS-repoet):                  │
-│    Gi Claude lenken/kontrakten -> Claude oppdaterer adapter │
-│    og presentasjon i nettsidemalen.                         │
-│    Verifiser med: npm test (88 tester grønne).              │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│ 4. PRODUKSJON OG VERIFIKASJON:                             │
-│    CMS-et viser de nye dataene automatisk på forhåndsvisning│
-└─────────────────────────────────────────────────────────────┘
-```
+1. **Taler / Prekener-verktøy (`cms_sermons`):**
+   * Firestore-samling med tittel, taler, dato, serie, bibeltekst og opptaks-URL (YouTube/Podcast/Vimeo/Lydfil).
+   * CMS-fane i Admin Studio for enkel registrering etter søndagens gudstjeneste.
+   * Offentlig side `/taler` med avspiller og arkiv.
 
----
+2. **Lederskap & Stab (`cms_staff`):**
+   * Firestore-samling eller innstillinger for pastor, menighetsarbeider, styreleder osv.
+   * Elegant kortvisning på «Om oss» og «Kontakt».
 
-## 4. Konkrete Kjørekommandoer og Tester
+3. **Interaktiv «Bli med i tjeneste / Bli med i gruppe»-knapp:**
+   * Besøkende kan melde sin interesse for å bidra som frivillig (f.eks. lyd, kirkekaffe, søndagsskole) eller bli med i et husfellesskap.
+   * Sendes direkte inn i planleggeren for godkjenning av leder.
 
-### I Menighetsplan (denne appen):
-Test at API-et svarer riktig:
-```bash
-curl -s "http://localhost:3000/api/offentlig/arrangementer?fra=2026-09-01&til=2027-01-01" | head -n 30
-```
-Sjekk at ingen private data lekkes:
-* Verifiser at `persons`, `tasks`, `gatheringAttendances` og `groupMessages` ikke finnes i JSON-svaret.
-
-### I ClaudeCMS (`menighetsplan_ClaudeCMS`):
-1. Sett miljøvariabel:
-   ```bash
-   export MENIGHETSPLAN_API_URL="https://ais-dev-bpwtuilescw22tmh5zztaw-138177352715.europe-west3.run.app/api/offentlig/arrangementer"
-   ```
-2. Kjør testsuiten:
-   ```bash
-   npm test
-   ```
-3. Start nettsiden lokalt:
-   ```bash
-   npm start
-   ```
-   Åpne `http://localhost:4000` i nettleseren og sjekk at neste gudstjeneste for Lillesand Misjonskirke dukker opp med riktig tid og sted.
-
----
-
-## 5. Veikart mot Lansering på `lillesandmisjonskirke.no`
-
-1. **Sprint 1 (Pågående):**
-   * Verifiser at Claude i CMS-repoet har koblet til det nye server-endepunktet.
-   * Fyll inn menighetens faste tekster («Om oss», «Kontakt», «Vipps #12345»).
-2. **Sprint 2:**
-   * Etabler separat hosting for CMS-et (f.eks. Vercel eller Google Cloud Run).
-   * Verifiser caching (15 minutters intervall med lokal fil-fallback).
-3. **Sprint 3 (Go-Live):**
-   * Pek DNS for `lillesandmisjonskirke.no` til det nye CMS-et.
-   * Sett opp 301-videresendinger fra gamle eRedaktør-adresser.
-   * Koble ut eRedaktør.
+4. **Visuell oppgradering av Hero & Toppmeny:**
+   * Dropdown/seksjoner som matcher `lillesandmisjonskirke.no` (Hjem, Hva skjer, Taler, Grupper, Om oss, Kontakt & Gi, Min Side).
