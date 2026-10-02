@@ -18,32 +18,7 @@ import {
 } from "../firebase";
 import { Person, Group, Gathering, Task, Assignment, GroupMessage, GatheringAttendance } from "../types";
 import { COLLECTIONS } from "../data/collections";
-
-// ============================================================================
-// Firestore Collections & Helpers
-// ============================================================================
-
-/**
- * Sanitizes object to remove undefined values since Firestore rejects them.
- */
-export function sanitizeForFirestore<T>(obj: T): T {
-  if (obj === null || obj === undefined) {
-    return obj;
-  }
-  if (Array.isArray(obj)) {
-    return obj.map((item) => sanitizeForFirestore(item)) as unknown as T;
-  }
-  if (typeof obj === "object" && !(obj instanceof Date)) {
-    const cleaned: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(obj)) {
-      if (value !== undefined) {
-        cleaned[key] = sanitizeForFirestore(value);
-      }
-    }
-    return cleaned as T;
-  }
-  return obj;
-}
+import { sanitizeForFirestore, forUpdate } from "../utils/firestoreData";
 
 // ============================================================================
 // Connection
@@ -166,7 +141,7 @@ export async function updatePerson(
   updates: Partial<Person>
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await updateDoc(doc(db, COLLECTIONS.PERSONS, personId), sanitizeForFirestore(updates));
+    await updateDoc(doc(db, COLLECTIONS.PERSONS, personId), forUpdate(updates));
     return { success: true };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
@@ -200,7 +175,7 @@ export async function updateGroup(
   updates: Partial<Group>
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await updateDoc(doc(db, COLLECTIONS.GROUPS, groupId), sanitizeForFirestore(updates));
+    await updateDoc(doc(db, COLLECTIONS.GROUPS, groupId), forUpdate(updates));
     return { success: true };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
@@ -275,7 +250,7 @@ export async function updateGathering(
   updates: Partial<Gathering>
 ): Promise<{ success: boolean; gathering?: Gathering; error?: string }> {
   try {
-    await updateDoc(doc(db, COLLECTIONS.GATHERINGS, gatheringId), sanitizeForFirestore(updates));
+    await updateDoc(doc(db, COLLECTIONS.GATHERINGS, gatheringId), forUpdate(updates));
     return { success: true };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
@@ -325,7 +300,7 @@ export async function updateTask(
   updates: Partial<Task>
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await updateDoc(doc(db, COLLECTIONS.TASKS, taskId), sanitizeForFirestore(updates));
+    await updateDoc(doc(db, COLLECTIONS.TASKS, taskId), forUpdate(updates));
     return { success: true };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
