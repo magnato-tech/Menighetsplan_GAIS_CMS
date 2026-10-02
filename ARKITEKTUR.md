@@ -34,19 +34,29 @@ Hvilke adresser som er interne, står i `MIN_SIDE_SECTIONS` i `src/App.tsx`. Sam
 
 Admin Studio er delt slik: `AdminStudio.tsx` er et skall som eier fanevalg og tilbakemeldinger, `StudioSidebar.tsx` er menyen, og hver fane ligger i `tabs/` med sin egen tilstand og sine egne dialoger. En fane monteres første gang den åpnes og skjules deretter bare, slik at et utkast overlever et fanebytte.
 
+De andre store sidene følger samme mønster. Siden kaller sin hook én gang, eier hva som vises, og sender resultatet ned til deler som har sin egen tilstand:
+
+| Side | Deler |
+|---|---|
+| `MyPage.tsx` | `src/pages/myPage/`: `useMyPage.ts` og én fil per seksjon |
+| `LeaderGroupDetailPage.tsx` | `src/pages/leaderGroup/`: rediger-skjema, møteplan, aktiviteter, medlemmer |
+| `GatheringDetailView.tsx` | `src/components/gathering/`: de fem dialogene |
+| `HusfellesskapView.tsx` | `src/components/husfellesskap/`: to faner og to dialoger |
+
 ## Datalag
 - **`src/services/firestore.ts`** inneholder alle lese- og skrivekall mot Firestore, uten React.
 - **`FirebaseDataProvider`** (`src/context/FirebaseDataContext.tsx`) holder dataene i minnet og tilbyr handlingene som endrer dem. Komponenter henter den med `useFirebase()`.
   - Alltid: `persons`, `groups`, `gatherings`.
   - Bare på interne ruter: `tasks`, `assignments`, `groupMessages`, `gatheringAttendances`. En besøkende på den offentlige nettsiden får aldri disse.
-- **`CmsProvider`** (`src/context/CmsContext.tsx`) lytter på `cms_pages`, `cms_news`, `cms_sermons`, `cms_staff`, `cms_settings` og `cms_overrides`. Siste øyeblikksbilde mellomlagres i `localStorage`, slik at nettsiden aldri starter blank.
+- **`CmsProvider`** (`src/context/CmsContext.tsx`) lytter på `cms_pages`, `cms_news`, `cms_sermons`, `cms_staff` og `cms_settings`. Siste øyeblikksbilde mellomlagres i `localStorage`, slik at nettsiden aldri starter blank.
 - **Hooks per rolle** (`src/hooks/`: `memberHooks`, `leaderHooks`, `adminHooks`, `useHusfellesskap`) setter sammen rådataene til det hver side trenger.
-- **Rene funksjoner** (`src/utils/dates.ts`, `src/utils/staffing.ts`) står for datoformatering og bemanningsstatus, og er dekket av tester.
+- **Rene funksjoner** (`src/utils/`) er dekket av tester: `dates`, `staffing`, `visibility`, `publicProfile` og `firestoreData`.
 
 ### Skriving
 1. Et nytt dokument bygges én gang i `src/data/newDocuments.ts`, med ID fra `newId()`.
 2. Det samme objektet legges i lokal tilstand og sendes til Firestore.
-3. Feiler skrivingen, meldes det via `src/services/writeErrors.ts` og vises i `WriteErrorBanner`. Sanntidslytteren henter deretter tilbake det som faktisk er lagret.
+3. En oppdatering går gjennom `forUpdate`: et felt som er satt til `undefined` slettes i databasen, slik at et tømt skjemafelt faktisk blir tomt.
+4. Feiler skrivingen, meldes det via `src/services/writeErrors.ts` og vises i `WriteErrorBanner`. Sanntidslytteren henter deretter tilbake det som faktisk er lagret.
 
 ## Offentlig API
 `server.ts` leser `gatherings` og `groups` og sender dem gjennom rene funksjoner i `server/publicApi.ts`. Bare hvitelistede felt slipper ut. Medlemslister og kontaktinformasjon eksponeres ikke.
@@ -58,8 +68,11 @@ Admin Studio er delt slik: `AdminStudio.tsx` er et skall som eier fanevalg og ti
 
 Kontrakten for eksterne lesere står i **[INTEGRASJON-MENIGHETSPLAN.md](INTEGRASJON-MENIGHETSPLAN.md)**.
 
-## Synlighet
-Feltet `visibility` på en samling (`intern`, `offentlig`, `fremhevet`) er fasit. `isPublic` skrives som et speil av dette for eldre lesere.
+## Hva som er offentlig
+To regler avgjør hva en besøkende ser, og hver av dem ligger ett sted:
+
+- **Samlinger:** feltet `visibility` (`intern`, `offentlig`, `fremhevet`) er eneste bryter. Både de offentlige sidene og API-et leser det gjennom `isPubliclyVisible` i `src/utils/visibility.ts`, og alt som skriver bruker `visibilityFields`. `isPublic` lagres bare som et speil for eldre dokumenter.
+- **Personer:** en person vises bare når `isPublicProfile` er satt og et samtykke er registrert (`consentToPublishGivenAt`, `consentGivenBy`). `src/utils/publicProfile.ts` gir da navn, tittel utad og kontaktinfo utad. Privat telefon og e-post er aldri med. Samtykket registreres på personkortet i admin, og fjernes når krysset tas bort.
 
 ## Kjente avvik fra målbildet
 `PRODUKTDOKUMENTASJON.md` beskriver hvor løsningen skal. Koden er ikke der ennå på disse punktene:
@@ -68,6 +81,8 @@ Feltet `visibility` på en samling (`intern`, `offentlig`, `fremhevet`) er fasit
 |---|---|---|
 | Innlogging | Brukere logger inn; roller styrer tilgang | Ingen innlogging. Aktiv bruker velges i en testbryter, og `/admin` er åpen |
 | Sikkerhetsregler | Bare admin endrer offentlige profilfelt; medlemmer endrer bare sitt eget | Reglene tillater lesing av alt og skriving uten innlogging |
-| Personvern på nettsiden | Besøkende får bare offentlige data | Oppgaver, tildelinger, meldinger og oppmøte lastes ikke lenger på offentlige sider. Hele personregisteret lastes fortsatt, og `/lederskap` viser privat telefon og e-post for alle i ledergrupper uten å sjekke `isPublicProfile` |
-| Synlighet | Én bryter (`visibility`) | `cms_overrides` (fremhevet/skjult) finnes fortsatt ved siden av, og de offentlige sidene filtrerer på `isPublic` og `overrides`. Dialogen «Rediger arrangement» lagrer `isPublic` uten å oppdatere `visibility` |
-| Filstørrelse | Én komponent per fane/modal | Gjort for Admin Studio, hooks, datalaget og dialogene i samlingsvisningen. Gjenstår: `LeaderGroupDetailPage.tsx` (ca. 1 300 linjer), `MyPage.tsx` (ca. 1 150), `HusfellesskapView.tsx` (ca. 1 100), `GatheringDetailView.tsx` (ca. 1 000) |
+| Personvern på nettsiden | Besøkende får bare offentlige data | Sidene viser bare personer med samtykke, og laster ikke oppgaver, tildelinger, meldinger eller oppmøte. Hele personregisteret lastes likevel til nettleseren; det kan først stenges med innlogging og strammere regler |
+| Fremhevet samling | Løftes frem som neste samling på forsiden | `fremhevet` lagres, men forsiden velger neste samling bare etter dato |
+| Grupper | Bare offentlige grupper vises utad | `isPublic` på grupper kan ikke settes noe sted, og verken `/fellesskap` eller API-et filtrerer på det |
+| Min side | Viser det som er kommende | «Trenger din oppmerksomhet» regner fra en fast dato i demodataene (2. september 2026) i stedet for dagens dato |
+| Filstørrelse | Én komponent per fane/modal | Gjort for alle sidene over 1 000 linjer. Størst nå: `GatheringDetailView.tsx` (ca. 1 000 linjer, selve kjøreplanen) og `FirebaseDataContext.tsx` (ca. 700) |
