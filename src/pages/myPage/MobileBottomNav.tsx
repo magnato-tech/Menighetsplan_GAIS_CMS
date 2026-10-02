@@ -19,7 +19,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onShowTasks })
     >
       {/* 1. Min side */}
       <Link
-        to="/"
+        to="/minside"
         id="mobile-nav-min-side"
         className="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-emerald-800 font-bold transition-colors cursor-pointer"
       >

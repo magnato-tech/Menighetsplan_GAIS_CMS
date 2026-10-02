@@ -25,7 +25,7 @@ export const GroupRoleBar: React.FC<GroupRoleBarProps> = ({ detail }) => {
         </Link>
       ) : (
         <Link
-          to="/"
+          to="/minside"
           id="btn-back-to-home-nav"
           className="text-xs font-semibold text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition-colors"
         >

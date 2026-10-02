@@ -70,7 +70,7 @@ export const ModulePlaceholderPage: React.FC<Props> = ({ module }) => {
 
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
             <Link
-              to="/"
+              to="/minside"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />

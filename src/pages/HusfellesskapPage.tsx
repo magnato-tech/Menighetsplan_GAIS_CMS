@@ -75,7 +75,7 @@ export const HusfellesskapPage: React.FC = () => {
       <div className="p-4 sm:p-6 space-y-4">
         <div className="flex items-center justify-between">
           <Link
-            to="/"
+            to="/minside"
             className="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />

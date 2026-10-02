@@ -64,7 +64,7 @@ export const TaskDetailPage: React.FC = () => {
     return (
       <div className="w-full max-w-md mx-auto bg-slate-50 min-h-screen p-4 sm:p-6 sm:my-4 sm:rounded-3xl sm:border sm:border-slate-200/80 space-y-6">
         <Link
-          to="/"
+          to="/minside"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-800"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
@@ -87,7 +87,7 @@ export const TaskDetailPage: React.FC = () => {
 
           <div className="pt-2">
             <Link
-              to="/"
+              to="/minside"
               className="inline-flex items-center justify-center w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-xs transition-colors"
             >
               Gå til Min side
@@ -103,7 +103,7 @@ export const TaskDetailPage: React.FC = () => {
     return (
       <div className="w-full max-w-md mx-auto bg-slate-50 min-h-screen p-4 sm:p-6 sm:my-4 sm:rounded-3xl sm:border sm:border-slate-200/80 space-y-6">
         <Link
-          to="/"
+          to="/minside"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-800"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
@@ -131,7 +131,7 @@ export const TaskDetailPage: React.FC = () => {
       {/* Top Nav Back */}
       <div className="flex items-center justify-between">
         <Link
-          to="/"
+          to="/minside"
           id="btn-back-to-mypage"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors"
         >

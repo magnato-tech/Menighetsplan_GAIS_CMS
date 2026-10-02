@@ -68,7 +68,7 @@ export const LeaderGroupDetailPage: React.FC = () => {
           </div>
           <div className="pt-2 flex flex-col gap-2">
             <Link
-              to="/"
+              to="/minside"
               id="btn-back-to-home"
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
             >

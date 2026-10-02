@@ -108,7 +108,7 @@ export const LeaderPage: React.FC = () => {
           </div>
           <div className="pt-2">
             <Link
-              to="/"
+              to="/minside"
               id="btn-back-to-my-page"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
             >
