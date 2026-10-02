@@ -1,0 +1,471 @@
+import { useMemo, useCallback } from "react";
+import { useFirebase } from "../firebase-service";
+import { Task, Person, Group, Gathering } from "../types";
+import { calculateTaskStaffingStatus, StaffingStatusResult, getStaffingStatus } from "../utils/staffing";
+
+export interface LeaderGatheringItem {
+  gathering: Gathering;
+  group: Group;
+  tasks: Task[];
+  staffing: StaffingStatusResult;
+}
+
+export interface LeaderGroupData {
+  group: Group;
+  members: Person[];
+  gatherings: LeaderGatheringItem[];
+  totalVacantTasks: number;
+  totalOpenTasks: number;
+  needsAttention: boolean;
+}
+
+// 7. Hook: useLeaderDashboard
+export function useLeaderDashboard() {
+  const { currentUser, groups, gatherings, tasks, assignments, allPersons, assignTaskToPerson } = useFirebase();
+
+  // Find groups where current user's ID exists in group.leaderIds OR group.deputyLeaderIds
+  const leaderGroups = useMemo(() => {
+    return groups.filter(
+      (g) =>
+        g.leaderIds.includes(currentUser.id) ||
+        (g.deputyLeaderIds && g.deputyLeaderIds.includes(currentUser.id)) ||
+        currentUser.globalRole === "admin"
+    );
+  }, [groups, currentUser.id, currentUser.globalRole]);
+
+  const isLeader = leaderGroups.length > 0;
+
+  const leaderData: LeaderGroupData[] = useMemo(() => {
+    return leaderGroups.map((group) => {
+      // Find members belonging to this group
+      const groupMembers = allPersons.filter((p) => group.memberIds.includes(p.id));
+
+      // Find all tasks for this group
+      const groupTasks = tasks.filter((t) => t.groupId === group.id);
+
+      // Find gatherings relevant to this group
+      const relevantGatheringIds = new Set([
+        ...gatherings.filter((g) => g.groupId === group.id).map((g) => g.id),
+        ...groupTasks.map((t) => t.gatheringId),
+      ]);
+
+      const groupGatherings = gatherings
+        .filter((g) => relevantGatheringIds.has(g.id))
+        .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+
+      const gatheringItems: LeaderGatheringItem[] = groupGatherings.map((gathering) => {
+        const tasksForGathering = groupTasks.filter((t) => t.gatheringId === gathering.id);
+        const staffing = getStaffingStatus(tasksForGathering, assignments);
+        return {
+          gathering,
+          group,
+          tasks: tasksForGathering,
+          staffing,
+        };
+      });
+
+      const totalVacantTasks = groupTasks.filter((t) => t.status === "vacant").length;
+      const totalOpenTasks = groupTasks.filter((t) => t.status === "open").length;
+
+      return {
+        group,
+        members: groupMembers,
+        gatherings: gatheringItems,
+        totalVacantTasks,
+        totalOpenTasks,
+        needsAttention: totalVacantTasks > 0,
+      };
+    });
+  }, [leaderGroups, gatherings, tasks, assignments, allPersons]);
+
+  // All semester gatherings across leader's groups (consolidated)
+  const allSemesterGatherings = useMemo(() => {
+    const leaderGroupIds = new Set(leaderGroups.map((g) => g.id));
+    const leaderTasks = tasks.filter((t) => leaderGroupIds.has(t.groupId));
+
+    const relevantGatheringIds = new Set([
+      ...gatherings.filter((g) => leaderGroupIds.has(g.groupId)).map((g) => g.id),
+      ...leaderTasks.map((t) => t.gatheringId),
+    ]);
+
+    const relevantGatherings = gatherings
+      .filter((g) => relevantGatheringIds.has(g.id))
+      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+
+    return relevantGatherings.map((gathering) => {
+      const tasksForGathering = leaderTasks.filter((t) => t.gatheringId === gathering.id);
+      const group = groups.find((g) => g.id === gathering.groupId) || leaderGroups[0];
+      const staffing = getStaffingStatus(tasksForGathering, assignments);
+      return {
+        gathering,
+        group,
+        tasks: tasksForGathering,
+        staffing,
+      };
+    });
+  }, [leaderGroups, gatherings, tasks, assignments, groups]);
+
+  // Urgent tasks across leader's groups
+  const urgentTasks = useMemo(() => {
+    const leaderGroupIds = new Set(leaderGroups.map((g) => g.id));
+    return tasks.filter((t) => leaderGroupIds.has(t.groupId) && t.status === "vacant");
+  }, [leaderGroups, tasks]);
+
+  // Urgent gatherings across leader's groups (all semester gatherings where staffing is red)
+  const urgentGatherings = useMemo(() => {
+    return allSemesterGatherings.filter((item) => item.staffing.color === "red");
+  }, [allSemesterGatherings]);
+
+  return {
+    isLeader,
+    leaderGroups,
+    leaderData,
+    allSemesterGatherings,
+    urgentGatherings,
+    urgentTasks,
+    urgentTasksCount: urgentTasks.length,
+    urgentGatheringsCount: urgentGatherings.length,
+    currentUser,
+    assignTaskToPerson,
+  };
+}
+
+// 14. Hook: useLeaderGroupDetail
+export function useLeaderGroupDetail(groupId: string) {
+  const {
+    currentUser,
+    allPersons,
+    groups,
+    gatherings,
+    tasks,
+    assignments,
+    getGroupById,
+    updateGroup,
+    addGroupMember,
+    removeGroupMember,
+    getGroupMessages,
+    sendGroupMessage,
+    assignTaskToPerson,
+    updateAssignmentStatus,
+    removeAssignment,
+    updateTaskStatus,
+    getPersonById,
+  } = useFirebase();
+
+  const group = getGroupById(groupId);
+
+  // Access checks:
+  const isLeader = Boolean(group && group.leaderIds.includes(currentUser.id));
+  const isDeputy = Boolean(group && group.deputyLeaderIds?.includes(currentUser.id));
+  const isAdmin = currentUser.globalRole === "admin";
+  const hasLeaderAccess = Boolean(group && (isLeader || isDeputy || isAdmin));
+  const isMember = Boolean(
+    group &&
+      (group.memberIds.includes(currentUser.id) ||
+        group.leaderIds.includes(currentUser.id) ||
+        (group.deputyLeaderIds && group.deputyLeaderIds.includes(currentUser.id)) ||
+        isAdmin)
+  );
+  const hasAccess = Boolean(group && (isMember || hasLeaderAccess));
+
+  const leaders = useMemo(() => {
+    if (!group) return [];
+    return allPersons.filter((p) => group.leaderIds.includes(p.id));
+  }, [group, allPersons]);
+
+  const deputyLeaders = useMemo(() => {
+    if (!group) return [];
+    return allPersons.filter((p) => group.deputyLeaderIds?.includes(p.id));
+  }, [group, allPersons]);
+
+  const members = useMemo(() => {
+    if (!group) return [];
+    return allPersons.filter((p) => group.memberIds.includes(p.id));
+  }, [group, allPersons]);
+
+  const availablePersonsToAdd = useMemo(() => {
+    if (!group) return [];
+    return allPersons.filter((p) => !group.memberIds.includes(p.id));
+  }, [group, allPersons]);
+
+  const groupGatherings = useMemo(() => {
+    if (!group) return [];
+    
+    // Find all gatherings assigned to this group or where this group has tasks
+    const groupTasks = tasks.filter((t) => t.groupId === group.id);
+    const relevantGatheringIds = new Set([
+      ...gatherings.filter((g) => g.groupId === group.id).map((g) => g.id),
+      ...groupTasks.map((t) => t.gatheringId),
+    ]);
+
+    return gatherings
+      .filter((g) => relevantGatheringIds.has(g.id))
+      .map((gathering) => {
+        const gatheringTasks = groupTasks.filter((t) => t.gatheringId === gathering.id);
+        const staffing = getStaffingStatus(gatheringTasks, assignments);
+
+        // Detailed task items with assignments
+        const taskItems = gatheringTasks.map((task) => {
+          const taskAssignments = assignments.filter((a) => a.taskId === task.id);
+          const assignedPersons = taskAssignments.map((a) => {
+            const person = getPersonById(a.personId);
+            let statusLabel = "Forespurt";
+            if (a.response === "confirmed") statusLabel = "Akseptert";
+            if (a.response === "withdrawn") statusLabel = "Forfall";
+            if (a.response === "declined") statusLabel = "Avslått";
+
+            return {
+              assignment: a,
+              person,
+              statusLabel,
+              response: a.response,
+            };
+          });
+
+          const taskStaffing = calculateTaskStaffingStatus(task, taskAssignments);
+          const confirmedCount = taskStaffing.confirmedCount;
+          const neededCount = taskStaffing.neededCount;
+          const isFullyCovered = taskStaffing.isFullyCovered;
+          const hasForfall = taskStaffing.hasForfall;
+
+          return {
+            task,
+            assignedPersons,
+            confirmedCount,
+            neededCount,
+            isFullyCovered,
+            hasForfall,
+            taskStaffing,
+          };
+        });
+
+        // Compute total needed and confirmed count for gathering
+        const totalNeeded = taskItems.reduce((acc, t) => acc + (t.neededCount || 1), 0);
+        const totalConfirmed = taskItems.reduce((acc, t) => acc + t.confirmedCount, 0);
+        const hasForfall = taskItems.some((t) => t.hasForfall);
+        const isFullyCovered = totalNeeded > 0 && totalConfirmed >= totalNeeded && !hasForfall;
+
+        return {
+          gathering,
+          tasks: gatheringTasks,
+          taskItems,
+          totalNeeded,
+          totalConfirmed,
+          hasForfall,
+          isFullyCovered,
+          staffing,
+        };
+      })
+      .sort((a, b) => new Date(a.gathering.startsAt).getTime() - new Date(b.gathering.startsAt).getTime());
+  }, [group, gatherings, tasks, assignments, getPersonById]);
+
+  const messages = useMemo(() => {
+    if (!group) return [];
+    return getGroupMessages(group.id);
+  }, [group, getGroupMessages]);
+
+  const handleSendMessage = useCallback(
+    (content: string) => {
+      if (!group) return { success: false, error: "Ingen gruppe valgt." };
+      return sendGroupMessage(group.id, content);
+    },
+    [group, sendGroupMessage]
+  );
+
+  return {
+    hasAccess,
+    isMember,
+    hasLeaderAccess,
+    isLeader,
+    isDeputy,
+    isAdmin,
+    currentUser,
+    group,
+    leaders,
+    deputyLeaders,
+    members,
+    availablePersonsToAdd,
+    allPersons,
+    groupGatherings,
+    messages,
+    updateGroup,
+    addGroupMember,
+    removeGroupMember,
+    sendMessage: handleSendMessage,
+    assignTaskToPerson,
+    updateAssignmentStatus,
+    removeAssignment,
+    updateTaskStatus,
+  };
+}
+
+// 15. Hook: useLeaderGatheringDetail
+export function useLeaderGatheringDetail(gatheringId: string) {
+  const {
+    currentUser,
+    gatherings,
+    groups,
+    tasks,
+    assignments,
+    allPersons,
+    getGatheringById,
+    getGroupById,
+    getPersonById,
+    assignTaskToPerson,
+    updateAssignmentStatus,
+    removeAssignment,
+    updateTaskStatus,
+    reportAbsence: performReportAbsence,
+    updateTaskNeededCount,
+    updateTaskInstruction,
+    updateTask,
+    createTask,
+    deleteTask,
+    updateGathering,
+  } = useFirebase();
+
+  const gathering = useMemo(() => {
+    if (!gatheringId) return null;
+    return getGatheringById(gatheringId) || null;
+  }, [gatheringId, getGatheringById, gatherings]);
+
+  // All tasks for this gathering
+  const gatheringTasks = useMemo(() => {
+    if (!gathering) return [];
+    return tasks.filter((t) => t.gatheringId === gathering.id);
+  }, [gathering, tasks]);
+
+  // Find all groups involved in this gathering
+  const involvedGroupIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (gathering) {
+      ids.add(gathering.groupId);
+    }
+    gatheringTasks.forEach((t) => ids.add(t.groupId));
+    return Array.from(ids);
+  }, [gathering, gatheringTasks]);
+
+  const involvedGroups = useMemo(() => {
+    return involvedGroupIds.map((id) => getGroupById(id)).filter(Boolean) as Group[];
+  }, [involvedGroupIds, getGroupById]);
+
+  // Determine user's active group for this gathering:
+  // If user is leader/deputy in one of the involved groups, pick that group
+  const userLedGroup = useMemo(() => {
+    return involvedGroups.find(
+      (g) => g.leaderIds.includes(currentUser.id) || g.deputyLeaderIds?.includes(currentUser.id)
+    ) || null;
+  }, [involvedGroups, currentUser]);
+
+  const group = useMemo(() => {
+    if (userLedGroup) return userLedGroup;
+    if (gathering) return getGroupById(gathering.groupId) || null;
+    return null;
+  }, [userLedGroup, gathering, getGroupById]);
+
+  const isLeader = Boolean(
+    (group && group.leaderIds.includes(currentUser.id)) ||
+    involvedGroups.some((g) => g.leaderIds.includes(currentUser.id))
+  );
+  const isDeputy = Boolean(
+    (group && group.deputyLeaderIds?.includes(currentUser.id)) ||
+    involvedGroups.some((g) => g.deputyLeaderIds?.includes(currentUser.id))
+  );
+  const isAdmin = currentUser.globalRole === "admin";
+  const hasAccess = Boolean(isAdmin || isLeader || isDeputy);
+
+  // Group members available for leader to assign
+  const groupMembers = useMemo(() => {
+    if (!group) return allPersons;
+    return allPersons.filter((p) => group.memberIds.includes(p.id));
+  }, [group, allPersons]);
+
+  const tasksWithDetails = useMemo(() => {
+    if (!gathering) return [];
+
+    return gatheringTasks.map((task) => {
+      const taskGroup = getGroupById(task.groupId);
+      const taskAssignments = assignments.filter((a) => a.taskId === task.id);
+      const assignedPersons = taskAssignments.map((a) => {
+        const person = getPersonById(a.personId);
+        let statusLabel = "Forespurt";
+        if (a.response === "confirmed") statusLabel = "Akseptert";
+        if (a.response === "withdrawn") statusLabel = "Forfall";
+        if (a.response === "declined") statusLabel = "Avslått";
+
+        return {
+          assignment: a,
+          person,
+          statusLabel,
+          response: a.response,
+        };
+      });
+
+      const taskStaffing = calculateTaskStaffingStatus(task, taskAssignments);
+      const confirmedPersonsCount = taskStaffing.confirmedCount;
+      const neededCount = taskStaffing.neededCount;
+      const isFullyCovered = taskStaffing.isFullyCovered;
+      const hasWithdrawn = taskStaffing.hasForfall;
+      const missingCount = taskStaffing.missingCount;
+      const isMyGroup = Boolean(group && task.groupId === group.id);
+      const staffingStatusLabel = taskStaffing.statusText;
+
+      return {
+        task,
+        taskGroup,
+        isMyGroup,
+        neededCount,
+        assignedPersons,
+        confirmedPersonsCount,
+        isFullyCovered,
+        missingCount,
+        hasWithdrawn,
+        staffingStatusLabel,
+        taskStaffing,
+      };
+    });
+  }, [gathering, gatheringTasks, assignments, getPersonById, getGroupById, group]);
+
+  // Combined program schedule including items with or without task links
+  const programSchedule = useMemo(() => {
+    if (!gathering) return [];
+    if (gathering.programSchedule && gathering.programSchedule.length > 0) {
+      return gathering.programSchedule;
+    }
+    // Fallback: build default program schedule from gathering tasks
+    return [
+      { time: "11:00", title: "Velkommen & åpningsbønn" },
+      { time: "11:05", title: "Fellessang & lovsang" },
+      { time: "11:50", title: "Preken / Dagens tale" },
+      { time: "12:15", title: "Nattverd & forbønn" },
+      { time: "12:35", title: "Kirkekaffe & fellesskap" },
+    ];
+  }, [gathering]);
+
+  return {
+    hasAccess,
+    isLeader,
+    isDeputy,
+    isAdmin,
+    currentUser,
+    gathering,
+    group,
+    involvedGroups,
+    groupMembers,
+    allPersons,
+    tasksWithDetails,
+    programSchedule,
+    assignTaskToPerson,
+    updateAssignmentStatus,
+    removeAssignment,
+    updateTaskStatus,
+    reportAbsence: performReportAbsence,
+    updateTaskNeededCount,
+    updateTaskInstruction,
+    updateTask,
+    createTask,
+    deleteTask,
+    allGroups: groups,
+    updateGathering,
+  };
+}
