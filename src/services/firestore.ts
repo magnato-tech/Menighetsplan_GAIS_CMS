@@ -12,10 +12,11 @@ import {
 } from "firebase/firestore";
 import { db, handleFirestoreError, OperationType } from "../firebase";
 import { Assignment } from "../types";
-import { COLLECTIONS } from "../data/collections";
+import { COLLECTIONS, CMS_COLLECTIONS } from "../data/collections";
 import { sanitizeForFirestore, forUpdate } from "../utils/firestoreData";
 
-type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];
+type PlanningCollection = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];
+type CollectionName = PlanningCollection | (typeof CMS_COLLECTIONS)[keyof typeof CMS_COLLECTIONS];
 
 // ============================================================================
 // Reading
@@ -27,7 +28,7 @@ type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];
  * then rejects it, the listener is called again with what is actually stored.
  */
 export function subscribeCollection<T extends { id: string }>(
-  name: CollectionName,
+  name: PlanningCollection,
   onChange: (items: T[]) => void
 ): () => void {
   return onSnapshot(
@@ -45,7 +46,12 @@ export function subscribeCollection<T extends { id: string }>(
 // a failure. New documents arrive fully built (see data/newDocuments.ts), id included.
 
 export function createDocument<T extends { id: string }>(name: CollectionName, document: T): Promise<void> {
-  return setDoc(doc(db, name, document.id), sanitizeForFirestore(document));
+  return setDocument(name, document.id, document);
+}
+
+/** Stores the whole document under the given id, replacing what was there. */
+export function setDocument(name: CollectionName, id: string, document: object): Promise<void> {
+  return setDoc(doc(db, name, id), sanitizeForFirestore(document));
 }
 
 /** A field given as `undefined` is removed from the stored document. */
@@ -91,6 +97,19 @@ export function assignTask(assignment: Assignment): Promise<void> {
   batch.update(doc(db, COLLECTIONS.TASKS, assignment.taskId), {
     status: assignment.response === "confirmed" ? "confirmed" : "assigned",
   });
+  return batch.commit();
+}
+
+/**
+ * Deletes a CMS page and moves its sub-pages to the top level in the same write,
+ * so the database never holds a page that points at a deleted parent.
+ */
+export function deletePage(pageId: string, subPageIds: string[]): Promise<void> {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, CMS_COLLECTIONS.PAGES, pageId));
+  for (const subPageId of subPageIds) {
+    batch.update(doc(db, CMS_COLLECTIONS.PAGES, subPageId), { parentId: null });
+  }
   return batch.commit();
 }
 

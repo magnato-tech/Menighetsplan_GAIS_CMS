@@ -30,7 +30,7 @@ export const firebaseModuleMock = {
 };
 
 /** Puts documents in the local database. Offline, a write is never acknowledged, so it is not awaited. */
-export function seed(collectionName: string, documents: { id: string }[]): void {
+export function seed<T extends { id: string }>(collectionName: string, documents: T[]): void {
   for (const document of documents) {
     void setDoc(doc(db, collectionName, document.id), document);
   }

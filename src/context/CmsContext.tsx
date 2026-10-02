@@ -1,27 +1,16 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import {
-  collection,
-  doc,
-  setDoc,
-  deleteDoc,
-  onSnapshot,
-  writeBatch,
-} from "firebase/firestore";
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { collection, doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
-import { sanitizeForFirestore } from "../utils/firestoreData";
-import { withoutPage } from "../utils/menu";
 import { CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID } from "../data/collections";
+import { createDocument, setDocument, deleteDocument, deletePage as deletePageWithSubPages } from "../services/firestore";
 import { reportWriteError } from "../services/writeErrors";
+import { newId } from "../utils/id";
 import {
   CmsPage,
   CmsNewsArticle,
   CmsSermon,
   CmsStaffMember,
   CmsSettings,
-  initialCmsPages,
-  initialCmsNews,
-  initialCmsSermons,
-  initialCmsStaff,
   initialCmsSettings,
 } from "../data/cmsData";
 
@@ -31,7 +20,6 @@ interface CmsContextValue {
   sermons: CmsSermon[];
   staff: CmsStaffMember[];
   settings: CmsSettings;
-  isFirestoreSyncing: boolean;
   // Every write resolves to whether it reached Firestore. A failure is already shown to the user.
   savePage: (page: Partial<CmsPage> & { id?: string }) => Promise<boolean>;
   deletePage: (pageId: string) => Promise<boolean>;
@@ -42,21 +30,110 @@ interface CmsContextValue {
   saveStaff: (staffData: Partial<CmsStaffMember> & { id?: string }) => Promise<boolean>;
   deleteStaff: (staffId: string) => Promise<boolean>;
   saveSettings: (settingsData: Partial<CmsSettings>) => Promise<boolean>;
-  resetCmsToDefaults: () => Promise<boolean>;
   getPageBySlug: (slug: string) => CmsPage | undefined;
   getNewsById: (id: string) => CmsNewsArticle | undefined;
   getNewsBySlug: (slug: string) => CmsNewsArticle | undefined;
-  getSermonById: (id: string) => CmsSermon | undefined;
 }
 
 const CmsContext = createContext<CmsContextValue | null>(null);
 
-const STORAGE_KEY_PAGES = "menighetsplan_cms_pages_v3";
-const STORAGE_KEY_NEWS = "menighetsplan_cms_news_v3";
-const STORAGE_KEY_SERMONS = "menighetsplan_cms_sermons_v3";
-const STORAGE_KEY_STAFF = "menighetsplan_cms_staff_v3";
-const STORAGE_KEY_SETTINGS = "menighetsplan_cms_settings_v3";
+// The last content received is kept in the browser, so the public site has
+// something to show before Firestore has answered.
+const STORAGE_KEYS = {
+  pages: "menighetsplan_cms_pages_v3",
+  news: "menighetsplan_cms_news_v3",
+  sermons: "menighetsplan_cms_sermons_v3",
+  staff: "menighetsplan_cms_staff_v3",
+  settings: "menighetsplan_cms_settings_v3",
+};
 
+function readCache<T>(key: string): T | null {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? (JSON.parse(saved) as T) : null;
+  } catch {
+    // Unreadable or blocked storage only means there is nothing to show yet
+    return null;
+  }
+}
+
+/** Keeps `value` for the next visit, or forgets the entry when `value` is null. */
+function writeCache(key: string, value: unknown): void {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // A full or blocked storage costs the head start on the next visit, nothing else
+  }
+}
+
+// A listener that fails stops for good, so say which one it was
+const onListenerError = (name: string) => (error: Error) => console.warn(`Firestore sync error (${name}):`, error);
+
+const newestFirst = (a: { publishedAt: string }, b: { publishedAt: string }) =>
+  new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+const latestDateFirst = (a: { date: string }, b: { date: string }) =>
+  new Date(b.date).getTime() - new Date(a.date).getTime();
+
+/**
+ * A CMS collection as Firestore has it, starting from the copy kept in the browser.
+ * A write shows up here through the listener; nothing else changes the list.
+ */
+function useCmsCollection<T>(name: string, storageKey: string, compare?: (a: T, b: T) => number): T[] {
+  const [items, setItems] = useState<T[]>(() => readCache<T[]>(storageKey) ?? []);
+
+  useEffect(() => {
+    let isFirst = true;
+    return onSnapshot(
+      collection(db, name),
+      (snapshot) => {
+        // Opened without a connection, Firestore first reports an empty collection. Keep the copy we have.
+        const emptyBecauseOffline = isFirst && snapshot.empty && snapshot.metadata.fromCache;
+        isFirst = false;
+        if (emptyBecauseOffline) return;
+
+        const list = snapshot.docs.map((d) => d.data() as T);
+        if (compare) list.sort(compare);
+        setItems(list);
+        writeCache(storageKey, list);
+      },
+      onListenerError(name)
+    );
+  }, [name, storageKey, compare]);
+
+  return items;
+}
+
+/** The site settings. The built-in defaults apply for as long as no settings document exists. */
+function useCmsSettings(): CmsSettings {
+  const [settings, setSettings] = useState<CmsSettings>(
+    () => readCache<CmsSettings>(STORAGE_KEYS.settings) ?? initialCmsSettings
+  );
+
+  useEffect(
+    () =>
+      onSnapshot(
+        doc(db, CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID),
+        (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.data() as CmsSettings;
+            setSettings(data);
+            writeCache(STORAGE_KEYS.settings, data);
+          } else if (!snapshot.metadata.fromCache) {
+            // Only the server can say the document is gone; without a connection it is merely not fetched yet
+            setSettings(initialCmsSettings);
+            writeCache(STORAGE_KEYS.settings, null);
+          }
+        },
+        onListenerError(CMS_COLLECTIONS.SETTINGS)
+      ),
+    []
+  );
+
+  return settings;
+}
+
+/** Waits for the server's answer, so an editor can stay open with what was typed if the save fails. */
 async function attempt(action: string, write: () => Promise<unknown>): Promise<boolean> {
   try {
     await write();
@@ -67,135 +144,11 @@ async function attempt(action: string, write: () => Promise<unknown>): Promise<b
   }
 }
 
-export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // The lists start from the local cache of the last Firestore snapshot, never from mock data
-  const [pages, setPages] = useState<CmsPage[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_PAGES);
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return [];
-  });
-
-  const [news, setNews] = useState<CmsNewsArticle[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_NEWS);
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return [];
-  });
-
-  const [sermons, setSermons] = useState<CmsSermon[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_SERMONS);
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return [];
-  });
-
-  const [staff, setStaff] = useState<CmsStaffMember[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_STAFF);
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return [];
-  });
-
-  const [settings, setSettings] = useState<CmsSettings>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_SETTINGS);
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return initialCmsSettings;
-  });
-
-  const [isFirestoreSyncing, setIsFirestoreSyncing] = useState(false);
-
-  // Firestore real-time subscriptions
-  useEffect(() => {
-    let unsubPages: (() => void) | undefined;
-    let unsubNews: (() => void) | undefined;
-    let unsubSermons: (() => void) | undefined;
-    let unsubStaff: (() => void) | undefined;
-    let unsubSettings: (() => void) | undefined;
-
-    // A listener that fails stops for good, so say which one it was
-    const onError = (name: string) => (err: Error) => console.warn(`Firestore sync error (${name}):`, err);
-
-    const setupFirestore = async () => {
-      try {
-        setIsFirestoreSyncing(true);
-
-        // 1. Pages
-        unsubPages = onSnapshot(collection(db, CMS_COLLECTIONS.PAGES), (snapshot) => {
-          const list: CmsPage[] = [];
-          snapshot.forEach((docSnap) => list.push(docSnap.data() as CmsPage));
-          setPages(list);
-          localStorage.setItem(STORAGE_KEY_PAGES, JSON.stringify(list));
-        }, onError(CMS_COLLECTIONS.PAGES));
-
-        // 2. News
-        unsubNews = onSnapshot(collection(db, CMS_COLLECTIONS.NEWS), (snapshot) => {
-          const list: CmsNewsArticle[] = [];
-          snapshot.forEach((docSnap) => list.push(docSnap.data() as CmsNewsArticle));
-          list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-          setNews(list);
-          localStorage.setItem(STORAGE_KEY_NEWS, JSON.stringify(list));
-        }, onError(CMS_COLLECTIONS.NEWS));
-
-        // 3. Sermons (Taler)
-        unsubSermons = onSnapshot(collection(db, CMS_COLLECTIONS.SERMONS), (snapshot) => {
-          const list: CmsSermon[] = [];
-          snapshot.forEach((docSnap) => list.push(docSnap.data() as CmsSermon));
-          list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          setSermons(list);
-          localStorage.setItem(STORAGE_KEY_SERMONS, JSON.stringify(list));
-        }, onError(CMS_COLLECTIONS.SERMONS));
-
-        // 4. Staff (Lederskap & Stab)
-        unsubStaff = onSnapshot(collection(db, CMS_COLLECTIONS.STAFF), (snapshot) => {
-          const list: CmsStaffMember[] = [];
-          snapshot.forEach((docSnap) => list.push(docSnap.data() as CmsStaffMember));
-          setStaff(list);
-          localStorage.setItem(STORAGE_KEY_STAFF, JSON.stringify(list));
-        }, onError(CMS_COLLECTIONS.STAFF));
-
-        // 5. Settings (the built-in defaults apply while no settings document exists)
-        const settingsDocRef = doc(db, CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID);
-        unsubSettings = onSnapshot(settingsDocRef, (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data() as CmsSettings;
-            setSettings(data);
-            localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(data));
-          } else {
-            setSettings(initialCmsSettings);
-            localStorage.removeItem(STORAGE_KEY_SETTINGS);
-          }
-        }, onError(CMS_COLLECTIONS.SETTINGS));
-      } catch (err) {
-        console.warn("Firestore sync error:", err);
-      } finally {
-        setIsFirestoreSyncing(false);
-      }
-    };
-
-    setupFirestore();
-
-    return () => {
-      if (unsubPages) unsubPages();
-      if (unsubNews) unsubNews();
-      if (unsubSermons) unsubSermons();
-      if (unsubStaff) unsubStaff();
-      if (unsubSettings) unsubSettings();
-    };
-  }, []);
-
-  // CRUD Pages
-  const savePage = async (pageData: Partial<CmsPage> & { id?: string }) => {
-    const now = new Date().toISOString();
-    const id = pageData.id || `page-${Date.now()}`;
-    const pageToSave: CmsPage = {
-      id,
+// Each write builds the complete document, so a field left out in the editor gets its default
+const writes = {
+  savePage: (pageData: Partial<CmsPage> & { id?: string }) => {
+    const page: CmsPage = {
+      id: pageData.id || newId("page"),
       slug: (pageData.slug || `side-${Date.now()}`).toLowerCase().trim().replace(/^\//, ""),
       title: pageData.title || "Uten tittel",
       summary: pageData.summary || "",
@@ -205,87 +158,37 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       navOrder: typeof pageData.navOrder === "number" ? pageData.navOrder : 99,
       inNavMenu: pageData.inNavMenu !== false,
       parentId: pageData.parentId || null,
+      // Left out of the stored document when the page has no link of its own
       linkUrl: pageData.linkUrl || undefined,
-      updatedAt: now,
+      updatedAt: new Date().toISOString(),
       heroImage: pageData.heroImage || "",
       heroCtaText: pageData.heroCtaText || "",
       heroCtaLink: pageData.heroCtaLink || "",
     };
+    return attempt("lagre siden", () => createDocument(CMS_COLLECTIONS.PAGES, page));
+  },
 
-    setPages((prev) => {
-      const exists = prev.some((p) => p.id === id);
-      const next = exists ? prev.map((p) => (p.id === id ? pageToSave : p)) : [...prev, pageToSave];
-      localStorage.setItem(STORAGE_KEY_PAGES, JSON.stringify(next));
-      return next;
-    });
-
-    // Firestore rejects `undefined`, and `linkUrl` is undefined on every page without an external link
-    return attempt("lagre siden", () =>
-      setDoc(doc(db, CMS_COLLECTIONS.PAGES, id), sanitizeForFirestore(pageToSave))
-    );
-  };
-
-  const deletePage = async (pageId: string) => {
-    const subPages = pages.filter((p) => p.parentId === pageId);
-    setPages((prev) => {
-      const next = withoutPage(prev, pageId);
-      localStorage.setItem(STORAGE_KEY_PAGES, JSON.stringify(next));
-      return next;
-    });
-    return attempt("slette siden", () => {
-      // The sub-pages move in the same write, so the database never holds a page with a deleted parent
-      const batch = writeBatch(db);
-      batch.delete(doc(db, CMS_COLLECTIONS.PAGES, pageId));
-      for (const subPage of subPages) {
-        batch.update(doc(db, CMS_COLLECTIONS.PAGES, subPage.id), { parentId: null });
-      }
-      return batch.commit();
-    });
-  };
-
-  // CRUD News
-  const saveNews = async (newsData: Partial<CmsNewsArticle> & { id?: string }) => {
-    const now = new Date().toISOString();
-    const id = newsData.id || `news-${Date.now()}`;
-    const articleToSave: CmsNewsArticle = {
-      id,
+  saveNews: (newsData: Partial<CmsNewsArticle> & { id?: string }) => {
+    const article: CmsNewsArticle = {
+      id: newsData.id || newId("news"),
       title: newsData.title || "Nyhetsartikkel",
       slug: (newsData.slug || `nyhet-${Date.now()}`).toLowerCase().trim(),
       summary: newsData.summary || "",
       content: newsData.content || "",
       category: newsData.category || "aktuelt",
       author: newsData.author || "Menigheten",
-      publishedAt: newsData.publishedAt || now,
+      publishedAt: newsData.publishedAt || new Date().toISOString(),
       isPublished: newsData.isPublished !== false,
       imageUrl: newsData.imageUrl || "",
     };
+    return attempt("lagre nyhetsartikkelen", () => createDocument(CMS_COLLECTIONS.NEWS, article));
+  },
+  deleteNews: (newsId: string) =>
+    attempt("slette nyhetsartikkelen", () => deleteDocument(CMS_COLLECTIONS.NEWS, newsId)),
 
-    setNews((prev) => {
-      const exists = prev.some((n) => n.id === id);
-      const next = exists ? prev.map((n) => (n.id === id ? articleToSave : n)) : [articleToSave, ...prev];
-      localStorage.setItem(STORAGE_KEY_NEWS, JSON.stringify(next));
-      return next;
-    });
-
-    return attempt("lagre nyhetsartikkelen", () =>
-      setDoc(doc(db, CMS_COLLECTIONS.NEWS, id), sanitizeForFirestore(articleToSave))
-    );
-  };
-
-  const deleteNews = async (newsId: string) => {
-    setNews((prev) => {
-      const next = prev.filter((n) => n.id !== newsId);
-      localStorage.setItem(STORAGE_KEY_NEWS, JSON.stringify(next));
-      return next;
-    });
-    return attempt("slette nyhetsartikkelen", () => deleteDoc(doc(db, CMS_COLLECTIONS.NEWS, newsId)));
-  };
-
-  // CRUD Sermons
-  const saveSermon = async (sermonData: Partial<CmsSermon> & { id?: string }) => {
-    const id = sermonData.id || `sermon-${Date.now()}`;
-    const sermonToSave: CmsSermon = {
-      id,
+  saveSermon: (sermonData: Partial<CmsSermon> & { id?: string }) => {
+    const sermon: CmsSermon = {
+      id: sermonData.id || newId("sermon"),
       title: sermonData.title || "Tale",
       speaker: sermonData.speaker || "Pastor",
       date: sermonData.date || new Date().toISOString(),
@@ -296,33 +199,13 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       videoUrl: sermonData.videoUrl || "",
       summary: sermonData.summary || "",
     };
+    return attempt("lagre talen", () => createDocument(CMS_COLLECTIONS.SERMONS, sermon));
+  },
+  deleteSermon: (sermonId: string) => attempt("slette talen", () => deleteDocument(CMS_COLLECTIONS.SERMONS, sermonId)),
 
-    setSermons((prev) => {
-      const exists = prev.some((s) => s.id === id);
-      const next = exists ? prev.map((s) => (s.id === id ? sermonToSave : s)) : [sermonToSave, ...prev];
-      localStorage.setItem(STORAGE_KEY_SERMONS, JSON.stringify(next));
-      return next;
-    });
-
-    return attempt("lagre talen", () =>
-      setDoc(doc(db, CMS_COLLECTIONS.SERMONS, id), sanitizeForFirestore(sermonToSave))
-    );
-  };
-
-  const deleteSermon = async (sermonId: string) => {
-    setSermons((prev) => {
-      const next = prev.filter((s) => s.id !== sermonId);
-      localStorage.setItem(STORAGE_KEY_SERMONS, JSON.stringify(next));
-      return next;
-    });
-    return attempt("slette talen", () => deleteDoc(doc(db, CMS_COLLECTIONS.SERMONS, sermonId)));
-  };
-
-  // CRUD Staff
-  const saveStaff = async (staffData: Partial<CmsStaffMember> & { id?: string }) => {
-    const id = staffData.id || `staff-${Date.now()}`;
-    const staffToSave: CmsStaffMember = {
-      id,
+  saveStaff: (staffData: Partial<CmsStaffMember> & { id?: string }) => {
+    const member: CmsStaffMember = {
+      id: staffData.id || newId("staff"),
       name: staffData.name || "Navn",
       role: staffData.role || "Medarbeider",
       email: staffData.email || "",
@@ -331,90 +214,44 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       bio: staffData.bio || "",
       imageUrl: staffData.imageUrl || "",
     };
+    return attempt("lagre medarbeideren", () => createDocument(CMS_COLLECTIONS.STAFF, member));
+  },
+  deleteStaff: (staffId: string) => attempt("slette medarbeideren", () => deleteDocument(CMS_COLLECTIONS.STAFF, staffId)),
+};
 
-    setStaff((prev) => {
-      const exists = prev.some((st) => st.id === id);
-      const next = exists ? prev.map((st) => (st.id === id ? staffToSave : st)) : [...prev, staffToSave];
-      localStorage.setItem(STORAGE_KEY_STAFF, JSON.stringify(next));
-      return next;
-    });
+const normalizeSlug = (slug: string) => slug.toLowerCase().replace(/^\//, "").trim();
 
-    return attempt("lagre medarbeideren", () =>
-      setDoc(doc(db, CMS_COLLECTIONS.STAFF, id), sanitizeForFirestore(staffToSave))
-    );
-  };
+export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const pages = useCmsCollection<CmsPage>(CMS_COLLECTIONS.PAGES, STORAGE_KEYS.pages);
+  const news = useCmsCollection<CmsNewsArticle>(CMS_COLLECTIONS.NEWS, STORAGE_KEYS.news, newestFirst);
+  const sermons = useCmsCollection<CmsSermon>(CMS_COLLECTIONS.SERMONS, STORAGE_KEYS.sermons, latestDateFirst);
+  const staff = useCmsCollection<CmsStaffMember>(CMS_COLLECTIONS.STAFF, STORAGE_KEYS.staff);
+  const settings = useCmsSettings();
 
-  const deleteStaff = async (staffId: string) => {
-    setStaff((prev) => {
-      const next = prev.filter((st) => st.id !== staffId);
-      localStorage.setItem(STORAGE_KEY_STAFF, JSON.stringify(next));
-      return next;
-    });
-    return attempt("slette medarbeideren", () => deleteDoc(doc(db, CMS_COLLECTIONS.STAFF, staffId)));
-  };
-
-  // CRUD Settings
-  const saveSettings = async (settingsData: Partial<CmsSettings>) => {
-    const updated: CmsSettings = { ...settings, ...settingsData };
-    setSettings(updated);
-    localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(updated));
-    return attempt("lagre innstillingene", () =>
-      setDoc(doc(db, CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID), sanitizeForFirestore(updated))
-    );
-  };
-
-  const resetCmsToDefaults = async () => {
-    setPages(initialCmsPages);
-    setNews(initialCmsNews);
-    setSermons(initialCmsSermons);
-    setStaff(initialCmsStaff);
-    setSettings(initialCmsSettings);
-    return attempt("tilbakestille CMS-innholdet", async () => {
-      for (const p of initialCmsPages) await setDoc(doc(db, CMS_COLLECTIONS.PAGES, p.id), sanitizeForFirestore(p));
-      for (const n of initialCmsNews) await setDoc(doc(db, CMS_COLLECTIONS.NEWS, n.id), sanitizeForFirestore(n));
-      for (const s of initialCmsSermons) await setDoc(doc(db, CMS_COLLECTIONS.SERMONS, s.id), sanitizeForFirestore(s));
-      for (const st of initialCmsStaff) await setDoc(doc(db, CMS_COLLECTIONS.STAFF, st.id), sanitizeForFirestore(st));
-      await setDoc(doc(db, CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID), sanitizeForFirestore(initialCmsSettings));
-    });
-  };
-
-  const getPageBySlug = (slug: string) => {
-    const clean = slug.toLowerCase().replace(/^\//, "").trim();
-    return pages.find((p) => p.slug.toLowerCase().replace(/^\//, "").trim() === clean);
-  };
-
-  const getNewsById = (id: string) => news.find((n) => n.id === id);
-  const getNewsBySlug = (slug: string) => news.find((n) => n.slug.toLowerCase() === slug.toLowerCase());
-  const getSermonById = (id: string) => sermons.find((s) => s.id === id);
-
-  return (
-    <CmsContext.Provider
-      value={{
-        pages,
-        news,
-        sermons,
-        staff,
-        settings,
-        isFirestoreSyncing,
-        savePage,
-        deletePage,
-        saveNews,
-        deleteNews,
-        saveSermon,
-        deleteSermon,
-        saveStaff,
-        deleteStaff,
-        saveSettings,
-        resetCmsToDefaults,
-        getPageBySlug,
-        getNewsById,
-        getNewsBySlug,
-        getSermonById,
-      }}
-    >
-      {children}
-    </CmsContext.Provider>
+  const value: CmsContextValue = useMemo(
+    () => ({
+      pages,
+      news,
+      sermons,
+      staff,
+      settings,
+      ...writes,
+      deletePage: (pageId: string) => {
+        const subPageIds = pages.filter((p) => p.parentId === pageId).map((p) => p.id);
+        return attempt("slette siden", () => deletePageWithSubPages(pageId, subPageIds));
+      },
+      saveSettings: (settingsData: Partial<CmsSettings>) =>
+        attempt("lagre innstillingene", () =>
+          setDocument(CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID, { ...settings, ...settingsData })
+        ),
+      getPageBySlug: (slug: string) => pages.find((p) => normalizeSlug(p.slug) === normalizeSlug(slug)),
+      getNewsById: (id: string) => news.find((n) => n.id === id),
+      getNewsBySlug: (slug: string) => news.find((n) => n.slug.toLowerCase() === slug.toLowerCase()),
+    }),
+    [pages, news, sermons, staff, settings]
   );
+
+  return <CmsContext.Provider value={value}>{children}</CmsContext.Provider>;
 };
 
 export const useCms = () => {
