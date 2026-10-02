@@ -4,14 +4,14 @@ import {
   type GatheringDoc,
   type GroupDoc,
   toOsloIso,
-  isWorshipService,
   toPublicGatherings,
   toContractV1,
   toV11,
   toPublicGroups,
   toRecurringEvents,
 } from "../server/publicApi";
-import { isPubliclyVisible, visibilityOf, visibilityFields, visibilityAfterToggle } from "../src/utils/visibility";
+import { isWorshipService } from "../src/utils/gatherings";
+import { isGroupPublic, isPubliclyVisible, visibilityOf, visibilityFields, visibilityAfterToggle } from "../src/utils/visibility";
 
 describe("Det offentlige API-et", () => {
   const base: GatheringDoc = {
@@ -148,6 +148,9 @@ describe("Det offentlige API-et", () => {
   assert(legacy.start === base.startsAt && legacy.slutt === base.endsAt, "v1.1: start og slutt er uendret fra databasen");
   assert(legacy.uid === legacy.id && legacy.tittel === legacy.title && legacy.sted === legacy.location, "v1.1: norske og engelske nøkler har samme verdi");
   assert(toV11(cancelled).kategorier.join() === "arrangement,ungdom", "v1.1: kategorier uten gudstjeneste");
+  const [featured] = toPublicGatherings([{ ...base, visibility: "fremhevet" }]);
+  assert(toV11(featured).fremhevet === true && legacy.fremhevet === false, "v1.1: sier fra hvilke samlinger som er fremhevet");
+  assert(!("fremhevet" in toContractV1(featured, now)), "Kontrakt v1 er uendret: ingen nye felt");
 
   // 7. Groups and recurring events
   const groups: GroupDoc[] = [
@@ -173,4 +176,17 @@ describe("Det offentlige API-et", () => {
     fromGroup.id === "recurring-group-group-hus-1" && fromGroup.sted === "Hjemmene" && fromGroup.klokkeslett === "19:30",
     "Faste aktiviteter: husgruppe får sted 'Hjemmene' og tid fra møteplanen"
   );
+
+  // 8. A group an admin has hidden leaves the API altogether
+  assert(isGroupPublic({}) && isGroupPublic({ isPublic: true }) && !isGroupPublic({ isPublic: false }), "En gruppe er offentlig til noen skjuler den");
+  const withHidden: GroupDoc[] = [...groups, { ...groups[0], id: "group-sorg", name: "Sorggruppe", isPublic: false }];
+  assert(
+    toPublicGroups(withHidden).map((g) => g.id).join() === "group-hus-1,group-lyd",
+    "Grupper: en skjult gruppe er ikke med"
+  );
+  assert(
+    toRecurringEvents(withHidden).map((e) => e.groupId).join() === "group-hus-1",
+    "Faste aktiviteter: møtetiden til en skjult gruppe er ikke med"
+  );
+  assert(!JSON.stringify([toPublicGroups(withHidden), toRecurringEvents(withHidden)]).includes("Sorggruppe"), "Navnet på en skjult gruppe lekker ikke");
 });

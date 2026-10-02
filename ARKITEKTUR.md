@@ -83,9 +83,10 @@ Reglene i kapittel 3 i `PRODUKTDOKUMENTASJON.md` ligger i `src/utils/staffing.ts
 Kontrakten for eksterne lesere står i **[INTEGRASJON-MENIGHETSPLAN.md](INTEGRASJON-MENIGHETSPLAN.md)**.
 
 ## Hva som er offentlig
-To regler avgjør hva en besøkende ser, og hver av dem ligger ett sted:
+Tre regler avgjør hva en besøkende ser, og hver av dem ligger ett sted:
 
-- **Samlinger:** feltet `visibility` (`intern`, `offentlig`, `fremhevet`) er eneste bryter. Både de offentlige sidene og API-et leser det gjennom `isPubliclyVisible` i `src/utils/visibility.ts`, og alt som skriver bruker `visibilityFields`. `isPublic` lagres bare som et speil for eldre dokumenter.
+- **Samlinger:** feltet `visibility` (`intern`, `offentlig`, `fremhevet`) er eneste bryter. Både de offentlige sidene og API-et leser det gjennom `isPubliclyVisible` i `src/utils/visibility.ts`, og alt som skriver bruker `visibilityFields`. `isPublic` lagres bare som et speil for eldre dokumenter. `src/utils/gatherings.ts` avgjør resten: hva som er en gudstjeneste (`isWorshipService`), hva som er kommende, og hvilken samling forsiden løfter fram (`pickHighlight`): en fremhevet samling først, ellers neste gudstjeneste, ellers det som kommer først. En avlyst samling løftes aldri fram.
+- **Grupper:** en gruppe vises utad til en administrator fjerner krysset «Vis gruppen på nettsiden» (`isPublic: false`). `isGroupPublic` brukes av `/fellesskap`, `/lederskap` og API-et, som da verken gir fra seg gruppen eller møtetiden dens.
 - **Personer:** en person vises bare når `isPublicProfile` er satt og et samtykke er registrert (`consentToPublishGivenAt`, `consentGivenBy`). `src/utils/publicProfile.ts` gir da navn, tittel utad og kontaktinfo utad. Privat telefon og e-post er aldri med. Samtykket registreres på personkortet i admin, og fjernes når krysset tas bort.
 
 ## Kjente avvik fra målbildet
@@ -96,8 +97,7 @@ To regler avgjør hva en besøkende ser, og hver av dem ligger ett sted:
 | Innlogging | Brukere logger inn; roller styrer tilgang | Ingen innlogging. Aktiv bruker velges i en testbryter, og `/admin` er åpen |
 | Sikkerhetsregler | Bare admin endrer offentlige profilfelt; medlemmer endrer bare sitt eget | Reglene tillater lesing av alt og skriving uten innlogging |
 | Personvern på nettsiden | Besøkende får bare offentlige data | Sidene viser bare personer med samtykke, og laster ikke oppgaver, tildelinger, meldinger eller oppmøte. Hele personregisteret lastes likevel til nettleseren; det kan først stenges med innlogging og strammere regler |
-| Fremhevet samling | Løftes frem som neste samling på forsiden | `fremhevet` lagres, men forsiden velger neste samling bare etter dato |
-| Grupper | Bare offentlige grupper vises utad | `isPublic` på grupper kan ikke settes noe sted, og verken `/fellesskap` eller API-et filtrerer på det |
+| Bli med i en gruppe | En besøkende kan melde interesse for en gruppe | `/fellesskap` viser hvem man kan kontakte. Det finnes ikke noe skjema som lagrer en henvendelse; det krever en egen samling, regler og et sted lederen kan lese dem |
 | Filstørrelse | Én komponent per fane/modal | Gjort for alle sidene over 1 000 linjer. Størst nå: `GatheringDetailView.tsx` (ca. 1 000 linjer, selve kjøreplanen) |
 | Gruppemeldinger | Testverktøyet på husfellesskapssiden sier at et nytt medlem ikke skal se eldre meldinger | Innmeldingsdato lagres (`memberJoinedAt`), men brukes ikke: et medlem ser alle meldingene i gruppen |
 | Modulbrytere | Kalender og meldinger slås av og på for hele menigheten | Valget lagres bare i nettleseren til den som endrer det |

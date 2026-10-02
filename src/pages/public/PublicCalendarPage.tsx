@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { useCms } from "../../context/CmsContext";
-import { isPubliclyVisible } from "../../utils/visibility";
+import { isWorshipService, upcomingPublicGatherings } from "../../utils/gatherings";
 import {
   Calendar,
   Clock,
@@ -43,14 +43,14 @@ export const PublicCalendarPage: React.FC = () => {
 
   // Process & filter gatherings
   const processedEvents = useMemo(() => {
-    return gatherings
-      .filter((g) => isPubliclyVisible(g))
+    // The calendar looks ahead, from the start of today, so a service earlier today is still listed
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    return upcomingPublicGatherings(gatherings, startOfToday.getTime())
       .map((g) => {
         const title = g.title || "Samling";
-        const isWorship = Boolean(
-          g.isGudstjeneste ||
-          (g.type === "arrangement" && title.toLowerCase().includes("gudstjeneste"))
-        );
+        const isWorship = isWorshipService(g);
         const isCancelled = Boolean(g.cancelled);
 
         const categories: string[] = [];
@@ -65,7 +65,6 @@ export const PublicCalendarPage: React.FC = () => {
           isWorship,
           isCancelled,
           categories,
-          startDate: new Date(g.startsAt),
         };
       })
       .filter((item) => {
@@ -74,8 +73,7 @@ export const PublicCalendarPage: React.FC = () => {
         if (selectedCategory === "ungdom") return item.categories.includes("Ungdom");
         if (selectedCategory === "barn") return item.categories.includes("Barn & familie");
         return true;
-      })
-      .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+      });
   }, [gatherings, selectedCategory]);
 
   return (
@@ -147,7 +145,7 @@ export const PublicCalendarPage: React.FC = () => {
         {processedEvents.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-2xl border border-stone-200 p-8">
             <Calendar className="w-10 h-10 text-stone-300 mx-auto mb-3" />
-            <p className="text-sm font-semibold text-stone-700">Ingen arrangementer funnet i denne kategorien.</p>
+            <p className="text-sm font-semibold text-stone-700">Ingen kommende arrangementer i denne kategorien.</p>
             <p className="text-xs text-stone-500 mt-1">Velg en annen kategori eller kom tilbake senere.</p>
           </div>
         ) : (

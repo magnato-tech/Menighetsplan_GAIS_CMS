@@ -59,9 +59,11 @@ GET https://ais-dev-bpwtuilescw22tmh5zztaw-138177352715.europe-west3.run.app/api
 GET https://ais-dev-bpwtuilescw22tmh5zztaw-138177352715.europe-west3.run.app/api/public/all
 ```
 Leverer samlet:
-* `arrangementer` (kommende enkelthendelser og gudstjenester)
-* `grupper` (husfellesskap og fellesskap)
-* `gjentagende_eventer` (ukentlige gudstjenester, faste barne- og ungdomskvelder)
+* `arrangementer` (enkelthendelser og gudstjenester). Hvert arrangement har `fremhevet: true` når en administrator har løftet det fram; nettsiden kan bruke det til å vise arrangementet øverst.
+* `grupper` (husfellesskap og fellesskap). Grupper som er skjult i Menighetsplan er ikke med.
+* `gjentagende_eventer` (faste møtetider for gruppene som er med i `grupper`)
+
+Kontrakt v1 over er uendret.
 
 ---
 

@@ -2,7 +2,8 @@ import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { useCms } from "../../context/CmsContext";
-import { publicProfilesOf } from "../../utils/publicProfile";
+import { PublicProfile, publicProfilesOf } from "../../utils/publicProfile";
+import { isGroupPublic } from "../../utils/visibility";
 import {
   Users,
   Home,
@@ -12,7 +13,6 @@ import {
   Compass,
   Target,
   Tag,
-  CheckCircle2,
 } from "lucide-react";
 
 export const PublicGroupsPage: React.FC = () => {
@@ -20,7 +20,6 @@ export const PublicGroupsPage: React.FC = () => {
   const { settings } = useCms();
   const [selectedCategory, setSelectedCategory] = useState<string>("alle");
   const [interestedGroupId, setInterestedGroupId] = useState<string | null>(null);
-  const [interestSubmitted, setInterestSubmitted] = useState<string | null>(null);
 
   // Group categories configuration
   const categoryConfig: Record<
@@ -53,9 +52,9 @@ export const PublicGroupsPage: React.FC = () => {
     },
   };
 
-  // Filter out internal leadership groups from public fellowship listing (they are shown on /lederskap)
+  // Groups an admin has hidden are left out. So are the leadership groups, which have their own page (/lederskap).
   const publicGroups = useMemo(() => {
-    return groups.filter((g) => g.category !== "ledergruppe");
+    return groups.filter((g) => isGroupPublic(g) && g.category !== "ledergruppe");
   }, [groups]);
 
   const filteredGroups = useMemo(() => {
@@ -63,14 +62,11 @@ export const PublicGroupsPage: React.FC = () => {
     return publicGroups.filter((g) => g.category === selectedCategory);
   }, [publicGroups, selectedCategory]);
 
-  const handleInterestSubmit = (e: React.FormEvent, groupName: string) => {
-    e.preventDefault();
-    setInterestSubmitted(groupName);
-    setTimeout(() => {
-      setInterestedGroupId(null);
-      setInterestSubmitted(null);
-    }, 3000);
-  };
+  // Who to ask about a group: its leader when they have published contact details, otherwise the church
+  const contactFor = (leader: PublicProfile | undefined) =>
+    leader && (leader.phone || leader.email)
+      ? { name: leader.name, phone: leader.phone, email: leader.email }
+      : { name: settings.churchName, phone: settings.phone, email: settings.email };
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10">
@@ -130,7 +126,8 @@ export const PublicGroupsPage: React.FC = () => {
           const cat = g.category || "tjenestegruppe";
           const config = categoryConfig[cat] || categoryConfig.tjenestegruppe;
           // A leader is named only when they have consented to a public profile
-          const leader = publicProfilesOf(g.leaderIds || [], allPersons)[0];
+          const leader: PublicProfile | undefined = publicProfilesOf(g.leaderIds || [], allPersons)[0];
+          const contact = contactFor(leader);
 
           return (
             <div
@@ -188,59 +185,38 @@ export const PublicGroupsPage: React.FC = () => {
                   onClick={() => setInterestedGroupId(interestedGroupId === g.id ? null : g.id)}
                   className="font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1 cursor-pointer"
                 >
-                  <span>{interestedGroupId === g.id ? "Lukk skjema" : "Meld interesse"}</span>
+                  <span>{interestedGroupId === g.id ? "Lukk" : "Bli med"}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              {/* Inline Interest Form */}
+              {/* How to get in touch. There is no form here: nothing typed on this page is stored anywhere. */}
               {interestedGroupId === g.id && (
-                <form
-                  onSubmit={(e) => handleInterestSubmit(e, g.name)}
-                  className="mt-3 p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-3 text-xs"
-                >
-                  {interestSubmitted === g.name ? (
-                    <div className="flex items-center gap-2 text-emerald-700 font-bold py-2">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Takk! Gruppelederen vil ta kontakt med deg.</span>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="font-semibold text-stone-800">
-                        Ønsker du å bli med i {g.name}?
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          placeholder="Ditt navn"
-                          className="px-3 py-1.5 rounded-lg bg-white border border-stone-300 text-stone-800 focus:outline-hidden"
-                          required
-                        />
-                        <input
-                          type="tel"
-                          placeholder="Telefonnummer"
-                          className="px-3 py-1.5 rounded-lg bg-white border border-stone-300 text-stone-800 focus:outline-hidden"
-                          required
-                        />
-                      </div>
-                      <div className="flex items-center justify-end gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => setInterestedGroupId(null)}
-                          className="px-3 py-1 rounded-lg text-stone-600 hover:bg-stone-200"
-                        >
-                          Avbryt
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-4 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold"
-                        >
-                          Send henvendelse
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </form>
+                <div className="mt-3 p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-2 text-xs">
+                  <p className="font-semibold text-stone-800">Ønsker du å bli med i {g.name}?</p>
+                  <p className="text-stone-600">Ta kontakt med {contact.name}, så hjelper vi deg videre.</p>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    {contact.phone && (
+                      <a
+                        href={`tel:${contact.phone.replace(/\s+/g, "")}`}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold"
+                      >
+                        Ring {contact.phone}
+                      </a>
+                    )}
+                    {contact.email && (
+                      <a
+                        href={`mailto:${contact.email}?subject=${encodeURIComponent(`Interesse for ${g.name}`)}`}
+                        className="px-3 py-1.5 rounded-lg bg-white hover:bg-stone-100 text-stone-800 font-bold border border-stone-300"
+                      >
+                        Send e-post
+                      </a>
+                    )}
+                    <Link to="/kontakt" className="px-3 py-1.5 rounded-lg text-stone-600 hover:bg-stone-200 font-semibold">
+                      Kontaktsiden
+                    </Link>
+                  </div>
+                </div>
               )}
             </div>
           );

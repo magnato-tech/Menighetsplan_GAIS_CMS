@@ -1,6 +1,7 @@
 import type { Gathering, Group } from "../src/types";
 import { validateEvent } from "../src/utils/validation";
-import { isPubliclyVisible } from "../src/utils/visibility";
+import { isGroupPublic, isPubliclyVisible, visibilityOf } from "../src/utils/visibility";
+import { isWorshipService } from "../src/utils/gatherings";
 
 // Firestore documents are untyped at runtime, so every field is optional until validated.
 export type GatheringDoc = Partial<Gathering>;
@@ -50,11 +51,6 @@ export function toOsloIso(d: Date): string {
 // ============================================================================
 // Gatherings: one set of rules shared by every endpoint
 // ============================================================================
-
-export function isWorshipService(g: GatheringDoc): boolean {
-  if (typeof g.isGudstjeneste === "boolean") return g.isGudstjeneste;
-  return (g.title || "").toLowerCase().includes("gudstjeneste");
-}
 
 export function keywordTags(title: string): string[] {
   const t = title.toLowerCase();
@@ -158,6 +154,8 @@ export function toV11({ gathering: g, isWorship, tags }: PublicGathering) {
     tema: g.theme || "",
     kategorier: categories.length > 0 ? categories : ["samling"],
     erGudstjeneste: isWorship,
+    // Set by an admin to lift the gathering up, as the front page of the app does
+    fremhevet: visibilityOf(g) === "fremhevet",
     erAvlyst: Boolean(g.cancelled),
     cancelled: Boolean(g.cancelled),
   };
@@ -179,9 +177,12 @@ export interface RecurringEvent {
   beskrivelse: string;
 }
 
-/** Member lists and contact details are never exposed, only the member count. */
+/**
+ * Only groups that are open to the public, and of those only the name, category,
+ * meeting schedule and member count. Member lists and contact details are never exposed.
+ */
 export function toPublicGroups(docs: GroupDoc[]) {
-  return docs.map((g) => {
+  return docs.filter(isGroupPublic).map((g) => {
     const name = g.name || "Gruppe";
     const category = g.category || "gruppe";
     return {
@@ -197,11 +198,11 @@ export function toPublicGroups(docs: GroupDoc[]) {
   });
 }
 
-/** Recurring events come from the groups' meeting schedules in Firestore, nothing else. */
+/** Recurring events come from the meeting schedules of the public groups, nothing else. */
 export function toRecurringEvents(docs: GroupDoc[]): RecurringEvent[] {
   const events: RecurringEvent[] = [];
   for (const g of docs) {
-    if (!g.id || !g.meetingSchedule?.weekday) continue;
+    if (!isGroupPublic(g) || !g.id || !g.meetingSchedule?.weekday) continue;
     const name = g.name || "Gruppe";
     const category = g.category || "gruppe";
     const frequency = g.meetingSchedule.frequency || "annenhver uke";

@@ -8,6 +8,7 @@ import {
   formatNorwegianDateTime,
 } from "../hooks/useAppHooks";
 import { GroupCategory } from "../types";
+import { isGroupPublic } from "../utils/visibility";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
 import {
   Shield,
@@ -49,6 +50,9 @@ export const AdminGroupDetailPage: React.FC = () => {
   const [tags, setTags] = useState<string>("");
   const [selectedLeaderId, setSelectedLeaderId] = useState<string>("");
   const [selectedDeputyId, setSelectedDeputyId] = useState<string>("");
+  const [isPublic, setIsPublic] = useState<boolean>(true);
+  // A group without fixed meetings must not get a schedule just because the form was saved
+  const [hasSchedule, setHasSchedule] = useState<boolean>(false);
   const [weekday, setWeekday] = useState<string>("Søndag");
   const [time, setTime] = useState<string>("11:00");
   const [frequency, setFrequency] = useState<"hver uke" | "annenhver uke" | "hver måned">("hver uke");
@@ -64,6 +68,8 @@ export const AdminGroupDetailPage: React.FC = () => {
       setCategory(group.category || "tjenestegruppe");
       setSelectedLeaderId(group.leaderIds[0] || "");
       setSelectedDeputyId(group.deputyLeaderIds?.[0] || "");
+      setIsPublic(isGroupPublic(group));
+      setHasSchedule(Boolean(group.meetingSchedule));
       if (group.meetingSchedule) {
         setWeekday(group.meetingSchedule.weekday);
         setTime(group.meetingSchedule.time);
@@ -96,13 +102,10 @@ export const AdminGroupDetailPage: React.FC = () => {
       description: description.trim() || undefined,
       tags: tagsArray,
       category,
+      isPublic,
       leaderIds: selectedLeaderId ? [selectedLeaderId] : [],
       deputyLeaderIds: selectedDeputyId ? [selectedDeputyId] : [],
-      meetingSchedule: {
-        weekday,
-        time,
-        frequency,
-      },
+      meetingSchedule: hasSchedule ? { weekday, time, frequency } : undefined,
     });
 
     if (res.success) {
@@ -323,6 +326,26 @@ export const AdminGroupDetailPage: React.FC = () => {
               />
             </div>
 
+            {/* Synlighet utad */}
+            <label
+              htmlFor="input-edit-group-public"
+              className="flex items-start gap-2.5 p-3 bg-slate-50 rounded-xl border border-slate-200/70 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                id="input-edit-group-public"
+                checked={isPublic}
+                onChange={(e) => setIsPublic(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded text-indigo-600 focus:ring-0"
+              />
+              <span className="text-xs">
+                <span className="font-bold text-slate-800 block">Vis gruppen på nettsiden</span>
+                <span className="text-[11px] text-slate-500">
+                  Uten krysset vises gruppen bare i planleggeren, ikke på nettsiden og ikke for eksterne nettsider som henter grupper herfra.
+                </span>
+              </span>
+            </label>
+
             {/* 3. Leder & 4. Nestleder */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-100">
               {/* Leder */}
@@ -340,14 +363,15 @@ export const AdminGroupDetailPage: React.FC = () => {
                   onChange={(e) => setSelectedLeaderId(e.target.value)}
                   className="w-full px-2.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
                 >
+                  {/* Without this option the list would show the first member as leader of a group that has none */}
+                  <option value="">
+                    {members.length === 0 ? "Ingen medlemmer i gruppen" : "-- Ingen leder valgt --"}
+                  </option>
                   {members.map((member) => (
                     <option key={member.id} value={member.id}>
                       {member.name}
                     </option>
                   ))}
-                  {members.length === 0 && (
-                    <option value="">Ingen medlemmer i gruppen</option>
-                  )}
                 </select>
                 <p className="text-[10px] text-slate-400">
                   Styrer hvem som har lederadgang på /leder
@@ -384,94 +408,105 @@ export const AdminGroupDetailPage: React.FC = () => {
 
             {/* 5. Møteplan */}
             <div className="pt-2 border-t border-slate-100 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <Repeat className="w-3.5 h-3.5 text-indigo-600" />
-                  Gruppens møteplan (normaltid)
-                </span>
-                <span className="text-[10px] text-slate-400 font-medium">Sprint 4.1</span>
-              </div>
+              <label
+                htmlFor="input-edit-group-has-schedule"
+                className="text-xs font-bold text-slate-700 flex items-center gap-1.5 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  id="input-edit-group-has-schedule"
+                  checked={hasSchedule}
+                  onChange={(e) => setHasSchedule(e.target.checked)}
+                  className="w-4 h-4 rounded text-indigo-600 focus:ring-0"
+                />
+                <Repeat className="w-3.5 h-3.5 text-indigo-600" />
+                Gruppen har fast møtetid
+              </label>
 
-              <div className="grid grid-cols-3 gap-2">
-                {/* Ukedag */}
-                <div className="space-y-1">
-                  <label
-                    htmlFor="select-schedule-weekday"
-                    className="text-[11px] font-semibold text-slate-600 block"
-                  >
-                    Ukedag:
-                  </label>
-                  <select
-                    id="select-schedule-weekday"
-                    value={weekday}
-                    onChange={(e) => setWeekday(e.target.value)}
-                    className="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
-                  >
-                    {WEEKDAYS.map((day) => (
-                      <option key={day} value={day}>
-                        {day}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {hasSchedule && (
+                <>
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Ukedag */}
+                    <div className="space-y-1">
+                      <label
+                        htmlFor="select-schedule-weekday"
+                        className="text-[11px] font-semibold text-slate-600 block"
+                      >
+                        Ukedag:
+                      </label>
+                      <select
+                        id="select-schedule-weekday"
+                        value={weekday}
+                        onChange={(e) => setWeekday(e.target.value)}
+                        className="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
+                      >
+                        {WEEKDAYS.map((day) => (
+                          <option key={day} value={day}>
+                            {day}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                {/* Klokkeslett */}
-                <div className="space-y-1">
-                  <label
-                    htmlFor="input-schedule-time"
-                    className="text-[11px] font-semibold text-slate-600 block"
-                  >
-                    Klokkeslett:
-                  </label>
-                  <input
-                    type="text"
-                    id="input-schedule-time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    placeholder="19:00"
-                    className="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
-                  />
-                </div>
+                    {/* Klokkeslett */}
+                    <div className="space-y-1">
+                      <label
+                        htmlFor="input-schedule-time"
+                        className="text-[11px] font-semibold text-slate-600 block"
+                      >
+                        Klokkeslett:
+                      </label>
+                      <input
+                        type="text"
+                        id="input-schedule-time"
+                        value={time}
+                        onChange={(e) => setTime(e.target.value)}
+                        placeholder="19:00"
+                        className="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+                      />
+                    </div>
 
-                {/* Frekvens */}
-                <div className="space-y-1">
-                  <label
-                    htmlFor="select-schedule-frequency"
-                    className="text-[11px] font-semibold text-slate-600 block"
-                  >
-                    Frekvens:
-                  </label>
-                  <select
-                    id="select-schedule-frequency"
-                    value={frequency}
-                    onChange={(e) =>
-                      setFrequency(
-                        e.target.value as "hver uke" | "annenhver uke" | "hver måned"
-                      )
-                    }
-                    className="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
-                  >
-                    {MEETING_FREQUENCIES.map((freq) => (
-                      <option key={freq.id} value={freq.id}>
-                        {freq.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+                    {/* Frekvens */}
+                    <div className="space-y-1">
+                      <label
+                        htmlFor="select-schedule-frequency"
+                        className="text-[11px] font-semibold text-slate-600 block"
+                      >
+                        Frekvens:
+                      </label>
+                      <select
+                        id="select-schedule-frequency"
+                        value={frequency}
+                        onChange={(e) =>
+                          setFrequency(
+                            e.target.value as "hver uke" | "annenhver uke" | "hver måned"
+                          )
+                        }
+                        className="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
+                      >
+                        {MEETING_FREQUENCIES.map((freq) => (
+                          <option key={freq.id} value={freq.id}>
+                            {freq.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
 
-              {/* Formatted Meeting Plan Preview */}
-              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70 flex items-center gap-2 text-xs">
-                <Clock className="w-4 h-4 text-indigo-600 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                    Aktiv møteplan:
-                  </span>
-                  <p className="font-bold text-slate-800">
-                    {weekday} kl. {time}, {frequency}
-                  </p>
-                </div>
-              </div>
+                  {/* Formatted Meeting Plan Preview */}
+                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70 flex items-center gap-2 text-xs">
+                    <Clock className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                        Aktiv møteplan:
+                      </span>
+                      <p className="font-bold text-slate-800">
+                        {weekday} kl. {time}, {frequency}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Save Button */}

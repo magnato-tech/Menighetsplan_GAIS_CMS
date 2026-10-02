@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { useCms } from "../../context/CmsContext";
-import { isPubliclyVisible } from "../../utils/visibility";
+import { pickHighlight, upcomingPublicGatherings } from "../../utils/gatherings";
 import {
   Calendar,
   Clock,
@@ -37,29 +37,14 @@ export const PublicHomePage: React.FC = () => {
   const { settings, news, sermons } = useCms();
   const [isPlayingSermon, setIsPlayingSermon] = useState(false);
 
-  // Find next upcoming worship service
-  const nextWorship = useMemo(() => {
-    const now = new Date().getTime();
-    return gatherings
-      .filter((g) => {
-        if (!isPubliclyVisible(g)) return false;
-        const startTime = new Date(g.startsAt).getTime();
-        return startTime >= now - 4 * 60 * 60 * 1000; // include services currently happening
-      })
-      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0];
-  }, [gatherings]);
+  // The gathering lifted up at the top: one an admin has featured, otherwise the next worship service
+  const highlight = useMemo(() => pickHighlight(gatherings, Date.now()), [gatherings]);
+  const nextWorship = highlight?.gathering;
+  const highlightLabel =
+    highlight?.kind === "featured" ? "Fremhevet" : highlight?.kind === "next" ? "Neste arrangement" : "Neste Gudstjeneste";
 
   // Upcoming public gatherings for "Hva skjer" preview
-  const upcomingEvents = useMemo(() => {
-    const now = new Date().getTime();
-    return gatherings
-      .filter((g) => {
-        if (!isPubliclyVisible(g)) return false;
-        return new Date(g.startsAt).getTime() >= now;
-      })
-      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
-      .slice(0, 4);
-  }, [gatherings]);
+  const upcomingEvents = useMemo(() => upcomingPublicGatherings(gatherings, Date.now()).slice(0, 4), [gatherings]);
 
   // Published news articles
   const publishedNews = useMemo(() => {
@@ -144,10 +129,10 @@ export const PublicHomePage: React.FC = () => {
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-800 text-xs font-bold uppercase tracking-wider">
                 <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Neste Gudstjeneste</span>
+                <span>{highlightLabel}</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
-                {nextWorship ? nextWorship.title : "Søndagsgudstjeneste & kirkekaffe"}
+                {nextWorship ? nextWorship.title : "Ingen samlinger er lagt ut ennå"}
               </h2>
               {nextWorship?.theme && (
                 <p className="text-sm font-medium text-stone-600">
@@ -243,6 +228,11 @@ export const PublicHomePage: React.FC = () => {
                 <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">
                   {formatDate(item.startsAt)}
                 </div>
+                {item.cancelled && (
+                  <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">
+                    Avlyst
+                  </span>
+                )}
                 <h4 className="font-bold text-stone-900 text-base leading-snug">
                   {item.title}
                 </h4>

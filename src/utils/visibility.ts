@@ -1,4 +1,4 @@
-import { Gathering, GatheringVisibility } from "../types";
+import { Gathering, GatheringVisibility, Group } from "../types";
 
 type VisibilitySource = Pick<Partial<Gathering>, "visibility" | "isPublic">;
 
@@ -31,4 +31,12 @@ export function visibilityAfterToggle(
 ): GatheringVisibility {
   if (!isPublic) return "intern";
   return current === "fremhevet" ? "fremhevet" : "offentlig";
+}
+
+/**
+ * Whether a group may be shown outside the planner: on the website and in the public API.
+ * A group is public until an admin says otherwise.
+ */
+export function isGroupPublic(group: Pick<Partial<Group>, "isPublic">): boolean {
+  return group.isPublic !== false;
 }

@@ -42,7 +42,7 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 | `src/data/collections.ts` | Navn på alle Firestore-samlinger |
 | `src/data/newDocuments.ts` | Bygger nye personer, grupper, samlinger, oppgaver, tildelinger og meldinger |
 | `src/hooks/` | Hooks per rolle: `memberHooks`, `leaderHooks`, `adminHooks`, `useHusfellesskap`. `useAppHooks.ts` eksporterer alle |
-| `src/utils/` | Rene funksjoner: `staffing` (bemanning), `visibility` (hva som er offentlig), `publicProfile` (samtykke), `firestoreData` (klargjøring før skriving), `menu` (sidetreet og menyen), `groups` (hvem som er med i en gruppe), `dates` |
+| `src/utils/` | Rene funksjoner: `staffing` (bemanning), `visibility` (hva som er offentlig), `publicProfile` (samtykke), `firestoreData` (klargjøring før skriving), `menu` (sidetreet og menyen), `gatherings` (kommende samlinger og forsidens utvalg), `groups` (hvem som er med i en gruppe), `dates` |
 | `src/services/writeErrors.ts` | Melder mislykkede skrivinger til `WriteErrorBanner` |
 | `src/services/databaseAdmin.ts` | Fyll databasen med demodata / slett alt |
 | `src/pages/admin/` | Admin Studio: `AdminStudio.tsx` er skallet, `StudioSidebar.tsx` menyen, og `tabs/` har én fil per fane |
@@ -63,7 +63,9 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 - **Ikke les før du skriver.** Lister og kart i et dokument endres med `arrayUnion`, `arrayRemove` eller feltsti, og det som hører sammen skrives i én `writeBatch`. Se `src/services/firestore.ts`.
 - **`undefined` før skriving.** Firestore avviser `undefined`. Et nytt dokument går gjennom `sanitizeForFirestore`, som fjerner slike felt. En oppdatering går gjennom `forUpdate`, som sletter feltet i databasen. Bruker du `sanitizeForFirestore` på en oppdatering, blir et tømt felt stående med gammel verdi.
 - **Nye samlinger** legges inn i `src/data/collections.ts` og får en regel i `firestore.rules`. En test feiler hvis regelen mangler.
-- **`visibility` er eneste bryter** for om en samling er offentlig. Les med `isPubliclyVisible` og skriv med `visibilityFields` fra `src/utils/visibility.ts`. `isPublic` lagres bare som et speil.
+- **`visibility` er eneste bryter** for om en samling er offentlig. Les med `isPubliclyVisible` og skriv med `visibilityFields` fra `src/utils/visibility.ts`. `isPublic` lagres bare som et speil. Hva som er kommende, hva som er en gudstjeneste og hva forsiden løfter fram, hentes fra `src/utils/gatherings.ts`.
+- **En gruppe vises utad bare når `isGroupPublic` sier det.** Det gjelder nettsiden og `server/publicApi.ts`.
+- **Ikke lag skjema som ikke lagrer.** Et felt en besøkende fyller ut skal enten lagres og kunne leses av noen, eller ikke finnes.
 - **Ingen person vises offentlig uten registrert samtykke.** Offentlige sider henter personer gjennom `toPublicProfile` / `publicProfilesOf` i `src/utils/publicProfile.ts`, som bare gir navn og kontaktinfo utad. Bruk aldri `person.phone` eller `person.email` på en offentlig side.
 - **Persondata skal ikke ut i det offentlige API-et.** Nye felt i `server/publicApi.ts` må hvitelistes bevisst.
 - **Én fane eller dialog per fil.** En ny fane eller dialog får sin egen fil med egen tilstand. Siden over eier bare hva som vises, og kaller sidens hook én gang og sender resultatet ned.
@@ -80,5 +82,6 @@ Disse er ikke løst ennå. Se `ARKITEKTUR.md` for detaljer.
 - Det finnes ingen innlogging. Aktiv bruker velges i en testbryter.
 - `firestore.rules` slipper gjennom lesing og skriving uten innlogging.
 - De offentlige sidene laster hele personregisteret til nettleseren, selv om de bare viser personer med samtykke.
-- `fremhevet` lagres, men forsiden bruker det ikke: neste samling velges bare etter dato.
-- Grupper har feltet `isPublic`, men det kan ikke settes noe sted, og verken gruppesiden eller API-et filtrerer på det.
+- En besøkende kan ikke melde interesse for en gruppe i appen; `/fellesskap` viser hvem man kan kontakte.
+- Innmeldingsdato i en gruppe lagres, men eldre meldinger skjules ikke for nye medlemmer.
+- Modulbryterne (kalender, meldinger) lagres bare i nettleseren til den som endrer dem.

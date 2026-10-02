@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { useCms } from "../../context/CmsContext";
 import { publicProfilesOf } from "../../utils/publicProfile";
+import { isGroupPublic } from "../../utils/visibility";
 import {
   Shield,
   Phone,
@@ -43,9 +44,9 @@ export const PublicLeadershipPage: React.FC = () => {
       });
   };
 
-  // All groups in the "ledergruppe" category that have someone to show
+  // The leadership groups an admin has not hidden, and that have someone to show
   const ledergrupper = groups.filter(
-    (g) => g.category === "ledergruppe" && getGroupMembersWithRoles(g).length > 0
+    (g) => g.category === "ledergruppe" && isGroupPublic(g) && getGroupMembersWithRoles(g).length > 0
   );
 
   // Specific groups
