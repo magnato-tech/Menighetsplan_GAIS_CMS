@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { useCms } from "../../context/CmsContext";
+import { isPubliclyVisible } from "../../utils/visibility";
 import {
   Calendar,
   Clock,
@@ -15,7 +16,7 @@ import {
 
 export const PublicCalendarPage: React.FC = () => {
   const { gatherings } = useFirebase();
-  const { settings, overrides } = useCms();
+  const { settings } = useCms();
   const [selectedCategory, setSelectedCategory] = useState<string>("alle");
 
   // Format date helper
@@ -48,11 +49,7 @@ export const PublicCalendarPage: React.FC = () => {
   // Process & filter gatherings
   const processedEvents = useMemo(() => {
     return gatherings
-      .filter((g) => {
-        if (g.isPublic === false) return false;
-        if (overrides[g.id]?.hidden) return false;
-        return true;
-      })
+      .filter((g) => isPubliclyVisible(g))
       .map((g) => {
         const title = g.title || "Samling";
         const isWorship = Boolean(
@@ -84,7 +81,7 @@ export const PublicCalendarPage: React.FC = () => {
         return true;
       })
       .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-  }, [gatherings, overrides, selectedCategory]);
+  }, [gatherings, selectedCategory]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-8">

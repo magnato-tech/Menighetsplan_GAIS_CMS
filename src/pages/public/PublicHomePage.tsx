@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { useCms } from "../../context/CmsContext";
+import { isPubliclyVisible } from "../../utils/visibility";
 import {
   Calendar,
   Clock,
@@ -33,7 +34,7 @@ function getSpotifyEmbedUrl(url: string | undefined): string | null {
 
 export const PublicHomePage: React.FC = () => {
   const { gatherings, groups } = useFirebase();
-  const { settings, news, sermons, overrides } = useCms();
+  const { settings, news, sermons } = useCms();
   const [isPlayingSermon, setIsPlayingSermon] = useState(false);
 
   // Find next upcoming worship service
@@ -41,26 +42,24 @@ export const PublicHomePage: React.FC = () => {
     const now = new Date().getTime();
     return gatherings
       .filter((g) => {
-        if (g.isPublic === false) return false;
-        if (overrides[g.id]?.hidden) return false;
+        if (!isPubliclyVisible(g)) return false;
         const startTime = new Date(g.startsAt).getTime();
         return startTime >= now - 4 * 60 * 60 * 1000; // include services currently happening
       })
       .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0];
-  }, [gatherings, overrides]);
+  }, [gatherings]);
 
   // Upcoming public gatherings for "Hva skjer" preview
   const upcomingEvents = useMemo(() => {
     const now = new Date().getTime();
     return gatherings
       .filter((g) => {
-        if (g.isPublic === false) return false;
-        if (overrides[g.id]?.hidden) return false;
+        if (!isPubliclyVisible(g)) return false;
         return new Date(g.startsAt).getTime() >= now;
       })
       .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
       .slice(0, 4);
-  }, [gatherings, overrides]);
+  }, [gatherings]);
 
   // Published news articles
   const publishedNews = useMemo(() => {

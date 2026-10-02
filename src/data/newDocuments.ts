@@ -10,6 +10,7 @@ import {
   MeetingSchedule,
 } from "../types";
 import { newId } from "../utils/id";
+import { visibilityFields } from "../utils/visibility";
 
 // Each new document is built here exactly once. The same object goes into local
 // state and into Firestore, so the two can never disagree on the id or the defaults.
@@ -103,8 +104,7 @@ export function buildGathering(data: NewGatheringInput): Gathering {
     hostPersonId: data.hostPersonId,
     invitationSent: !!data.sendInvitationImmediately,
     invitationSentAt: data.sendInvitationImmediately ? new Date().toISOString() : undefined,
-    visibility,
-    isPublic: visibility !== "intern",
+    ...visibilityFields(visibility),
     isGudstjeneste: data.isGudstjeneste ?? (data.type === "arrangement"),
     cancelled: data.cancelled ?? false,
   };

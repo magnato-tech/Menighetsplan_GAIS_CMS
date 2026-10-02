@@ -8,7 +8,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { sanitizeForFirestore } from "../services/firestore";
-import { CMS_COLLECTIONS, CMS_OVERRIDES_COLLECTION, CMS_SETTINGS_DOC_ID } from "../data/collections";
+import { CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID } from "../data/collections";
 import { reportWriteError } from "../services/writeErrors";
 import {
   CmsPage,
@@ -16,7 +16,6 @@ import {
   CmsSermon,
   CmsStaffMember,
   CmsSettings,
-  CmsEventOverride,
   initialCmsPages,
   initialCmsNews,
   initialCmsSermons,
@@ -30,7 +29,6 @@ interface CmsContextValue {
   sermons: CmsSermon[];
   staff: CmsStaffMember[];
   settings: CmsSettings;
-  overrides: Record<string, CmsEventOverride>;
   isFirestoreSyncing: boolean;
   // Every write resolves to whether it reached Firestore. A failure is already shown to the user.
   savePage: (page: Partial<CmsPage> & { id?: string }) => Promise<boolean>;
@@ -42,8 +40,6 @@ interface CmsContextValue {
   saveStaff: (staffData: Partial<CmsStaffMember> & { id?: string }) => Promise<boolean>;
   deleteStaff: (staffId: string) => Promise<boolean>;
   saveSettings: (settingsData: Partial<CmsSettings>) => Promise<boolean>;
-  toggleFeatureGathering: (gatheringId: string) => Promise<boolean>;
-  toggleHideGathering: (gatheringId: string) => Promise<boolean>;
   resetCmsToDefaults: () => Promise<boolean>;
   getPageBySlug: (slug: string) => CmsPage | undefined;
   getNewsById: (id: string) => CmsNewsArticle | undefined;
@@ -58,7 +54,6 @@ const STORAGE_KEY_NEWS = "menighetsplan_cms_news_v3";
 const STORAGE_KEY_SERMONS = "menighetsplan_cms_sermons_v3";
 const STORAGE_KEY_STAFF = "menighetsplan_cms_staff_v3";
 const STORAGE_KEY_SETTINGS = "menighetsplan_cms_settings_v3";
-const STORAGE_KEY_OVERRIDES = "menighetsplan_cms_overrides_v3";
 
 async function attempt(action: string, write: () => Promise<unknown>): Promise<boolean> {
   try {
@@ -112,14 +107,6 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return initialCmsSettings;
   });
 
-  const [overrides, setOverrides] = useState<Record<string, CmsEventOverride>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_OVERRIDES);
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return {};
-  });
-
   const [isFirestoreSyncing, setIsFirestoreSyncing] = useState(false);
 
   // Firestore real-time subscriptions
@@ -129,7 +116,6 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let unsubSermons: (() => void) | undefined;
     let unsubStaff: (() => void) | undefined;
     let unsubSettings: (() => void) | undefined;
-    let unsubOverrides: (() => void) | undefined;
 
     // A listener that fails stops for good, so say which one it was
     const onError = (name: string) => (err: Error) => console.warn(`Firestore sync error (${name}):`, err);
@@ -184,16 +170,6 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             localStorage.removeItem(STORAGE_KEY_SETTINGS);
           }
         }, onError(CMS_COLLECTIONS.SETTINGS));
-
-        // 6. Overrides
-        unsubOverrides = onSnapshot(collection(db, CMS_OVERRIDES_COLLECTION), (snapshot) => {
-          const map: Record<string, CmsEventOverride> = {};
-          snapshot.forEach((docSnap) => {
-            map[docSnap.id] = docSnap.data() as CmsEventOverride;
-          });
-          setOverrides(map);
-          localStorage.setItem(STORAGE_KEY_OVERRIDES, JSON.stringify(map));
-        }, onError(CMS_OVERRIDES_COLLECTION));
       } catch (err) {
         console.warn("Firestore sync error:", err);
       } finally {
@@ -209,7 +185,6 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (unsubSermons) unsubSermons();
       if (unsubStaff) unsubStaff();
       if (unsubSettings) unsubSettings();
-      if (unsubOverrides) unsubOverrides();
     };
   }, []);
 
@@ -380,52 +355,12 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
-  // Overrides
-  const toggleFeatureGathering = async (gatheringId: string) => {
-    const current = overrides[gatheringId] || {
-      gatheringId,
-      featured: false,
-      hidden: false,
-      updatedAt: new Date().toISOString(),
-    };
-    const nextOverride: CmsEventOverride = {
-      ...current,
-      featured: !current.featured,
-      hidden: current.featured ? current.hidden : false,
-      updatedAt: new Date().toISOString(),
-    };
-    setOverrides((prev) => ({ ...prev, [gatheringId]: nextOverride }));
-    return attempt("lagre fremhevingen", () =>
-      setDoc(doc(db, CMS_OVERRIDES_COLLECTION, gatheringId), sanitizeForFirestore(nextOverride))
-    );
-  };
-
-  const toggleHideGathering = async (gatheringId: string) => {
-    const current = overrides[gatheringId] || {
-      gatheringId,
-      featured: false,
-      hidden: false,
-      updatedAt: new Date().toISOString(),
-    };
-    const nextOverride: CmsEventOverride = {
-      ...current,
-      hidden: !current.hidden,
-      featured: current.hidden ? current.featured : false,
-      updatedAt: new Date().toISOString(),
-    };
-    setOverrides((prev) => ({ ...prev, [gatheringId]: nextOverride }));
-    return attempt("lagre skjulingen", () =>
-      setDoc(doc(db, CMS_OVERRIDES_COLLECTION, gatheringId), sanitizeForFirestore(nextOverride))
-    );
-  };
-
   const resetCmsToDefaults = async () => {
     setPages(initialCmsPages);
     setNews(initialCmsNews);
     setSermons(initialCmsSermons);
     setStaff(initialCmsStaff);
     setSettings(initialCmsSettings);
-    setOverrides({});
     return attempt("tilbakestille CMS-innholdet", async () => {
       for (const p of initialCmsPages) await setDoc(doc(db, CMS_COLLECTIONS.PAGES, p.id), sanitizeForFirestore(p));
       for (const n of initialCmsNews) await setDoc(doc(db, CMS_COLLECTIONS.NEWS, n.id), sanitizeForFirestore(n));
@@ -452,7 +387,6 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         sermons,
         staff,
         settings,
-        overrides,
         isFirestoreSyncing,
         savePage,
         deletePage,
@@ -463,8 +397,6 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         saveStaff,
         deleteStaff,
         saveSettings,
-        toggleFeatureGathering,
-        toggleHideGathering,
         resetCmsToDefaults,
         getPageBySlug,
         getNewsById,

@@ -2,7 +2,6 @@ import {
   type GatheringDoc,
   type GroupDoc,
   toOsloIso,
-  isPubliclyVisible,
   isWorshipService,
   toPublicGatherings,
   toContractV1,
@@ -10,6 +9,7 @@ import {
   toPublicGroups,
   toRecurringEvents,
 } from "../server/publicApi";
+import { isPubliclyVisible, visibilityFields, visibilityAfterToggle } from "../src/utils/visibility";
 
 function runTests() {
   console.log("🧪 Starter tester for det offentlige API-et...\n");
@@ -70,6 +70,21 @@ function runTests() {
   assert(
     !isPubliclyVisible({ visibility: "hemmelig" as GatheringDoc["visibility"] }),
     "Ukjent visibility-verdi regnes ikke som offentlig"
+  );
+
+  // Writing: the two fields are always stored together, and a public/internal switch keeps "fremhevet"
+  assert(
+    visibilityFields("intern").isPublic === false && visibilityFields("offentlig").isPublic && visibilityFields("fremhevet").isPublic,
+    "visibilityFields gir isPublic som følger visibility"
+  );
+  assert(visibilityAfterToggle("offentlig", false) === "intern", "Å skru av offentlig gir 'intern'");
+  assert(visibilityAfterToggle("fremhevet", false) === "intern", "Å skru av offentlig på en fremhevet samling gir 'intern'");
+  assert(visibilityAfterToggle("intern", true) === "offentlig", "Å skru på offentlig gir 'offentlig'");
+  assert(visibilityAfterToggle(undefined, true) === "offentlig", "Samling uten visibility blir 'offentlig' når den skrus på");
+  assert(visibilityAfterToggle("fremhevet", true) === "fremhevet", "En fremhevet samling forblir fremhevet så lenge den er offentlig");
+  assert(
+    !isPubliclyVisible(visibilityFields(visibilityAfterToggle("offentlig", false))),
+    "En samling som skrus av er ikke lenger offentlig, heller ikke i API-et"
   );
 
   // 3. Worship service: the explicit flag wins over the title

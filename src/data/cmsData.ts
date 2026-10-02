@@ -105,14 +105,6 @@ export interface CmsSettings {
   }[];
 }
 
-export interface CmsEventOverride {
-  gatheringId: string;
-  featured: boolean;
-  hidden: boolean;
-  customTag?: string;
-  updatedAt: string;
-}
-
 export const initialLeadershipDecisions = [
   {
     id: "dec-1",

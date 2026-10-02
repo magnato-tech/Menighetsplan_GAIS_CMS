@@ -1,5 +1,6 @@
 import type { Gathering, Group } from "../src/types";
 import { validateEvent } from "../src/utils/validation";
+import { isPubliclyVisible } from "../src/utils/visibility";
 
 // Firestore documents are untyped at runtime, so every field is optional until validated.
 export type GatheringDoc = Partial<Gathering>;
@@ -49,15 +50,6 @@ export function toOsloIso(d: Date): string {
 // ============================================================================
 // Gatherings: one set of rules shared by every endpoint
 // ============================================================================
-
-/**
- * `visibility` is the single source of truth. Documents written before that
- * field existed only carry `isPublic`, so it is used when `visibility` is absent.
- */
-export function isPubliclyVisible(g: GatheringDoc): boolean {
-  if (g.visibility) return g.visibility === "offentlig" || g.visibility === "fremhevet";
-  return g.isPublic !== false;
-}
 
 export function isWorshipService(g: GatheringDoc): boolean {
   if (typeof g.isGudstjeneste === "boolean") return g.isGudstjeneste;

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { parseIsoToDateAndTime, combineDateAndTimeToIso } from "../../utils/dates";
+import { isPubliclyVisible, visibilityFields, visibilityAfterToggle } from "../../utils/visibility";
 import { Gathering } from "../../types";
 import {
   X,
@@ -26,7 +27,7 @@ export const EditGatheringDialog: React.FC<EditGatheringDialogProps> = ({ detail
     gathering.endsAt ? parseIsoToDateAndTime(gathering.endsAt).time : "12:00"
   );
   const [editGatheringLocation, setEditGatheringLocation] = useState<string>(gathering.location || "");
-  const [editGatheringIsPublic, setEditGatheringIsPublic] = useState<boolean>(gathering.isPublic !== false);
+  const [editGatheringIsPublic, setEditGatheringIsPublic] = useState<boolean>(isPubliclyVisible(gathering));
   const [editGatheringIsGudstjeneste, setEditGatheringIsGudstjeneste] = useState<boolean>(gathering.isGudstjeneste || false);
   const [editGatheringCancelled, setEditGatheringCancelled] = useState<boolean>(gathering.cancelled || false);
 
@@ -50,7 +51,8 @@ export const EditGatheringDialog: React.FC<EditGatheringDialogProps> = ({ detail
       startsAt,
       endsAt,
       location: editGatheringLocation.trim() || undefined,
-      isPublic: editGatheringIsPublic,
+      // `visibility` is what the public site and API read; storing only `isPublic` changed nothing there
+      ...visibilityFields(visibilityAfterToggle(gathering.visibility, editGatheringIsPublic)),
       isGudstjeneste: editGatheringIsGudstjeneste,
       cancelled: editGatheringCancelled,
     });

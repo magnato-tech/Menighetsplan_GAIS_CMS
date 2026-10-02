@@ -2,7 +2,8 @@ import React from "react";
 import {
   formatNorwegianDateTime,
 } from "../../../hooks/useAppHooks";
-import { useCms } from "../../../context/CmsContext";
+import { GatheringVisibility } from "../../../types";
+import { isPubliclyVisible, visibilityFields } from "../../../utils/visibility";
 import {
   Globe,
   Star,
@@ -17,18 +18,9 @@ interface VisibilityTabProps {
 
 export const VisibilityTab: React.FC<VisibilityTabProps> = ({ studio, showFeedback }) => {
   const { adminGatherings, updateGathering } = studio;
-  const { overrides, toggleFeatureGathering, toggleHideGathering } = useCms();
 
-  const handleSetGatheringVisibility = async (gatheringId: string, visibility: "intern" | "offentlig" | "fremhevet") => {
-    await updateGathering(gatheringId, {
-      visibility,
-      isPublic: visibility !== "intern",
-    });
-    if (visibility === "fremhevet") {
-      if (!overrides[gatheringId]?.featured) toggleFeatureGathering(gatheringId);
-    } else if (visibility === "intern") {
-      if (!overrides[gatheringId]?.hidden) toggleHideGathering(gatheringId);
-    }
+  const handleSetGatheringVisibility = async (gatheringId: string, visibility: GatheringVisibility) => {
+    await updateGathering(gatheringId, visibilityFields(visibility));
     showFeedback(`Synlighet oppdatert til: ${visibility === "fremhevet" ? "Fremhevet på forsiden" : visibility === "offentlig" ? "Offentlig kalender" : "Kun intern"}`);
   };
 
@@ -44,7 +36,8 @@ export const VisibilityTab: React.FC<VisibilityTabProps> = ({ studio, showFeedba
       <div className="space-y-3">
         {adminGatherings.map((item) => {
           const g = item.gathering;
-          const visibility = g.visibility || (overrides[g.id]?.featured ? "fremhevet" : overrides[g.id]?.hidden ? "intern" : "offentlig");
+          // Older documents may lack `visibility` and only say whether they are public
+          const visibility = g.visibility || (isPubliclyVisible(g) ? "offentlig" : "intern");
           const isFeatured = visibility === "fremhevet";
           const isHidden = visibility === "intern";
           const isPublic = visibility === "offentlig";
