@@ -46,15 +46,3 @@ export function validateEvent(data: unknown): Event {
 export function validateGathering(data: unknown): Gathering {
   return validateEvent(data);
 }
-
-/**
- * The canonical staffing equation:
- * Ledige plasser = Behov (neededCount) - Bekreftet (confirmed) - Venter (pending)
- */
-export function calculateAvailableSpots(
-  neededCount: number,
-  confirmedCount: number,
-  pendingCount: number
-): number {
-  return Math.max(0, neededCount - confirmedCount - pendingCount);
-}

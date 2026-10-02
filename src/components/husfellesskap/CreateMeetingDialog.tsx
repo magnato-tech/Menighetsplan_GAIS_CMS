@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { combineDateAndTimeToIso, parseIsoToDateAndTime } from "../../utils/dates";
 import { HusfellesskapModel } from "./husfellesskapModel";
 import {
   Check,
@@ -17,12 +18,9 @@ export const CreateMeetingDialog: React.FC<CreateMeetingDialogProps> = ({ model,
   // The form starts with next week's date, the usual time and the first member as host
   const [formTitle, setFormTitle] = useState("Husfellesskap");
   const [formDate, setFormDate] = useState(() => {
-    const nextDate = new Date();
-    nextDate.setDate(nextDate.getDate() + 7);
-    const yyyy = nextDate.getFullYear();
-    const mm = String(nextDate.getMonth() + 1).padStart(2, "0");
-    const dd = String(nextDate.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    return parseIsoToDateAndTime(nextWeek.toISOString()).date;
   });
   const [formTime, setFormTime] = useState("19:30");
   const [formLocation, setFormLocation] = useState("");
@@ -37,7 +35,7 @@ export const CreateMeetingDialog: React.FC<CreateMeetingDialogProps> = ({ model,
       showToast("Vennligst fyll ut dato og tittel.", "info");
       return;
     }
-    const startsAt = new Date(`${formDate}T${formTime || "19:30"}:00`).toISOString();
+    const startsAt = combineDateAndTimeToIso(formDate, formTime || "19:30");
     let computedLocation = formLocation;
     if (!computedLocation && formHostId) {
       const host = allPersons.find((p) => p.id === formHostId);

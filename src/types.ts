@@ -26,18 +26,6 @@ export interface Person {
   updatedAt?: string;
 }
 
-export interface LeadershipDecision {
-  id: string;
-  topic: string;
-  question: string;
-  optionA: string;
-  optionB: string;
-  chosenOption?: "A" | "B";
-  decidedBy?: string;
-  decidedAt?: string;
-  notes?: string;
-}
-
 export type GroupCategory = "tjenestegruppe" | "husgruppe" | "strategigruppe" | "ledergruppe" | "interessegruppe";
 
 export interface MeetingSchedule {
@@ -139,33 +127,3 @@ export interface Assignment {
   respondedAt?: string;
   withdrawalReason?: string;
 }
-
-// Presentation Model for reusable ActionCard component
-export type BadgeVariant = "neutral" | "success" | "warning" | "urgent" | "info";
-
-export interface ActionCardModel {
-  id: string;
-  taskId: string;
-  title: string;
-  gatheringTitle: string;
-  dateTimeFormatted: string;
-  groupName: string;
-  location?: string;
-  status: Task["status"];
-  statusLabel: string;
-  badgeVariant: BadgeVariant;
-  primaryActionLabel?: string;
-  primaryActionType?: "claim" | "absence" | "view";
-  detailUrl: string;
-  isAssignedToMe: boolean;
-  assignedPersonName?: string;
-}
-
-export interface QueryResult<T> {
-  data: T;
-  loading: boolean;
-  error: string | null;
-  permissionDenied?: boolean;
-}
-
-export type { CmsPage } from "./data/cmsData";

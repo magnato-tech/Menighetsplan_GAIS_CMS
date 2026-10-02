@@ -1,6 +1,16 @@
 import { describe } from "vitest";
 import { assert } from "./assert";
-import { calculateTaskStaffingStatus, getStaffingStatus } from "../src/utils/staffing";
+import {
+  applyAssignmentChange,
+  calculateTaskStaffingStatus,
+  countSlots,
+  describeAssignments,
+  getStaffingStatus,
+  holdsSlot,
+  isAcuteForfall,
+  taskStatusFor,
+} from "../src/utils/staffing";
+import { initialAssignments, initialTasks } from "../src/data/mockData";
 import type { Task, Assignment } from "../src/types";
 
 describe("Bemanningsstatus", () => {
@@ -98,4 +108,85 @@ describe("Bemanningsstatus", () => {
     ...responses("kaffe", "confirmed"),
   ]);
   assert(withForfall.vacantCount === 1 && withForfall.openCount === 1, "Samlingen skiller forfall fra oppgaver som bare mangler folk");
+
+  // 4. The equation: Ledige plasser = Behov − Bekreftet − Venter
+  const slots = (needed: number | undefined, ...list: Assignment["response"][]) =>
+    countSlots({ neededCount: needed }, responses("t", ...list));
+  assert(slots(2, "confirmed").free === 1, "2 behov − 1 bekreftet − 0 venter = 1 ledig plass");
+  assert(slots(3, "confirmed", "pending").free === 1, "3 behov − 1 bekreftet − 1 venter = 1 ledig plass");
+  assert(slots(2, "confirmed", "confirmed").free === 0, "Fullt dekket gir ingen ledige plasser");
+  assert(slots(1, "pending").free === 0, "En ubesvart forespørsel holder plassen");
+  assert(slots(1, "withdrawn", "declined").free === 1, "Forfall og avslag holder ingen plass");
+  assert(slots(1, "confirmed", "confirmed").free === 0, "Flere enn behovet gir ikke negativt antall ledige");
+  assert(slots(undefined).needed === 1 && slots(undefined).free === 1, "Uten oppgitt behov trengs én person");
+  assert(holdsSlot({ response: "confirmed" }) && holdsSlot({ response: "pending" }), "Bekreftet og forespurt står på oppgaven");
+  assert(!holdsSlot({ response: "declined" }) && !holdsSlot({ response: "withdrawn" }), "Avslått og forfall står ikke på oppgaven");
+
+  // 5. The status stored on a task follows from its assignments
+  const statusOf = (needed: number, status: Task["status"], acute: boolean, ...list: Assignment["response"][]) =>
+    taskStatusFor(task("t", needed, status), responses("t", ...list), acute);
+  assert(statusOf(1, "open", false) === "open", "Uten tildelinger er oppgaven ledig");
+  assert(statusOf(1, "open", false, "confirmed") === "confirmed", "Én bekreftet på en oppgave for én er dekket");
+  assert(statusOf(1, "open", false, "pending") === "assigned", "En forespørsel som holder siste plass gir 'assigned'");
+  assert(statusOf(2, "open", false, "confirmed") === "open", "1 av 2 bekreftet har fortsatt en ledig plass");
+  assert(statusOf(2, "open", false, "confirmed", "pending") === "assigned", "1 bekreftet + 1 forespurt av 2 venter på svar");
+  assert(statusOf(2, "open", false, "confirmed", "confirmed") === "confirmed", "2 av 2 bekreftet er dekket");
+  assert(statusOf(1, "confirmed", false, "withdrawn") === "open", "Forfall i god tid gjør oppgaven ledig");
+  assert(statusOf(1, "confirmed", true, "withdrawn") === "vacant", "Akutt forfall gir 'vacant'");
+  assert(statusOf(1, "assigned", true, "declined") === "vacant", "Et nei tett på samlingen gir også 'vacant'");
+  assert(statusOf(2, "vacant", false, "confirmed") === "vacant", "En akutt ledig oppgave er akutt til alle plassene er fylt");
+  assert(statusOf(1, "vacant", false, "withdrawn", "confirmed") === "confirmed", "En vikar som sier ja dekker oppgaven igjen");
+  assert(statusOf(1, "vacant", false, "withdrawn", "pending") === "assigned", "En forespurt vikar holder plassen til svaret kommer");
+  assert(statusOf(1, "confirmed", true, "confirmed") === "confirmed", "Et akutt forfall på en plass som alt er dekket endrer ingenting");
+  assert(statusOf(1, "cancelled", false, "confirmed") === "cancelled", "En avlyst oppgave forblir avlyst");
+
+  // 6. Acute: less than 48 hours before the gathering starts
+  const start = "2026-11-01T10:00:00.000Z";
+  assert(isAcuteForfall(start, new Date("2026-10-31T10:00:00.000Z")), "24 timer før er akutt");
+  assert(isAcuteForfall(start, new Date("2026-10-30T10:00:01.000Z")), "Ett sekund innenfor 48 timer er akutt");
+  assert(!isAcuteForfall(start, new Date("2026-10-30T10:00:00.000Z")), "Nøyaktig 48 timer før er ikke akutt");
+  assert(!isAcuteForfall(start, new Date("2026-10-01T10:00:00.000Z")), "En måned før er ikke akutt");
+  assert(isAcuteForfall(start, new Date("2026-11-01T10:30:00.000Z")), "Etter at samlingen har startet er det akutt");
+  assert(!isAcuteForfall(undefined, new Date()) && !isAcuteForfall("ikke en dato", new Date()), "Uten gyldig starttid er ingenting akutt");
+
+  // 7. A change to the assignments, applied to the list the status is worked out from
+  const [first, second] = responses("t", "confirmed", "pending");
+  const added = assignment("t", "pending");
+  const changed = applyAssignmentChange([first, second], {
+    add: added,
+    update: [{ id: second.id, fields: { response: "declined", respondedAt: "2026-10-01T10:00:00.000Z" } }],
+    remove: first.id,
+  });
+  assert(changed.length === 2 && changed[0].id === second.id && changed[1].id === added.id, "Endringen fjerner, oppdaterer og legger til");
+  assert(changed[0].response === "declined" && changed[0].respondedAt !== undefined, "Den oppdaterte tildelingen får de nye feltene");
+  assert(second.response === "pending", "applyAssignmentChange endrer ikke tildelingene den får inn");
+  assert(applyAssignmentChange([first], {}).length === 1, "En tom endring endrer ingenting");
+
+  // 8. How an answer reads, in one place
+  const described = describeAssignments(responses("t", "pending", "confirmed", "declined", "withdrawn"), (id) => ({
+    id,
+    name: `Person ${id}`,
+    globalRole: "member",
+  }));
+  assert(
+    described.map((d) => d.statusLabel).join(",") === "Forespurt,Akseptert,Avslått,Forfall",
+    "Svarene heter Forespurt, Akseptert, Avslått og Forfall"
+  );
+  assert(
+    described.every((d) => d.response === d.assignment.response && d.person?.id === d.assignment.personId),
+    "Hver rad viser tildelingens eget svar og person"
+  );
+  assert(
+    describeAssignments(responses("t", "confirmed"), () => undefined)[0].person === undefined,
+    "En tildeling til en slettet person tåles"
+  );
+
+  // 9. The demo data follows the same rule, so a freshly filled database starts out consistent
+  const inconsistent = initialTasks.filter(
+    (t) => taskStatusFor(t, initialAssignments.filter((a) => a.taskId === t.id)) !== t.status
+  );
+  assert(
+    inconsistent.length === 0,
+    `Statusen på hver demooppgave følger av tildelingene (avvik: ${inconsistent.map((t) => t.id).join(", ") || "ingen"})`
+  );
 });

@@ -1,6 +1,105 @@
-import { Task, Assignment } from "../types";
+import { Task, Assignment, Person } from "../types";
 
-// 6. Bemanningsbarometer & Staffing Status helpers
+// The staffing rules of PRODUKTDOKUMENTASJON.md chapter 3, in one place.
+
+/** How a person's answer to a task reads in the planner. */
+export const RESPONSE_LABELS: Record<Assignment["response"], string> = {
+  pending: "Forespurt",
+  confirmed: "Akseptert",
+  declined: "Avslått",
+  withdrawn: "Forfall",
+};
+
+export interface AssignedPerson {
+  assignment: Assignment;
+  /** Missing when the person has been deleted. */
+  person?: Person;
+  statusLabel: string;
+  response: Assignment["response"];
+}
+
+/** Each assignment with its person and how the answer reads. */
+export function describeAssignments(
+  taskAssignments: Assignment[],
+  getPersonById: (personId: string) => Person | undefined
+): AssignedPerson[] {
+  return taskAssignments.map((assignment) => ({
+    assignment,
+    person: getPersonById(assignment.personId),
+    statusLabel: RESPONSE_LABELS[assignment.response],
+    response: assignment.response,
+  }));
+}
+
+export interface TaskSlots {
+  needed: number;
+  confirmed: number;
+  pending: number;
+  /** Ledige plasser = Behov − Bekreftet − Venter */
+  free: number;
+}
+
+/** Counts a task's slots. Someone who has declined or withdrawn holds no slot. */
+export function countSlots(task: Pick<Task, "neededCount">, taskAssignments: Assignment[]): TaskSlots {
+  const needed = task.neededCount ?? 1;
+  const confirmed = taskAssignments.filter((a) => a.response === "confirmed").length;
+  const pending = taskAssignments.filter((a) => a.response === "pending").length;
+  return { needed, confirmed, pending, free: Math.max(0, needed - confirmed - pending) };
+}
+
+/** Whether the person is on the task: has said yes, or has been asked and not answered yet. */
+export function holdsSlot(assignment: Pick<Assignment, "response">): boolean {
+  return assignment.response === "confirmed" || assignment.response === "pending";
+}
+
+const ACUTE_FORFALL_HOURS = 48;
+
+/** A withdrawal is acute when it comes less than 48 hours before the gathering starts. */
+export function isAcuteForfall(gatheringStartsAt: string | undefined, at: Date): boolean {
+  const start = gatheringStartsAt ? new Date(gatheringStartsAt).getTime() : NaN;
+  if (Number.isNaN(start)) return false;
+  return start - at.getTime() < ACUTE_FORFALL_HOURS * 60 * 60 * 1000;
+}
+
+/**
+ * The status a task has, given who is assigned to it. It is stored on the task every time
+ * its assignments change, so the status never says something the assignments do not.
+ *
+ * - confirmed: every slot is filled by someone who has said yes
+ * - assigned: every slot is spoken for, but someone has yet to answer
+ * - vacant: a slot is free after an acute withdrawal, until it is filled again
+ * - open: a slot is free
+ */
+export function taskStatusFor(
+  task: Pick<Task, "status" | "neededCount">,
+  taskAssignments: Assignment[],
+  acuteForfall = false
+): Task["status"] {
+  if (task.status === "cancelled") return "cancelled";
+  const { needed, confirmed, free } = countSlots(task, taskAssignments);
+  if (free === 0) return confirmed >= needed ? "confirmed" : "assigned";
+  return acuteForfall || task.status === "vacant" ? "vacant" : "open";
+}
+
+/** A change to who is on a task. */
+export interface AssignmentChange {
+  add?: Assignment;
+  /** A field given as `undefined` is cleared. */
+  update?: { id: string; fields: Partial<Assignment> }[];
+  remove?: string;
+}
+
+/** The task's assignments as they are once the change has been made. */
+export function applyAssignmentChange(taskAssignments: Assignment[], change: AssignmentChange): Assignment[] {
+  const updated = taskAssignments
+    .filter((a) => a.id !== change.remove)
+    .map((a) => {
+      const fields = change.update?.find((u) => u.id === a.id)?.fields;
+      return fields ? { ...a, ...fields } : a;
+    });
+  return change.add ? [...updated, change.add] : updated;
+}
+
 export type StaffingColor = "green" | "yellow" | "red";
 
 export interface TaskStaffingStatus {
@@ -33,7 +132,7 @@ export function calculateTaskStaffingStatus(
   task: Task,
   taskAssignments: Assignment[] = []
 ): TaskStaffingStatus {
-  const needed = task.neededCount !== undefined ? task.neededCount : 1;
+  const { needed, confirmed: confirmedCount, pending: pendingCount } = countSlots(task, taskAssignments);
 
   // If no assignments provided, synthesize from task.status fallback
   if (taskAssignments.length === 0) {
@@ -86,8 +185,6 @@ export function calculateTaskStaffingStatus(
     };
   }
 
-  const confirmedCount = taskAssignments.filter((a) => a.response === "confirmed").length;
-  const pendingCount = taskAssignments.filter((a) => a.response === "pending").length;
   const withdrawnCount = taskAssignments.filter((a) => a.response === "withdrawn").length;
   const hasForfall = withdrawnCount > 0 || task.status === "vacant";
 

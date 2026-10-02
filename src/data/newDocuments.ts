@@ -133,6 +133,7 @@ export function buildAssignment(
     taskId,
     personId,
     response,
+    assignedAt: new Date().toISOString(),
   };
 }
 

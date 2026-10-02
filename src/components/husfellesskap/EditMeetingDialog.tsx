@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Gathering } from "../../types";
+import { combineDateAndTimeToIso, parseIsoToDateAndTime } from "../../utils/dates";
 import { HusfellesskapModel } from "./husfellesskapModel";
 import {
   Check,
@@ -20,19 +21,8 @@ export const EditMeetingDialog: React.FC<EditMeetingDialogProps> = ({ model, act
 
   // The form starts from the meeting as it is when the dialog opens
   const [formTitle, setFormTitle] = useState(activeMeeting.title || "Husfellesskap");
-  const [formDate, setFormDate] = useState(() => {
-    const d = new Date(activeMeeting.startsAt);
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  });
-  const [formTime, setFormTime] = useState(() => {
-    const d = new Date(activeMeeting.startsAt);
-    const hh = String(d.getHours()).padStart(2, "0");
-    const min = String(d.getMinutes()).padStart(2, "0");
-    return `${hh}:${min}`;
-  });
+  const [formDate, setFormDate] = useState(() => parseIsoToDateAndTime(activeMeeting.startsAt).date);
+  const [formTime, setFormTime] = useState(() => parseIsoToDateAndTime(activeMeeting.startsAt).time);
   const [formLocation, setFormLocation] = useState(activeMeeting.location || "");
   const [formHostId, setFormHostId] = useState(activeMeeting.hostPersonId || "");
   const [formTheme, setFormTheme] = useState(activeMeeting.theme || "");
@@ -41,7 +31,7 @@ export const EditMeetingDialog: React.FC<EditMeetingDialogProps> = ({ model, act
   const handleSaveEditMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeMeeting) return;
-    const startsAt = new Date(`${formDate}T${formTime || "19:30"}:00`).toISOString();
+    const startsAt = combineDateAndTimeToIso(formDate, formTime || "19:30");
     let computedLocation = formLocation;
     if (!computedLocation && formHostId) {
       const host = allPersons.find((p) => p.id === formHostId);

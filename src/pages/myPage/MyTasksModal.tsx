@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { MyPageModel } from "./useMyPage";
+import { Task } from "../../types";
+import { formatNorwegianDateTime } from "../../utils/dates";
 import {
   X,
   ListTodo,
@@ -12,8 +14,12 @@ interface MyTasksModalProps {
 }
 
 export const MyTasksModal: React.FC<MyTasksModalProps> = ({ page, onClose }) => {
-  const { myTasks } = page;
+  const { myTasks, getGatheringById } = page;
   const navigate = useNavigate();
+  const gatheringLine = (task: Task) => {
+    const gathering = getGatheringById(task.gatheringId);
+    return gathering ? `${formatNorwegianDateTime(gathering.startsAt)} · ${gathering.title}` : "";
+  };
 
   return (
     <div
@@ -61,6 +67,10 @@ export const MyTasksModal: React.FC<MyTasksModalProps> = ({ page, onClose }) => 
                     Tildelt
                   </span>
                 </div>
+                {/* Two tasks may share a title, so say which gathering each belongs to */}
+                {gatheringLine(task) && (
+                  <p className="text-[11px] font-semibold text-slate-500">{gatheringLine(task)}</p>
+                )}
                 {task.description && (
                   <p className="text-xs text-slate-600">{task.description}</p>
                 )}

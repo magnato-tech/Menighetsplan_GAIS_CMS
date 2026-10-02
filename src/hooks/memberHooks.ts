@@ -1,7 +1,7 @@
-import { useMemo, useCallback } from "react";
+import { useMemo } from "react";
 import { useFirebase } from "../context/FirebaseDataContext";
-import { Task, Person, Group, Gathering, Assignment, ActionCardModel, QueryResult, BadgeVariant } from "../types";
-import { formatNorwegianDateTime } from "../utils/dates";
+import { Person } from "../types";
+import { countSlots, holdsSlot } from "../utils/staffing";
 
 // 1. Hook: useCurrentUser
 export function useCurrentUser() {
@@ -17,211 +17,82 @@ export function useCurrentUser() {
   };
 }
 
-// 2. Hook: useMyTasks
-export function useMyTasks(): QueryResult<Task[]> {
-  const { currentUser, getTasksForPerson, tasks, assignments } = useFirebase();
-
-  const myTasks = useMemo(() => {
-    return getTasksForPerson(currentUser.id);
-  }, [getTasksForPerson, currentUser.id, tasks, assignments]);
-
-  // The data comes straight from the snapshot listeners: nothing to wait for, nothing to fail here
-  return {
-    data: myTasks,
-    loading: false,
-    error: null,
-  };
+// 2. Hook: useMyTasks — the tasks the current user has said yes to
+export function useMyTasks() {
+  const { currentUser, getTasksForPerson } = useFirebase();
+  return useMemo(() => getTasksForPerson(currentUser.id), [getTasksForPerson, currentUser.id]);
 }
 
-// 3. Hook: useOpenTasks
-export function useOpenTasks(): QueryResult<Task[]> {
-  const { currentUser, getUserGroups, getOpenTasksForGroups, tasks } = useFirebase();
-
-  const userGroups = useMemo(() => getUserGroups(currentUser.id), [getUserGroups, currentUser.id]);
-  const groupIds = useMemo(() => userGroups.map((g) => g.id), [userGroups]);
-
-  const openTasks = useMemo(() => {
-    return getOpenTasksForGroups(groupIds);
-  }, [getOpenTasksForGroups, groupIds, tasks]);
-
-  return {
-    data: openTasks,
-    loading: false,
-    error: null,
-    permissionDenied: false,
-  };
-}
-
-// 4. Hook: useTaskDetail
-export interface TaskDetailResult {
-  task: Task | null;
-  gathering: Gathering | null;
-  group: Group | null;
-  assignment: Assignment | null;
-  assignedPerson: Person | null;
-  isAssignedToMe: boolean;
-  canClaim: boolean;
-  canReportAbsence: boolean;
-  permissionDenied: boolean;
-  loading: boolean;
-  error: string | null;
-  claimTask: () => Promise<{ success: boolean; error?: string }>;
-  reportAbsence: () => Promise<{ success: boolean; error?: string }>;
-}
-
-export function useTaskDetail(taskId: string | undefined): TaskDetailResult {
+// 3. Hook: useTaskDetail — a task as one member sees it, and what they can do with it
+export function useTaskDetail(taskId: string | undefined) {
   const {
     currentUser,
     getTaskById,
     getGatheringById,
     getGroupById,
     getPersonById,
-    getAssignmentForTask,
+    getAllAssignmentsForTask,
     isPersonInGroup,
     assignTaskToPerson,
-    reportAbsence: performReportAbsence,
-    tasks,
-    assignments,
+    updateAssignmentStatus,
+    reportAbsence,
   } = useFirebase();
 
-  const task = useMemo(() => {
-    if (!taskId) return null;
-    return getTaskById(taskId) || null;
-  }, [taskId, getTaskById, tasks]);
+  const task = (taskId && getTaskById(taskId)) || null;
+  const group = (task && getGroupById(task.groupId)) || null;
+  const gathering = (task && getGatheringById(task.gatheringId)) || null;
 
-  const group = useMemo(() => {
-    if (!task) return null;
-    return getGroupById(task.groupId) || null;
-  }, [task, getGroupById]);
+  // A task is only shown to the group it belongs to
+  const permissionDenied = task !== null && !isPersonInGroup(currentUser.id, task.groupId);
 
-  const gathering = useMemo(() => {
-    if (!task) return null;
-    return getGatheringById(task.gatheringId) || null;
-  }, [task, getGatheringById]);
+  const taskAssignments = task ? getAllAssignmentsForTask(task.id) : [];
+  const freeSlots = task ? countSlots(task, taskAssignments).free : 0;
 
-  const assignment = useMemo(() => {
-    if (!task) return null;
-    return getAssignmentForTask(task.id) || null;
-  }, [task, getAssignmentForTask, assignments]);
+  // The current user's own place on the task, if they have one
+  const myAssignment = taskAssignments.find((a) => a.personId === currentUser.id && holdsSlot(a)) ?? null;
+  const isAssignedToMe = myAssignment?.response === "confirmed";
+  const isAskedOfMe = myAssignment?.response === "pending";
 
-  const assignedPerson = useMemo(() => {
-    if (!assignment) return null;
-    return getPersonById(assignment.personId) || null;
-  }, [assignment, getPersonById]);
+  // The others who are on it, those who have said yes first
+  const othersOnTask = taskAssignments
+    .filter((a) => holdsSlot(a) && a.personId !== currentUser.id)
+    .sort((a, b) => Number(b.response === "confirmed") - Number(a.response === "confirmed"))
+    .map((a) => getPersonById(a.personId))
+    .filter((person): person is Person => person !== undefined);
 
-  // Check group membership permission
-  const hasGroupAccess = useMemo(() => {
-    if (!task) return true;
-    return isPersonInGroup(currentUser.id, task.groupId);
-  }, [task, currentUser.id, isPersonInGroup]);
+  const canClaim = task !== null && !permissionDenied && task.status !== "cancelled" && freeSlots > 0 && !myAssignment;
 
-  const isAssignedToMe = useMemo(() => {
-    return assignment?.personId === currentUser.id && assignment?.response === "confirmed";
-  }, [assignment, currentUser.id]);
-
-  const canClaim = useMemo(() => {
-    return (
-      hasGroupAccess &&
-      (task?.status === "open" || task?.status === "vacant") &&
-      !isAssignedToMe
-    );
-  }, [hasGroupAccess, task?.status, isAssignedToMe]);
-
-  const canReportAbsence = useMemo(() => {
-    return isAssignedToMe && (task?.status === "confirmed" || task?.status === "assigned");
-  }, [isAssignedToMe, task?.status]);
-
-  const claimTask = useCallback(async () => {
-    if (!task) return { success: false, error: "Ingen oppgave valgt" };
-    return assignTaskToPerson(task.id, currentUser.id);
-  }, [task, currentUser.id, assignTaskToPerson]);
-
-  const reportAbsenceAction = useCallback(async () => {
-    if (!task) return { success: false, error: "Ingen oppgave valgt" };
-    return performReportAbsence(task.id, currentUser.id);
-  }, [task, currentUser.id, performReportAbsence]);
-
-  const permissionDenied = Boolean(task && !hasGroupAccess);
+  const refused = (error: string) => ({ success: false, error });
 
   return {
     task: permissionDenied ? null : task,
     gathering,
     group,
-    assignment,
-    assignedPerson,
+    othersOnTask,
+    freeSlots,
+    /** A slot stands empty after an acute withdrawal. */
+    needsSubstitute: freeSlots > 0 && task?.status === "vacant",
     isAssignedToMe,
+    isAskedOfMe,
     canClaim,
-    canReportAbsence,
+    canReportAbsence: isAssignedToMe,
     permissionDenied,
-    loading: false,
-    error: null,
-    claimTask,
-    reportAbsence: reportAbsenceAction,
+    /** Taking a task oneself is a yes, so the assignment is confirmed at once. */
+    claimTask: () =>
+      task && canClaim
+        ? assignTaskToPerson(task.id, currentUser.id, "confirmed")
+        : refused("Oppgaven kan ikke tas."),
+    /** Answers a request from a leader. */
+    answerRequest: (accept: boolean) =>
+      myAssignment && isAskedOfMe
+        ? updateAssignmentStatus(myAssignment.id, accept ? "confirmed" : "declined")
+        : refused("Det er ingen forespørsel å svare på."),
+    reportAbsence: () =>
+      task && isAssignedToMe ? reportAbsence(task.id, currentUser.id) : refused("Du står ikke på denne oppgaven."),
   };
 }
 
-// 5. Hook / Function: useActionCardModel
-export function useActionCardModel(task: Task, currentUser: Person): ActionCardModel {
-  const { getGatheringById, getGroupById, getAssignmentForTask, getPersonById } = useFirebase();
-
-  const gathering = getGatheringById(task.gatheringId);
-  const group = getGroupById(task.groupId);
-  const assignment = getAssignmentForTask(task.id);
-  const assignedPerson = assignment ? getPersonById(assignment.personId) : null;
-
-  const isAssignedToMe = assignment?.personId === currentUser.id && assignment?.response === "confirmed";
-
-  let statusLabel = "Ledig";
-  let badgeVariant: BadgeVariant = "neutral";
-  let primaryActionLabel: string | undefined = "Ta oppgave";
-  let primaryActionType: "claim" | "absence" | "view" | undefined = "claim";
-
-  if (isAssignedToMe) {
-    statusLabel = "Din oppgave";
-    badgeVariant = "success";
-    primaryActionLabel = "Meld forfall";
-    primaryActionType = "absence";
-  } else if (task.status === "vacant") {
-    statusLabel = "Trenger vikar";
-    badgeVariant = "urgent";
-    primaryActionLabel = "Ta oppgave";
-    primaryActionType = "claim";
-  } else if (task.status === "open") {
-    statusLabel = "Ledig oppgave";
-    badgeVariant = "info";
-    primaryActionLabel = "Ta oppgave";
-    primaryActionType = "claim";
-  } else if (task.status === "confirmed" || task.status === "assigned") {
-    statusLabel = assignedPerson ? `Tildelt ${assignedPerson.name.split(" ")[0]}` : "Tildelt";
-    badgeVariant = "neutral";
-    primaryActionLabel = undefined;
-    primaryActionType = "view";
-  }
-
-  const dateTimeFormatted = gathering
-    ? formatNorwegianDateTime(gathering.startsAt)
-    : "Tidspunkt ikke satt";
-
-  return {
-    id: task.id,
-    taskId: task.id,
-    title: task.title,
-    gatheringTitle: gathering?.title || "Samling",
-    dateTimeFormatted,
-    groupName: group?.name || "Gruppe",
-    location: gathering?.location,
-    status: task.status,
-    statusLabel,
-    badgeVariant,
-    primaryActionLabel,
-    primaryActionType,
-    detailUrl: `/oppgave/${task.id}`,
-    isAssignedToMe,
-    assignedPersonName: assignedPerson?.name,
-  };
-}
-
-// 8. Hook: useModuleConfig
+// 4. Hook: useModuleConfig
 export function useModuleConfig() {
   const { moduleConfig, setModuleStatus, toggleKalender, toggleMeldinger } = useFirebase();
 

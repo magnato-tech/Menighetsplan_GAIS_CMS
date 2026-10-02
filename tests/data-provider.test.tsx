@@ -13,6 +13,11 @@ vi.mock("../src/firebase", async () => (await import("./support/offlineFirestore
 
 import { FirebaseDataProvider, useFirebase } from "../src/context/FirebaseDataContext";
 
+const inHours = (hours: number) => new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+// A withdrawal is acute less than 48 hours before the gathering
+const farAhead = inHours(30 * 24);
+const tomorrow = inHours(24);
+
 const persons: Person[] = [
   { id: "person-1", name: "Kari Nordmann", globalRole: "admin" },
   { id: "person-2", name: "Ola Hansen", globalRole: "member" },
@@ -33,17 +38,22 @@ const gatherings: Gathering[] = [
     id: "gathering-1",
     groupId: "group-lyd",
     title: "Gudstjeneste",
-    startsAt: "2026-11-01T10:00:00.000Z",
+    startsAt: farAhead,
     theme: "Nåde",
     visibility: "offentlig",
     isPublic: true,
   },
+  { id: "gathering-soon", groupId: "group-lyd", title: "Bønnemøte", startsAt: tomorrow, visibility: "intern", isPublic: false },
 ];
 const tasks: Task[] = [
   { id: "task-1", gatheringId: "gathering-1", groupId: "group-lyd", title: "Lydtekniker", status: "open", neededCount: 1 },
-  { id: "task-2", gatheringId: "gathering-1", groupId: "group-lyd", title: "Bilde", status: "confirmed", neededCount: 2 },
+  { id: "task-2", gatheringId: "gathering-1", groupId: "group-lyd", title: "Bilde", status: "open", neededCount: 2 },
+  { id: "task-soon", gatheringId: "gathering-soon", groupId: "group-lyd", title: "Vert", status: "confirmed", neededCount: 1 },
 ];
-const assignments: Assignment[] = [{ id: "assign-1", taskId: "task-2", personId: "person-2", response: "confirmed" }];
+const assignments: Assignment[] = [
+  { id: "assign-1", taskId: "task-2", personId: "person-2", response: "confirmed" },
+  { id: "assign-soon", taskId: "task-soon", personId: "person-3", response: "confirmed" },
+];
 const messages: GroupMessage[] = [
   {
     id: "msg-1",
@@ -81,18 +91,21 @@ async function mountProvider(internal = true) {
   });
   await waitFor(() => expect(result.current.allPersons).toHaveLength(persons.length));
   await waitFor(() => expect(result.current.gatherings).toHaveLength(gatherings.length));
-  if (internal) await waitFor(() => expect(result.current.assignments).toHaveLength(assignments.length));
+  if (internal) {
+    await waitFor(() => expect(result.current.tasks).toHaveLength(tasks.length));
+    await waitFor(() => expect(result.current.assignments).toHaveLength(assignments.length));
+  }
   return result;
 }
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const isTimestamp = (value: unknown) => typeof value === "string" && !Number.isNaN(Date.parse(value));
 
 describe("Lesing", () => {
   test("Dataene i databasen vises", async () => {
     const data = await mountProvider();
     await waitFor(() => {
       expect(data.current.groups.map((g) => g.id)).toEqual(["group-lyd"]);
-      expect(data.current.tasks.map((t) => t.id).sort()).toEqual(["task-1", "task-2"]);
       expect(data.current.groupMessages.map((m) => m.id)).toEqual(["msg-1"]);
     });
     expect(data.current.getTaskById("task-1")?.title).toBe("Lydtekniker");
@@ -168,7 +181,7 @@ describe("Endringer", () => {
     await waitFor(() => expect(data.current.getGatheringById("gathering-1")?.title).toBe("Familiegudstjeneste"));
     expect(data.current.getGatheringById("gathering-1")).not.toHaveProperty("theme");
     const saved = await stored(COLLECTIONS.GATHERINGS, "gathering-1");
-    expect(saved).toMatchObject({ title: "Familiegudstjeneste", startsAt: "2026-11-01T10:00:00.000Z" });
+    expect(saved).toMatchObject({ title: "Familiegudstjeneste", startsAt: farAhead });
     expect(saved).not.toHaveProperty("theme");
   });
 
@@ -177,22 +190,16 @@ describe("Endringer", () => {
     data.current.sendGatheringInvitation("gathering-1");
 
     await waitFor(() => expect(data.current.getGatheringById("gathering-1")?.invitationSent).toBe(true));
-    const saved = await stored(COLLECTIONS.GATHERINGS, "gathering-1");
-    expect(Number.isNaN(Date.parse(saved?.invitationSentAt))).toBe(false);
+    expect(isTimestamp((await stored(COLLECTIONS.GATHERINGS, "gathering-1"))?.invitationSentAt)).toBe(true);
   });
 
   test("Oppgaven kan endres felt for felt", async () => {
     const data = await mountProvider();
-    data.current.updateTaskStatus("task-1", "cancelled");
     data.current.updateTaskInstruction("task-1", "Møt 09:30");
     data.current.updateTask("task-1", { title: "Lyd og lys" });
-    data.current.updateTaskNeededCount("task-2", undefined);
 
-    await waitFor(() =>
-      expect(data.current.getTaskById("task-1")).toMatchObject({ status: "cancelled", instruction: "Møt 09:30", title: "Lyd og lys" })
-    );
-    await waitFor(() => expect(data.current.getTaskById("task-2")).not.toHaveProperty("neededCount"));
-    expect(await stored(COLLECTIONS.TASKS, "task-2")).not.toHaveProperty("neededCount");
+    await waitFor(() => expect(data.current.getTaskById("task-1")).toMatchObject({ instruction: "Møt 09:30", title: "Lyd og lys" }));
+    expect(data.current.getTaskById("task-1")?.status).toBe("open");
   });
 
   test("Gruppe og person kan endres", async () => {
@@ -210,21 +217,19 @@ describe("Endringer", () => {
 });
 
 describe("Sletting", () => {
-  test("Samling, oppgave, tildeling og melding forsvinner", async () => {
+  test("Samling, oppgave og melding forsvinner", async () => {
     const data = await mountProvider();
     data.current.deleteGathering("gathering-1");
     data.current.deleteTask("task-1");
-    data.current.removeAssignment("assign-1");
     data.current.deleteGroupMessage("msg-1");
 
     await waitFor(() => {
-      expect(data.current.gatherings).toEqual([]);
-      expect(data.current.tasks.map((t) => t.id)).toEqual(["task-2"]);
-      expect(data.current.assignments).toEqual([]);
+      expect(data.current.gatherings.map((g) => g.id)).toEqual(["gathering-soon"]);
+      expect(data.current.tasks.map((t) => t.id).sort()).toEqual(["task-2", "task-soon"]);
       expect(data.current.groupMessages).toEqual([]);
     });
-    expect(await storedIds(COLLECTIONS.GATHERINGS)).toEqual([]);
-    expect(await storedIds(COLLECTIONS.TASKS)).toEqual(["task-2"]);
+    expect(await storedIds(COLLECTIONS.GATHERINGS)).toEqual(["gathering-soon"]);
+    expect(await storedIds(COLLECTIONS.TASKS)).toEqual(["task-2", "task-soon"]);
   });
 });
 
@@ -237,7 +242,7 @@ describe("Medlemskap", () => {
     await waitFor(() => expect(data.current.getGroupById("group-lyd")?.memberIds).toEqual(["person-2", "person-3"]));
     const saved = await stored(COLLECTIONS.GROUPS, "group-lyd");
     expect(saved?.memberIds).toEqual(["person-2", "person-3"]);
-    expect(Number.isNaN(Date.parse(saved?.memberJoinedAt["person-3"]))).toBe(false);
+    expect(isTimestamp(saved?.memberJoinedAt["person-3"])).toBe(true);
     expect(saved?.memberJoinedAt["person-2"]).toBe("2026-01-10T12:00:00.000Z");
     expect(data.current.isPersonInGroup("person-3", "group-lyd")).toBe(true);
   });
@@ -268,54 +273,133 @@ describe("Medlemskap", () => {
   });
 });
 
-describe("Tildelinger", () => {
-  test("Direkte tildeling bekrefter både tildelingen og oppgaven", async () => {
+// PRODUKTDOKUMENTASJON.md chapter 3: the task's status follows from its need and its assignments
+describe("Bemanning", () => {
+  test("Direkte tildeling bekrefter tildelingen, og oppgaven er dekket", async () => {
     const data = await mountProvider();
-    void data.current.assignTaskToPerson("task-1", "person-3", "confirmed");
+    data.current.assignTaskToPerson("task-1", "person-3", "confirmed");
 
     await waitFor(() => expect(data.current.getTaskById("task-1")?.status).toBe("confirmed"));
     const [assignment] = data.current.getAllAssignmentsForTask("task-1");
     expect(assignment).toMatchObject({ taskId: "task-1", personId: "person-3", response: "confirmed" });
-    expect(await stored(COLLECTIONS.ASSIGNMENTS, assignment.id)).toMatchObject({ response: "confirmed" });
+    const saved = await stored(COLLECTIONS.ASSIGNMENTS, assignment.id);
+    expect(saved).toMatchObject({ response: "confirmed" });
+    expect(isTimestamp(saved?.assignedAt)).toBe(true);
     expect((await stored(COLLECTIONS.TASKS, "task-1"))?.status).toBe("confirmed");
   });
 
-  test("En forespørsel venter på svar", async () => {
+  test("En forespørsel venter på svar, og svaret avgjør oppgavens status", async () => {
     const data = await mountProvider();
-    void data.current.assignTaskToPerson("task-1", "person-3");
-
+    data.current.assignTaskToPerson("task-1", "person-3", "pending");
     await waitFor(() => expect(data.current.getTaskById("task-1")?.status).toBe("assigned"));
-    expect(data.current.getAssignmentForTask("task-1")?.response).toBe("pending");
-    expect((await stored(COLLECTIONS.TASKS, "task-1"))?.status).toBe("assigned");
+    const [request] = data.current.getAllAssignmentsForTask("task-1");
+    expect(request.response).toBe("pending");
+    expect(request).not.toHaveProperty("respondedAt");
+
+    data.current.updateAssignmentStatus(request.id, "confirmed");
+    await waitFor(() => expect(data.current.getTaskById("task-1")?.status).toBe("confirmed"));
+    expect(isTimestamp((await stored(COLLECTIONS.ASSIGNMENTS, request.id))?.respondedAt)).toBe(true);
+
+    // Setting it back to "pending" means the person has not answered after all
+    data.current.updateAssignmentStatus(request.id, "pending");
+    await waitFor(() => expect(data.current.getTaskById("task-1")?.status).toBe("assigned"));
+    expect(await stored(COLLECTIONS.ASSIGNMENTS, request.id)).not.toHaveProperty("respondedAt");
   });
 
-  test("Forfall lagres med grunn, og oppgaven blir ledig", async () => {
+  test("Et nei i god tid gjør oppgaven ledig igjen", async () => {
     const data = await mountProvider();
-    void data.current.reportAbsence("task-2", "person-2", "Syk");
+    data.current.assignTaskToPerson("task-1", "person-3", "pending");
+    await waitFor(() => expect(data.current.getAllAssignmentsForTask("task-1")).toHaveLength(1));
 
-    await waitFor(() => expect(data.current.getTaskById("task-2")?.status).toBe("vacant"));
+    data.current.updateAssignmentStatus(data.current.getAllAssignmentsForTask("task-1")[0].id, "declined");
+    await waitFor(() => expect(data.current.getAllAssignmentsForTask("task-1")[0].response).toBe("declined"));
+    expect((await stored(COLLECTIONS.TASKS, "task-1"))?.status).toBe("open");
+  });
+
+  test("En oppgave som trenger to er ledig til begge plassene er fylt", async () => {
+    const data = await mountProvider();
+    expect(data.current.getTaskById("task-2")?.status).toBe("open");
+
+    data.current.assignTaskToPerson("task-2", "person-3", "confirmed");
+    await waitFor(() => expect(data.current.getTaskById("task-2")?.status).toBe("confirmed"));
+    expect(data.current.getAllAssignmentsForTask("task-2")).toHaveLength(2);
+  });
+
+  test("Forfall i god tid lagres med grunn, og oppgaven blir ledig", async () => {
+    const data = await mountProvider();
+    data.current.assignTaskToPerson("task-2", "person-3", "confirmed");
+    await waitFor(() => expect(data.current.getTaskById("task-2")?.status).toBe("confirmed"));
+
+    expect(data.current.reportAbsence("task-2", "person-2", " Syk ")).toEqual({ success: true });
+    await waitFor(() => expect(data.current.getTaskById("task-2")?.status).toBe("open"));
     const saved = await stored(COLLECTIONS.ASSIGNMENTS, "assign-1");
-    expect(saved).toMatchObject({ withdrawalReason: "Syk" });
-    expect(saved?.response).not.toBe("confirmed");
-    expect((await stored(COLLECTIONS.TASKS, "task-2"))?.status).toBe("vacant");
+    expect(saved).toMatchObject({ response: "withdrawn", withdrawalReason: "Syk" });
+    expect(isTimestamp(saved?.respondedAt)).toBe(true);
+    expect((await stored(COLLECTIONS.TASKS, "task-2"))?.status).toBe("open");
   });
 
-  test("Svaret på en tildeling lagres", async () => {
+  test("Forfall mindre enn 48 timer før samlingen er akutt, til noen tar oppgaven", async () => {
     const data = await mountProvider();
-    data.current.updateAssignmentStatus("assign-1", "declined");
+    data.current.reportAbsence("task-soon", "person-3");
+    await waitFor(() => expect(data.current.getTaskById("task-soon")?.status).toBe("vacant"));
+    expect((await stored(COLLECTIONS.ASSIGNMENTS, "assign-soon"))?.response).toBe("withdrawn");
 
-    await waitFor(() => expect(data.current.getAssignmentForTask("task-2")?.response).toBe("declined"));
-    expect((await stored(COLLECTIONS.ASSIGNMENTS, "assign-1"))?.response).toBe("declined");
+    data.current.assignTaskToPerson("task-soon", "person-2", "confirmed");
+    await waitFor(() => expect(data.current.getTaskById("task-soon")?.status).toBe("confirmed"));
+    expect((await stored(COLLECTIONS.TASKS, "task-soon"))?.status).toBe("confirmed");
+  });
+
+  test("Den som bare er spurt og melder fra, har svart nei", async () => {
+    const data = await mountProvider();
+    data.current.assignTaskToPerson("task-1", "person-3", "pending");
+    await waitFor(() => expect(data.current.getAllAssignmentsForTask("task-1")).toHaveLength(1));
+
+    data.current.reportAbsence("task-1", "person-3");
+    await waitFor(() => expect(data.current.getAllAssignmentsForTask("task-1")[0].response).toBe("declined"));
+    expect(data.current.getTaskById("task-1")?.status).toBe("open");
+  });
+
+  test("Forfall fra en som ikke står på oppgaven gjør ingenting", async () => {
+    const data = await mountProvider();
+    expect(data.current.reportAbsence("task-1", "person-2").success).toBe(false);
+    expect(data.current.reportAbsence("ukjent-oppgave", "person-2").success).toBe(false);
+    await pause(60);
+    expect(data.current.getTaskById("task-1")?.status).toBe("open");
+    expect(getWriteError()).toBeNull();
+  });
+
+  test("Når en person fjernes fra oppgaven, er plassen ledig igjen", async () => {
+    const data = await mountProvider();
+    data.current.removeAssignment("assign-soon");
+
+    await waitFor(() => expect(data.current.getAllAssignmentsForTask("task-soon")).toEqual([]));
+    expect(data.current.getTaskById("task-soon")?.status).toBe("open");
+    expect((await stored(COLLECTIONS.TASKS, "task-soon"))?.status).toBe("open");
+    expect(await storedIds(COLLECTIONS.ASSIGNMENTS)).toEqual(["assign-1"]);
+  });
+
+  test("Endret behov endrer også om oppgaven er dekket", async () => {
+    const data = await mountProvider();
+    data.current.updateTaskNeededCount("task-2", 1);
+    await waitFor(() => expect(data.current.getTaskById("task-2")).toMatchObject({ neededCount: 1, status: "confirmed" }));
+
+    data.current.updateTask("task-2", { neededCount: 3 });
+    await waitFor(() => expect(data.current.getTaskById("task-2")).toMatchObject({ neededCount: 3, status: "open" }));
+
+    // Without a stated need the task counts as needing one person
+    data.current.updateTaskNeededCount("task-2", undefined);
+    await waitFor(() => expect(data.current.getTaskById("task-2")).not.toHaveProperty("neededCount"));
+    expect((await stored(COLLECTIONS.TASKS, "task-2"))?.status).toBe("confirmed");
   });
 });
 
 describe("Oppmøte", () => {
   test("Hver person har ett svar per samling, og et nytt svar erstatter det gamle", async () => {
     const data = await mountProvider();
-    void data.current.respondToGathering("gathering-1", "person-2", "attending");
+    data.current.respondToGathering("gathering-1", "person-2", "attending");
     await waitFor(() => expect(data.current.getPersonAttendance("gathering-1", "person-2")?.status).toBe("attending"));
 
-    void data.current.respondToGathering("gathering-1", "person-2", "declined");
+    data.current.respondToGathering("gathering-1", "person-2", "declined");
     await waitFor(() => expect(data.current.getPersonAttendance("gathering-1", "person-2")?.status).toBe("declined"));
     expect(data.current.getGatheringAttendances("gathering-1")).toHaveLength(1);
     expect(await storedIds(COLLECTIONS.GATHERING_ATTENDANCES)).toHaveLength(1);

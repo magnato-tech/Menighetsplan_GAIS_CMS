@@ -1,7 +1,7 @@
 import { useMemo, useCallback } from "react";
 import { useFirebase } from "../context/FirebaseDataContext";
 import { Task, Person, Group, Gathering } from "../types";
-import { calculateTaskStaffingStatus, StaffingStatusResult, getStaffingStatus } from "../utils/staffing";
+import { calculateTaskStaffingStatus, describeAssignments, StaffingStatusResult, getStaffingStatus } from "../utils/staffing";
 import { isInGroup } from "../utils/groups";
 
 export interface LeaderGatheringItem {
@@ -148,7 +148,6 @@ export function useLeaderGroupDetail(groupId: string) {
     assignTaskToPerson,
     updateAssignmentStatus,
     removeAssignment,
-    updateTaskStatus,
     getPersonById,
   } = useFirebase();
 
@@ -201,20 +200,7 @@ export function useLeaderGroupDetail(groupId: string) {
         // Detailed task items with assignments
         const taskItems = gatheringTasks.map((task) => {
           const taskAssignments = assignments.filter((a) => a.taskId === task.id);
-          const assignedPersons = taskAssignments.map((a) => {
-            const person = getPersonById(a.personId);
-            let statusLabel = "Forespurt";
-            if (a.response === "confirmed") statusLabel = "Akseptert";
-            if (a.response === "withdrawn") statusLabel = "Forfall";
-            if (a.response === "declined") statusLabel = "Avslått";
-
-            return {
-              assignment: a,
-              person,
-              statusLabel,
-              response: a.response,
-            };
-          });
+          const assignedPersons = describeAssignments(taskAssignments, getPersonById);
 
           const taskStaffing = calculateTaskStaffingStatus(task, taskAssignments);
           const confirmedCount = taskStaffing.confirmedCount;
@@ -289,7 +275,6 @@ export function useLeaderGroupDetail(groupId: string) {
     assignTaskToPerson,
     updateAssignmentStatus,
     removeAssignment,
-    updateTaskStatus,
   };
 }
 
@@ -308,7 +293,6 @@ export function useLeaderGatheringDetail(gatheringId: string) {
     assignTaskToPerson,
     updateAssignmentStatus,
     removeAssignment,
-    updateTaskStatus,
     reportAbsence: performReportAbsence,
     updateTaskNeededCount,
     updateTaskInstruction,
@@ -380,20 +364,7 @@ export function useLeaderGatheringDetail(gatheringId: string) {
     return gatheringTasks.map((task) => {
       const taskGroup = getGroupById(task.groupId);
       const taskAssignments = assignments.filter((a) => a.taskId === task.id);
-      const assignedPersons = taskAssignments.map((a) => {
-        const person = getPersonById(a.personId);
-        let statusLabel = "Forespurt";
-        if (a.response === "confirmed") statusLabel = "Akseptert";
-        if (a.response === "withdrawn") statusLabel = "Forfall";
-        if (a.response === "declined") statusLabel = "Avslått";
-
-        return {
-          assignment: a,
-          person,
-          statusLabel,
-          response: a.response,
-        };
-      });
+      const assignedPersons = describeAssignments(taskAssignments, getPersonById);
 
       const taskStaffing = calculateTaskStaffingStatus(task, taskAssignments);
       const confirmedPersonsCount = taskStaffing.confirmedCount;
@@ -452,7 +423,6 @@ export function useLeaderGatheringDetail(gatheringId: string) {
     assignTaskToPerson,
     updateAssignmentStatus,
     removeAssignment,
-    updateTaskStatus,
     reportAbsence: performReportAbsence,
     updateTaskNeededCount,
     updateTaskInstruction,

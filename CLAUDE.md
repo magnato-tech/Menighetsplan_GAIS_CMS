@@ -67,6 +67,8 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 - **Ingen person vises offentlig uten registrert samtykke.** Offentlige sider henter personer gjennom `toPublicProfile` / `publicProfilesOf` i `src/utils/publicProfile.ts`, som bare gir navn og kontaktinfo utad. Bruk aldri `person.phone` eller `person.email` på en offentlig side.
 - **Persondata skal ikke ut i det offentlige API-et.** Nye felt i `server/publicApi.ts` må hvitelistes bevisst.
 - **Én fane eller dialog per fil.** En ny fane eller dialog får sin egen fil med egen tilstand. Siden over eier bare hva som vises, og kaller sidens hook én gang og sender resultatet ned.
+- **Oppgavens status følger av tildelingene.** Sett aldri `task.status` for hånd. Alt som endrer hvem som står på en oppgave, eller hvor mange den trenger, går gjennom handlingene i `FirebaseDataContext.tsx`. De lagrer statusen fra `taskStatusFor` i samme skriving. Ledige plasser leses med `countSlots`, ikke fra statusen. Begge ligger i `src/utils/staffing.ts`.
+- **Tidspunkt lagres som eksakte øyeblikk.** Bruk `combineDateAndTimeToIso` fra `src/utils/dates.ts` når et skjema har dato og klokkeslett. En streng uten tidssone (`2026-10-18T11:00:00`) leses ulikt i nettleseren og på serveren.
 - **Test den ekte koden.** Regler og utregninger legges i `src/utils/` som rene funksjoner og testes derfra. En test skal aldri ha sin egen kopi av logikken.
 - **Interne ruter** må stå i `MIN_SIDE_SECTIONS` i `src/App.tsx`. Det styrer både layouten og om planleggingsdata lastes. Lenker til Min side skal gå til `/minside`; `/` er den offentlige forsiden.
 
@@ -79,5 +81,4 @@ Disse er ikke løst ennå. Se `ARKITEKTUR.md` for detaljer.
 - `firestore.rules` slipper gjennom lesing og skriving uten innlogging.
 - De offentlige sidene laster hele personregisteret til nettleseren, selv om de bare viser personer med samtykke.
 - `fremhevet` lagres, men forsiden bruker det ikke: neste samling velges bare etter dato.
-- Min side avgjør hva som er «kommende» mot en fast dato fra demodataene (2. september 2026), ikke dagens dato.
 - Grupper har feltet `isPublic`, men det kan ikke settes noe sted, og verken gruppesiden eller API-et filtrerer på det.

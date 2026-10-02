@@ -1,6 +1,6 @@
 import { describe } from "vitest";
 import { assert } from "./assert";
-import { validateEvent, validateGathering, calculateAvailableSpots, ValidationError } from "../src/utils/validation";
+import { validateEvent, validateGathering, ValidationError } from "../src/utils/validation";
 import { initialGatherings } from "../src/data/mockData";
 
 describe("Validering av samlinger", () => {
@@ -64,20 +64,7 @@ describe("Validering av samlinger", () => {
     assert(isValidationError, "Arrangement med ugyldig datoformat kaster ValidationError");
   }
 
-  // 5. Staffing equation: Ledige plasser = Behov − Bekreftet − Venter
-  const test1 = calculateAvailableSpots(2, 1, 0); // Behov 2, Bekreftet 1, Venter 0 -> Ledig 1
-  assert(test1 === 1, "Bemanningsligning: 2 behov - 1 bekreftet - 0 venter = 1 ledig plass");
-
-  const test2 = calculateAvailableSpots(3, 1, 1); // Behov 3, Bekreftet 1, Venter 1 -> Ledig 1
-  assert(test2 === 1, "Bemanningsligning: 3 behov - 1 bekreftet - 1 venter = 1 ledig plass");
-
-  const test3 = calculateAvailableSpots(2, 2, 0); // Behov 2, Bekreftet 2, Venter 0 -> Ledig 0
-  assert(test3 === 0, "Bemanningsligning: Fullt dekket (2 - 2 - 0 = 0 ledige)");
-
-  const test4 = calculateAvailableSpots(1, 0, 1); // Behov 1, Bekreftet 0, Venter 1 -> Ledig 0
-  assert(test4 === 0, "Bemanningsligning: 1 behov - 0 bekreftet - 1 venter = 0 ledige (venter på svar)");
-
-  // 6. Test single source of visibility: only allowed values
+  // 5. Test single source of visibility: only allowed values
   try {
     const invalidVisibility = {
       id: "event-bad-vis",

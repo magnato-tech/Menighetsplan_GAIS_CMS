@@ -25,10 +25,10 @@ import {
   addGroupMember,
   removeGroupMember,
   setGroupNotifications,
-  assignTask,
-  withdrawFromTask,
+  saveAssignmentChange,
 } from "../services/firestore";
 import { isInGroup } from "../utils/groups";
+import { AssignmentChange, applyAssignmentChange, holdsSlot, isAcuteForfall, taskStatusFor } from "../utils/staffing";
 
 export interface ModuleConfig {
   kalender: "on" | "off";
@@ -65,13 +65,12 @@ export interface FirebaseDataContextType {
   toggleMeldinger: () => void;
 
   // Lookups in the data above
+  /** The tasks the person has said yes to. */
   getTasksForPerson: (personId: string) => Task[];
-  getOpenTasksForGroups: (groupIds: string[]) => Task[];
   getTaskById: (taskId: string) => Task | undefined;
   getGatheringById: (gatheringId: string) => Gathering | undefined;
   getGroupById: (groupId: string) => Group | undefined;
   getPersonById: (personId: string) => Person | undefined;
-  getAssignmentForTask: (taskId: string) => Assignment | undefined;
   getAllAssignmentsForTask: (taskId: string) => Assignment[];
   getUserGroups: (personId: string) => Group[];
   isPersonInGroup: (personId: string, groupId: string) => boolean;
@@ -87,11 +86,13 @@ export interface FirebaseDataContextType {
   updateGathering: (gatheringId: string, updates: Partial<Gathering>) => ActionResult;
   deleteGathering: (gatheringId: string) => ActionResult;
   sendGatheringInvitation: (gatheringId: string) => ActionResult;
-  assignTaskToPerson: (taskId: string, personId: string, responseStatus?: "confirmed" | "pending") => ActionResult;
+  // Who is on a task. Each of these also stores the task status that follows from the change.
+  /** "confirmed" when the person has already said yes, "pending" to ask them. */
+  assignTaskToPerson: (taskId: string, personId: string, response: "confirmed" | "pending") => ActionResult;
+  /** The person pulls out of the task: a forfall if they had said yes, a no if they had only been asked. */
   reportAbsence: (taskId: string, personId: string, reason?: string) => ActionResult;
   updateAssignmentStatus: (assignmentId: string, response: Assignment["response"]) => ActionResult;
   removeAssignment: (assignmentId: string) => ActionResult;
-  updateTaskStatus: (taskId: string, status: Task["status"]) => ActionResult;
   updateGroupName: (groupId: string, newName: string) => ActionResult;
   updateGroup: (groupId: string, updates: Partial<Group>) => ActionResult;
   createGroup: (data: NewGroupInput) => ActionResult & { group?: Group };
@@ -258,13 +259,10 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
   const taskLookups = useMemo(
     () => ({
       getTaskById: (taskId: string) => tasks.find((t) => t.id === taskId),
-      getOpenTasksForGroups: (groupIds: string[]) =>
-        tasks.filter((t) => groupIds.includes(t.groupId) && (t.status === "open" || t.status === "vacant")),
       getTasksForPerson: (personId: string) => {
-        const taskIds = assignments.filter((a) => a.personId === personId).map((a) => a.taskId);
+        const taskIds = assignments.filter((a) => a.personId === personId && a.response === "confirmed").map((a) => a.taskId);
         return tasks.filter((t) => taskIds.includes(t.id));
       },
-      getAssignmentForTask: (taskId: string) => assignments.find((a) => a.taskId === taskId),
       getAllAssignmentsForTask: (taskId: string) => assignments.filter((a) => a.taskId === taskId),
     }),
     [tasks, assignments]
@@ -291,8 +289,6 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
 
   // Actions that need nothing but their arguments
   const actions = useMemo(() => {
-    const updateTask = (taskId: string, updates: Partial<Task>, action = "lagre endringene i oppgaven") =>
-      save(action, () => updateDocument(COLLECTIONS.TASKS, taskId, updates));
     const updateGroup = (groupId: string, updates: Partial<Group>, action = "lagre endringene i gruppen") =>
       save(action, () => updateDocument(COLLECTIONS.GROUPS, groupId, updates));
 
@@ -317,23 +313,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
         const task = buildTask(data);
         return { ...save("lagre oppgaven", () => createDocument(COLLECTIONS.TASKS, task)), task };
       },
-      updateTask: (taskId: string, updates: Partial<Task>) => updateTask(taskId, updates),
-      updateTaskStatus: (taskId: string, status: Task["status"]) =>
-        updateTask(taskId, { status }, "lagre status på oppgaven"),
-      updateTaskInstruction: (taskId: string, instruction: string) =>
-        updateTask(taskId, { instruction }, "lagre instruksen"),
-      updateTaskNeededCount: (taskId: string, neededCount: number | undefined) =>
-        updateTask(taskId, { neededCount }, "lagre bemanningsbehovet"),
       deleteTask: (taskId: string) => save("slette oppgaven", () => deleteDocument(COLLECTIONS.TASKS, taskId)),
-
-      assignTaskToPerson: (taskId: string, personId: string, responseStatus: "confirmed" | "pending" = "pending") => {
-        const assignment = buildAssignment(taskId, personId, responseStatus);
-        return save("lagre tildelingen", () => assignTask(assignment));
-      },
-      updateAssignmentStatus: (assignmentId: string, response: Assignment["response"]) =>
-        save("lagre svaret på oppgaven", () => updateDocument(COLLECTIONS.ASSIGNMENTS, assignmentId, { response })),
-      removeAssignment: (assignmentId: string) =>
-        save("fjerne tildelingen", () => deleteDocument(COLLECTIONS.ASSIGNMENTS, assignmentId)),
 
       createGroup: (data: NewGroupInput) => {
         const group = buildGroup(data);
@@ -373,13 +353,81 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
     [currentUser]
   );
 
-  const reportAbsence = useCallback(
-    (taskId: string, personId: string, reason?: string) => {
-      const assignmentIds = assignments.filter((a) => a.taskId === taskId && a.personId === personId).map((a) => a.id);
-      return save("registrere forfallet", () => withdrawFromTask(taskId, assignmentIds, reason));
-    },
-    [assignments]
-  );
+  // Staffing. A task's status follows from its need and its assignments (see taskStatusFor),
+  // so every action that changes either one stores the resulting status in the same write.
+  const staffingActions = useMemo(() => {
+    const assignmentsOf = (taskId: string) => assignments.filter((a) => a.taskId === taskId);
+
+    const updateTask = (taskId: string, updates: Partial<Task>, action = "lagre endringene i oppgaven") => {
+      const task = tasks.find((t) => t.id === taskId);
+      const changesNeed = task !== undefined && "neededCount" in updates && !("status" in updates);
+      const fields = changesNeed
+        ? { ...updates, status: taskStatusFor({ ...task, ...updates }, assignmentsOf(taskId)) }
+        : updates;
+      return save(action, () => updateDocument(COLLECTIONS.TASKS, taskId, fields));
+    };
+
+    const changeAssignments = (taskId: string, change: AssignmentChange, action: string, acuteForfall = false) => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task) return { success: false, error: "Oppgaven finnes ikke lenger." };
+      const after = applyAssignmentChange(assignmentsOf(taskId), change);
+      return save(action, () => saveAssignmentChange(taskId, change, taskStatusFor(task, after, acuteForfall)));
+    };
+
+    /** Whether pulling out of the task now comes too close to the gathering. */
+    const isAcuteNow = (taskId: string, now: Date) => {
+      const task = tasks.find((t) => t.id === taskId);
+      const gathering = gatherings.find((g) => g.id === task?.gatheringId);
+      return isAcuteForfall(gathering?.startsAt, now);
+    };
+
+    return {
+      updateTask: (taskId: string, updates: Partial<Task>) => updateTask(taskId, updates),
+      updateTaskInstruction: (taskId: string, instruction: string) =>
+        updateTask(taskId, { instruction }, "lagre instruksen"),
+      updateTaskNeededCount: (taskId: string, neededCount: number | undefined) =>
+        updateTask(taskId, { neededCount }, "lagre bemanningsbehovet"),
+
+      assignTaskToPerson: (taskId: string, personId: string, response: "confirmed" | "pending") =>
+        changeAssignments(taskId, { add: buildAssignment(taskId, personId, response) }, "lagre tildelingen"),
+
+      updateAssignmentStatus: (assignmentId: string, response: Assignment["response"]) => {
+        const assignment = assignments.find((a) => a.id === assignmentId);
+        if (!assignment) return { success: false, error: "Tildelingen finnes ikke lenger." };
+        const now = new Date();
+        // Back to "pending" means the person has not answered after all
+        const fields = { response, respondedAt: response === "pending" ? undefined : now.toISOString() };
+        const pullsOut = response === "withdrawn" || response === "declined";
+        return changeAssignments(
+          assignment.taskId,
+          { update: [{ id: assignmentId, fields }] },
+          "lagre svaret på oppgaven",
+          pullsOut && isAcuteNow(assignment.taskId, now)
+        );
+      },
+
+      removeAssignment: (assignmentId: string) => {
+        const assignment = assignments.find((a) => a.id === assignmentId);
+        if (!assignment) return { success: false, error: "Tildelingen finnes ikke lenger." };
+        return changeAssignments(assignment.taskId, { remove: assignmentId }, "fjerne tildelingen");
+      },
+
+      reportAbsence: (taskId: string, personId: string, reason?: string) => {
+        const mine = assignments.filter((a) => a.taskId === taskId && a.personId === personId && holdsSlot(a));
+        if (mine.length === 0) return { success: false, error: "Personen står ikke på denne oppgaven." };
+        const now = new Date();
+        const update = mine.map((a) => ({
+          id: a.id,
+          fields: {
+            response: a.response === "confirmed" ? ("withdrawn" as const) : ("declined" as const),
+            respondedAt: now.toISOString(),
+            withdrawalReason: reason?.trim() || undefined,
+          },
+        }));
+        return changeAssignments(taskId, { update }, "registrere forfallet", isAcuteNow(taskId, now));
+      },
+    };
+  }, [tasks, assignments, gatherings]);
 
   const { getGroupNotificationsEnabled } = groupLookups;
   const toggleGroupNotifications = useCallback(
@@ -415,8 +463,8 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       ...messageLookups,
       ...attendanceLookups,
       ...actions,
+      ...staffingActions,
       sendGroupMessage,
-      reportAbsence,
       toggleGroupNotifications,
     }),
     [
@@ -441,8 +489,8 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       messageLookups,
       attendanceLookups,
       actions,
+      staffingActions,
       sendGroupMessage,
-      reportAbsence,
       toggleGroupNotifications,
     ]
   );

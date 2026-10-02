@@ -1,8 +1,16 @@
 import { useMemo, useCallback } from "react";
 import { useFirebase } from "../context/FirebaseDataContext";
-import { Task, Person, Group, Gathering, Assignment } from "../types";
+import { Task, Group, Gathering } from "../types";
 import { validateGathering } from "../utils/validation";
-import { StaffingColor, TaskStaffingStatus, calculateTaskStaffingStatus, StaffingStatusResult, getStaffingStatus } from "../utils/staffing";
+import {
+  AssignedPerson,
+  TaskStaffingStatus,
+  calculateTaskStaffingStatus,
+  countSlots,
+  describeAssignments,
+  StaffingStatusResult,
+  getStaffingStatus,
+} from "../utils/staffing";
 
 export interface AdminGatheringItem {
   gathering: Gathering;
@@ -19,14 +27,7 @@ export interface AdminTaskItem {
   task: Task;
   gathering?: Gathering;
   group?: Group;
-  assignment?: Assignment;
-  assignedPerson?: Person | null;
-  assignedPersonsList: Array<{
-    assignment: Assignment;
-    person?: Person;
-    statusLabel: string;
-    response: Assignment["response"];
-  }>;
+  assignedPersonsList: AssignedPerson[];
   neededCount: number;
   confirmedCount: number;
   pendingCount: number;
@@ -53,7 +54,6 @@ export function useAdminDashboard() {
     getGroupById,
     getGatheringById,
     getPersonById,
-    getAssignmentForTask,
     createGathering,
     updateGathering,
     deleteGathering,
@@ -144,48 +144,24 @@ export function useAdminDashboard() {
       const gathering = getGatheringById(task.gatheringId);
       const group = getGroupById(task.groupId);
       const taskAssignments = assignments.filter((a) => a.taskId === task.id);
-      const primaryAssignment = getAssignmentForTask(task.id);
-      const assignedPerson = primaryAssignment ? getPersonById(primaryAssignment.personId) : null;
-      
-      const assignedPersonsList = taskAssignments.map((a) => {
-        const person = getPersonById(a.personId);
-        let statusLabel = "Forespurt";
-        if (a.response === "confirmed") statusLabel = "Akseptert";
-        if (a.response === "withdrawn") statusLabel = "Forfall";
-        if (a.response === "declined") statusLabel = "Avslått";
-
-        return {
-          assignment: a,
-          person,
-          statusLabel,
-          response: a.response,
-        };
-      });
-
       const taskStaffing = calculateTaskStaffingStatus(task, taskAssignments);
-      const neededCount = task.neededCount !== undefined ? task.neededCount : 1;
-      const confirmedCount = taskStaffing.confirmedCount;
-      const pendingCount = taskStaffing.pendingCount;
-      // Formula: Ledige plasser = Behov - Bekreftet - Venter
-      const availableSpots = Math.max(0, neededCount - confirmedCount - pendingCount);
+      const slots = countSlots(task, taskAssignments);
 
       return {
         task,
         gathering,
         group,
-        assignment: primaryAssignment,
-        assignedPerson,
-        assignedPersonsList,
-        neededCount,
-        confirmedCount,
-        pendingCount,
-        availableSpots,
+        assignedPersonsList: describeAssignments(taskAssignments, getPersonById),
+        neededCount: slots.needed,
+        confirmedCount: slots.confirmed,
+        pendingCount: slots.pending,
+        availableSpots: slots.free,
         isFullyCovered: taskStaffing.isFullyCovered,
         missingCount: taskStaffing.missingCount,
         taskStaffing,
       };
     });
-  }, [tasks, assignments, getGatheringById, getGroupById, getAssignmentForTask, getPersonById]);
+  }, [tasks, assignments, getGatheringById, getGroupById, getPersonById]);
 
   return {
     isAdmin,
@@ -207,119 +183,6 @@ export function useAdminDashboard() {
     updateTask,
     assignTaskToPerson,
     tasks,
-  };
-}
-
-// 10. Hook: useAdminGatheringDetail
-export function useAdminGatheringDetail(gatheringId: string) {
-  const {
-    currentUser,
-    gatherings,
-    groups,
-    tasks,
-    assignments,
-    allPersons,
-    getGatheringById,
-    getGroupById,
-    getPersonById,
-    assignTaskToPerson,
-    updateAssignmentStatus,
-    removeAssignment,
-    updateTaskStatus,
-    reportAbsence,
-    updateTaskNeededCount,
-    updateTaskInstruction,
-    updateTask,
-    createTask,
-    deleteTask,
-    updateGathering,
-  } = useFirebase();
-
-  const isAdmin = currentUser.globalRole === "admin";
-  const gathering = useMemo(() => {
-    if (!gatheringId) return null;
-    return getGatheringById(gatheringId) || null;
-  }, [gatheringId, getGatheringById, gatherings]);
-
-  const group = useMemo(() => {
-    if (!gathering) return null;
-    return getGroupById(gathering.groupId) || null;
-  }, [gathering, getGroupById, groups]);
-
-  const tasksWithDetails = useMemo(() => {
-    if (!gathering) return [];
-    const gatheringTasks = tasks.filter((t) => t.gatheringId === gathering.id);
-
-    return gatheringTasks.map((task) => {
-      const taskAssignments = assignments.filter((a) => a.taskId === task.id);
-      const assignedPersons = taskAssignments.map((a) => {
-        const person = getPersonById(a.personId);
-        let statusLabel = "Forespurt";
-        if (a.response === "confirmed") statusLabel = "Akseptert";
-        if (a.response === "withdrawn") statusLabel = "Forfall";
-        if (a.response === "declined") statusLabel = "Avslått";
-
-        return {
-          assignment: a,
-          person,
-          statusLabel,
-          response: a.response,
-        };
-      });
-
-      const confirmedPersonsCount = taskAssignments.filter((a) => a.response === "confirmed").length;
-      const neededCount = task.neededCount;
-      const isFullyCovered =
-        neededCount !== undefined ? confirmedPersonsCount >= neededCount : task.status === "confirmed";
-      const missingCount =
-        neededCount !== undefined
-          ? Math.max(0, neededCount - confirmedPersonsCount)
-          : task.status === "confirmed"
-          ? 0
-          : 1;
-
-      let staffingStatusLabel = "Behov ikke satt";
-      if (neededCount !== undefined) {
-        if (isFullyCovered) {
-          staffingStatusLabel = "Fullt dekket";
-        } else {
-          staffingStatusLabel = `Mangler: ${missingCount}`;
-        }
-      } else {
-        staffingStatusLabel = task.status === "confirmed" ? "Fullt dekket" : "Mangler bemanning";
-      }
-
-      return {
-        task,
-        neededCount,
-        assignedPersons,
-        confirmedPersonsCount,
-        isFullyCovered,
-        missingCount,
-        staffingStatusLabel,
-      };
-    });
-  }, [gathering, tasks, assignments, getPersonById]);
-
-  return {
-    isAdmin,
-    currentUser,
-    gathering,
-    group,
-    allGroups: groups,
-    allPersons,
-    tasksWithDetails,
-    assignTaskToPerson,
-    updateAssignmentStatus,
-    removeAssignment,
-    updateTaskStatus,
-    reportAbsence,
-    updateTaskNeededCount,
-    updateTaskInstruction,
-    updateTask,
-    createTask,
-    deleteTask,
-    updateGathering,
   };
 }
 
@@ -449,103 +312,32 @@ export function useAdminPersonDetail(personId: string) {
 export function useAdminTaskDetail(taskId: string) {
   const {
     currentUser,
-    tasks,
-    gatherings,
-    groups,
-    assignments,
-    allPersons,
     getTaskById,
     getGatheringById,
     getGroupById,
-    getAssignmentForTask,
     getAllAssignmentsForTask,
     getPersonById,
-    updateTask,
     updateTaskInstruction,
     updateTaskNeededCount,
   } = useFirebase();
 
   const isAdmin = currentUser.globalRole === "admin";
-  const task = useMemo(() => {
-    if (!taskId) return null;
-    return getTaskById(taskId) || null;
-  }, [taskId, getTaskById, tasks]);
+  const task = (taskId && getTaskById(taskId)) || null;
+  const gathering = (task && getGatheringById(task.gatheringId)) || null;
+  const group = (task && getGroupById(task.groupId)) || null;
 
-  const gathering = useMemo(() => {
-    if (!task) return null;
-    return getGatheringById(task.gatheringId) || null;
-  }, [task, getGatheringById, gatherings]);
-
-  const group = useMemo(() => {
-    if (!task) return null;
-    return getGroupById(task.groupId) || null;
-  }, [task, getGroupById, groups]);
-
-  const assignment = useMemo(() => {
-    if (!task) return null;
-    return getAssignmentForTask(task.id) || null;
-  }, [task, getAssignmentForTask, assignments]);
-
-  const assignedPerson = useMemo(() => {
-    if (!assignment) return null;
-    return getPersonById(assignment.personId) || null;
-  }, [assignment, getPersonById, allPersons]);
-
-  const allAssignedPersonsWithStatus = useMemo(() => {
-    if (!task) return [];
-    const taskAssignments = getAllAssignmentsForTask(task.id);
-    return taskAssignments.map((a) => {
-      const person = getPersonById(a.personId);
-      let statusLabel = "Forespurt";
-      if (a.response === "confirmed") statusLabel = "Akseptert";
-      if (a.response === "withdrawn") statusLabel = "Forfall";
-      if (a.response === "declined") statusLabel = "Avslått";
-
-      return {
-        assignment: a,
-        person,
-        statusLabel,
-        response: a.response,
-      };
-    });
-  }, [task, getAllAssignmentsForTask, getPersonById]);
-
-  const confirmedCount = useMemo(() => {
-    return allAssignedPersonsWithStatus.filter((p) => p.response === "confirmed").length;
-  }, [allAssignedPersonsWithStatus]);
-
-  const isFullyCovered = useMemo(() => {
-    if (!task) return false;
-    if (task.neededCount !== undefined) {
-      return confirmedCount >= task.neededCount;
-    }
-    return task.status === "confirmed";
-  }, [task, confirmedCount]);
-
-  const missingCount = useMemo(() => {
-    if (!task) return 0;
-    if (task.neededCount !== undefined) {
-      return Math.max(0, task.neededCount - confirmedCount);
-    }
-    return task.status === "confirmed" ? 0 : 1;
-  }, [task, confirmedCount]);
-
-  const taskStaffing = useMemo(() => {
-    if (!task) {
-      return {
-        color: "green" as StaffingColor,
-        statusText: "Dekket",
-        confirmedCount: 0,
-        neededCount: 0,
-        missingCount: 0,
-        pendingCount: 0,
-        hasForfall: false,
-        isFullyCovered: true,
-      };
-    }
-    const taskAssigns = getAllAssignmentsForTask(task.id);
-    return calculateTaskStaffingStatus(task, taskAssigns);
-  }, [task, getAllAssignmentsForTask, assignments]);
+  const taskAssignments = useMemo(
+    () => (task ? getAllAssignmentsForTask(task.id) : []),
+    [task, getAllAssignmentsForTask]
+  );
+  const allAssignedPersonsWithStatus = useMemo(
+    () => describeAssignments(taskAssignments, getPersonById),
+    [taskAssignments, getPersonById]
+  );
+  const taskStaffing = useMemo(
+    () => (task ? calculateTaskStaffingStatus(task, taskAssignments) : null),
+    [task, taskAssignments]
+  );
 
   const handleUpdateInstruction = useCallback(
     (instruction: string) => {
@@ -569,14 +361,10 @@ export function useAdminTaskDetail(taskId: string) {
     task,
     gathering,
     group,
-    assignment,
-    assignedPerson,
     allAssignedPersonsWithStatus,
-    confirmedCount,
-    isFullyCovered,
-    missingCount,
-    taskStaffing,
-    updateTask,
+    confirmedCount: taskStaffing?.confirmedCount ?? 0,
+    isFullyCovered: taskStaffing?.isFullyCovered ?? false,
+    missingCount: taskStaffing?.missingCount ?? 0,
     updateTaskInstruction: handleUpdateInstruction,
     updateTaskNeededCount: handleUpdateNeededCount,
   };

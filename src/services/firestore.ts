@@ -11,9 +11,10 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { db, handleFirestoreError, OperationType } from "../firebase";
-import { Assignment } from "../types";
+import { Task } from "../types";
 import { COLLECTIONS, CMS_COLLECTIONS } from "../data/collections";
 import { sanitizeForFirestore, forUpdate } from "../utils/firestoreData";
+import type { AssignmentChange } from "../utils/staffing";
 
 type PlanningCollection = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];
 type CollectionName = PlanningCollection | (typeof CMS_COLLECTIONS)[keyof typeof CMS_COLLECTIONS];
@@ -90,13 +91,17 @@ export function setGroupNotifications(groupId: string, personId: string, enabled
   return updateDoc(doc(db, COLLECTIONS.GROUPS, groupId), new FieldPath("notificationPreferences", personId), enabled);
 }
 
-/** Stores the assignment and the task's new status together, so neither exists without the other. */
-export function assignTask(assignment: Assignment): Promise<void> {
+/**
+ * Stores a change to who is on a task together with the task status that follows from it
+ * (see taskStatusFor), so the status can never disagree with the assignments.
+ */
+export function saveAssignmentChange(taskId: string, change: AssignmentChange, taskStatus: Task["status"]): Promise<void> {
   const batch = writeBatch(db);
-  batch.set(doc(db, COLLECTIONS.ASSIGNMENTS, assignment.id), sanitizeForFirestore(assignment));
-  batch.update(doc(db, COLLECTIONS.TASKS, assignment.taskId), {
-    status: assignment.response === "confirmed" ? "confirmed" : "assigned",
-  });
+  const assignmentRef = (id: string) => doc(db, COLLECTIONS.ASSIGNMENTS, id);
+  if (change.add) batch.set(assignmentRef(change.add.id), sanitizeForFirestore(change.add));
+  for (const { id, fields } of change.update ?? []) batch.update(assignmentRef(id), forUpdate(fields));
+  if (change.remove) batch.delete(assignmentRef(change.remove));
+  batch.update(doc(db, COLLECTIONS.TASKS, taskId), { status: taskStatus });
   return batch.commit();
 }
 
@@ -110,18 +115,5 @@ export function deletePage(pageId: string, subPageIds: string[]): Promise<void> 
   for (const subPageId of subPageIds) {
     batch.update(doc(db, CMS_COLLECTIONS.PAGES, subPageId), { parentId: null });
   }
-  return batch.commit();
-}
-
-/** Marks the given assignments as withdrawn from and the task as vacant, in one write. */
-export function withdrawFromTask(taskId: string, assignmentIds: string[], reason?: string): Promise<void> {
-  const batch = writeBatch(db);
-  for (const assignmentId of assignmentIds) {
-    batch.update(doc(db, COLLECTIONS.ASSIGNMENTS, assignmentId), {
-      response: "declined",
-      ...(reason ? { withdrawalReason: reason } : {}),
-    });
-  }
-  batch.update(doc(db, COLLECTIONS.TASKS, taskId), { status: "vacant" });
   return batch.commit();
 }

@@ -37,7 +37,9 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
       showFeedback("Vennligst oppgi dato for det nye arrangementet", "error");
       return;
     }
-    const isoDateTime = `${nextGatheringDate}T${nextGatheringTime || "11:00"}:00`;
+    // Stored as an exact moment. A bare "date + clock time" would be read in whatever
+    // time zone the reader happens to be in, and the server is not in Norway.
+    const isoDateTime = combineDateAndTimeToIso(nextGatheringDate, nextGatheringTime);
     const sourceG = nextGatheringSource.gathering;
     const res = createGathering({
       title: sourceG.title,

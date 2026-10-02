@@ -50,7 +50,7 @@ De andre store sidene følger samme mønster. Siden kaller sin hook én gang, ei
   - Bare på interne ruter: `tasks`, `assignments`, `groupMessages`, `gatheringAttendances`. En besøkende på den offentlige nettsiden får aldri disse.
 - **`CmsProvider`** (`src/context/CmsContext.tsx`) lytter på `cms_pages`, `cms_news`, `cms_sermons`, `cms_staff` og `cms_settings`. Det siste som ble mottatt mellomlagres i `localStorage`, slik at nettsiden har innhold å vise før Firestore har svart, og beholder det når den åpnes uten nett. En lagring i CMS-et venter på svar fra serveren (i motsetning til planleggingsdataene), slik at redigeringsskjemaet kan bli stående åpent med teksten hvis lagringen feiler.
 - **Hooks per rolle** (`src/hooks/`: `memberHooks`, `leaderHooks`, `adminHooks`, `useHusfellesskap`) setter sammen rådataene til det hver side trenger.
-- **Rene funksjoner** (`src/utils/`) holder reglene, og testene i `tests/` (Vitest) kjører mot dem: `staffing`, `visibility`, `publicProfile`, `firestoreData` og `menu`. `dates` har ingen tester ennå.
+- **Rene funksjoner** (`src/utils/`) holder reglene, og testene i `tests/` (Vitest) kjører mot dem: `staffing`, `visibility`, `publicProfile`, `firestoreData`, `menu`, `groups` og `dates`.
 - **Sidetreet** (`src/utils/menu.ts`) er felles for den offentlige menyen og sidelisten i admin. Når en hovedfane slettes, flyttes underfanene opp til toppnivå i samme skriving.
 
 ### Skriving
@@ -61,8 +61,16 @@ De andre store sidene følger samme mønster. Siden kaller sin hook én gang, ei
 5. Det som hører sammen skrives i én batch: en tildeling og oppgavens status, et forfall og oppgavens status, en slettet side og undersidene dens.
 6. Feiler skrivingen, meldes det via `src/services/writeErrors.ts` og vises i `WriteErrorBanner`. Lytterne setter da tilbake det som faktisk er lagret.
 
+### Bemanning
+Reglene i kapittel 3 i `PRODUKTDOKUMENTASJON.md` ligger i `src/utils/staffing.ts`:
+
+- `countSlots` er ligningen *ledige plasser = behov − bekreftet − venter*. Den som har avslått eller meldt forfall, holder ingen plass.
+- `taskStatusFor` gir statusen en oppgave skal ha ut fra behovet og tildelingene: `confirmed` når alle plasser er bekreftet, `assigned` når alle plasser er opptatt men noen ikke har svart, `open` når en plass er ledig, og `vacant` når plassen ble ledig ved et akutt forfall (mindre enn 48 timer før samlingen, `isAcuteForfall`).
+- Hver handling som endrer en tildeling eller behovet, lagrer denne statusen i samme skriving. Statusen kan derfor ikke si noe annet enn tildelingene.
+- En direkte tildeling og en oppgave et medlem tar selv er bekreftet med en gang. En forespørsel står som «venter» til medlemmet svarer på oppgavesiden eller på Min side. Tildelinger får `assignedAt` når de opprettes og `respondedAt` når svaret registreres. Et forfall lagres som `withdrawn` med valgfri grunn; et nei på en forespørsel som `declined`.
+
 ### Testing av datalaget
-`tests/data-provider.test.tsx` og `tests/cms-provider.test.tsx` kjører `FirebaseDataProvider` og `CmsProvider` mot den ekte Firestore-klienten, koblet fra nettet (`tests/support/offlineFirestore.ts`). Testene ser dermed det samme som appen: en skriving når listene gjennom lytterne. Ingenting sendes til en server.
+`tests/data-provider.test.tsx` og `tests/cms-provider.test.tsx` kjører `FirebaseDataProvider` og `CmsProvider` mot den ekte Firestore-klienten, koblet fra nettet (`tests/support/offlineFirestore.ts`). `tests/member-flow.test.tsx` gjør det samme med det et medlem ser og gjør: ta en oppgave, svare på en forespørsel, melde forfall. Testene ser dermed det samme som appen: en skriving når listene gjennom lytterne. Ingenting sendes til en server.
 
 ## Offentlig API
 `server.ts` leser `gatherings` og `groups` og sender dem gjennom rene funksjoner i `server/publicApi.ts`. Bare hvitelistede felt slipper ut. Medlemslister og kontaktinformasjon eksponeres ikke.
@@ -90,7 +98,6 @@ To regler avgjør hva en besøkende ser, og hver av dem ligger ett sted:
 | Personvern på nettsiden | Besøkende får bare offentlige data | Sidene viser bare personer med samtykke, og laster ikke oppgaver, tildelinger, meldinger eller oppmøte. Hele personregisteret lastes likevel til nettleseren; det kan først stenges med innlogging og strammere regler |
 | Fremhevet samling | Løftes frem som neste samling på forsiden | `fremhevet` lagres, men forsiden velger neste samling bare etter dato |
 | Grupper | Bare offentlige grupper vises utad | `isPublic` på grupper kan ikke settes noe sted, og verken `/fellesskap` eller API-et filtrerer på det |
-| Min side | Viser det som er kommende | «Trenger din oppmerksomhet» regner fra en fast dato i demodataene (2. september 2026) i stedet for dagens dato |
 | Filstørrelse | Én komponent per fane/modal | Gjort for alle sidene over 1 000 linjer. Størst nå: `GatheringDetailView.tsx` (ca. 1 000 linjer, selve kjøreplanen) |
 | Gruppemeldinger | Testverktøyet på husfellesskapssiden sier at et nytt medlem ikke skal se eldre meldinger | Innmeldingsdato lagres (`memberJoinedAt`), men brukes ikke: et medlem ser alle meldingene i gruppen |
 | Modulbrytere | Kalender og meldinger slås av og på for hele menigheten | Valget lagres bare i nettleseren til den som endrer det |

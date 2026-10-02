@@ -17,27 +17,37 @@ export const TaskDetailPage: React.FC = () => {
     task,
     gathering,
     group,
-    assignedPerson,
+    othersOnTask,
+    freeSlots,
+    needsSubstitute,
     isAssignedToMe,
+    isAskedOfMe,
     canClaim,
     canReportAbsence,
     permissionDenied,
     claimTask,
+    answerRequest,
     reportAbsence,
   } = useTaskDetail(taskId);
 
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmingAbsence, setIsConfirmingAbsence] = useState(false);
 
-  const handleClaim = async () => {
-    setIsProcessing(true);
-    const res = await claimTask();
-    setIsProcessing(false);
-    if (res.success) {
-      setActionFeedback("Takk for at du stiller opp! Du har nå tatt denne oppgaven.");
+  const handleClaim = () => {
+    const res = claimTask();
+    setActionFeedback(
+      res.success ? "Takk for at du stiller opp! Du har nå tatt denne oppgaven." : res.error || "Kunne ikke ta oppgaven."
+    );
+  };
+
+  const handleAnswer = (accept: boolean) => {
+    const res = answerRequest(accept);
+    if (!res.success) {
+      setActionFeedback(res.error || "Kunne ikke lagre svaret.");
     } else {
-      setActionFeedback(res.error || "Kunne ikke ta oppgaven.");
+      setActionFeedback(
+        accept ? "Takk for at du stiller opp! Oppgaven er din." : "Takk for beskjed. Lederen ser at du ikke kan."
+      );
     }
   };
 
@@ -47,17 +57,17 @@ export const TaskDetailPage: React.FC = () => {
     }
   };
 
-  const handleConfirmAbsence = async () => {
-    setIsProcessing(true);
-    const res = await reportAbsence();
-    setIsProcessing(false);
+  const handleConfirmAbsence = () => {
+    const res = reportAbsence();
     setIsConfirmingAbsence(false);
-    if (res.success) {
-      setActionFeedback("Forfall er registrert. Oppgaven er nå gjort ledig for gruppen din.");
-    } else {
-      setActionFeedback(res.error || "Kunne ikke melde forfall.");
-    }
+    setActionFeedback(
+      res.success
+        ? "Forfall er registrert. Oppgaven er nå gjort ledig for gruppen din."
+        : res.error || "Kunne ikke melde forfall."
+    );
   };
+
+  const othersNames = othersOnTask.map((person) => person.name).join(", ");
 
   // Case 1: Permission Denied State (User tries to access task outside their groups)
   if (permissionDenied) {
@@ -164,7 +174,16 @@ export const TaskDetailPage: React.FC = () => {
             <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600">
               Din oppgave
             </span>
-          ) : task.status === "vacant" ? (
+          ) : isAskedOfMe ? (
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-amber-50 text-amber-700">
+                Forespørsel til deg
+              </span>
+              <p className="text-xs text-slate-500 font-medium">
+                Du er spurt om å ta denne oppgaven. Svar nederst på siden.
+              </p>
+            </div>
+          ) : needsSubstitute ? (
             <div className="space-y-1">
               <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-red-50 text-red-600">
                 Trenger vikar
@@ -173,18 +192,20 @@ export const TaskDetailPage: React.FC = () => {
                 Noen må ta denne – ledig fordi noen meldte forfall.
               </p>
             </div>
-          ) : task.status === "open" ? (
+          ) : freeSlots > 0 ? (
             <div className="space-y-1">
               <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700">
                 Ledig oppgave
               </span>
               <p className="text-xs text-slate-500 font-medium">
-                Denne oppgaven er ledig og venter på en frivillig fra gruppen.
+                {othersNames
+                  ? `Oppgaven trenger ${freeSlots} til, sammen med ${othersNames}.`
+                  : "Denne oppgaven er ledig og venter på en frivillig fra gruppen."}
               </p>
             </div>
           ) : (
             <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 text-slate-600">
-              Tildelt: {assignedPerson?.name || "Annen person"}
+              Tildelt: {othersNames || "Annen person"}
             </span>
           )}
         </div>
@@ -230,12 +251,32 @@ export const TaskDetailPage: React.FC = () => {
             <button
               type="button"
               id="btn-claim-task"
-              disabled={isProcessing}
               onClick={handleClaim}
-              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-sm rounded-xl shadow-md shadow-emerald-200 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-sm rounded-xl shadow-md shadow-emerald-200 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              {isProcessing ? "Registrerer..." : "Ta denne oppgaven"}
+              Ta denne oppgaven
             </button>
+          )}
+
+          {isAskedOfMe && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                id="btn-accept-request"
+                onClick={() => handleAnswer(true)}
+                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-sm rounded-xl shadow-md shadow-emerald-200 transition-all cursor-pointer"
+              >
+                Ja, jeg kan
+              </button>
+              <button
+                type="button"
+                id="btn-decline-request"
+                onClick={() => handleAnswer(false)}
+                className="py-3 px-4 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-semibold text-sm rounded-xl transition-colors cursor-pointer"
+              >
+                Kan ikke
+              </button>
+            </div>
           )}
 
           {canReportAbsence && (
@@ -245,9 +286,8 @@ export const TaskDetailPage: React.FC = () => {
                   <button
                     type="button"
                     id="btn-report-absence"
-                    disabled={isProcessing}
                     onClick={handleAbsenceClick}
-                    className="w-full py-2.5 border border-red-200 hover:bg-red-50 active:bg-red-100 text-red-600 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full py-2.5 border border-red-200 hover:bg-red-50 active:bg-red-100 text-red-600 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
                   >
                     Meld forfall
                   </button>
@@ -266,16 +306,14 @@ export const TaskDetailPage: React.FC = () => {
                   <button
                     type="button"
                     id="btn-confirm-absence"
-                    disabled={isProcessing}
                     onClick={handleConfirmAbsence}
-                    className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold text-xs rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold text-xs rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {isProcessing ? "Registrerer..." : "Bekreft forfall"}
+                    Bekreft forfall
                   </button>
                   <button
                     type="button"
                     id="btn-cancel-absence"
-                    disabled={isProcessing}
                     onClick={() => setIsConfirmingAbsence(false)}
                     className="w-full py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors text-center block cursor-pointer"
                   >
@@ -286,13 +324,9 @@ export const TaskDetailPage: React.FC = () => {
             </div>
           )}
 
-          {!canClaim && !canReportAbsence && (
+          {!canClaim && !canReportAbsence && !isAskedOfMe && (
             <div className="p-3 bg-slate-50 rounded-xl text-center text-xs font-medium text-slate-500 border border-slate-100">
-              {isAssignedToMe
-                ? "Du har denne oppgaven."
-                : assignedPerson
-                ? `Tildelt ${assignedPerson.name}.`
-                : "Ingen handlinger tilgjengelig."}
+              {othersNames ? `Tildelt ${othersNames}.` : "Ingen handlinger tilgjengelig."}
             </div>
           )}
         </div>
