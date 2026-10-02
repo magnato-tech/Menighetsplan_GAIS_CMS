@@ -1,22 +1,10 @@
+import { describe } from "vitest";
+import { assert } from "./assert";
 import { toPublicProfile, publicProfilesOf, publicProfileFields } from "../src/utils/publicProfile";
 import { initialPersons, initialGroups } from "../src/data/mockData";
 import type { Person } from "../src/types";
 
-function runTests() {
-  console.log("🧪 Starter tester for offentlig profil og samtykke...\n");
-  let passed = 0;
-  let failed = 0;
-
-  function assert(condition: boolean, testName: string) {
-    if (condition) {
-      console.log(`  ✅ PASS: ${testName}`);
-      passed++;
-    } else {
-      console.error(`  ❌ FAIL: ${testName}`);
-      failed++;
-    }
-  }
-
+describe("Offentlig profil og samtykke", () => {
   const base: Person = {
     id: "p-1",
     name: "Kari Nordmann",
@@ -115,11 +103,4 @@ function runTests() {
       leaderGroups.every((g) => publicProfilesOf([...g.leaderIds, ...g.memberIds], initialPersons).length > 0),
     "Hver ledergruppe i demodataene har minst én person å vise"
   );
-
-  console.log(`\nResultat: ${passed} bestått, ${failed} feilet.`);
-  if (failed > 0) {
-    process.exit(1);
-  }
-}
-
-runTests();
+});

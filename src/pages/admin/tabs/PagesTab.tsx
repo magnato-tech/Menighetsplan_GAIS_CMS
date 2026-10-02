@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useCms } from "../../../context/CmsContext";
 import { CmsPage } from "../../../data/cmsData";
+import { buildPageTree, findOrphanPages, pageUrl } from "../../../utils/menu";
 import {
   FileText,
   Plus,
@@ -79,27 +80,10 @@ export const PagesTab: React.FC<PagesTabProps> = ({ showFeedback, createRequeste
     showFeedback("Siden ble lagret og menystrukturen ble oppdatert!");
   };
 
-  // Hierarchical groupings of CMS pages for visual tree representation
-  const hierarchicalPages = useMemo(() => {
-    const topLevel = pages
-      .filter((p) => !p.parentId)
-      .sort((a, b) => (a.navOrder ?? 99) - (b.navOrder ?? 99));
+  // Every page is listed here, drafts and pages hidden from the menu included
+  const hierarchicalPages = useMemo(() => buildPageTree(pages), [pages]);
 
-    return topLevel.map((parent) => {
-      const children = pages
-        .filter((p) => p.parentId === parent.id)
-        .sort((a, b) => (a.navOrder ?? 99) - (b.navOrder ?? 99));
-      return {
-        parent,
-        children,
-      };
-    });
-  }, [pages]);
-
-  const orphanPages = useMemo(() => {
-    const topIds = new Set(pages.filter((p) => !p.parentId).map((p) => p.id));
-    return pages.filter((p) => p.parentId && !topIds.has(p.parentId));
-  }, [pages]);
+  const orphanPages = useMemo(() => findOrphanPages(pages), [pages]);
 
   const availableParentPages = useMemo(() => {
     return pages.filter((p) => !p.parentId && p.id !== editingPage?.id);
@@ -107,6 +91,7 @@ export const PagesTab: React.FC<PagesTabProps> = ({ showFeedback, createRequeste
 
   // Delete Page Confirmation Modal State
   const [deleteConfirmPageId, setDeleteConfirmPageId] = useState<string | null>(null);
+  const subPagesOfDeleted = pages.filter((p) => p.parentId === deleteConfirmPageId).length;
 
   useEffect(() => {
     if (createRequested) {
@@ -379,9 +364,9 @@ export const PagesTab: React.FC<PagesTabProps> = ({ showFeedback, createRequeste
       {/* Hierarchical Tree of Pages */}
       <div className="space-y-4">
         {hierarchicalPages.map((item) => {
-          const parent = item.parent;
+          const parent = item.page;
           const hasChildren = item.children.length > 0;
-          const targetUrl = parent.linkUrl || (parent.slug ? `/${parent.slug}` : "/");
+          const targetUrl = pageUrl(parent);
 
           return (
             <div
@@ -521,7 +506,7 @@ export const PagesTab: React.FC<PagesTabProps> = ({ showFeedback, createRequeste
 
                       <div className="flex items-center gap-1.5 text-xs shrink-0 self-end sm:self-auto">
                         <Link
-                          to={child.linkUrl || `/${child.slug}`}
+                          to={pageUrl(child)}
                           target="_blank"
                           className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
                           title="Forhåndsvis underside"
@@ -596,6 +581,13 @@ export const PagesTab: React.FC<PagesTabProps> = ({ showFeedback, createRequeste
             <p className="text-xs text-slate-300 leading-relaxed">
               Er du sikker på at du vil slette denne siden fra nettsiden? Denne handlingen kan ikke angres.
             </p>
+            {subPagesOfDeleted > 0 && (
+              <p className="text-xs text-amber-300 leading-relaxed">
+                {subPagesOfDeleted === 1
+                  ? "Siden har én underfane. Den slettes ikke, men blir en hovedfane."
+                  : `Siden har ${subPagesOfDeleted} underfaner. De slettes ikke, men blir hovedfaner.`}
+              </p>
+            )}
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"

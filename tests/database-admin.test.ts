@@ -1,23 +1,11 @@
+import { describe } from "vitest";
+import { assert } from "./assert";
 import { readFileSync } from "node:fs";
 import { ALL_COLLECTIONS, COLLECTIONS, CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID } from "../src/data/collections";
 import { getMockDocuments } from "../src/data/mockDocuments";
 import { chunk } from "../src/utils/chunk";
 
-function runTests() {
-  console.log("🧪 Starter tester for fylling og sletting av databasen...\n");
-  let passed = 0;
-  let failed = 0;
-
-  function assert(condition: boolean, testName: string) {
-    if (condition) {
-      console.log(`  ✅ PASS: ${testName}`);
-      passed++;
-    } else {
-      console.error(`  ❌ FAIL: ${testName}`);
-      failed++;
-    }
-  }
-
+describe("Fylling og sletting av databasen", () => {
   // 1. chunk: batches must cover every item exactly once, in order
   assert(JSON.stringify(chunk([1, 2, 3, 4, 5], 2)) === "[[1,2],[3,4],[5]]", "chunk deler i biter med rest til slutt");
   assert(JSON.stringify(chunk([1, 2, 3, 4], 2)) === "[[1,2],[3,4]]", "chunk uten rest");
@@ -83,11 +71,4 @@ function runTests() {
   const rules = readFileSync(new URL("../firestore.rules", import.meta.url), "utf8");
   const missing = ALL_COLLECTIONS.filter((name) => !rules.includes(`match /${name}/{`));
   assert(missing.length === 0, `firestore.rules har en regel for hver samling (mangler: ${missing.join(", ") || "ingen"})`);
-
-  console.log(`\nResultat: ${passed} bestått, ${failed} feilet.`);
-  if (failed > 0) {
-    process.exit(1);
-  }
-}
-
-runTests();
+});

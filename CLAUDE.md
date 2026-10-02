@@ -24,7 +24,7 @@ Appen utvikles og kjøres i Google AI Studio (Cloud Run). Det finnes også et eg
 | `npm run dev` | Starter Express + Vite på port 3000 |
 | `npm run build` | Bygger klienten til `dist/` |
 | `npm run lint` | Typesjekk (`tsc --noEmit`) |
-| `npm test` | Kjører testskriptene i `tests/` |
+| `npm test` | Kjører testene i `tests/` med Vitest (`npx vitest` følger med mens du jobber) |
 
 Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 
@@ -42,7 +42,7 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 | `src/data/collections.ts` | Navn på alle Firestore-samlinger |
 | `src/data/newDocuments.ts` | Bygger nye personer, grupper, samlinger, oppgaver, tildelinger og meldinger |
 | `src/hooks/` | Hooks per rolle: `memberHooks`, `leaderHooks`, `adminHooks`, `useHusfellesskap`. `useAppHooks.ts` eksporterer alle |
-| `src/utils/` | Rene funksjoner med tester: `dates`, `staffing` (bemanning), `visibility` (hva som er offentlig), `publicProfile` (samtykke), `firestoreData` (klargjøring før skriving) |
+| `src/utils/` | Rene funksjoner: `staffing` (bemanning), `visibility` (hva som er offentlig), `publicProfile` (samtykke), `firestoreData` (klargjøring før skriving), `menu` (sidetreet og menyen), `dates` |
 | `src/services/writeErrors.ts` | Melder mislykkede skrivinger til `WriteErrorBanner` |
 | `src/services/databaseAdmin.ts` | Fyll databasen med demodata / slett alt |
 | `src/pages/admin/` | Admin Studio: `AdminStudio.tsx` er skallet, `StudioSidebar.tsx` menyen, og `tabs/` har én fil per fane |
@@ -51,7 +51,7 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 | `src/components/gathering/` | Dialogene i samlingsvisningen (`GatheringDetailView.tsx`) |
 | `src/components/husfellesskap/` | Fanene og dialogene i husfellesskapsvisningen (`HusfellesskapView.tsx`) |
 | `src/pages/`, `src/components/` | Øvrige sider og komponenter |
-| `tests/` | Testskript som kjøres med `tsx` |
+| `tests/` | Tester (Vitest). `assert(betingelse, navn)` fra `tests/assert.ts` registrerer én navngitt sjekk |
 | `firestore.rules` | Sikkerhetsregler |
 
 ---
@@ -65,6 +65,7 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 - **Ingen person vises offentlig uten registrert samtykke.** Offentlige sider henter personer gjennom `toPublicProfile` / `publicProfilesOf` i `src/utils/publicProfile.ts`, som bare gir navn og kontaktinfo utad. Bruk aldri `person.phone` eller `person.email` på en offentlig side.
 - **Persondata skal ikke ut i det offentlige API-et.** Nye felt i `server/publicApi.ts` må hvitelistes bevisst.
 - **Én fane eller dialog per fil.** En ny fane eller dialog får sin egen fil med egen tilstand. Siden over eier bare hva som vises, og kaller sidens hook én gang og sender resultatet ned.
+- **Test den ekte koden.** Regler og utregninger legges i `src/utils/` som rene funksjoner og testes derfra. En test skal aldri ha sin egen kopi av logikken.
 - **Interne ruter** må stå i `MIN_SIDE_SECTIONS` i `src/App.tsx`. Det styrer både layouten og om planleggingsdata lastes. Lenker til Min side skal gå til `/minside`; `/` er den offentlige forsiden.
 
 ---

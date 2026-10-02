@@ -1,21 +1,9 @@
+import { describe } from "vitest";
+import { assert } from "./assert";
 import { calculateTaskStaffingStatus, getStaffingStatus } from "../src/utils/staffing";
 import type { Task, Assignment } from "../src/types";
 
-function runTests() {
-  console.log("🧪 Starter tester for bemanningsstatus...\n");
-  let passed = 0;
-  let failed = 0;
-
-  function assert(condition: boolean, testName: string) {
-    if (condition) {
-      console.log(`  ✅ PASS: ${testName}`);
-      passed++;
-    } else {
-      console.error(`  ❌ FAIL: ${testName}`);
-      failed++;
-    }
-  }
-
+describe("Bemanningsstatus", () => {
   const task = (id: string, neededCount: number, status: Task["status"] = "open"): Task => ({
     id,
     gatheringId: "gathering-1",
@@ -110,11 +98,4 @@ function runTests() {
     ...responses("kaffe", "confirmed"),
   ]);
   assert(withForfall.vacantCount === 1 && withForfall.openCount === 1, "Samlingen skiller forfall fra oppgaver som bare mangler folk");
-
-  console.log(`\nResultat: ${passed} bestått, ${failed} feilet.`);
-  if (failed > 0) {
-    process.exit(1);
-  }
-}
-
-runTests();
+});

@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { UserSwitcher } from "../UserSwitcher";
+import { buildPublicMenu, pageUrl } from "../../utils/menu";
 import {
   Menu,
   X,
@@ -28,40 +29,24 @@ export const PublicNavbar: React.FC = () => {
     }));
   };
 
-  // Build hierarchical navigation items from CmsContext pages
-  const navigationItems = useMemo(() => {
-    const activePages = pages.filter((p) => p.isPublished !== false && p.inNavMenu !== false);
-
-    const topLevel = activePages
-      .filter((p) => !p.parentId)
-      .sort((a, b) => (a.navOrder ?? 99) - (b.navOrder ?? 99));
-
-    return topLevel.map((parent) => {
-      const children = activePages
-        .filter((p) => p.parentId === parent.id)
-        .sort((a, b) => (a.navOrder ?? 99) - (b.navOrder ?? 99));
-
-      const targetUrl = parent.linkUrl || (parent.slug ? `/${parent.slug}` : "/");
-      const isParentActive =
-        location.pathname === targetUrl ||
-        (targetUrl !== "/" && location.pathname.startsWith(targetUrl)) ||
-        children.some((c) => {
-          const cUrl = c.linkUrl || `/${c.slug}`;
-          return location.pathname === cUrl;
+  // The menu tree with a link and an active marker on every entry
+  const navigationItems = useMemo(
+    () =>
+      buildPublicMenu(pages).map(({ page, children }) => {
+        const targetUrl = pageUrl(page);
+        const items = children.map((child) => {
+          const childUrl = pageUrl(child);
+          return { page: child, targetUrl: childUrl, isActive: location.pathname === childUrl };
         });
+        const isActive =
+          location.pathname === targetUrl ||
+          (targetUrl !== "/" && location.pathname.startsWith(targetUrl)) ||
+          items.some((item) => item.isActive);
 
-      return {
-        page: parent,
-        targetUrl,
-        isActive: isParentActive,
-        children: children.map((c) => ({
-          page: c,
-          targetUrl: c.linkUrl || `/${c.slug}`,
-          isActive: location.pathname === (c.linkUrl || `/${c.slug}`),
-        })),
-      };
-    });
-  }, [pages, location.pathname]);
+        return { page, targetUrl, isActive, children: items };
+      }),
+    [pages, location.pathname]
+  );
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200/80 shadow-xs transition-all">

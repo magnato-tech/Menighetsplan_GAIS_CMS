@@ -1,3 +1,5 @@
+import { describe } from "vitest";
+import { assert } from "./assert";
 import {
   reportWriteError,
   clearWriteError,
@@ -5,21 +7,7 @@ import {
   subscribeToWriteError,
 } from "../src/services/writeErrors";
 
-function runTests() {
-  console.log("🧪 Starter tester for melding av mislykkede skrivinger...\n");
-  let passed = 0;
-  let failed = 0;
-
-  function assert(condition: boolean, testName: string) {
-    if (condition) {
-      console.log(`  ✅ PASS: ${testName}`);
-      passed++;
-    } else {
-      console.error(`  ❌ FAIL: ${testName}`);
-      failed++;
-    }
-  }
-
+describe("Melding av mislykkede skrivinger", () => {
   // reportWriteError logs to the console by design; keep the test output readable
   const originalConsoleError = console.error;
   console.error = () => {};
@@ -52,11 +40,4 @@ function runTests() {
   clearWriteError();
 
   console.error = originalConsoleError;
-
-  console.log(`\nResultat: ${passed} bestått, ${failed} feilet.`);
-  if (failed > 0) {
-    process.exit(1);
-  }
-}
-
-runTests();
+});

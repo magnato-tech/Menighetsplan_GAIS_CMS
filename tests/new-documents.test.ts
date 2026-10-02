@@ -1,3 +1,5 @@
+import { describe } from "vitest";
+import { assert } from "./assert";
 import { newId } from "../src/utils/id";
 import {
   buildPerson,
@@ -9,21 +11,7 @@ import {
 } from "../src/data/newDocuments";
 import { validateGathering } from "../src/utils/validation";
 
-function runTests() {
-  console.log("🧪 Starter tester for opprettelse av nye dokumenter...\n");
-  let passed = 0;
-  let failed = 0;
-
-  function assert(condition: boolean, testName: string) {
-    if (condition) {
-      console.log(`  ✅ PASS: ${testName}`);
-      passed++;
-    } else {
-      console.error(`  ❌ FAIL: ${testName}`);
-      failed++;
-    }
-  }
-
+describe("Opprettelse av nye dokumenter", () => {
   // 1. Ids made in the same millisecond must differ, or Firestore overwrites one document with the next
   const ids = Array.from({ length: 500 }, () => newId("task"));
   assert(new Set(ids).size === ids.length, "500 ID-er laget i en løkke er alle unike");
@@ -83,11 +71,4 @@ function runTests() {
     "Meldingen får avsender og trimmet innhold"
   );
   assert(!isNaN(Date.parse(message.createdAt)), "Meldingen får et gyldig tidspunkt");
-
-  console.log(`\nResultat: ${passed} bestått, ${failed} feilet.`);
-  if (failed > 0) {
-    process.exit(1);
-  }
-}
-
-runTests();
+});

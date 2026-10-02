@@ -1,21 +1,9 @@
+import { describe } from "vitest";
+import { assert } from "./assert";
 import { validateEvent, validateGathering, calculateAvailableSpots, ValidationError } from "../src/utils/validation";
 import { initialGatherings } from "../src/data/mockData";
 
-function runTests() {
-  console.log("🧪 Starter automatiske valideringstester for Menighetsplan 2.0...\n");
-  let passed = 0;
-  let failed = 0;
-
-  function assert(condition: boolean, testName: string) {
-    if (condition) {
-      console.log(`  ✅ PASS: ${testName}`);
-      passed++;
-    } else {
-      console.error(`  ❌ FAIL: ${testName}`);
-      failed++;
-    }
-  }
-
+describe("Validering av samlinger", () => {
   // 1. Initial mock data validation test
   try {
     for (const g of initialGatherings) {
@@ -104,11 +92,4 @@ function runTests() {
     const isValidationError = err instanceof ValidationError;
     assert(isValidationError, "Ugyldig visibility-verdi kaster ValidationError");
   }
-
-  console.log(`\nResultat: ${passed} bestått, ${failed} feilet.`);
-  if (failed > 0) {
-    process.exit(1);
-  }
-}
-
-runTests();
+});

@@ -5,9 +5,11 @@ import {
   setDoc,
   deleteDoc,
   onSnapshot,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { sanitizeForFirestore } from "../utils/firestoreData";
+import { withoutPage } from "../utils/menu";
 import { CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID } from "../data/collections";
 import { reportWriteError } from "../services/writeErrors";
 import {
@@ -224,15 +226,21 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deletePage = async (pageId: string) => {
+    const subPages = pages.filter((p) => p.parentId === pageId);
     setPages((prev) => {
-      // Re-parent any direct children so they become top-level if parent is deleted
-      const next = prev
-        .filter((p) => p.id !== pageId)
-        .map((p) => (p.parentId === pageId ? { ...p, parentId: null } : p));
+      const next = withoutPage(prev, pageId);
       localStorage.setItem(STORAGE_KEY_PAGES, JSON.stringify(next));
       return next;
     });
-    return attempt("slette siden", () => deleteDoc(doc(db, CMS_COLLECTIONS.PAGES, pageId)));
+    return attempt("slette siden", () => {
+      // The sub-pages move in the same write, so the database never holds a page with a deleted parent
+      const batch = writeBatch(db);
+      batch.delete(doc(db, CMS_COLLECTIONS.PAGES, pageId));
+      for (const subPage of subPages) {
+        batch.update(doc(db, CMS_COLLECTIONS.PAGES, subPage.id), { parentId: null });
+      }
+      return batch.commit();
+    });
   };
 
   // CRUD News

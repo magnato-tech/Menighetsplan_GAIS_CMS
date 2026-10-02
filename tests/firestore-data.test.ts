@@ -1,21 +1,9 @@
+import { describe } from "vitest";
+import { assert } from "./assert";
 import { deleteField } from "firebase/firestore";
 import { sanitizeForFirestore, forUpdate } from "../src/utils/firestoreData";
 
-function runTests() {
-  console.log("🧪 Starter tester for klargjøring av data til Firestore...\n");
-  let passed = 0;
-  let failed = 0;
-
-  function assert(condition: boolean, testName: string) {
-    if (condition) {
-      console.log(`  ✅ PASS: ${testName}`);
-      passed++;
-    } else {
-      console.error(`  ❌ FAIL: ${testName}`);
-      failed++;
-    }
-  }
-
+describe("Klargjøring av data til Firestore", () => {
   const isDelete = (value: unknown) => deleteField().isEqual(value as ReturnType<typeof deleteField>);
 
   // 1. New documents: undefined is dropped at every level, everything else is kept as it is
@@ -55,11 +43,4 @@ function runTests() {
   );
   assert(Object.keys(forUpdate({})).length === 0, "forUpdate av en tom oppdatering er tom");
   assert(!("email" in forUpdate({ name: "Ola" })), "Et felt som ikke er nevnt i oppdateringen røres ikke");
-
-  console.log(`\nResultat: ${passed} bestått, ${failed} feilet.`);
-  if (failed > 0) {
-    process.exit(1);
-  }
-}
-
-runTests();
+});

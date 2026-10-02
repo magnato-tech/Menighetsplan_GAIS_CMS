@@ -1,3 +1,5 @@
+import { describe } from "vitest";
+import { assert } from "./assert";
 import {
   type GatheringDoc,
   type GroupDoc,
@@ -11,21 +13,7 @@ import {
 } from "../server/publicApi";
 import { isPubliclyVisible, visibilityFields, visibilityAfterToggle } from "../src/utils/visibility";
 
-function runTests() {
-  console.log("🧪 Starter tester for det offentlige API-et...\n");
-  let passed = 0;
-  let failed = 0;
-
-  function assert(condition: boolean, testName: string) {
-    if (condition) {
-      console.log(`  ✅ PASS: ${testName}`);
-      passed++;
-    } else {
-      console.error(`  ❌ FAIL: ${testName}`);
-      failed++;
-    }
-  }
-
+describe("Det offentlige API-et", () => {
   const base: GatheringDoc = {
     id: "g-1",
     groupId: "group-1",
@@ -173,11 +161,4 @@ function runTests() {
     fromGroup.id === "recurring-group-group-hus-1" && fromGroup.sted === "Hjemmene" && fromGroup.klokkeslett === "19:30",
     "Faste aktiviteter: husgruppe får sted 'Hjemmene' og tid fra møteplanen"
   );
-
-  console.log(`\nResultat: ${passed} bestått, ${failed} feilet.`);
-  if (failed > 0) {
-    process.exit(1);
-  }
-}
-
-runTests();
+});
