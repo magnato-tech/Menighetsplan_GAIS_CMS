@@ -105,6 +105,28 @@
         "updatedAt": { "type": "string" }
       },
       "required": ["id", "gatheringId", "personId", "status"]
+    },
+    "CmsPage": {
+      "title": "CmsPage",
+      "description": "CMS page content and hierarchical navigation positioning",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "slug": { "type": "string" },
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "content": { "type": "string" },
+        "isPublished": { "type": "boolean" },
+        "parentPageId": { "type": "string" },
+        "parentId": { "type": "string" },
+        "menuOrder": { "type": "number" },
+        "navOrder": { "type": "number" },
+        "inNavMenu": { "type": "boolean" },
+        "linkUrl": { "type": "string" },
+        "heroImage": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "slug", "title"]
     }
   },
   "firestore": {
@@ -135,6 +157,10 @@
     "/gatheringAttendances/{attendanceId}": {
       "schema": "GatheringAttendance",
       "description": "Collection of gathering RSVP responses"
+    },
+    "/cms_pages/{pageId}": {
+      "schema": "CmsPage",
+      "description": "CMS content pages and hierarchical navigation structure"
     }
   }
 }

@@ -109,4 +109,45 @@ describe("Menystruktur og CMS-sider", () => {
   assert(pageUrl({ slug: "om-oss" }) === "/om-oss", "En side ligger under sin egen slug");
   assert(pageUrl({ slug: "kalender", linkUrl: "/hva-skjer" }) === "/hva-skjer", "linkUrl overstyrer slug");
   assert(pageUrl({ slug: "" }) === "/", "En side uten slug er forsiden");
+
+  // 8. Dual support: parentPageId / parentId og menuOrder / navOrder
+  const modernPages: CmsPage[] = [
+    page("hoved-1", { menuOrder: 1, parentPageId: null }),
+    page("under-1", { menuOrder: 1, parentPageId: "hoved-1" }),
+    page("under-2", { menuOrder: 2, parentPageId: "hoved-1" }),
+    page("hoved-2", { menuOrder: 2, parentPageId: null }),
+  ];
+  const modernTree = buildPageTree(modernPages);
+  assert(modernTree.length === 2, "buildPageTree håndterer parentPageId: null som hovedfane");
+  assert(modernTree[0].children.length === 2, "buildPageTree grupperer underfaner etter parentPageId");
+  assert(ids(modernTree[0].children) === "under-1,under-2", "Underfaner sorteres etter menuOrder");
+
+  const mixedPages: CmsPage[] = [
+    page("legacy-parent", { navOrder: 1, parentId: null }),
+    page("modern-child", { menuOrder: 1, parentPageId: "legacy-parent" }),
+    page("legacy-child", { navOrder: 2, parentId: "legacy-parent" }),
+  ];
+  const mixedTree = buildPageTree(mixedPages);
+  assert(mixedTree[0].children.length === 2, "Blandet bruk av parentPageId og parentId fungerer sømløst");
+  assert(ids(mixedTree[0].children) === "modern-child,legacy-child", "Blandet sortering med menuOrder og navOrder fungerer");
+
+  const afterModernDelete = withoutPage(modernPages, "hoved-1");
+  assert(
+    afterModernDelete.every((p) => p.parentPageId === null && p.parentId === null),
+    "withoutPage nullstiller både parentPageId og parentId"
+  );
+
+  // 9. Dra-og-slipp rekkefølge (menuOrder / navOrder)
+  const initialList = [page("p1", { menuOrder: 1 }), page("p2", { menuOrder: 2 }), page("p3", { menuOrder: 3 })];
+  // Dra p3 foran p1 -> ["p3", "p1", "p2"]
+  const reorderedIds = ["p3", "p1", "p2"];
+  const updatedList = initialList.map((p) => {
+    const newIdx = reorderedIds.indexOf(p.id);
+    return { ...p, menuOrder: newIdx + 1, navOrder: newIdx + 1 };
+  });
+  const reorderedTree = buildPageTree(updatedList);
+  assert(ids(reorderedTree.map((n) => n.page)) === "p3,p1,p2", "Sider sorteres etter oppdatert menuOrder etter dra-og-slipp");
+  assert(reorderedTree[0].page.menuOrder === 1, "Første element etter reorder har menuOrder 1");
+  assert(reorderedTree[1].page.menuOrder === 2, "Andre element etter reorder har menuOrder 2");
+  assert(reorderedTree[2].page.menuOrder === 3, "Tredje element etter reorder har menuOrder 3");
 });

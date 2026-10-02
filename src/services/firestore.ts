@@ -113,7 +113,25 @@ export function deletePage(pageId: string, subPageIds: string[]): Promise<void> 
   const batch = writeBatch(db);
   batch.delete(doc(db, CMS_COLLECTIONS.PAGES, pageId));
   for (const subPageId of subPageIds) {
-    batch.update(doc(db, CMS_COLLECTIONS.PAGES, subPageId), { parentId: null });
+    batch.update(doc(db, CMS_COLLECTIONS.PAGES, subPageId), {
+      parentId: null,
+      parentPageId: null,
+    });
   }
+  return batch.commit();
+}
+
+/**
+ * Updates menuOrder and navOrder for a list of pages in a single atomic batch.
+ */
+export function reorderPages(orderedPageIds: string[]): Promise<void> {
+  const batch = writeBatch(db);
+  orderedPageIds.forEach((pageId, index) => {
+    const order = index + 1;
+    batch.update(doc(db, CMS_COLLECTIONS.PAGES, pageId), {
+      menuOrder: order,
+      navOrder: order,
+    });
+  });
   return batch.commit();
 }

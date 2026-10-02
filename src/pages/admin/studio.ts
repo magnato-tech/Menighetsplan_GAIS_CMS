@@ -7,6 +7,7 @@ export const STUDIO_TABS = [
   "cms-nyheter",
   "cms-taler",
   "cms-stab",
+  "cms-design",
   "cms-innstillinger",
   "cms-overstyringer",
   "planlegger-samlinger",

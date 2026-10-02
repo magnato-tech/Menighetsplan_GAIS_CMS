@@ -5,10 +5,11 @@ import { useAdminDashboard } from "../../hooks/useAppHooks";
 import { StudioTab, ShowFeedback, toStudioTab } from "./studio";
 import { StudioSidebar } from "./StudioSidebar";
 import { DashboardTab } from "./tabs/DashboardTab";
-import { PagesTab } from "./tabs/PagesTab";
+import { AdminCmsPanel } from "../../components/admin/AdminCmsPanel";
 import { NewsTab } from "./tabs/NewsTab";
 import { SermonsTab } from "./tabs/SermonsTab";
 import { StaffTab } from "./tabs/StaffTab";
+import { ThemeTab } from "./tabs/ThemeTab";
 import { SiteSettingsTab } from "./tabs/SiteSettingsTab";
 import { VisibilityTab } from "./tabs/VisibilityTab";
 import { GatheringsTab } from "./tabs/GatheringsTab";
@@ -91,7 +92,7 @@ export const AdminStudio: React.FC = () => {
         {panel("dashboard", <DashboardTab studio={studio} onTabChange={handleTabChange} onCreateIn={handleCreateIn} />)}
         {panel(
           "cms-sider",
-          <PagesTab
+          <AdminCmsPanel
             showFeedback={showFeedback}
             createRequested={createRequest === "cms-sider"}
             onCreateHandled={clearCreateRequest}
@@ -108,6 +109,7 @@ export const AdminStudio: React.FC = () => {
         )}
         {panel("cms-taler", <SermonsTab studio={studio} showFeedback={showFeedback} />)}
         {panel("cms-stab", <StaffTab showFeedback={showFeedback} />)}
+        {panel("cms-design", <ThemeTab showFeedback={showFeedback} />)}
         {panel("cms-innstillinger", <SiteSettingsTab />)}
         {panel("cms-overstyringer", <VisibilityTab studio={studio} showFeedback={showFeedback} />)}
         {panel("planlegger-samlinger", <GatheringsTab studio={studio} showFeedback={showFeedback} />)}

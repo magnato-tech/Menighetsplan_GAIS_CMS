@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
 import {
@@ -9,6 +9,11 @@ import {
   Clock,
   Users,
 } from "lucide-react";
+import { CmsContentRenderer } from "../../components/cms/CmsContentRenderer";
+import { getThemeCssVariables, getThemeRadiusClass } from "../../utils/themeUtils";
+import { injectPageSeo } from "../../utils/seoUtils";
+import { isPagePublished } from "../../utils/menu";
+import { formatNorwegianDateTime } from "../../utils/dates";
 
 interface PublicStaticPageProps {
   forcedSlug?: string;
@@ -20,13 +25,66 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
 
   const currentSlug = forcedSlug || paramSlug || "om-oss";
   const page = getPageBySlug(currentSlug);
+  const theme = settings?.theme;
+  const themeCssVars = getThemeCssVariables(theme);
+  const cardRadiusClass = getThemeRadiusClass(theme);
 
-  if (!page) {
+  const isAvailable = page ? isPagePublished(page) : false;
+
+  // Injisér SEO-metadata (metaDescription, ogImage, tittel, Schema.org) direkte i dokumentets head
+  useEffect(() => {
+    if (!page || !isAvailable) {
+      document.title = `Side ikke funnet – ${settings?.churchName || "Lillesand Misjonskirke"}`;
+      return;
+    }
+
+    // Hent 'metaDescription' og 'ogImage' fra CMS-konteksten (med trygge fallbacks)
+    const { metaDescription, ogImage, heroImage, summary, title, slug } = page;
+    const churchName = settings?.churchName || "Lillesand Misjonskirke";
+    const appName = settings?.appName || "Menighetsplan";
+
+    // Manipulerer document.head direkte (metaDescription, ogImage, OpenGraph, Twitter-kort og Schema.org)
+    const cleanupSeo = injectPageSeo({
+      title,
+      metaDescription,
+      ogImage,
+      heroImage,
+      summary,
+      slug,
+      churchName,
+      siteName: appName,
+      type: "website",
+    });
+
+    return () => {
+      cleanupSeo();
+    };
+  }, [
+    page?.id,
+    page?.title,
+    page?.metaDescription,
+    page?.ogImage,
+    page?.heroImage,
+    page?.summary,
+    page?.slug,
+    isAvailable,
+    settings?.churchName,
+    settings?.appName,
+  ]);
+
+  if (!page || !isAvailable) {
+    const isFutureScheduled =
+      Boolean(page && page.publishAt && new Date(page.publishAt).getTime() > Date.now());
+
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-4">
-        <h1 className="text-2xl font-black text-stone-900">Siden ble ikke funnet</h1>
+        <h1 className="text-2xl font-black text-stone-900">
+          {isFutureScheduled ? "Siden er planlagt publisert" : "Siden ble ikke funnet"}
+        </h1>
         <p className="text-sm text-stone-600">
-          Siden med adresse «/{currentSlug}» eksisterer ikke eller er ikke publisert ennå.
+          {isFutureScheduled && page?.publishAt
+            ? `Denne siden blir automatisk tilgjengelig for publikum ${formatNorwegianDateTime(page.publishAt)}.`
+            : `Siden med adresse «/${currentSlug}» eksisterer ikke eller er ikke publisert ennå.`}
         </p>
         <Link
           to="/"
@@ -39,48 +97,14 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
     );
   }
 
-  // Render markdown-like sections cleanly
-  const renderFormattedContent = (content: string) => {
-    const lines = content.split("\n");
-    return lines.map((line, idx) => {
-      const trimmed = line.trim();
-      if (trimmed.startsWith("## ")) {
-        return (
-          <h2 key={idx} className="text-xl sm:text-2xl font-black text-stone-900 mt-6 mb-2">
-            {trimmed.replace("## ", "")}
-          </h2>
-        );
-      }
-      if (trimmed.startsWith("### ")) {
-        return (
-          <h3 key={idx} className="text-lg font-bold text-stone-900 mt-4 mb-1">
-            {trimmed.replace("### ", "")}
-          </h3>
-        );
-      }
-      if (trimmed.startsWith("- ")) {
-        return (
-          <li key={idx} className="ml-4 list-disc text-stone-700 text-sm leading-relaxed my-1">
-            {trimmed.replace("- ", "")}
-          </li>
-        );
-      }
-      if (trimmed === "") {
-        return <div key={idx} className="h-2" />;
-      }
-      return (
-        <p key={idx} className="text-stone-700 text-sm sm:text-base leading-relaxed my-1.5">
-          {trimmed}
-        </p>
-      );
-    });
-  };
-
   const isAboutPage = currentSlug.includes("om-oss");
   const isContactPage = currentSlug.includes("kontakt");
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10">
+    <div
+      style={themeCssVars}
+      className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10"
+    >
       {/* Header */}
       <div className="space-y-3 border-b border-stone-200 pb-6">
         <Link
@@ -90,7 +114,10 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
           <ArrowLeft className="w-4 h-4" />
           <span>Tilbake til forsiden</span>
         </Link>
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-stone-900 tracking-tight">
+        <h1
+          style={{ fontFamily: themeCssVars["--cms-font-heading"] }}
+          className="text-3xl sm:text-4xl lg:text-5xl font-black text-stone-900 tracking-tight"
+        >
           {page.title}
         </h1>
         {page.summary && (
@@ -100,9 +127,20 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
         )}
       </div>
 
+      {/* Hovedbilde (Hero Image) */}
+      {page.heroImage && (
+        <div className={`w-full h-56 sm:h-72 md:h-96 ${cardRadiusClass} overflow-hidden border border-stone-200/80 shadow-xs relative bg-stone-100`}>
+          <img
+            src={page.heroImage}
+            alt={page.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
       {/* Main Content Area */}
-      <div className="bg-white rounded-2xl border border-stone-200/80 p-6 sm:p-10 shadow-xs space-y-4">
-        {renderFormattedContent(page.content)}
+      <div className={`bg-white ${cardRadiusClass} border border-stone-200/80 p-6 sm:p-10 shadow-xs space-y-4`}>
+        <CmsContentRenderer content={page.content} theme={theme} />
       </div>
 
       {/* Lederskap & Stab (vises under Om oss) */}

@@ -5,7 +5,7 @@ export interface CmsPage {
   summary: string;
   content: string;
   isPublished: boolean;
-  status?: "draft" | "published";
+  status?: "draft" | "published" | "scheduled";
   parentPageId?: string | null; // Canonical reference to parent page (null = top-level main tab)
   parentId?: string | null; // Compatibility alias
   menuOrder?: number; // Canonical sort order in navigation menu
@@ -17,6 +17,10 @@ export interface CmsPage {
   heroImage?: string;
   heroCtaText?: string;
   heroCtaLink?: string;
+  metaDescription?: string;
+  ogImage?: string;
+  publishAt?: string; // Scheduled publish date/time in ISO 8601 format
+  publishedAt?: string; // Compatibility alias
 }
 
 export interface CmsNewsArticle {
@@ -73,6 +77,116 @@ export interface CmsStaffMember {
   bio?: string;
 }
 
+export interface CmsDesignTheme {
+  presetId?: string;
+  primaryColor: string; // e.g. #1e3a8a
+  primaryName?: string;
+  accentColor: string; // e.g. #d97706
+  accentName?: string;
+  backgroundTone: "stone" | "slate" | "warm" | "pure-white";
+  headingFont: "sans" | "serif" | "display";
+  bodyFont: "sans" | "serif";
+  borderRadius: "sharp" | "medium" | "smooth"; // sharp=6px, medium=16px, smooth=24px
+  spacingDensity: "compact" | "normal" | "spacious";
+}
+
+export interface ThemePreset {
+  id: string;
+  name: string;
+  description: string;
+  theme: CmsDesignTheme;
+}
+
+export const THEME_PRESETS: ThemePreset[] = [
+  {
+    id: "church-navy",
+    name: "Klassisk Menighetsblå",
+    description: "Tidløs, verdig dyp marinblå med varme gull/rav-detaljer. Perfekt for formelle og tradisjonsrike fellesskap.",
+    theme: {
+      presetId: "church-navy",
+      primaryColor: "#1e3a8a",
+      primaryName: "Menighetsblå",
+      accentColor: "#d97706",
+      accentName: "Varmt Gull",
+      backgroundTone: "stone",
+      headingFont: "sans",
+      bodyFont: "sans",
+      borderRadius: "medium",
+      spacingDensity: "normal",
+    },
+  },
+  {
+    id: "nordic-sage",
+    name: "Nordisk Salvie & Skog",
+    description: "Rolig skogsgrønn med himmelblå aksenter og myke, organiske linjer. Gir en innbydende og varm atmosfære.",
+    theme: {
+      presetId: "nordic-sage",
+      primaryColor: "#166534",
+      primaryName: "Salviegrønn",
+      accentColor: "#0284c7",
+      accentName: "Himmelblå",
+      backgroundTone: "warm",
+      headingFont: "sans",
+      bodyFont: "sans",
+      borderRadius: "smooth",
+      spacingDensity: "normal",
+    },
+  },
+  {
+    id: "warm-terracotta",
+    name: "Varm Terracotta & Jord",
+    description: "Inspirert av lune middelhavs- og naturtoner med klassisk serif-tittel for et personlig og nært uttrykk.",
+    theme: {
+      presetId: "warm-terracotta",
+      primaryColor: "#c2410c",
+      primaryName: "Terracotta",
+      accentColor: "#0d9488",
+      accentName: "Dyp Petrol",
+      backgroundTone: "warm",
+      headingFont: "serif",
+      bodyFont: "sans",
+      borderRadius: "medium",
+      spacingDensity: "spacious",
+    },
+  },
+  {
+    id: "royal-burgundy",
+    name: "Dyp Vinrød & Liturgisk Gull",
+    description: "Klassisk høytidelig vinrød kombinert med dyp rav og serif-skrift. Viser respekt for kirkelig tradisjon og høytid.",
+    theme: {
+      presetId: "royal-burgundy",
+      primaryColor: "#881337",
+      primaryName: "Vinrød",
+      accentColor: "#ca8a04",
+      accentName: "Liturgisk Gull",
+      backgroundTone: "stone",
+      headingFont: "serif",
+      bodyFont: "serif",
+      borderRadius: "sharp",
+      spacingDensity: "normal",
+    },
+  },
+  {
+    id: "modern-indigo",
+    name: "Moderne Indigo & Cyan",
+    description: "Frisk, moderne tech-inspirert fargeprofil med rene kontraster og skarp lesbarhet for yngre generasjoner.",
+    theme: {
+      presetId: "modern-indigo",
+      primaryColor: "#4f46e5",
+      primaryName: "Elektro Indigo",
+      accentColor: "#06b6d4",
+      accentName: "Frisk Cyan",
+      backgroundTone: "slate",
+      headingFont: "sans",
+      bodyFont: "sans",
+      borderRadius: "smooth",
+      spacingDensity: "normal",
+    },
+  },
+];
+
+export const defaultCmsDesignTheme: CmsDesignTheme = THEME_PRESETS[0].theme;
+
 export interface CmsSettings {
   churchName: string;
   appName: string;
@@ -92,6 +206,7 @@ export interface CmsSettings {
   instagramUrl?: string;
   youtubeUrl?: string;
   podcastUrl?: string;
+  theme?: CmsDesignTheme;
   leadershipDecisions?: {
     id: string;
     topic: string;
@@ -191,6 +306,7 @@ export const initialCmsSettings: CmsSettings = {
   instagramUrl: "https://instagram.com/lillesandmisjonskirke",
   youtubeUrl: "https://youtube.com/@lillesandmisjonskirke",
   podcastUrl: "https://spotify.com",
+  theme: defaultCmsDesignTheme,
 };
 
 export const initialCmsStaff: CmsStaffMember[] = [
@@ -334,6 +450,8 @@ export const initialCmsPages: CmsPage[] = [
     navOrder: 1,
     inNavMenu: true,
     linkUrl: "/",
+    metaDescription: "Velkommen til Lillesand Misjonskirke. Et åpent hjem for alle generasjoner med gudstjeneste søndager kl. 11:00, søndagsskole og fellesskap.",
+    ogImage: "https://images.unsplash.com/photo-1548625361-195fe5795df5?auto=format&fit=crop&w=1200&h=630&q=80",
     updatedAt: "2026-09-28T10:00:00.000Z",
   },
   // 2. Kalender (Toppfane)
@@ -520,6 +638,8 @@ export const initialCmsPages: CmsPage[] = [
     menuOrder: 5,
     navOrder: 5,
     inNavMenu: true,
+    metaDescription: "Bli kjent med Lillesand Misjonskirke – vår visjon, verdier, fellesskap, lederskap og tilhørighet i Misjonskirken Norge.",
+    ogImage: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1200&h=630&q=80",
     updatedAt: "2026-09-28T10:00:00.000Z",
   },
   {
@@ -567,6 +687,7 @@ export const initialCmsPages: CmsPage[] = [
     menuOrder: 6,
     navOrder: 6,
     inNavMenu: true,
+    metaDescription: "Kontakt Lillesand Misjonskirke. Finn besøksadresse, åpningstider, telefon, e-post og informasjon om givertjeneste og samtaler.",
     updatedAt: "2026-09-28T10:00:00.000Z",
   },
   // 7. Personvern (Skjult fra hovedmeny, men aktiv på URL)

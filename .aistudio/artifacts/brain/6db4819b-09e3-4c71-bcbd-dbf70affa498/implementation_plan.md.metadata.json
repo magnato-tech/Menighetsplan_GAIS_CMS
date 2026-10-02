@@ -1,6 +1,6 @@
 {
-  "summary":  "Plan for å koble CMS-sider direkte til nettsidens navigasjonsmeny med hierarkisk trestruktur (hovedfaner og underfaner/dropdowns) både i Admin Studio og på den offentlige nettsiden.",
-  "updatedAt":  "2026-10-01T17:42:33.180237634Z",
+  "summary":  "Gjennomføringsplan for en visuell 'Legg til innhold'-blokkvelger i AdminCmsPanel med forhåndsvisningskort for to-kolonne-grid, bilde-med-tekst og sitatblokker, direkte innsetting av Tailwind-formaterte maler, og støtte i CmsContentRenderer.",
+  "updatedAt":  "2026-10-02T20:20:45.707029747Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

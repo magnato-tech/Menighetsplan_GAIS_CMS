@@ -6,28 +6,67 @@ export interface PageNode {
   children: CmsPage[];
 }
 
-const byNavOrder = (a: CmsPage, b: CmsPage) => (a.navOrder ?? 99) - (b.navOrder ?? 99);
+/** Resolves parent ID with fallback between canonical parentPageId and legacy parentId. */
+export function getParentId(page: CmsPage): string | null {
+  if (page.parentPageId !== undefined) {
+    return page.parentPageId;
+  }
+  return page.parentId ?? null;
+}
+
+/** Resolves menu order with fallback between canonical menuOrder and legacy navOrder. */
+export function getMenuOrder(page: CmsPage): number {
+  if (typeof page.menuOrder === "number") {
+    return page.menuOrder;
+  }
+  if (typeof page.navOrder === "number") {
+    return page.navOrder;
+  }
+  return 99;
+}
+
+export const byMenuOrder = (a: CmsPage, b: CmsPage) => getMenuOrder(a) - getMenuOrder(b);
 
 /** Every top-level page in menu order, each with its sub-pages in menu order. */
 export function buildPageTree(pages: CmsPage[]): PageNode[] {
   return pages
-    .filter((p) => !p.parentId)
-    .sort(byNavOrder)
+    .filter((p) => !getParentId(p))
+    .sort(byMenuOrder)
     .map((page) => ({
       page,
-      children: pages.filter((p) => p.parentId === page.id).sort(byNavOrder),
+      children: pages.filter((p) => getParentId(p) === page.id).sort(byMenuOrder),
     }));
 }
 
-/** The tree visitors see: published pages that are marked for the menu. */
-export function buildPublicMenu(pages: CmsPage[]): PageNode[] {
-  return buildPageTree(pages.filter((p) => p.isPublished !== false && p.inNavMenu !== false));
+/** Returns true if a page is currently published and not held back by a future scheduled publish date. */
+export function isPagePublished(page: CmsPage, now = new Date()): boolean {
+  if (page.isPublished === false || page.status === "draft") {
+    return false;
+  }
+  const schedule = page.publishAt || page.publishedAt;
+  if (schedule) {
+    const scheduledTime = new Date(schedule).getTime();
+    if (!isNaN(scheduledTime) && scheduledTime > now.getTime()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/** The tree visitors see: published pages that are marked for the menu and not scheduled in the future. */
+export function buildPublicMenu(pages: CmsPage[], now = new Date()): PageNode[] {
+  return buildPageTree(
+    pages.filter((p) => isPagePublished(p, now) && p.inNavMenu !== false)
+  );
 }
 
 /** Sub-pages that no menu reaches, because their parent is gone or is itself a sub-page. */
 export function findOrphanPages(pages: CmsPage[]): CmsPage[] {
-  const topLevelIds = new Set(pages.filter((p) => !p.parentId).map((p) => p.id));
-  return pages.filter((p) => p.parentId && !topLevelIds.has(p.parentId));
+  const topLevelIds = new Set(pages.filter((p) => !getParentId(p)).map((p) => p.id));
+  return pages.filter((p) => {
+    const pId = getParentId(p);
+    return Boolean(pId && !topLevelIds.has(pId));
+  });
 }
 
 /**
@@ -37,10 +76,15 @@ export function findOrphanPages(pages: CmsPage[]): CmsPage[] {
 export function withoutPage(pages: CmsPage[], pageId: string): CmsPage[] {
   return pages
     .filter((p) => p.id !== pageId)
-    .map((p) => (p.parentId === pageId ? { ...p, parentId: null } : p));
+    .map((p) =>
+      getParentId(p) === pageId
+        ? { ...p, parentId: null, parentPageId: null }
+        : p
+    );
 }
 
 /** Where a page lives on the site. `linkUrl` points it at a built-in route instead of its own article. */
 export function pageUrl(page: Pick<CmsPage, "slug" | "linkUrl">): string {
   return page.linkUrl || (page.slug ? `/${page.slug}` : "/");
 }
+

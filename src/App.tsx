@@ -1,7 +1,8 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { FirebaseDataProvider } from "./context/FirebaseDataContext";
-import { CmsProvider } from "./context/CmsContext";
+import { CmsProvider, useCms } from "./context/CmsContext";
+import { getThemeCssVariables } from "./utils/themeUtils";
 import { Header } from "./components/Header";
 import { WriteErrorBanner } from "./components/WriteErrorBanner";
 import { PublicNavbar } from "./components/public/PublicNavbar";
@@ -47,6 +48,7 @@ function isMinSidePath(pathname: string): boolean {
 
 function AppContent() {
   const location = useLocation();
+  const { settings } = useCms();
 
   // Route type checks
   const isAdminStudio = isAdminStudioPath(location.pathname);
@@ -97,7 +99,10 @@ function AppContent() {
 
   // 3. Public Website Layout (Menighetsplan - Offentlig nettside for Lillesand Misjonskirke)
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50 text-stone-900 font-sans">
+    <div
+      style={getThemeCssVariables(settings?.theme)}
+      className="min-h-screen flex flex-col bg-stone-50 text-stone-900 font-sans"
+    >
       <PublicNavbar />
       <main className="flex-1">
         <Routes>

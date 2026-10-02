@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useCms } from "../../../context/CmsContext";
 import { CmsSettings } from "../../../data/cmsData";
 import {
@@ -6,6 +7,8 @@ import {
   Building2,
   Heart,
   Save,
+  Palette,
+  ArrowRight,
 } from "lucide-react";
 
 export const SiteSettingsTab: React.FC = () => {
@@ -29,6 +32,28 @@ export const SiteSettingsTab: React.FC = () => {
         <p className="text-xs text-slate-400">
           Oppdater menighetens faste informasjon, Vipps-nummer, bankkonto, adresse og sosiale medier på felles Firestore.
         </p>
+      </div>
+
+      {/* Design System Banner */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-slate-900 border border-indigo-700/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-500/50 flex items-center justify-center text-indigo-400 shrink-0">
+            <Palette className="w-5 h-5 text-indigo-300" />
+          </div>
+          <div>
+            <h3 className="font-bold text-white text-sm">Menighetens Designsystem & Fargetema</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Globale fargeprofiler, typografi, overflater og spacing administreres sentralt under fanen «Tema & Designsystem».
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/admin?tab=cms-design"
+          className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-xs"
+        >
+          <span>Åpne Tema & Design</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
 
       <form onSubmit={handleSaveSettings} className="space-y-6">

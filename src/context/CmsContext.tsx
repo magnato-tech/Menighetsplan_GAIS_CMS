@@ -2,7 +2,13 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from "
 import { collection, doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID } from "../data/collections";
-import { createDocument, setDocument, deleteDocument, deletePage as deletePageWithSubPages } from "../services/firestore";
+import {
+  createDocument,
+  setDocument,
+  deleteDocument,
+  deletePage as deletePageWithSubPages,
+  reorderPages as reorderPagesInFirestore,
+} from "../services/firestore";
 import { reportWriteError } from "../services/writeErrors";
 import { newId } from "../utils/id";
 import {
@@ -23,6 +29,7 @@ interface CmsContextValue {
   // Every write resolves to whether it reached Firestore. A failure is already shown to the user.
   savePage: (page: Partial<CmsPage> & { id?: string }) => Promise<boolean>;
   deletePage: (pageId: string) => Promise<boolean>;
+  reorderPages: (orderedPageIds: string[]) => Promise<boolean>;
   saveNews: (newsData: Partial<CmsNewsArticle> & { id?: string }) => Promise<boolean>;
   deleteNews: (newsId: string) => Promise<boolean>;
   saveSermon: (sermonData: Partial<CmsSermon> & { id?: string }) => Promise<boolean>;
@@ -147,23 +154,53 @@ async function attempt(action: string, write: () => Promise<unknown>): Promise<b
 // Each write builds the complete document, so a field left out in the editor gets its default
 const writes = {
   savePage: (pageData: Partial<CmsPage> & { id?: string }) => {
+    const resolvedParent =
+      pageData.parentPageId !== undefined
+        ? pageData.parentPageId
+        : pageData.parentId || null;
+
+    const resolvedOrder =
+      typeof pageData.menuOrder === "number"
+        ? pageData.menuOrder
+        : typeof pageData.navOrder === "number"
+        ? pageData.navOrder
+        : 99;
+
+    const isPublished = pageData.isPublished !== false;
+    const publishAt = pageData.publishAt?.trim() || pageData.publishedAt?.trim() || undefined;
+    const isFutureScheduled = Boolean(
+      isPublished && publishAt && new Date(publishAt).getTime() > Date.now()
+    );
+
+    const resolvedStatus: "draft" | "published" | "scheduled" = !isPublished
+      ? "draft"
+      : isFutureScheduled
+      ? "scheduled"
+      : "published";
+
     const page: CmsPage = {
       id: pageData.id || newId("page"),
       slug: (pageData.slug || `side-${Date.now()}`).toLowerCase().trim().replace(/^\//, ""),
       title: pageData.title || "Uten tittel",
       summary: pageData.summary || "",
       content: pageData.content || "",
-      isPublished: pageData.isPublished !== false,
-      status: pageData.isPublished !== false ? "published" : "draft",
-      navOrder: typeof pageData.navOrder === "number" ? pageData.navOrder : 99,
+      isPublished,
+      status: resolvedStatus,
+      parentPageId: resolvedParent,
+      parentId: resolvedParent, // dual compatibility alias
+      menuOrder: resolvedOrder,
+      navOrder: resolvedOrder, // dual compatibility alias
       inNavMenu: pageData.inNavMenu !== false,
-      parentId: pageData.parentId || null,
       // Left out of the stored document when the page has no link of its own
       linkUrl: pageData.linkUrl || undefined,
       updatedAt: new Date().toISOString(),
       heroImage: pageData.heroImage || "",
       heroCtaText: pageData.heroCtaText || "",
       heroCtaLink: pageData.heroCtaLink || "",
+      metaDescription: pageData.metaDescription?.trim() || undefined,
+      ogImage: pageData.ogImage?.trim() || undefined,
+      publishAt,
+      publishedAt: publishAt,
     };
     return attempt("lagre siden", () => createDocument(CMS_COLLECTIONS.PAGES, page));
   },
@@ -237,9 +274,13 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       settings,
       ...writes,
       deletePage: (pageId: string) => {
-        const subPageIds = pages.filter((p) => p.parentId === pageId).map((p) => p.id);
+        const subPageIds = pages
+          .filter((p) => (p.parentPageId !== undefined ? p.parentPageId === pageId : p.parentId === pageId))
+          .map((p) => p.id);
         return attempt("slette siden", () => deletePageWithSubPages(pageId, subPageIds));
       },
+      reorderPages: (orderedPageIds: string[]) =>
+        attempt("endre rekkefølge på sidene", () => reorderPagesInFirestore(orderedPageIds)),
       saveSettings: (settingsData: Partial<CmsSettings>) =>
         attempt("lagre innstillingene", () =>
           setDocument(CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID, { ...settings, ...settingsData })

@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Headphones,
   User,
+  Palette,
 } from "lucide-react";
 import { StudioData, StudioTab, countUrgentTasks } from "./studio";
 
@@ -199,6 +200,24 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
               </div>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
                 {staff.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onTabChange("cms-design")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                activeTab === "cms-design"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white hover:bg-slate-900"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Palette className="w-4 h-4 text-pink-400" />
+                <span>Tema & Designsystem</span>
+              </div>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                CSS
               </span>
             </button>
 
