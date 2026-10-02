@@ -1,47 +1,37 @@
 import React, { useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   useLeaderGatheringDetail,
   formatNorwegianDateTime,
-  parseIsoToDateAndTime,
-  combineDateAndTimeToIso,
 } from "../hooks/useAppHooks";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
-import { Task, Person, Assignment, Group } from "../types";
+import { Task, Person, Assignment } from "../types";
 import {
   ArrowLeft,
   Calendar,
   Clock,
   MapPin,
   Users,
-  Shield,
   ShieldAlert,
   ShieldCheck,
   CheckCircle2,
   AlertTriangle,
   UserPlus,
-  UserCheck,
-  UserX,
   FileText,
   Info,
   Check,
-  ChevronRight,
   ChevronDown,
-  ChevronUp,
-  Sparkles,
-  X,
   SlidersHorizontal,
-  ExternalLink,
   Edit3,
   Plus,
   Trash2,
   Printer,
-  Search,
-  CheckSquare,
-  Building2,
-  Share2,
-  Save,
 } from "lucide-react";
+import { InstructionDialog } from "./gathering/InstructionDialog";
+import { AssignPersonDialog } from "./gathering/AssignPersonDialog";
+import { EditTaskDialog } from "./gathering/EditTaskDialog";
+import { CreateTaskDialog } from "./gathering/CreateTaskDialog";
+import { EditGatheringDialog } from "./gathering/EditGatheringDialog";
 
 export interface IntegratedScheduleRow {
   id: string;
@@ -75,33 +65,20 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
   gatheringId,
   mode = "leader",
 }) => {
-  const navigate = useNavigate();
-
+  const detail = useLeaderGatheringDetail(gatheringId);
   const {
     hasAccess,
     isLeader,
     isDeputy,
     isAdmin: isUserAdmin,
-    currentUser,
     gathering,
     group,
     involvedGroups,
-    groupMembers,
-    allPersons,
-    allGroups,
     tasksWithDetails,
     programSchedule,
-    assignTaskToPerson,
     updateAssignmentStatus,
     removeAssignment,
-    updateTaskStatus,
-    updateTaskNeededCount,
-    updateTaskInstruction,
-    updateTask,
-    createTask,
-    deleteTask,
-    updateGathering,
-  } = useLeaderGatheringDetail(gatheringId);
+  } = detail;
 
   const isExplicitAdminView = mode === "admin" || (isUserAdmin && mode !== "leader");
   const canAdminister = isUserAdmin || isExplicitAdminView;
@@ -109,9 +86,6 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
   // Filter state
   const [viewFilter, setViewFilter] = useState<"all" | "needs-action" | "my-group">("all");
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>("all");
-
-  // Search in assignment modal
-  const [personSearchQuery, setPersonSearchQuery] = useState<string>("");
 
   // Modals
   const [activeInterveneTaskId, setActiveInterveneTaskId] = useState<string | null>(null);
@@ -123,23 +97,12 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
     groupName?: string;
   } | null>(null);
 
-  // Edit instruction inline inside instruction modal
-  const [isEditingInstructionInModal, setIsEditingInstructionInModal] = useState<boolean>(false);
-  const [editedInstructionText, setEditedInstructionText] = useState<string>("");
 
   // Person status dropdown modal
   const [activePersonActionId, setActivePersonActionId] = useState<string | null>(null);
 
   // Admin: Edit Gathering modal
   const [isEditingGathering, setIsEditingGathering] = useState<boolean>(false);
-  const [editGatheringTitle, setEditGatheringTitle] = useState<string>("");
-  const [editGatheringDate, setEditGatheringDate] = useState<string>("");
-  const [editGatheringTime, setEditGatheringTime] = useState<string>("11:00");
-  const [editGatheringEndTime, setEditGatheringEndTime] = useState<string>("12:00");
-  const [editGatheringLocation, setEditGatheringLocation] = useState<string>("");
-  const [editGatheringIsPublic, setEditGatheringIsPublic] = useState<boolean>(true);
-  const [editGatheringIsGudstjeneste, setEditGatheringIsGudstjeneste] = useState<boolean>(false);
-  const [editGatheringCancelled, setEditGatheringCancelled] = useState<boolean>(false);
 
   // Admin: Edit Task modal
   const [editingTask, setEditingTask] = useState<{
@@ -153,14 +116,6 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
 
   // Admin: Create Task modal
   const [isCreatingTask, setIsCreatingTask] = useState<boolean>(false);
-  const [newTaskTitle, setNewTaskTitle] = useState<string>("");
-  const [newTaskGroupId, setNewTaskGroupId] = useState<string>(
-    group?.id || (involvedGroups[0]?.id || "group-verter")
-  );
-  const [newTaskNeededCount, setNewTaskNeededCount] = useState<number>(1);
-  const [newTaskTime, setNewTaskTime] = useState<string>("11:00");
-  const [newTaskDescription, setNewTaskDescription] = useState<string>("");
-  const [newTaskInstruction, setNewTaskInstruction] = useState<string>("");
 
   // Toast feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -383,24 +338,6 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
   const myGroupTasks = tasksWithDetails.filter((t) => t.isMyGroup);
   const myGroupNeedsAction = myGroupTasks.filter((t) => !t.isFullyCovered || t.hasWithdrawn);
 
-  // Available persons for assignment in modal (all parish members or group members)
-  const availablePersonsForModal = useMemo(() => {
-    if (!activeInterveneTaskId) return [];
-    const activeTaskDetail = tasksWithDetails.find((td) => td.task.id === activeInterveneTaskId);
-    const assignedIds = activeTaskDetail ? activeTaskDetail.assignedPersons.map((p) => p.person?.id) : [];
-
-    // In admin mode, show all parish persons; in leader mode, prioritize group members but allow seeing all if needed
-    const pool = canAdminister ? allPersons : groupMembers;
-    
-    return pool
-      .filter((p) => !assignedIds.includes(p.id))
-      .filter((p) => {
-        if (!personSearchQuery.trim()) return true;
-        const q = personSearchQuery.toLowerCase();
-        return p.name.toLowerCase().includes(q) || (p.email && p.email.toLowerCase().includes(q));
-      });
-  }, [activeInterveneTaskId, tasksWithDetails, canAdminister, allPersons, groupMembers, personSearchQuery]);
-
   // Access check
   if (!gathering || !hasAccess) {
     return (
@@ -434,18 +371,6 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
     );
   }
 
-  // Direct assign handler
-  const handleAssignPerson = async (taskId: string, personId: string, personName: string, response: "confirmed" | "pending" = "confirmed") => {
-    const res = await assignTaskToPerson(taskId, personId, response);
-    if (res.success) {
-      setActiveInterveneTaskId(null);
-      setPersonSearchQuery("");
-      showToast(`Oppgaven ble ${response === "confirmed" ? "tildelt" : "forespurt til"} ${personName}!`);
-    } else {
-      showToast(res.error || "Kunne ikke tildele oppgaven.");
-    }
-  };
-
   // Status changer handler
   const handleStatusChange = (assignmentId: string, newResponse: "confirmed" | "pending" | "withdrawn" | "declined", personName?: string) => {
     const res = updateAssignmentStatus(assignmentId, newResponse);
@@ -473,137 +398,6 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
       showToast(`${personName || "Personen"} ble fjernet fra oppgaven.`);
     } else {
       showToast(res.error || "Kunne ikke fjerne tildeling.");
-    }
-  };
-
-  // Admin: Save Task Edits
-  const handleSaveTaskEdit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingTask) return;
-
-    if (!editingTask.title.trim()) {
-      showToast("Oppgavetittel kan ikke være tom.");
-      return;
-    }
-
-    const res = updateTask(editingTask.id, {
-      title: editingTask.title.trim(),
-      groupId: editingTask.groupId,
-      neededCount: editingTask.neededCount || 1,
-      description: editingTask.description?.trim() || undefined,
-      instruction: editingTask.instruction?.trim() || undefined,
-    });
-
-    if (res.success) {
-      showToast("Oppgaven ble oppdatert!");
-      setEditingTask(null);
-    } else {
-      showToast(res.error || "Kunne ikke oppdatere oppgaven.");
-    }
-  };
-
-  // Admin: Create Task
-  const handleCreateTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTaskTitle.trim()) {
-      showToast("Vennligst oppgi en tittel på oppgaven.");
-      return;
-    }
-
-    const res = createTask({
-      gatheringId: gathering.id,
-      groupId: newTaskGroupId,
-      title: newTaskTitle.trim(),
-      description: newTaskDescription.trim() || undefined,
-      instruction: newTaskInstruction.trim() || undefined,
-      neededCount: newTaskNeededCount || 1,
-    });
-
-    if (res.success) {
-      showToast(`Oppgaven «${newTaskTitle.trim()}» ble lagt til i samlingen!`);
-      setIsCreatingTask(false);
-      setNewTaskTitle("");
-      setNewTaskDescription("");
-      setNewTaskInstruction("");
-      setNewTaskNeededCount(1);
-    } else {
-      showToast(res.error || "Kunne ikke opprette oppgave.");
-    }
-  };
-
-  // Admin: Delete Task
-  const handleDeleteTask = (taskId: string, taskTitle: string) => {
-    if (window.confirm(`Er du sikker på at du vil fjerne oppgaven «${taskTitle}» fra samlingen?`)) {
-      const res = deleteTask(taskId);
-      if (res.success) {
-        showToast(`Oppgaven «${taskTitle}» ble slettet.`);
-        setEditingTask(null);
-      } else {
-        showToast(res.error || "Kunne ikke slette oppgaven.");
-      }
-    }
-  };
-
-  // Save instruction from modal
-  const handleSaveInstructionInModal = () => {
-    if (!viewInstructionTask?.taskId) return;
-    const res = updateTaskInstruction(viewInstructionTask.taskId, editedInstructionText);
-    if (res.success) {
-      showToast("Instruksen ble oppdatert!");
-      setViewInstructionTask((prev) => prev ? { ...prev, instruction: editedInstructionText } : null);
-      setIsEditingInstructionInModal(false);
-    } else {
-      showToast(res.error || "Kunne ikke lagre instruks.");
-    }
-  };
-
-  // Admin: Edit Gathering handlers
-  const handleOpenEditGathering = () => {
-    if (!gathering) return;
-    const { date, time } = parseIsoToDateAndTime(gathering.startsAt);
-    const endTime = gathering.endsAt
-      ? parseIsoToDateAndTime(gathering.endsAt).time
-      : "12:00";
-    setEditGatheringTitle(gathering.title);
-    setEditGatheringDate(date);
-    setEditGatheringTime(time);
-    setEditGatheringEndTime(endTime);
-    setEditGatheringLocation(gathering.location || "");
-    setEditGatheringIsPublic(gathering.isPublic !== false);
-    setEditGatheringIsGudstjeneste(gathering.isGudstjeneste || false);
-    setEditGatheringCancelled(gathering.cancelled || false);
-    setIsEditingGathering(true);
-  };
-
-  const handleSaveGathering = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!gathering) return;
-    if (!editGatheringTitle.trim()) {
-      showToast("Tittel kan ikke være tom.");
-      return;
-    }
-    if (!editGatheringDate) {
-      showToast("Dato må fylles ut.");
-      return;
-    }
-    const startsAt = combineDateAndTimeToIso(editGatheringDate, editGatheringTime || "11:00");
-    const endsAt = editGatheringEndTime
-      ? combineDateAndTimeToIso(editGatheringDate, editGatheringEndTime)
-      : undefined;
-    const res = updateGathering(gathering.id, {
-      title: editGatheringTitle.trim(),
-      startsAt,
-      endsAt,
-      location: editGatheringLocation.trim() || undefined,
-      isPublic: editGatheringIsPublic,
-      isGudstjeneste: editGatheringIsGudstjeneste,
-      cancelled: editGatheringCancelled,
-    });
-    if (res.success) {
-      showToast("Arrangementet ble oppdatert!");
-      setIsEditingGathering(false);
-    } else {
-      showToast(res.error || "Kunne ikke oppdatere arrangement.");
     }
   };
 
@@ -654,7 +448,7 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
                 <button
                   type="button"
                   id="btn-admin-edit-gathering"
-                  onClick={handleOpenEditGathering}
+                  onClick={() => setIsEditingGathering(true)}
                   className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200/90 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer shadow-2xs"
                   title="Rediger tittel, dato, tid og sted"
                 >
@@ -1098,8 +892,6 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
                               time: row.time,
                               groupName: row.groupName,
                             });
-                            setEditedInstructionText(row.instruction || "");
-                            setIsEditingInstructionInModal(false);
                           }}
                           className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50/80 hover:bg-indigo-100 px-2 py-1 rounded-lg border border-indigo-200/60 transition-colors cursor-pointer"
                         >
@@ -1115,7 +907,6 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
                           id={`btn-intervene-assign-${row.task.id}`}
                           onClick={() => {
                             setActiveInterveneTaskId(row.task!.id);
-                            setPersonSearchQuery("");
                           }}
                           className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                             isVacant
@@ -1158,607 +949,50 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
         )}
       </div>
 
-      {/* On-demand Instruction Modal (Requirement 4) */}
       {viewInstructionTask && (
-        <div
-          id="modal-view-instruction"
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn"
-          onClick={() => setViewInstructionTask(null)}
-        >
-          <div
-            className="w-full max-w-md bg-white rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-100 relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 block">
-                  {viewInstructionTask.groupName || "Instruks for oppgave"} • kl. {viewInstructionTask.time || "11:00"}
-                </span>
-                <h3 className="text-base font-extrabold text-slate-900 leading-tight">
-                  {viewInstructionTask.title}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setViewInstructionTask(null)}
-                className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Instruction body or inline editor */}
-            {isEditingInstructionInModal ? (
-              <div className="space-y-3">
-                <label className="block text-xs font-bold text-slate-700">
-                  Rediger instruksen:
-                </label>
-                <textarea
-                  value={editedInstructionText}
-                  onChange={(e) => setEditedInstructionText(e.target.value)}
-                  rows={6}
-                  className="w-full p-3 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-slate-800"
-                  placeholder="Skriv instruks for oppgaven her..."
-                />
-                <div className="flex items-center justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingInstructionInModal(false)}
-                    className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
-                  >
-                    Avbryt
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveInstructionInModal}
-                    className="px-4 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs cursor-pointer"
-                  >
-                    Lagre instruks
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto">
-                  {viewInstructionTask.instruction || "Ingen instruks er registrert for denne oppgaven ennå."}
-                </div>
-
-                <div className="flex items-center justify-between pt-1">
-                  {canAdminister && viewInstructionTask.taskId ? (
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingInstructionInModal(true)}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl border border-indigo-200 cursor-pointer"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                      <span>Rediger instruks</span>
-                    </button>
-                  ) : <div />}
-
-                  <button
-                    type="button"
-                    onClick={() => setViewInstructionTask(null)}
-                    className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl cursor-pointer"
-                  >
-                    Lukk
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <InstructionDialog
+          detail={detail}
+          task={viewInstructionTask}
+          canAdminister={canAdminister}
+          showToast={showToast}
+          onClose={() => setViewInstructionTask(null)}
+        />
       )}
 
-      {/* Direct Assign Person Modal (Requirement 5) */}
       {activeInterveneTaskId && (
-        <div
-          id="modal-assign-person"
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn"
-          onClick={() => setActiveInterveneTaskId(null)}
-        >
-          <div
-            className="w-full max-w-md bg-white rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-100 relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block">
-                  Direkte bemanningshåndtering
-                </span>
-                <h3 className="text-base font-extrabold text-slate-900 leading-tight">
-                  Tildel person til oppgaven
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveInterveneTaskId(null)}
-                className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Quick Search */}
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                value={personSearchQuery}
-                onChange={(e) => setPersonSearchQuery(e.target.value)}
-                placeholder="Søk etter navn eller e-post..."
-                className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
-              />
-            </div>
-
-            {/* Person List */}
-            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
-              {availablePersonsForModal.length === 0 ? (
-                <div className="p-6 text-center text-xs text-slate-400">
-                  Ingen personer matcher søket.
-                </div>
-              ) : (
-                availablePersonsForModal.map((person) => {
-                  const gatheringDate = gathering?.startsAt ? gathering.startsAt.split("T")[0] : "";
-                  const matchingPeriod = person.unavailablePeriods?.find(
-                    (p) => gatheringDate >= p.from && gatheringDate <= p.to
-                  );
-                  const isUnavailable = Boolean(matchingPeriod);
-
-                  return (
-                    <div
-                      key={person.id}
-                      className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs transition-colors ${
-                        isUnavailable
-                          ? "bg-amber-50/80 border-amber-200"
-                          : "bg-slate-50/80 hover:bg-slate-100/80 border-slate-200/60"
-                      }`}
-                    >
-                      <div className="space-y-0.5">
-                        <span className="font-bold text-slate-800 block">{person.name}</span>
-                        <span className="text-[10px] text-slate-400 block">
-                          {person.email || person.phone || person.globalRole}
-                        </span>
-                        {isUnavailable && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
-                            ⚠️ Bortreist: {matchingPeriod?.reason || "Ferie"} ({matchingPeriod?.from} - {matchingPeriod?.to})
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleAssignPerson(activeInterveneTaskId, person.id, person.name, "confirmed")}
-                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg shadow-xs transition-colors cursor-pointer"
-                          title="Tildel direkte med Akseptert status"
-                        >
-                          Tildel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleAssignPerson(activeInterveneTaskId, person.id, person.name, "pending")}
-                          className="px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-[10px] rounded-lg transition-colors cursor-pointer"
-                          title="Send forespørsel (Forespurt status)"
-                        >
-                          Forespør
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-              <span className="text-[11px]">
-                {canAdminister ? "Viser personer i menigheten" : `Viser medlemmer i ${group?.name || "gruppen"}`}
-              </span>
-              <button
-                type="button"
-                onClick={() => setActiveInterveneTaskId(null)}
-                className="text-xs text-slate-600 hover:text-slate-900 font-bold cursor-pointer"
-              >
-                Lukk
-              </button>
-            </div>
-          </div>
-        </div>
+        <AssignPersonDialog
+          detail={detail}
+          taskId={activeInterveneTaskId}
+          canAdminister={canAdminister}
+          showToast={showToast}
+          onClose={() => setActiveInterveneTaskId(null)}
+        />
       )}
 
-      {/* Admin: Edit Task Modal (Requirement 5) */}
       {editingTask && (
-        <div
-          id="modal-admin-edit-task"
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn"
-          onClick={() => setEditingTask(null)}
-        >
-          <div
-            className="w-full max-w-md bg-white rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-100 relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 block">
-                  Administrativ oppgavekontroll
-                </span>
-                <h3 className="text-base font-extrabold text-slate-900 leading-tight">
-                  Rediger oppgave & bemanning
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setEditingTask(null)}
-                className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveTaskEdit} className="space-y-3 text-xs">
-              {/* Task Title */}
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Oppgavetittel / Rolle
-                </label>
-                <input
-                  type="text"
-                  value={editingTask.title}
-                  onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-900"
-                  required
-                />
-              </div>
-
-              {/* Responsible Group */}
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Ansvarlig tjenestegruppe
-                </label>
-                <select
-                  value={editingTask.groupId}
-                  onChange={(e) => setEditingTask({ ...editingTask, groupId: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
-                >
-                  {allGroups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name} ({g.category || "gruppe"})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Needed Count */}
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Bemanningsbehov (antall personer)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={editingTask.neededCount}
-                  onChange={(e) =>
-                    setEditingTask({
-                      ...editingTask,
-                      neededCount: parseInt(e.target.value, 10) || 1,
-                    })
-                  }
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-900"
-                />
-              </div>
-
-              {/* Instruction */}
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Oppgaveinstruks (vises ved behov)
-                </label>
-                <textarea
-                  rows={3}
-                  value={editingTask.instruction}
-                  onChange={(e) => setEditingTask({ ...editingTask, instruction: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
-                  placeholder="Beskriv oppmøtetid, rutiner og forventninger..."
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => handleDeleteTask(editingTask.id, editingTask.title)}
-                  className="text-xs text-red-600 hover:text-red-800 font-bold inline-flex items-center gap-1 cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Slett oppgave
-                </button>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setEditingTask(null)}
-                    className="px-3 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
-                  >
-                    Avbryt
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs cursor-pointer"
-                  >
-                    Lagre endringer
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
+        <EditTaskDialog
+          detail={detail}
+          task={editingTask}
+          showToast={showToast}
+          onClose={() => setEditingTask(null)}
+        />
       )}
 
-      {/* Admin: Create Task Modal (Requirement 5) */}
-      {isCreatingTask && (
-        <div
-          id="modal-admin-create-task"
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn"
-          onClick={() => setIsCreatingTask(false)}
-        >
-          <div
-            className="w-full max-w-md bg-white rounded-3xl p-5 space-y-4 shadow-2xl border border-slate-100 relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block">
-                  Legg til i samlingen
-                </span>
-                <h3 className="text-base font-extrabold text-slate-900 leading-tight">
-                  Ny oppgave / programpunkt
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsCreatingTask(false)}
-                className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      <CreateTaskDialog
+        detail={detail}
+        gathering={gathering}
+        open={isCreatingTask}
+        showToast={showToast}
+        onClose={() => setIsCreatingTask(false)}
+      />
 
-            <form onSubmit={handleCreateTask} className="space-y-3 text-xs">
-              {/* Task Title */}
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Oppgavetittel / Rolle *
-                </label>
-                <input
-                  type="text"
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  placeholder="f.eks. Dørvert / Velkomst"
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-900"
-                  required
-                />
-              </div>
-
-              {/* Responsible Group */}
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Ansvarlig tjenestegruppe *
-                </label>
-                <select
-                  value={newTaskGroupId}
-                  onChange={(e) => setNewTaskGroupId(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
-                >
-                  {allGroups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name} ({g.category || "gruppe"})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Needed Count */}
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Bemanningsbehov (antall personer)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={newTaskNeededCount}
-                  onChange={(e) => setNewTaskNeededCount(parseInt(e.target.value, 10) || 1)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-900"
-                />
-              </div>
-
-              {/* Instruction */}
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Oppgaveinstruks (valgfritt)
-                </label>
-                <textarea
-                  rows={2}
-                  value={newTaskInstruction}
-                  onChange={(e) => setNewTaskInstruction(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
-                  placeholder="Beskriv forberedelser og rutiner..."
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCreatingTask(false)}
-                  className="px-3 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
-                >
-                  Avbryt
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs cursor-pointer"
-                >
-                  Opprett oppgave
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Gathering Modal */}
-      {isEditingGathering && gathering && (
-        <div
-          id="modal-edit-gathering-detail"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150"
-        >
-          <div className="bg-white rounded-2xl max-w-md w-full p-4 border border-slate-200 shadow-xl space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <div className="flex items-center gap-1.5 text-slate-800 font-bold text-sm">
-                <Edit3 className="w-4 h-4 text-indigo-600" />
-                Rediger arrangement
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsEditingGathering(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveGathering} className="space-y-2.5 text-xs">
-              <div>
-                <label className="text-[11px] font-bold text-slate-700 block mb-0.5">
-                  Tittel <span className="text-red-500">*</span>:
-                </label>
-                <input
-                  type="text"
-                  id="input-detail-edit-gathering-title"
-                  value={editGatheringTitle}
-                  onChange={(e) => setEditGatheringTitle(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-800"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-0.5">
-                    Dato <span className="text-red-500">*</span>:
-                  </label>
-                  <input
-                    type="date"
-                    id="input-detail-edit-gathering-date"
-                    value={editGatheringDate}
-                    onChange={(e) => setEditGatheringDate(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-800"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-0.5">
-                    Starttid:
-                  </label>
-                  <input
-                    type="time"
-                    id="input-detail-edit-gathering-time"
-                    value={editGatheringTime}
-                    onChange={(e) => setEditGatheringTime(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-800"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[11px] font-semibold text-slate-700 block mb-0.5">
-                  Sluttid:
-                </label>
-                <input
-                  type="time"
-                  id="input-detail-edit-gathering-end-time"
-                  value={editGatheringEndTime}
-                  onChange={(e) => setEditGatheringEndTime(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-semibold text-slate-700 block mb-0.5">
-                  Sted:
-                </label>
-                <input
-                  type="text"
-                  id="input-detail-edit-gathering-location"
-                  value={editGatheringLocation}
-                  onChange={(e) => setEditGatheringLocation(e.target.value)}
-                  placeholder="F.eks. Hovedsalen"
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-800"
-                />
-              </div>
-
-              <div className="space-y-1.5 border-t border-slate-100 pt-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    id="input-detail-edit-gathering-is-public"
-                    checked={editGatheringIsPublic}
-                    onChange={(e) => setEditGatheringIsPublic(e.target.checked)}
-                    className="w-4 h-4 border border-slate-300 rounded-md cursor-pointer"
-                  />
-                  <span className="text-[11px] font-semibold text-slate-700">
-                    Vis offentlig på nettside (isPublic)
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    id="input-detail-edit-gathering-is-gudstjeneste"
-                    checked={editGatheringIsGudstjeneste}
-                    onChange={(e) => setEditGatheringIsGudstjeneste(e.target.checked)}
-                    className="w-4 h-4 border border-slate-300 rounded-md cursor-pointer"
-                  />
-                  <span className="text-[11px] font-semibold text-slate-700">
-                    Er gudstjeneste (isGudstjeneste)
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    id="input-detail-edit-gathering-cancelled"
-                    checked={editGatheringCancelled}
-                    onChange={(e) => setEditGatheringCancelled(e.target.checked)}
-                    className="w-4 h-4 border border-slate-300 rounded-md cursor-pointer"
-                  />
-                  <span className="text-[11px] font-semibold text-slate-700">
-                    Avlyst (cancelled)
-                  </span>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  id="btn-cancel-detail-edit-gathering"
-                  onClick={() => setIsEditingGathering(false)}
-                  className="px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-800 rounded-lg cursor-pointer"
-                >
-                  Avbryt
-                </button>
-                <button
-                  type="submit"
-                  id="btn-save-detail-edit-gathering"
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs cursor-pointer"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  Lagre endringer
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {isEditingGathering && (
+        <EditGatheringDialog
+          detail={detail}
+          gathering={gathering}
+          showToast={showToast}
+          onClose={() => setIsEditingGathering(false)}
+        />
       )}
     </div>
   );
