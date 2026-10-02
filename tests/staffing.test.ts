@@ -58,6 +58,15 @@ function runTests() {
   const replaced = calculateTaskStaffingStatus(task("t", 1), responses("t", "withdrawn", "confirmed"));
   assert(replaced.color === "green" && replaced.isFullyCovered, "Forfall som er erstattet av en bekreftet person er grønn");
 
+  // Forfall means someone dropped out, or the task is marked vacant. Being short of people is not forfall.
+  assert(!half.hasForfall, "1/2 bekreftet uten at noen har trukket seg er ikke forfall");
+  assert(!halfAndAsked.hasForfall, "1/2 bekreftet + ubesvart forespørsel er ikke forfall");
+  const halfWithWithdrawal = calculateTaskStaffingStatus(task("t", 2), responses("t", "confirmed", "withdrawn"));
+  assert(halfWithWithdrawal.color === "red" && halfWithWithdrawal.hasForfall, "1/2 bekreftet der én har meldt forfall er forfall");
+  const markedVacant = calculateTaskStaffingStatus(task("t", 2, "vacant"), responses("t", "confirmed"));
+  assert(markedVacant.hasForfall, "Oppgave med status 'vacant' er forfall også uten en tilbaketrukket tildeling");
+  assert(!replaced.hasForfall, "Et forfall som er dekket inn igjen er ikke lenger forfall");
+
   // 2. Edges the list does not spell out
   const untouched = calculateTaskStaffingStatus(task("t", 3), []);
   assert(untouched.color === "red" && untouched.statusText === "Mangler 3", "Åpen oppgave uten tildelinger mangler hele behovet");
@@ -94,6 +103,13 @@ function runTests() {
   assert(missing.color === "red" && missing.needsAttention, "Én rød oppgave gjør hele samlingen rød");
   assert(missing.missingPeopleCount === 2 && missing.label === "Mangler 2", "Samlingen summerer manglende personer på tvers av oppgaver");
   assert(missing.totalTasks === 3 && missing.coveredCount === 1, "Samlingen teller oppgaver og dekkede oppgaver");
+  assert(missing.vacantCount === 0 && missing.openCount === 2, "Oppgaver som mangler folk uten forfall telles som åpne, ikke som forfall");
+
+  const withForfall = getStaffingStatus([lyd, kaffe], [
+    ...responses("lyd", "withdrawn"),
+    ...responses("kaffe", "confirmed"),
+  ]);
+  assert(withForfall.vacantCount === 1 && withForfall.openCount === 1, "Samlingen skiller forfall fra oppgaver som bare mangler folk");
 
   console.log(`\nResultat: ${passed} bestått, ${failed} feilet.`);
   if (failed > 0) {

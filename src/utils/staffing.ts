@@ -120,7 +120,9 @@ export function calculateTaskStaffingStatus(
       neededCount: needed,
       missingCount,
       pendingCount,
-      hasForfall: true,
+      // Red either way, but only a withdrawal or a vacant task counts as forfall:
+      // 1 of 2 confirmed is short of people without anyone having dropped out.
+      hasForfall,
       isFullyCovered: false,
     };
   }
