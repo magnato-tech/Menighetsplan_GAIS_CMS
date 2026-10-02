@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useFirebase } from "../../firebase-service";
+import { useFirebase } from "../../context/FirebaseDataContext";
 import { useCms } from "../../context/CmsContext";
 import {
   Calendar,

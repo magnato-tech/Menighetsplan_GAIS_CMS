@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from "react";
-import { useFirebase } from "../firebase-service";
+import { useFirebase } from "../context/FirebaseDataContext";
 import { Task, Person, Group, Gathering, Assignment } from "../types";
 import { validateGathering } from "../utils/validation";
 import { StaffingColor, TaskStaffingStatus, calculateTaskStaffingStatus, StaffingStatusResult, getStaffingStatus } from "../utils/staffing";

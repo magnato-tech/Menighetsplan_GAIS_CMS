@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { FirebaseDataProvider } from "./firebase-service";
+import { FirebaseDataProvider } from "./context/FirebaseDataContext";
 import { CmsProvider } from "./context/CmsContext";
 import { Header } from "./components/Header";
 import { WriteErrorBanner } from "./components/WriteErrorBanner";
@@ -33,23 +33,24 @@ import { AdminGatheringDetailPage } from "./pages/AdminGatheringDetailPage";
 import { AdminTaskDetailPage } from "./pages/AdminTaskDetailPage";
 import { AdminSettingsPage } from "./pages/AdminSettingsPage";
 
+const MIN_SIDE_SECTIONS = ["/minside", "/leder", "/oppgave", "/gruppe", "/samling", "/husfellesskap", "/meldinger"];
+
+// Whole path segments only: "/leder" must not claim the public page "/lederskap"
+const isUnder = (pathname: string, section: string) => pathname === section || pathname.startsWith(`${section}/`);
+
+const isAdminStudioPath = (pathname: string) => pathname === "/admin";
+
+function isMinSidePath(pathname: string): boolean {
+  const isAdminSubpage = pathname.startsWith("/admin/") && !pathname.startsWith("/admin/cms");
+  return isAdminSubpage || MIN_SIDE_SECTIONS.some((section) => isUnder(pathname, section));
+}
+
 function AppContent() {
   const location = useLocation();
 
   // Route type checks
-  const isAdminStudio = location.pathname === "/admin";
-  const isAdminSubpage = location.pathname.startsWith("/admin/") && !location.pathname.startsWith("/admin/cms");
-
-  const isMinSideRoute =
-    location.pathname === "/minside" ||
-    location.pathname.startsWith("/leder") ||
-    location.pathname.startsWith("/oppgave") ||
-    location.pathname.startsWith("/samling") ||
-    location.pathname.startsWith("/husfellesskap") ||
-    location.pathname.startsWith("/meldinger") ||
-    isAdminSubpage;
-
-  const isPublicRoute = !isAdminStudio && !isMinSideRoute;
+  const isAdminStudio = isAdminStudioPath(location.pathname);
+  const isMinSideRoute = isMinSidePath(location.pathname);
 
   // 1. Fullscreen Admin Studio
   if (isAdminStudio) {
@@ -136,15 +137,24 @@ function AppContent() {
   );
 }
 
+function DataProviders({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation();
+  const internal = isAdminStudioPath(pathname) || isMinSidePath(pathname);
+
+  return (
+    <FirebaseDataProvider internal={internal}>
+      <CmsProvider>{children}</CmsProvider>
+    </FirebaseDataProvider>
+  );
+}
+
 export default function App() {
   return (
-    <FirebaseDataProvider>
-      <CmsProvider>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
+    <BrowserRouter>
+      <DataProviders>
+        <AppContent />
         <WriteErrorBanner />
-      </CmsProvider>
-    </FirebaseDataProvider>
+      </DataProviders>
+    </BrowserRouter>
   );
 }

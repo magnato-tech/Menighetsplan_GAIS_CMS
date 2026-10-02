@@ -1,6 +1,6 @@
 import { collection, doc, getDocs, writeBatch } from "firebase/firestore";
 import { db } from "../firebase";
-import { sanitizeForFirestore } from "../firebase-service";
+import { sanitizeForFirestore } from "./firestore";
 import { ALL_COLLECTIONS } from "../data/collections";
 import { getMockDocuments, type MockDocument } from "../data/mockDocuments";
 import { chunk } from "../utils/chunk";

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { HusfellesskapView } from "../components/HusfellesskapView";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
-import { useFirebase } from "../firebase-service";
+import { useFirebase } from "../context/FirebaseDataContext";
 import { useHusfellesskap } from "../hooks/useAppHooks";
 import {
   ChevronLeft,

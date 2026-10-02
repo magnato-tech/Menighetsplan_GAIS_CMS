@@ -7,7 +7,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { sanitizeForFirestore } from "../firebase-service";
+import { sanitizeForFirestore } from "../services/firestore";
 import { CMS_COLLECTIONS, CMS_OVERRIDES_COLLECTION, CMS_SETTINGS_DOC_ID } from "../data/collections";
 import { reportWriteError } from "../services/writeErrors";
 import {

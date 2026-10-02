@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
-import { useFirebase } from "../firebase-service";
+import { useFirebase } from "../context/FirebaseDataContext";
 import { Person, Gathering } from "../types";
 
 export function useHusfellesskap(explicitGroupId?: string, explicitGatheringId?: string) {

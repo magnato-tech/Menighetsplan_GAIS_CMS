@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
-import { useFirebase } from "../../firebase-service";
+import { useFirebase } from "../../context/FirebaseDataContext";
 import { UserSwitcher } from "../UserSwitcher";
 import {
   Menu,

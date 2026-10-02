@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useModuleConfig, useAdminDashboard } from "../hooks/useAppHooks";
-import { useFirebase } from "../firebase-service";
+import { useFirebase } from "../context/FirebaseDataContext";
 import { useCms } from "../context/CmsContext";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
 import { ConfirmDialog } from "../components/ConfirmDialog";

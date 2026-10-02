@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from "react";
-import { useFirebase } from "../firebase-service";
+import { useFirebase } from "../context/FirebaseDataContext";
 import { Task, Person, Group, Gathering, Assignment, ActionCardModel, QueryResult, BadgeVariant } from "../types";
 import { formatNorwegianDateTime } from "../utils/dates";
 

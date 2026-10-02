@@ -7,7 +7,7 @@ import {
   formatNorwegianDateTime,
   formatChatMessageTime,
 } from "../hooks/useAppHooks";
-import { useFirebase } from "../firebase-service";
+import { useFirebase } from "../context/FirebaseDataContext";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
 import { ActionCard } from "../components/ActionCard";
 import { Task, GroupMessage, Gathering, Group } from "../types";
