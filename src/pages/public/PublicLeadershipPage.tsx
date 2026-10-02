@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useMockData } from "../../context/MockDataContext";
+import { useFirebase } from "../../firebase-service";
 import { useCms } from "../../context/CmsContext";
 import {
   Users,
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 export const PublicLeadershipPage: React.FC = () => {
-  const { groups, allPersons } = useMockData();
+  const { groups, allPersons } = useFirebase();
   const { settings } = useCms();
 
   // All groups in the "ledergruppe" category

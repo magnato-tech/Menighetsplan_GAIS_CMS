@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useMockData } from "../../context/MockDataContext";
+import { useFirebase } from "../../firebase-service";
 import { useCms } from "../../context/CmsContext";
 import {
   Calendar,
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 export const PublicCalendarPage: React.FC = () => {
-  const { gatherings } = useMockData();
+  const { gatherings } = useFirebase();
   const { settings, overrides } = useCms();
   const [selectedCategory, setSelectedCategory] = useState<string>("alle");
 

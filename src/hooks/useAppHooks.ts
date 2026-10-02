@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { useMockData } from "../context/MockDataContext";
+import { useFirebase } from "../firebase-service";
 import { Task, Person, Group, Gathering, Assignment, ActionCardModel, QueryResult, BadgeVariant } from "../types";
 import { validateGathering } from "../utils/validation";
 
@@ -144,7 +144,7 @@ export function combineDateAndTimeToIso(dateStr: string, timeStr: string): strin
 
 // 1. Hook: useCurrentUser
 export function useCurrentUser() {
-  const { currentUser, allPersons, currentUserId, setCurrentUserId, getUserGroups } = useMockData();
+  const { currentUser, allPersons, currentUserId, setCurrentUserId, getUserGroups } = useFirebase();
   const userGroups = useMemo(() => getUserGroups(currentUser.id), [getUserGroups, currentUser.id]);
 
   return {
@@ -158,7 +158,7 @@ export function useCurrentUser() {
 
 // 2. Hook: useMyTasks
 export function useMyTasks(): QueryResult<Task[]> {
-  const { currentUser, getTasksForPerson, tasks, assignments } = useMockData();
+  const { currentUser, getTasksForPerson, tasks, assignments } = useFirebase();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -175,7 +175,7 @@ export function useMyTasks(): QueryResult<Task[]> {
 
 // 3. Hook: useOpenTasks
 export function useOpenTasks(): QueryResult<Task[]> {
-  const { currentUser, getUserGroups, getOpenTasksForGroups, tasks } = useMockData();
+  const { currentUser, getUserGroups, getOpenTasksForGroups, tasks } = useFirebase();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -224,7 +224,7 @@ export function useTaskDetail(taskId: string | undefined): TaskDetailResult {
     reportAbsence: performReportAbsence,
     tasks,
     assignments,
-  } = useMockData();
+  } = useFirebase();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -307,7 +307,7 @@ export function useTaskDetail(taskId: string | undefined): TaskDetailResult {
 
 // 5. Hook / Function: useActionCardModel
 export function useActionCardModel(task: Task, currentUser: Person): ActionCardModel {
-  const { getGatheringById, getGroupById, getAssignmentForTask, getPersonById } = useMockData();
+  const { getGatheringById, getGroupById, getAssignmentForTask, getPersonById } = useFirebase();
 
   const gathering = getGatheringById(task.gatheringId);
   const group = getGroupById(task.groupId);
@@ -668,7 +668,7 @@ export interface LeaderGroupData {
 
 // 7. Hook: useLeaderDashboard
 export function useLeaderDashboard() {
-  const { currentUser, groups, gatherings, tasks, assignments, allPersons, assignTaskToPerson } = useMockData();
+  const { currentUser, groups, gatherings, tasks, assignments, allPersons, assignTaskToPerson } = useFirebase();
 
   // Find groups where current user's ID exists in group.leaderIds OR group.deputyLeaderIds
   const leaderGroups = useMemo(() => {
@@ -779,7 +779,7 @@ export function useLeaderDashboard() {
 
 // 8. Hook: useModuleConfig
 export function useModuleConfig() {
-  const { moduleConfig, setModuleStatus, toggleKalender, toggleMeldinger } = useMockData();
+  const { moduleConfig, setModuleStatus, toggleKalender, toggleMeldinger } = useFirebase();
 
   return {
     moduleConfig,
@@ -843,7 +843,7 @@ export function useAdminDashboard() {
     createTask,
     updateTask,
     assignTaskToPerson,
-  } = useMockData();
+  } = useFirebase();
 
   const isAdmin = currentUser.globalRole === "admin";
 
@@ -1016,7 +1016,7 @@ export function useAdminGatheringDetail(gatheringId: string) {
     createTask,
     deleteTask,
     updateGathering,
-  } = useMockData();
+  } = useFirebase();
 
   const isAdmin = currentUser.globalRole === "admin";
   const gathering = useMemo(() => {
@@ -1119,7 +1119,7 @@ export function useAdminGroupDetail(groupId: string) {
     updateGroup,
     addGroupMember,
     removeGroupMember,
-  } = useMockData();
+  } = useFirebase();
 
   const isAdmin = currentUser.globalRole === "admin";
   const group = getGroupById(groupId);
@@ -1185,7 +1185,7 @@ export function useAdminPersonDetail(personId: string) {
     assignments,
     getPersonById,
     updatePerson,
-  } = useMockData();
+  } = useFirebase();
 
   const isAdmin = currentUser.globalRole === "admin";
   const person = getPersonById(personId);
@@ -1247,7 +1247,7 @@ export function useAdminTaskDetail(taskId: string) {
     updateTask,
     updateTaskInstruction,
     updateTaskNeededCount,
-  } = useMockData();
+  } = useFirebase();
 
   const isAdmin = currentUser.globalRole === "admin";
   const task = useMemo(() => {
@@ -1386,7 +1386,7 @@ export function useLeaderGroupDetail(groupId: string) {
     removeAssignment,
     updateTaskStatus,
     getPersonById,
-  } = useMockData();
+  } = useFirebase();
 
   const group = getGroupById(groupId);
 
@@ -1558,7 +1558,7 @@ export function useLeaderGatheringDetail(gatheringId: string) {
     createTask,
     deleteTask,
     updateGathering,
-  } = useMockData();
+  } = useFirebase();
 
   const gathering = useMemo(() => {
     if (!gatheringId) return null;
@@ -1729,7 +1729,7 @@ export function useHusfellesskap(explicitGroupId?: string, explicitGatheringId?:
     deleteGroupMessage,
     toggleGroupNotifications,
     getGroupNotificationsEnabled,
-  } = useMockData();
+  } = useFirebase();
 
   // Selected meeting ID override state
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(explicitGatheringId || null);

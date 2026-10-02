@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useMockData } from "../../context/MockDataContext";
+import { useFirebase } from "../../firebase-service";
 import { useCms } from "../../context/CmsContext";
 import {
   Calendar,
@@ -32,7 +32,7 @@ function getSpotifyEmbedUrl(url: string | undefined): string | null {
 }
 
 export const PublicHomePage: React.FC = () => {
-  const { gatherings, groups } = useMockData();
+  const { gatherings, groups } = useFirebase();
   const { settings, news, sermons, overrides } = useCms();
   const [isPlayingSermon, setIsPlayingSermon] = useState(false);
 

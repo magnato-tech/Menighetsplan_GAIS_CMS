@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useMockData } from "../context/MockDataContext";
+import { useFirebase } from "../firebase-service";
 import { useCms } from "../context/CmsContext";
 import { CmsPage } from "../data/cmsData";
 import {
@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 
 export const AdminCmsPage: React.FC = () => {
-  const { gatherings, isFirestoreConnected } = useMockData();
+  const { gatherings, isFirestoreConnected } = useFirebase();
   const {
     pages,
     overrides,

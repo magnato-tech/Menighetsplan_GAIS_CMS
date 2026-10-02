@@ -78,14 +78,14 @@ Her er spesifikasjonen du skal følge:
 I tillegg til API-et, har Menighetsplan nå **egen innebygd CMS-støtte** direkte i webapplikasjonen:
 
 1. **Offentlig nettsidevisning:**
-   * Tilgjengelig på ruten `/nettside` og `/nettside/:slug`.
-   * Viser forside med neste gudstjeneste, ukesoversikt, faste aktiviteter, og månedlig program.
-   * Har faste undersider for `om-oss`, `barn-og-unge`, og `kontakt`.
+   * Forsiden ligger på `/`, og faste sider på `/side/:slug` (de gamle adressene `/nettside` og `/nettside/:slug` virker fortsatt).
+   * Viser forside med neste gudstjeneste, kommende arrangementer, nyheter og siste tale, samt kalender (`/hva-skjer`), taler (`/taler`), fellesskap (`/fellesskap`) og lederskap (`/lederskap`).
+   * Har faste undersider for blant annet `om-oss` og `kontakt`.
 
 2. **CMS-Administrasjon:**
-   * Tilgjengelig på ruten `/admin/cms` (eller via **CMS**-fanen i toppmenyen).
-   * **Arrangementer & overstyring:** Klikk «⭐ Fremhev» for å løfte et arrangement opp på forsiden, eller «👁️ Skjul» for å fjerne det fra offentlig visning.
-   * **Faste sider:** Opprett nye sider, rediger tekst, overskrifter og punkter, eller tilbakestill til standardmaler.
+   * Ligger i Admin Studio på `/admin`, under fanene for sider, nyheter, taler, stab og innstillinger.
+   * **Synlighet:** Hver samling settes til «Kun intern», «Offentlig kalender» eller «Fremhevet på forsiden».
+   * **Faste sider:** Opprett nye sider, rediger tekst, overskrifter og punkter, og ordne dem i menyen.
 
 ---
 

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { useMockData } from "../context/MockDataContext";
+import { useFirebase } from "../firebase-service";
 import { useCms } from "../context/CmsContext";
 import {
   Calendar,
@@ -26,7 +26,7 @@ import {
 export const PublicWebsitePage: React.FC = () => {
   const { slug } = useParams<{ slug?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { gatherings, groups } = useMockData();
+  const { gatherings, groups } = useFirebase();
   const { pages, overrides, getPageBySlug } = useCms();
 
   const filterVisning = searchParams.get("visning") || "alle"; // 'alle' | 'gudstjenester'

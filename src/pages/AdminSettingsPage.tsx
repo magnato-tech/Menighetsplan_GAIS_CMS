@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useModuleConfig, useAdminDashboard } from "../hooks/useAppHooks";
-import { useMockData } from "../context/MockDataContext";
+import { useFirebase } from "../firebase-service";
 import { useCms } from "../context/CmsContext";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -54,7 +54,7 @@ export const AdminSettingsPage: React.FC = () => {
     assignments,
     groupMessages,
     attendances,
-  } = useMockData();
+  } = useFirebase();
   const { pages, news, sermons, staff } = useCms();
 
   // Which confirmation is open. Deleting takes two separate confirmations.

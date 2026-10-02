@@ -487,7 +487,7 @@ export async function respondToGathering(
 }
 
 // ============================================================================
-// React Context & Provider to replace MockDataProvider seamlessly
+// React Context & Provider
 // ============================================================================
 
 export interface ModuleConfig {
@@ -1131,7 +1131,3 @@ export const useFirebase = (): FirebaseDataContextType => {
   }
   return context;
 };
-
-// Aliases for compatibility when replacing MockDataProvider
-export { FirebaseDataProvider as MockDataProvider };
-export { useFirebase as useMockData };

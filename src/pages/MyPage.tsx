@@ -7,7 +7,7 @@ import {
   formatNorwegianDateTime,
   formatChatMessageTime,
 } from "../hooks/useAppHooks";
-import { useMockData } from "../context/MockDataContext";
+import { useFirebase } from "../firebase-service";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
 import { ActionCard } from "../components/ActionCard";
 import { Task, GroupMessage, Gathering, Group } from "../types";
@@ -48,7 +48,7 @@ export const MyPage: React.FC = () => {
     getGatheringById,
     getGroupById,
     getAllAssignmentsForTask,
-  } = useMockData();
+  } = useFirebase();
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();

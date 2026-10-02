@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { HusfellesskapView } from "../components/HusfellesskapView";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
-import { useMockData } from "../context/MockDataContext";
+import { useFirebase } from "../firebase-service";
 import { useHusfellesskap } from "../hooks/useAppHooks";
 import {
   ChevronLeft,
@@ -25,7 +25,7 @@ export const HusfellesskapPage: React.FC = () => {
     addGroupMember,
     removeGroupMember,
     addPerson,
-  } = useMockData();
+  } = useFirebase();
   const { group, isMember } = useHusfellesskap(groupId);
 
   const [showTestPanel, setShowTestPanel] = useState(false);

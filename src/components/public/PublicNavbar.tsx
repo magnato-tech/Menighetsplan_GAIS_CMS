@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
-import { useMockData } from "../../context/MockDataContext";
+import { useFirebase } from "../../firebase-service";
 import { UserSwitcher } from "../UserSwitcher";
 import {
   Menu,
@@ -22,7 +22,7 @@ export const PublicNavbar: React.FC = () => {
   const [openMobileSubmenus, setOpenMobileSubmenus] = useState<Record<string, boolean>>({});
   const location = useLocation();
   const { settings, pages } = useCms();
-  const { currentUser } = useMockData();
+  const { currentUser } = useFirebase();
 
   const isAdmin = currentUser.globalRole === "admin";
 

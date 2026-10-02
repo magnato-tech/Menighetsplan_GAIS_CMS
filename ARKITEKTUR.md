@@ -1,55 +1,65 @@
-# Arkitektur – Menighets-CMS (Lillesand Misjonskirke)
-*Sist oppdatert: 2026-09-28 – Etter at server-endepunktet ble implementert og levert i Menighetsplan 2.0.*
+# Arkitektur – Menighetsplan med innebygd CMS (Lillesand Misjonskirke)
+*Sist oppdatert: 2026-10-02 – beskriver koden slik den faktisk er i dette repoet.*
 
 ## Kort fortalt
-CMS-et er en **egen modul** og blir den nye offentlige nettsiden til **Lillesand Misjonskirke**. På sikt **erstatter** det eRedaktør og tar over `lillesandmisjonskirke.no`. 
-
-Den **eneste integrasjonen** er det offentlige API-et i appen **Menighetsplan 2.0** ([Menighetsplan2.0_mobil](https://github.com/magnato-tech/Menighetsplan2.0_mobil)). Derfra hentes gudstjenester og arrangementer hvert kvarter.
-
-Detaljert kontrakt: **[INTEGRASJON-MENIGHETSPLAN.md](INTEGRASJON-MENIGHETSPLAN.md)**.
+Menighetsplan er én webapp som samler den offentlige nettsiden, frivilligportalen og administrasjonen. Alt leser og skriver til samme Firestore-database. En liten Express-server leverer appen og et offentlig JSON-API for eksterne nettsider.
 
 ```
- Frivillige/admin ──▶ Menighetsplan 2.0 ──(offentlig API, kun lesing)──▶ CMS ──▶ Besøkende
-                      (fasit, Firestore)                                 lillesandmisjonskirke.no
+ Besøkende ───────▶ Offentlig nettside ─┐
+ Frivillige/ledere ▶ Min side ──────────┼─▶ Firestore (europe-west3)
+ Admin ───────────▶ Admin Studio ───────┘        ▲
+                                                 │ leses av
+ Eksterne nettsider ◀── JSON ── Express-server (`server.ts`)
 ```
 
-## Løs kobling
-- CMS-et kjenner bare **kontrakten** (JSON v1), ikke Firestore eller appens interne typer.
-- All kunnskap om appen ligger i én fil: `lib/kilder/menighetsplan.js`. Endrer appen seg, er det bare den filen som endres.
-- CMS-et kaller server-endepunktet:
-  `GET https://ais-dev-bpwtuilescw22tmh5zztaw-138177352715.europe-west3.run.app/api/offentlig/arrangementer`
-- Ved feil eller under frakoblede tester bruker CMS-et en **lokal mock** (`data/menighetsplan-mock.json`) som følger nøyaktig samme kontrakt.
+## Teknologi
+| Område | Valg |
+|---|---|
+| Klient | React 19, TypeScript, Vite 6, Tailwind CSS 4, React Router 7 |
+| Data | Cloud Firestore via Firebase klient-SDK, sanntidslyttere |
+| Server | Express (`server.ts`), kjøres med `tsx` |
+| Hosting | Google AI Studio / Cloud Run, port 3000 |
+| PWA | `public/sw.js` og `public/manifest.webmanifest` |
 
-## Valg
-| Område | Valg | Hvorfor |
+## De tre flatene
+`src/App.tsx` velger layout ut fra adressen:
+
+| Flate | Ruter | Hovedfiler |
 |---|---|---|
-| Plattform | **Node.js**, ingen eksterne pakker | Lite vedlikehold, lynrask oppstart |
-| Arrangementsdata | Hentes fra Menighetsplan via server-API | Én fasit, ingen dobbel registrering, ingen datalekasjer |
-| Siste kopi | Lagres som fil/minne og brukes hvis API-et er nede | Aldri blank side for kirkebesøkende |
-| Innhold som ikke er arrangementer | «Om oss», «Kontakt», «Bli med», «Barn og unge» eies av CMS-et | Hører hjemme på den offentlige nettsiden |
-| Hosting | Google Cloud Run / Vercel (appen ligger på AI Studio Cloud Run) | Må kunne ta over `lillesandmisjonskirke.no` |
-| Språk | JavaScript / TypeScript | Samme økosystem |
+| Offentlig nettside | `/`, `/hva-skjer`, `/taler`, `/fellesskap`, `/lederskap`, `/om-oss`, `/kontakt`, `/side/:slug`, `/artikkel/:id` | `src/pages/public/` |
+| Min side | `/minside`, `/leder`, `/oppgave/:id`, `/samling/:id`, `/husfellesskap`, og detaljsidene under `/admin/…` | `src/pages/` |
+| Admin Studio | `/admin` (faner via `?tab=`) | `src/pages/admin/AdminStudio.tsx` |
 
-## Datamodell i CMS-et
-* `id` / `uid`: Stabil identifikator fra Menighetsplan.
-* `type`: `"gudstjeneste"` eller `"arrangement"`.
-* `tittel`: Tittel på samlingen.
-* `start` / `slutt`: ISO 8601 med norsk tidssone-offset (`Europe/Oslo`, f.eks. `+02:00`).
-* `heldag`: boolean (heldagsarrangement).
-* `sted`: Lokasjon (standard: "Lillesand Misjonskirke").
-* `status`: `"planlagt"` eller `"avlyst"`.
-* `tagger`: Kategori-merkelapper.
+## Datalag
+- **`FirebaseDataProvider`** (`src/firebase-service.ts`) lytter på `persons`, `groups`, `gatherings`, `tasks`, `assignments`, `groupMessages` og `gatheringAttendances`, og tilbyr handlingene som endrer dem. Komponenter henter den med `useFirebase()`.
+- **`CmsProvider`** (`src/context/CmsContext.tsx`) lytter på `cms_pages`, `cms_news`, `cms_sermons`, `cms_staff`, `cms_settings` og `cms_overrides`. Siste øyeblikksbilde mellomlagres i `localStorage`, slik at nettsiden aldri starter blank.
+- **Hooks per side** (`src/hooks/useAppHooks.ts`) setter sammen rådataene til det hver side trenger, blant annet bemanningsstatus.
 
-## Sikkerhet & GDPR
-* CMS-et leser **aldri** direkte fra Firestore.
-* Server-endepunktet kjøres i appen (Cloud Run) og fungerer som en sikker brannmur:
-  * `persons`, `tasks`, `assignments`, `groupMessages` og interne notater forlater aldri appen.
-  * Gruppesamlinger for husfellesskap filtreres automatisk bort med mindre de er merket offentlige.
+### Skriving
+1. Et nytt dokument bygges én gang i `src/data/newDocuments.ts`, med ID fra `newId()`.
+2. Det samme objektet legges i lokal tilstand og sendes til Firestore.
+3. Feiler skrivingen, meldes det via `src/services/writeErrors.ts` og vises i `WriteErrorBanner`. Sanntidslytteren henter deretter tilbake det som faktisk er lagret.
 
-## Status og Avklaringer
-| Punkt | Status | Løsning |
+## Offentlig API
+`server.ts` leser `gatherings` og `groups` og sender dem gjennom rene funksjoner i `server/publicApi.ts`. Bare hvitelistede felt slipper ut. Medlemslister og kontaktinformasjon eksponeres ikke.
+
+| Endepunkt | Innhold |
+|---|---|
+| `GET /api/offentlig/arrangementer` | Kontrakt v1, tider med norsk offset (`+01:00` / `+02:00`) |
+| `GET /api/public/gatherings`, `/groups`, `/recurring`, `/all` | Utvidet v1.1-format |
+
+Kontrakten for eksterne lesere står i **[INTEGRASJON-MENIGHETSPLAN.md](INTEGRASJON-MENIGHETSPLAN.md)**.
+
+## Synlighet
+Feltet `visibility` på en samling (`intern`, `offentlig`, `fremhevet`) er fasit. `isPublic` skrives som et speil av dette for eldre lesere.
+
+## Kjente avvik fra målbildet
+`PRODUKTDOKUMENTASJON.md` beskriver hvor løsningen skal. Koden er ikke der ennå på disse punktene:
+
+| Område | Mål | I dag |
 |---|---|---|
-| **Endepunkt i appen** | **LØST** | `GET /api/offentlig/arrangementer` er ferdig implementert og testet |
-| **Sikkerhet & personvern** | **LØST** | Kun offentlige samlinger og felt eksponeres via serverproxy |
-| **Tidssone & sommertid** | **LØST** | Serveren leverer ferdig konvertert tid med norsk offset (`+01:00`/`+02:00`) |
-| **Fremhevede arrangementer** | **LØST** | Avklart med PO: Fremhevede arrangementer overstyrer `?visning=` og beholdes i toppseksjonen |
+| Innlogging | Brukere logger inn; roller styrer tilgang | Ingen innlogging. Aktiv bruker velges i en testbryter, og `/admin` er åpen |
+| Sikkerhetsregler | Bare admin endrer offentlige profilfelt; medlemmer endrer bare sitt eget | Reglene tillater lesing av alt og skriving uten innlogging |
+| Personvern på nettsiden | Besøkende får bare offentlige data | Hele appen ligger inne i `FirebaseDataProvider`, så også de offentlige sidene abonnerer på persondata og meldinger |
+| Synlighet | Én bryter (`visibility`) | `cms_overrides` (fremhevet/skjult) finnes fortsatt ved siden av, og de offentlige sidene filtrerer på `isPublic` og `overrides` |
+| Filstørrelse | Én komponent per fane/modal | `AdminStudio.tsx` (ca. 3 200 linjer), `useAppHooks.ts` (ca. 2 000), `GatheringDetailView.tsx` (ca. 1 650) |

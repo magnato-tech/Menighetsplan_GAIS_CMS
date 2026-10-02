@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useMockData } from "../../context/MockDataContext";
+import { useFirebase } from "../../firebase-service";
 import { useCms } from "../../context/CmsContext";
 import {
   Users,
@@ -19,7 +19,7 @@ import {
 import { GroupCategory } from "../../types";
 
 export const PublicGroupsPage: React.FC = () => {
-  const { groups, allPersons } = useMockData();
+  const { groups, allPersons } = useFirebase();
   const { settings } = useCms();
   const [selectedCategory, setSelectedCategory] = useState<string>("alle");
   const [interestedGroupId, setInterestedGroupId] = useState<string | null>(null);
