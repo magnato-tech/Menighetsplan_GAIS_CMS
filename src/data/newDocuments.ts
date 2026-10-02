@@ -47,7 +47,6 @@ export interface NewGatheringInput {
   bibleText?: string;
   hostPersonId?: string;
   visibility?: GatheringVisibility;
-  isPublic?: boolean;
   isGudstjeneste?: boolean;
   cancelled?: boolean;
   sendInvitationImmediately?: boolean;

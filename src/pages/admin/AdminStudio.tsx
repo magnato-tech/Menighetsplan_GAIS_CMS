@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import { useAdminDashboard } from "../../hooks/useAppHooks";
-import { StudioTab, ShowFeedback } from "./studio";
+import { StudioTab, ShowFeedback, toStudioTab } from "./studio";
 import { StudioSidebar } from "./StudioSidebar";
 import { DashboardTab } from "./tabs/DashboardTab";
 import { PagesTab } from "./tabs/PagesTab";
@@ -23,7 +23,7 @@ export const AdminStudio: React.FC = () => {
   const studio = useAdminDashboard();
 
   // Tab State
-  const tabParam = (searchParams.get("tab") as StudioTab) || "dashboard";
+  const tabParam = toStudioTab(searchParams.get("tab"));
   const [activeTab, setActiveTab] = useState<StudioTab>(tabParam);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // A tab is mounted on its first visit and then only hidden, so a half-written
@@ -38,8 +38,7 @@ export const AdminStudio: React.FC = () => {
   };
 
   useEffect(() => {
-    const t = searchParams.get("tab") as StudioTab;
-    if (t) openTab(t);
+    if (searchParams.has("tab")) openTab(tabParam);
   }, [searchParams]);
 
   const handleTabChange = (tab: StudioTab) => {

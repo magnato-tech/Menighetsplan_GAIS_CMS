@@ -15,6 +15,7 @@ import {
   CalendarPlus,
 } from "lucide-react";
 import { StudioData, ShowFeedback } from "../studio";
+import { visibilityOf } from "../../../utils/visibility";
 
 interface GatheringsTabProps {
   studio: StudioData;
@@ -45,8 +46,8 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
       location: nextGatheringLocation || sourceG.location,
       theme: sourceG.theme,
       type: sourceG.type,
-      visibility: sourceG.visibility || "offentlig",
-      isPublic: sourceG.visibility !== "intern",
+      // An internal gathering stays internal when it is copied, also one from before `visibility` existed
+      visibility: visibilityOf(sourceG),
       isGudstjeneste: sourceG.isGudstjeneste,
     });
     if (!res.success || !res.gathering) {

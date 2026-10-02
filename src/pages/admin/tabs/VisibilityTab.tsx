@@ -3,7 +3,7 @@ import {
   formatNorwegianDateTime,
 } from "../../../hooks/useAppHooks";
 import { GatheringVisibility } from "../../../types";
-import { isPubliclyVisible, visibilityFields } from "../../../utils/visibility";
+import { visibilityOf, visibilityFields } from "../../../utils/visibility";
 import {
   Globe,
   Star,
@@ -36,8 +36,7 @@ export const VisibilityTab: React.FC<VisibilityTabProps> = ({ studio, showFeedba
       <div className="space-y-3">
         {adminGatherings.map((item) => {
           const g = item.gathering;
-          // Older documents may lack `visibility` and only say whether they are public
-          const visibility = g.visibility || (isPubliclyVisible(g) ? "offentlig" : "intern");
+          const visibility = visibilityOf(g);
           const isFeatured = visibility === "fremhevet";
           const isHidden = visibility === "intern";
           const isPublic = visibility === "offentlig";

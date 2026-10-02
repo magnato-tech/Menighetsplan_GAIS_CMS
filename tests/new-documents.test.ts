@@ -33,13 +33,8 @@ describe("Opprettelse av nye dokumenter", () => {
   assert(arrangement.visibility === "offentlig" && arrangement.isPublic === true, "Arrangement er offentlig som standard");
   const groupGathering = buildGathering({ title: "Husfellesskap", startsAt: "2026-10-20T19:00:00", type: "gruppesamling" });
   assert(groupGathering.visibility === "intern" && groupGathering.isPublic === false, "Gruppesamling er intern som standard");
-  const mismatched = buildGathering({
-    title: "Lederforum",
-    startsAt: "2026-10-21T19:00:00",
-    visibility: "intern",
-    isPublic: true,
-  });
-  assert(mismatched.isPublic === false, "isPublic følger visibility også når de to er oppgitt ulikt");
+  const internal = buildGathering({ title: "Lederforum", startsAt: "2026-10-21T19:00:00", visibility: "intern" });
+  assert(internal.isPublic === false, "Et arrangement som opprettes som internt er ikke offentlig");
   const featured = buildGathering({ title: "Julekonsert", startsAt: "2026-12-14T18:00:00", visibility: "fremhevet" });
   assert(featured.isPublic === true, "Fremhevet samling er offentlig");
   try {

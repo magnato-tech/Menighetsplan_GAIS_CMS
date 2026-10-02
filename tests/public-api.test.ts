@@ -11,7 +11,7 @@ import {
   toPublicGroups,
   toRecurringEvents,
 } from "../server/publicApi";
-import { isPubliclyVisible, visibilityFields, visibilityAfterToggle } from "../src/utils/visibility";
+import { isPubliclyVisible, visibilityOf, visibilityFields, visibilityAfterToggle } from "../src/utils/visibility";
 
 describe("Det offentlige API-et", () => {
   const base: GatheringDoc = {
@@ -58,6 +58,18 @@ describe("Det offentlige API-et", () => {
   assert(
     !isPubliclyVisible({ visibility: "hemmelig" as GatheringDoc["visibility"] }),
     "Ukjent visibility-verdi regnes ikke som offentlig"
+  );
+  assert(
+    visibilityOf({ visibility: "fremhevet" }) === "fremhevet" && visibilityOf({ visibility: "intern", isPublic: true }) === "intern",
+    "visibilityOf gir den lagrede verdien"
+  );
+  assert(
+    visibilityOf({ isPublic: false }) === "intern" && visibilityOf({ isPublic: true }) === "offentlig" && visibilityOf({}) === "offentlig",
+    "visibilityOf leser isPublic på en samling fra før visibility fantes"
+  );
+  assert(
+    visibilityOf({ visibility: "hemmelig" as GatheringDoc["visibility"] }) === "intern",
+    "visibilityOf regner en ukjent verdi som intern"
   );
 
   // Writing: the two fields are always stored together, and a public/internal switch keeps "fremhevet"
