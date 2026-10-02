@@ -19,8 +19,8 @@ interface VisibilityTabProps {
 export const VisibilityTab: React.FC<VisibilityTabProps> = ({ studio, showFeedback }) => {
   const { adminGatherings, updateGathering } = studio;
 
-  const handleSetGatheringVisibility = async (gatheringId: string, visibility: GatheringVisibility) => {
-    await updateGathering(gatheringId, visibilityFields(visibility));
+  const handleSetGatheringVisibility = (gatheringId: string, visibility: GatheringVisibility) => {
+    updateGathering(gatheringId, visibilityFields(visibility));
     showFeedback(`Synlighet oppdatert til: ${visibility === "fremhevet" ? "Fremhevet på forsiden" : visibility === "offentlig" ? "Offentlig kalender" : "Kun intern"}`);
   };
 

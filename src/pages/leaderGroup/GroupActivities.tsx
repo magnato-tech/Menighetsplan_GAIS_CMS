@@ -435,8 +435,8 @@ export const GroupActivities: React.FC<GroupActivitiesProps> = ({ detail, showTo
                                       key={m.id}
                                       type="button"
                                       id={`btn-do-quick-assign-${task.id}-${m.id}`}
-                                      onClick={async () => {
-                                        const res = await assignTaskToPerson(task.id, m.id);
+                                      onClick={() => {
+                                        const res = assignTaskToPerson(task.id, m.id);
                                         if (res.success) {
                                           setQuickAssignTaskId(null);
                                           showToast(`Oppgaven ble direkte tildelt ${m.name}!`);

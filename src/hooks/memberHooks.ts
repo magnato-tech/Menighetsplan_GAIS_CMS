@@ -133,12 +133,12 @@ export function useTaskDetail(taskId: string | undefined): TaskDetailResult {
 
   const claimTask = useCallback(async () => {
     if (!task) return { success: false, error: "Ingen oppgave valgt" };
-    return await assignTaskToPerson(task.id, currentUser.id);
+    return assignTaskToPerson(task.id, currentUser.id);
   }, [task, currentUser.id, assignTaskToPerson]);
 
   const reportAbsenceAction = useCallback(async () => {
     if (!task) return { success: false, error: "Ingen oppgave valgt" };
-    return await performReportAbsence(task.id, currentUser.id);
+    return performReportAbsence(task.id, currentUser.id);
   }, [task, currentUser.id, performReportAbsence]);
 
   const permissionDenied = Boolean(task && !hasGroupAccess);

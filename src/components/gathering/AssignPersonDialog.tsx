@@ -39,8 +39,8 @@ export const AssignPersonDialog: React.FC<AssignPersonDialogProps> = ({ detail, 
   }, [taskId, tasksWithDetails, canAdminister, allPersons, groupMembers, personSearchQuery]);
 
   // Direct assign handler
-  const handleAssignPerson = async (taskId: string, personId: string, personName: string, response: "confirmed" | "pending" = "confirmed") => {
-    const res = await assignTaskToPerson(taskId, personId, response);
+  const handleAssignPerson = (taskId: string, personId: string, personName: string, response: "confirmed" | "pending" = "confirmed") => {
+    const res = assignTaskToPerson(taskId, personId, response);
     if (res.success) {
       onClose();
       setPersonSearchQuery("");

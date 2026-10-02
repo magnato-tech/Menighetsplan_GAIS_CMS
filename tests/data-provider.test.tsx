@@ -1,0 +1,336 @@
+// @vitest-environment jsdom
+import React from "react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { cleanup, renderHook, waitFor } from "@testing-library/react";
+import { COLLECTIONS } from "../src/data/collections";
+import { clearWriteError, getWriteError } from "../src/services/writeErrors";
+import type { Assignment, Gathering, Group, GroupMessage, Person, Task } from "../src/types";
+import { clearCollections, offline, seed, stored, storedIds } from "./support/offlineFirestore";
+
+// The provider runs against the real Firestore client, kept offline. What a test sees in
+// the provider's state is therefore what the client holds after the write, not a guess at it.
+vi.mock("../src/firebase", async () => (await import("./support/offlineFirestore")).firebaseModuleMock);
+
+import { FirebaseDataProvider, useFirebase } from "../src/context/FirebaseDataContext";
+
+const persons: Person[] = [
+  { id: "person-1", name: "Kari Nordmann", globalRole: "admin" },
+  { id: "person-2", name: "Ola Hansen", globalRole: "member" },
+  { id: "person-3", name: "Per Olsen", globalRole: "member" },
+];
+const groups: Group[] = [
+  {
+    id: "group-lyd",
+    name: "Lyd og bilde",
+    memberIds: ["person-2"],
+    leaderIds: ["person-1"],
+    memberJoinedAt: { "person-2": "2026-01-10T12:00:00.000Z" },
+    notificationPreferences: { "person-2": false },
+  },
+];
+const gatherings: Gathering[] = [
+  {
+    id: "gathering-1",
+    groupId: "group-lyd",
+    title: "Gudstjeneste",
+    startsAt: "2026-11-01T10:00:00.000Z",
+    theme: "Nåde",
+    visibility: "offentlig",
+    isPublic: true,
+  },
+];
+const tasks: Task[] = [
+  { id: "task-1", gatheringId: "gathering-1", groupId: "group-lyd", title: "Lydtekniker", status: "open", neededCount: 1 },
+  { id: "task-2", gatheringId: "gathering-1", groupId: "group-lyd", title: "Bilde", status: "confirmed", neededCount: 2 },
+];
+const assignments: Assignment[] = [{ id: "assign-1", taskId: "task-2", personId: "person-2", response: "confirmed" }];
+const messages: GroupMessage[] = [
+  {
+    id: "msg-1",
+    groupId: "group-lyd",
+    senderPersonId: "person-2",
+    senderName: "Ola Hansen",
+    content: "Hei!",
+    createdAt: "2026-10-01T08:00:00.000Z",
+  },
+];
+
+beforeEach(async () => {
+  await offline;
+  await clearCollections(Object.values(COLLECTIONS));
+  seed(COLLECTIONS.PERSONS, persons);
+  seed(COLLECTIONS.GROUPS, groups);
+  seed(COLLECTIONS.GATHERINGS, gatherings);
+  seed(COLLECTIONS.TASKS, tasks);
+  seed(COLLECTIONS.ASSIGNMENTS, assignments);
+  seed(COLLECTIONS.GROUP_MESSAGES, messages);
+  clearWriteError();
+});
+
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
+
+/** Mounts the provider and waits for the first snapshots. */
+async function mountProvider(internal = true) {
+  const { result } = renderHook(() => useFirebase(), {
+    wrapper: ({ children }: { children: React.ReactNode }) => (
+      <FirebaseDataProvider internal={internal}>{children}</FirebaseDataProvider>
+    ),
+  });
+  await waitFor(() => expect(result.current.allPersons).toHaveLength(persons.length));
+  await waitFor(() => expect(result.current.gatherings).toHaveLength(gatherings.length));
+  if (internal) await waitFor(() => expect(result.current.assignments).toHaveLength(assignments.length));
+  return result;
+}
+
+const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+describe("Lesing", () => {
+  test("Dataene i databasen vises", async () => {
+    const data = await mountProvider();
+    await waitFor(() => {
+      expect(data.current.groups.map((g) => g.id)).toEqual(["group-lyd"]);
+      expect(data.current.tasks.map((t) => t.id).sort()).toEqual(["task-1", "task-2"]);
+      expect(data.current.groupMessages.map((m) => m.id)).toEqual(["msg-1"]);
+    });
+    expect(data.current.getTaskById("task-1")?.title).toBe("Lydtekniker");
+    expect(data.current.getTasksForPerson("person-2").map((t) => t.id)).toEqual(["task-2"]);
+  });
+
+  test("Den offentlige nettsiden får ikke oppgaver, tildelinger, meldinger eller oppmøte", async () => {
+    const data = await mountProvider(false);
+    await waitFor(() => expect(data.current.groups).toHaveLength(1));
+    await pause(60);
+    expect(data.current.tasks).toEqual([]);
+    expect(data.current.assignments).toEqual([]);
+    expect(data.current.groupMessages).toEqual([]);
+    expect(data.current.attendances).toEqual([]);
+  });
+
+  test("Aktiv bruker er personen som er valgt", async () => {
+    const data = await mountProvider();
+    expect(data.current.currentUser.id).toBe("person-1");
+    data.current.setCurrentUserId("person-2");
+    await waitFor(() => expect(data.current.currentUser.name).toBe("Ola Hansen"));
+  });
+});
+
+describe("Nye dokumenter", () => {
+  test("En ny samling vises og lagres slik den ble returnert", async () => {
+    const data = await mountProvider();
+    const result = data.current.createGathering({ title: " Høsttakkefest ", startsAt: "2026-10-18T09:00:00.000Z" });
+    expect(result.success).toBe(true);
+    const created = result.gathering!;
+
+    await waitFor(() => expect(data.current.getGatheringById(created.id)?.title).toBe("Høsttakkefest"));
+    const saved = await stored(COLLECTIONS.GATHERINGS, created.id);
+    expect(saved).toMatchObject({ id: created.id, title: "Høsttakkefest", visibility: "offentlig", isPublic: true });
+    // Fields that were never filled in are left out, not stored as empty values
+    expect(saved).not.toHaveProperty("theme");
+  });
+
+  test("En ny oppgave, gruppe og person vises og lagres", async () => {
+    const data = await mountProvider();
+    const task = data.current.createTask({ gatheringId: "gathering-1", groupId: "group-lyd", title: "Kirkekaffe", neededCount: 2 }).task!;
+    const group = data.current.createGroup({ name: "Kirkekaffe", leaderIds: ["person-1"] }).group!;
+    const person = data.current.addPerson({ name: "Anne Berg", phone: "900 00 000" }).person!;
+
+    await waitFor(() => {
+      expect(data.current.getTaskById(task.id)).toMatchObject({ title: "Kirkekaffe", status: "open", neededCount: 2 });
+      expect(data.current.getGroupById(group.id)).toMatchObject({ name: "Kirkekaffe", leaderIds: ["person-1"], memberIds: [] });
+      expect(data.current.getPersonById(person.id)).toMatchObject({ name: "Anne Berg", globalRole: "member" });
+    });
+    expect(await stored(COLLECTIONS.TASKS, task.id)).toMatchObject({ id: task.id, gatheringId: "gathering-1" });
+    expect(await stored(COLLECTIONS.GROUPS, group.id)).toMatchObject({ id: group.id, category: "tjenestegruppe" });
+    expect(await stored(COLLECTIONS.PERSONS, person.id)).toMatchObject({ id: person.id, phone: "900 00 000" });
+  });
+
+  test("En melding sendes fra den aktive brukeren", async () => {
+    const data = await mountProvider();
+    const message = data.current.sendGroupMessage("group-lyd", "  Husk øvelse i kveld  ").message!;
+
+    await waitFor(() => expect(data.current.getGroupMessages("group-lyd").map((m) => m.id)).toEqual(["msg-1", message.id]));
+    expect(await stored(COLLECTIONS.GROUP_MESSAGES, message.id)).toMatchObject({
+      senderPersonId: "person-1",
+      senderName: "Kari Nordmann",
+      content: "Husk øvelse i kveld",
+    });
+  });
+});
+
+describe("Endringer", () => {
+  test("Et felt som tømmes forsvinner, og resten av samlingen står urørt", async () => {
+    const data = await mountProvider();
+    data.current.updateGathering("gathering-1", { title: "Familiegudstjeneste", theme: undefined });
+
+    await waitFor(() => expect(data.current.getGatheringById("gathering-1")?.title).toBe("Familiegudstjeneste"));
+    expect(data.current.getGatheringById("gathering-1")).not.toHaveProperty("theme");
+    const saved = await stored(COLLECTIONS.GATHERINGS, "gathering-1");
+    expect(saved).toMatchObject({ title: "Familiegudstjeneste", startsAt: "2026-11-01T10:00:00.000Z" });
+    expect(saved).not.toHaveProperty("theme");
+  });
+
+  test("Invitasjonen registreres som sendt med tidspunkt", async () => {
+    const data = await mountProvider();
+    data.current.sendGatheringInvitation("gathering-1");
+
+    await waitFor(() => expect(data.current.getGatheringById("gathering-1")?.invitationSent).toBe(true));
+    const saved = await stored(COLLECTIONS.GATHERINGS, "gathering-1");
+    expect(Number.isNaN(Date.parse(saved?.invitationSentAt))).toBe(false);
+  });
+
+  test("Oppgaven kan endres felt for felt", async () => {
+    const data = await mountProvider();
+    data.current.updateTaskStatus("task-1", "cancelled");
+    data.current.updateTaskInstruction("task-1", "Møt 09:30");
+    data.current.updateTask("task-1", { title: "Lyd og lys" });
+    data.current.updateTaskNeededCount("task-2", undefined);
+
+    await waitFor(() =>
+      expect(data.current.getTaskById("task-1")).toMatchObject({ status: "cancelled", instruction: "Møt 09:30", title: "Lyd og lys" })
+    );
+    await waitFor(() => expect(data.current.getTaskById("task-2")).not.toHaveProperty("neededCount"));
+    expect(await stored(COLLECTIONS.TASKS, "task-2")).not.toHaveProperty("neededCount");
+  });
+
+  test("Gruppe og person kan endres", async () => {
+    const data = await mountProvider();
+    data.current.updateGroupName("group-lyd", "  Teknikk  ");
+    data.current.updateGroup("group-lyd", { description: "Lyd, lys og bilde" });
+    data.current.updatePerson("person-2", { phone: "911 11 111" });
+
+    await waitFor(() => {
+      expect(data.current.getGroupById("group-lyd")).toMatchObject({ name: "Teknikk", description: "Lyd, lys og bilde" });
+      expect(data.current.getPersonById("person-2")?.phone).toBe("911 11 111");
+    });
+    expect(await stored(COLLECTIONS.GROUPS, "group-lyd")).toMatchObject({ name: "Teknikk", memberIds: ["person-2"] });
+  });
+});
+
+describe("Sletting", () => {
+  test("Samling, oppgave, tildeling og melding forsvinner", async () => {
+    const data = await mountProvider();
+    data.current.deleteGathering("gathering-1");
+    data.current.deleteTask("task-1");
+    data.current.removeAssignment("assign-1");
+    data.current.deleteGroupMessage("msg-1");
+
+    await waitFor(() => {
+      expect(data.current.gatherings).toEqual([]);
+      expect(data.current.tasks.map((t) => t.id)).toEqual(["task-2"]);
+      expect(data.current.assignments).toEqual([]);
+      expect(data.current.groupMessages).toEqual([]);
+    });
+    expect(await storedIds(COLLECTIONS.GATHERINGS)).toEqual([]);
+    expect(await storedIds(COLLECTIONS.TASKS)).toEqual(["task-2"]);
+  });
+});
+
+describe("Medlemskap", () => {
+  test("Et nytt medlem legges til én gang og får innmeldingsdato", async () => {
+    const data = await mountProvider();
+    data.current.addGroupMember("group-lyd", "person-3");
+    data.current.addGroupMember("group-lyd", "person-3");
+
+    await waitFor(() => expect(data.current.getGroupById("group-lyd")?.memberIds).toEqual(["person-2", "person-3"]));
+    const saved = await stored(COLLECTIONS.GROUPS, "group-lyd");
+    expect(saved?.memberIds).toEqual(["person-2", "person-3"]);
+    expect(Number.isNaN(Date.parse(saved?.memberJoinedAt["person-3"]))).toBe(false);
+    expect(saved?.memberJoinedAt["person-2"]).toBe("2026-01-10T12:00:00.000Z");
+    expect(data.current.isPersonInGroup("person-3", "group-lyd")).toBe(true);
+  });
+
+  test("Et medlem som fjernes er heller ikke leder lenger", async () => {
+    const data = await mountProvider();
+    data.current.removeGroupMember("group-lyd", "person-1");
+    data.current.removeGroupMember("group-lyd", "person-2");
+
+    await waitFor(() => expect(data.current.getGroupById("group-lyd")).toMatchObject({ memberIds: [], leaderIds: [] }));
+    expect(await stored(COLLECTIONS.GROUPS, "group-lyd")).toMatchObject({ memberIds: [], leaderIds: [], deputyLeaderIds: [] });
+    expect(data.current.isPersonInGroup("person-2", "group-lyd")).toBe(false);
+  });
+
+  test("Varslingsvalget gjelder bare personen som endrer det", async () => {
+    const data = await mountProvider();
+    expect(data.current.getGroupNotificationsEnabled("group-lyd", "person-1")).toBe(true);
+    expect(data.current.toggleGroupNotifications("group-lyd", "person-1")).toEqual({ success: true, enabled: false });
+
+    await waitFor(() => expect(data.current.getGroupNotificationsEnabled("group-lyd", "person-1")).toBe(false));
+    expect((await stored(COLLECTIONS.GROUPS, "group-lyd"))?.notificationPreferences).toEqual({
+      "person-1": false,
+      "person-2": false,
+    });
+
+    expect(data.current.toggleGroupNotifications("group-lyd", "person-1")).toEqual({ success: true, enabled: true });
+    await waitFor(() => expect(data.current.getGroupNotificationsEnabled("group-lyd", "person-1")).toBe(true));
+  });
+});
+
+describe("Tildelinger", () => {
+  test("Direkte tildeling bekrefter både tildelingen og oppgaven", async () => {
+    const data = await mountProvider();
+    void data.current.assignTaskToPerson("task-1", "person-3", "confirmed");
+
+    await waitFor(() => expect(data.current.getTaskById("task-1")?.status).toBe("confirmed"));
+    const [assignment] = data.current.getAllAssignmentsForTask("task-1");
+    expect(assignment).toMatchObject({ taskId: "task-1", personId: "person-3", response: "confirmed" });
+    expect(await stored(COLLECTIONS.ASSIGNMENTS, assignment.id)).toMatchObject({ response: "confirmed" });
+    expect((await stored(COLLECTIONS.TASKS, "task-1"))?.status).toBe("confirmed");
+  });
+
+  test("En forespørsel venter på svar", async () => {
+    const data = await mountProvider();
+    void data.current.assignTaskToPerson("task-1", "person-3");
+
+    await waitFor(() => expect(data.current.getTaskById("task-1")?.status).toBe("assigned"));
+    expect(data.current.getAssignmentForTask("task-1")?.response).toBe("pending");
+    expect((await stored(COLLECTIONS.TASKS, "task-1"))?.status).toBe("assigned");
+  });
+
+  test("Forfall lagres med grunn, og oppgaven blir ledig", async () => {
+    const data = await mountProvider();
+    void data.current.reportAbsence("task-2", "person-2", "Syk");
+
+    await waitFor(() => expect(data.current.getTaskById("task-2")?.status).toBe("vacant"));
+    const saved = await stored(COLLECTIONS.ASSIGNMENTS, "assign-1");
+    expect(saved).toMatchObject({ withdrawalReason: "Syk" });
+    expect(saved?.response).not.toBe("confirmed");
+    expect((await stored(COLLECTIONS.TASKS, "task-2"))?.status).toBe("vacant");
+  });
+
+  test("Svaret på en tildeling lagres", async () => {
+    const data = await mountProvider();
+    data.current.updateAssignmentStatus("assign-1", "declined");
+
+    await waitFor(() => expect(data.current.getAssignmentForTask("task-2")?.response).toBe("declined"));
+    expect((await stored(COLLECTIONS.ASSIGNMENTS, "assign-1"))?.response).toBe("declined");
+  });
+});
+
+describe("Oppmøte", () => {
+  test("Hver person har ett svar per samling, og et nytt svar erstatter det gamle", async () => {
+    const data = await mountProvider();
+    void data.current.respondToGathering("gathering-1", "person-2", "attending");
+    await waitFor(() => expect(data.current.getPersonAttendance("gathering-1", "person-2")?.status).toBe("attending"));
+
+    void data.current.respondToGathering("gathering-1", "person-2", "declined");
+    await waitFor(() => expect(data.current.getPersonAttendance("gathering-1", "person-2")?.status).toBe("declined"));
+    expect(data.current.getGatheringAttendances("gathering-1")).toHaveLength(1);
+    expect(await storedIds(COLLECTIONS.GATHERING_ATTENDANCES)).toHaveLength(1);
+  });
+});
+
+describe("Feil", () => {
+  test("En skriving databasen avviser meldes til brukeren", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const data = await mountProvider();
+    // Firestore cannot store a function
+    data.current.updateGathering("gathering-1", { theme: (() => "x") as unknown as string });
+
+    await waitFor(() => expect(getWriteError()?.action).toBe("lagre endringene i samlingen"));
+    await waitFor(() => expect(data.current.getGatheringById("gathering-1")?.theme).toBe("Nåde"));
+    expect((await stored(COLLECTIONS.GATHERINGS, "gathering-1"))?.theme).toBe("Nåde");
+  });
+});

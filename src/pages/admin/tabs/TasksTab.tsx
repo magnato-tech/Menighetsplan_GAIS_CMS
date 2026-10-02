@@ -39,12 +39,10 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
   // Oppgavefilter
   const [taskFilter, setTaskFilter] = useState<"all" | "urgent" | "uncovered" | "covered">("all");
 
-  const handleOpenReminderModal = async (item: AdminTaskItem) => {
+  const handleOpenReminderModal = (item: AdminTaskItem) => {
     setReminderTaskItem(item);
     setCopiedReminder(false);
-    if (updateTask) {
-      await updateTask(item.task.id, { lastReminded: new Date().toISOString() });
-    }
+    updateTask(item.task.id, { lastReminded: new Date().toISOString() });
   };
 
   const reminderText = useMemo(() => {
@@ -60,12 +58,12 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
     showFeedback("Purretekst kopiert til utklippstavlen!");
   };
 
-  const handleExecuteAssign = async () => {
+  const handleExecuteAssign = () => {
     if (!assigningTaskItem || !selectedPersonIdToAssign) {
       showFeedback("Vennligst velg en person", "error");
       return;
     }
-    const res = await assignTaskToPerson(
+    const res = assignTaskToPerson(
       assigningTaskItem.task.id,
       selectedPersonIdToAssign,
       assignMode

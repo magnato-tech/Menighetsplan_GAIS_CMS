@@ -5,6 +5,7 @@ import {
   GatheringVisibility,
   Task,
   Assignment,
+  GatheringAttendance,
   GroupMessage,
   GroupCategory,
   MeetingSchedule,
@@ -132,6 +133,24 @@ export function buildAssignment(
     taskId,
     personId,
     response,
+  };
+}
+
+/**
+ * A person's answer to a gathering. The id is made from the two, so each person
+ * has one answer per gathering and a new answer replaces the old one.
+ */
+export function buildAttendance(
+  gatheringId: string,
+  personId: string,
+  status: GatheringAttendance["status"]
+): GatheringAttendance {
+  return {
+    id: `att-${gatheringId}-${personId}`,
+    gatheringId,
+    personId,
+    status,
+    updatedAt: new Date().toISOString(),
   };
 }
 

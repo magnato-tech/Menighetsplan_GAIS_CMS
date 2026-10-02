@@ -44,8 +44,8 @@ De andre store sidene følger samme mønster. Siden kaller sin hook én gang, ei
 | `HusfellesskapView.tsx` | `src/components/husfellesskap/`: to faner og to dialoger |
 
 ## Datalag
-- **`src/services/firestore.ts`** inneholder alle lese- og skrivekall mot Firestore, uten React.
-- **`FirebaseDataProvider`** (`src/context/FirebaseDataContext.tsx`) holder dataene i minnet og tilbyr handlingene som endrer dem. Komponenter henter den med `useFirebase()`.
+- **`src/services/firestore.ts`** inneholder alle lese- og skrivekall mot Firestore, uten React: én lytter per samling (`subscribeCollection`), tre generelle skrivinger (`createDocument`, `updateDocument`, `deleteDocument`) og de få som gjelder flere felt eller dokumenter.
+- **`FirebaseDataProvider`** (`src/context/FirebaseDataContext.tsx`) holder det lytterne leverer, og tilbyr oppslag og handlinger. Komponenter henter den med `useFirebase()`.
   - Alltid: `persons`, `groups`, `gatherings`.
   - Bare på interne ruter: `tasks`, `assignments`, `groupMessages`, `gatheringAttendances`. En besøkende på den offentlige nettsiden får aldri disse.
 - **`CmsProvider`** (`src/context/CmsContext.tsx`) lytter på `cms_pages`, `cms_news`, `cms_sermons`, `cms_staff` og `cms_settings`. Siste øyeblikksbilde mellomlagres i `localStorage`, slik at nettsiden aldri starter blank.
@@ -55,9 +55,14 @@ De andre store sidene følger samme mønster. Siden kaller sin hook én gang, ei
 
 ### Skriving
 1. Et nytt dokument bygges én gang i `src/data/newDocuments.ts`, med ID fra `newId()`.
-2. Det samme objektet legges i lokal tilstand og sendes til Firestore.
+2. Handlingen sender skrivingen til Firestore og er ferdig. Firestore-klienten legger endringen inn lokalt med én gang, og lytterne viser den uten å vente på serveren. Ingen handling endrer listene i minnet selv, så det som vises er alltid det klienten faktisk har.
 3. En oppdatering går gjennom `forUpdate`: et felt som er satt til `undefined` slettes i databasen, slik at et tømt skjemafelt faktisk blir tomt.
-4. Feiler skrivingen, meldes det via `src/services/writeErrors.ts` og vises i `WriteErrorBanner`. Sanntidslytteren henter deretter tilbake det som faktisk er lagret.
+4. Lister og kart inne i et dokument (medlemmer, innmeldingsdato, varslingsvalg) endres uten å lese dokumentet først, med `arrayUnion`, `arrayRemove` og feltsti. To endringer som gjøres samtidig kan dermed ikke overskrive hverandre.
+5. Det som hører sammen skrives i én batch: en tildeling og oppgavens status, et forfall og oppgavens status, en slettet side og undersidene dens.
+6. Feiler skrivingen, meldes det via `src/services/writeErrors.ts` og vises i `WriteErrorBanner`. Lytterne setter da tilbake det som faktisk er lagret.
+
+### Testing av datalaget
+`tests/data-provider.test.tsx` kjører `FirebaseDataProvider` mot den ekte Firestore-klienten, koblet fra nettet (`tests/support/offlineFirestore.ts`). Testene ser dermed det samme som appen: en skriving når listene gjennom lytterne. Ingenting sendes til en server.
 
 ## Offentlig API
 `server.ts` leser `gatherings` og `groups` og sender dem gjennom rene funksjoner i `server/publicApi.ts`. Bare hvitelistede felt slipper ut. Medlemslister og kontaktinformasjon eksponeres ikke.
@@ -86,4 +91,6 @@ To regler avgjør hva en besøkende ser, og hver av dem ligger ett sted:
 | Fremhevet samling | Løftes frem som neste samling på forsiden | `fremhevet` lagres, men forsiden velger neste samling bare etter dato |
 | Grupper | Bare offentlige grupper vises utad | `isPublic` på grupper kan ikke settes noe sted, og verken `/fellesskap` eller API-et filtrerer på det |
 | Min side | Viser det som er kommende | «Trenger din oppmerksomhet» regner fra en fast dato i demodataene (2. september 2026) i stedet for dagens dato |
-| Filstørrelse | Én komponent per fane/modal | Gjort for alle sidene over 1 000 linjer. Størst nå: `GatheringDetailView.tsx` (ca. 1 000 linjer, selve kjøreplanen) og `FirebaseDataContext.tsx` (ca. 700) |
+| Filstørrelse | Én komponent per fane/modal | Gjort for alle sidene over 1 000 linjer. Størst nå: `GatheringDetailView.tsx` (ca. 1 000 linjer, selve kjøreplanen) |
+| Gruppemeldinger | Testverktøyet på husfellesskapssiden sier at et nytt medlem ikke skal se eldre meldinger | Innmeldingsdato lagres (`memberJoinedAt`), men brukes ikke: et medlem ser alle meldingene i gruppen |
+| Modulbrytere | Kalender og meldinger slås av og på for hele menigheten | Valget lagres bare i nettleseren til den som endrer det |

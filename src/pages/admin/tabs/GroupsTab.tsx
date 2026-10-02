@@ -26,7 +26,7 @@ export const GroupsTab: React.FC<GroupsTabProps> = ({ studio, showFeedback }) =>
   const [newGroupLeaderId, setNewGroupLeaderId] = useState("");
   const [groupFilterCategory, setGroupFilterCategory] = useState<string>("alle");
 
-  const handleCreateNewGroup = async (e: React.FormEvent) => {
+  const handleCreateNewGroup = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newGroupName.trim()) {
       showFeedback("Gruppen må ha et navn", "error");
@@ -37,7 +37,7 @@ export const GroupsTab: React.FC<GroupsTabProps> = ({ studio, showFeedback }) =>
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
 
-    await createGroup({
+    createGroup({
       name: newGroupName.trim(),
       category: newGroupCategory,
       description: newGroupDescription.trim() || undefined,

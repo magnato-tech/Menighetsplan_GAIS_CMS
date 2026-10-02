@@ -1,6 +1,7 @@
 import { useMemo, useState, useCallback } from "react";
 import { useFirebase } from "../context/FirebaseDataContext";
 import { Person, Gathering } from "../types";
+import { isInGroup, allGroupPersonIds } from "../utils/groups";
 
 export function useHusfellesskap(explicitGroupId?: string, explicitGatheringId?: string) {
   const {
@@ -9,7 +10,6 @@ export function useHusfellesskap(explicitGroupId?: string, explicitGatheringId?:
     groups,
     gatherings,
     attendances,
-    groupMessages,
     getPersonById,
     getGatheringAttendances,
     getPersonAttendance,
@@ -36,34 +36,16 @@ export function useHusfellesskap(explicitGroupId?: string, explicitGatheringId?:
       return groups.find((g) => g.id === explicitGroupId) || null;
     }
     // Find user's husfellesskap first
-    const userHus = groups.find(
-      (g) =>
-        g.category === "husgruppe" &&
-        (g.memberIds.includes(currentUser.id) ||
-          g.leaderIds.includes(currentUser.id) ||
-          (g.deputyLeaderIds && g.deputyLeaderIds.includes(currentUser.id)))
-    );
+    const userHus = groups.find((g) => g.category === "husgruppe" && isInGroup(g, currentUser.id));
     if (userHus) return userHus;
     // Or any group user is member/leader in
-    const anyUserGroup = groups.find(
-      (g) =>
-        g.memberIds.includes(currentUser.id) ||
-        g.leaderIds.includes(currentUser.id) ||
-        (g.deputyLeaderIds && g.deputyLeaderIds.includes(currentUser.id))
-    );
+    const anyUserGroup = groups.find((g) => isInGroup(g, currentUser.id));
     if (anyUserGroup) return anyUserGroup;
     // Fallback: any husgruppe or first group
     return groups.find((g) => g.category === "husgruppe") || groups[0] || null;
   }, [groups, explicitGroupId, currentUser.id]);
 
-  const isMember = useMemo(() => {
-    if (!group) return false;
-    return (
-      group.memberIds.includes(currentUser.id) ||
-      group.leaderIds.includes(currentUser.id) ||
-      (group.deputyLeaderIds ? group.deputyLeaderIds.includes(currentUser.id) : false)
-    );
-  }, [group, currentUser.id]);
+  const isMember = useMemo(() => group !== null && isInGroup(group, currentUser.id), [group, currentUser.id]);
 
   const isLeader = useMemo(() => {
     if (!group) return false;
@@ -87,11 +69,7 @@ export function useHusfellesskap(explicitGroupId?: string, explicitGatheringId?:
 
   const members = useMemo(() => {
     if (!group) return [];
-    // Distinct members including leaders and deputy leaders or pure members
-    const allMemberIds = Array.from(
-      new Set([...group.memberIds, ...group.leaderIds, ...(group.deputyLeaderIds || [])])
-    );
-    return allMemberIds.map((id) => getPersonById(id)).filter(Boolean) as Person[];
+    return allGroupPersonIds(group).map((id) => getPersonById(id)).filter(Boolean) as Person[];
   }, [group, getPersonById, allPersons]);
 
   // All planned meetings for this husfellesskap
@@ -215,11 +193,11 @@ export function useHusfellesskap(explicitGroupId?: string, explicitGatheringId?:
     [activeMeeting, sendGatheringInvitation]
   );
 
-  // Group messages filtered by membership and join date
+  // Only members see the group's messages. A member sees all of them, also those from before they joined.
   const messages = useMemo(() => {
     if (!group || !isMember) return [];
-    return getGroupMessages(group.id, currentUser.id);
-  }, [group, isMember, getGroupMessages, currentUser.id, groupMessages]);
+    return getGroupMessages(group.id);
+  }, [group, isMember, getGroupMessages]);
 
   const sendMessage = useCallback(
     (content: string, imageUrl?: string) => {
@@ -230,12 +208,7 @@ export function useHusfellesskap(explicitGroupId?: string, explicitGatheringId?:
     [group, isMember, sendGroupMessage]
   );
 
-  const deleteMessage = useCallback(
-    (messageId: string) => {
-      return deleteGroupMessage(messageId, currentUser.id);
-    },
-    [deleteGroupMessage, currentUser.id]
-  );
+  const deleteMessage = deleteGroupMessage;
 
   const notificationsEnabled = useMemo(() => {
     if (!group) return true;

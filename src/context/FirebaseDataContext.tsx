@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { Person, Group, Gathering, Task, Assignment, GroupMessage, GatheringAttendance } from "../types";
 import { initialPersons } from "../data/mockData";
+import { COLLECTIONS } from "../data/collections";
 import {
   NewPersonInput,
   NewGroupInput,
@@ -11,47 +12,36 @@ import {
   buildGathering,
   buildTask,
   buildAssignment,
+  buildAttendance,
   buildGroupMessage,
 } from "../data/newDocuments";
+import { testConnection } from "../firebase";
 import { reportWriteError } from "../services/writeErrors";
 import {
-  testConnection,
-  subscribePersons,
-  subscribeGroups,
-  subscribeGatherings,
-  subscribeTasks,
-  subscribeAssignments,
-  subscribeGroupMessages,
-  subscribeAttendances,
-  createPerson,
-  updatePerson,
-  createGroup,
-  updateGroup,
-  updateGroupName,
+  subscribeCollection,
+  createDocument,
+  updateDocument,
+  deleteDocument,
   addGroupMember,
   removeGroupMember,
-  createGathering,
-  updateGathering,
-  deleteGathering,
-  sendGatheringInvitation,
-  createTask,
-  updateTask,
-  deleteTask,
-  updateTaskStatus,
-  updateTaskInstruction,
-  updateTaskNeededCount,
-  assignTaskToPerson,
-  updateAssignmentStatus,
-  removeAssignment,
-  reportAbsence,
-  sendGroupMessage,
-  deleteGroupMessage,
-  respondToGathering,
+  setGroupNotifications,
+  assignTask,
+  withdrawFromTask,
 } from "../services/firestore";
+import { isInGroup } from "../utils/groups";
 
 export interface ModuleConfig {
   kalender: "on" | "off";
   meldinger: "on" | "off";
+}
+
+/**
+ * What an action answers. `success` means the change was accepted and is on its way to
+ * the database, not that the server has stored it. See `save` below.
+ */
+export interface ActionResult {
+  success: boolean;
+  error?: string;
 }
 
 export interface FirebaseDataContextType {
@@ -74,7 +64,7 @@ export interface FirebaseDataContextType {
   toggleKalender: () => void;
   toggleMeldinger: () => void;
 
-  // Data Adapter functions
+  // Lookups in the data above
   getTasksForPerson: (personId: string) => Task[];
   getOpenTasksForGroups: (groupIds: string[]) => Task[];
   getTaskById: (taskId: string) => Task | undefined;
@@ -85,7 +75,7 @@ export interface FirebaseDataContextType {
   getAllAssignmentsForTask: (taskId: string) => Assignment[];
   getUserGroups: (personId: string) => Group[];
   isPersonInGroup: (personId: string, groupId: string) => boolean;
-  getGroupMessages: (groupId: string, personId?: string) => GroupMessage[];
+  getGroupMessages: (groupId: string) => GroupMessage[];
   getGatheringAttendances: (gatheringId: string) => GatheringAttendance[];
   getPersonAttendance: (gatheringId: string, personId: string) => GatheringAttendance | undefined;
   getUpcomingGatheringForGroup: (groupId: string) => Gathering | undefined;
@@ -93,47 +83,47 @@ export interface FirebaseDataContextType {
   getGroupNotificationsEnabled: (groupId: string, personId?: string) => boolean;
 
   // Actions
-  createGathering: (data: NewGatheringInput) => { success: boolean; gathering?: Gathering; error?: string };
-  updateGathering: (gatheringId: string, updates: Partial<Gathering>) => { success: boolean; gathering?: Gathering; error?: string };
-  deleteGathering: (gatheringId: string) => { success: boolean; error?: string };
-  sendGatheringInvitation: (gatheringId: string) => { success: boolean; error?: string };
-  assignTaskToPerson: (taskId: string, personId: string, responseStatus?: "confirmed" | "pending") => Promise<{ success: boolean; error?: string }>;
-  reportAbsence: (taskId: string, personId: string, reason?: string) => Promise<{ success: boolean; error?: string }>;
-  updateAssignmentStatus: (assignmentId: string, response: "confirmed" | "pending" | "declined" | "withdrawn") => { success: boolean; error?: string };
-  removeAssignment: (assignmentId: string) => { success: boolean; error?: string };
-  updateTaskStatus: (taskId: string, status: Task["status"]) => { success: boolean; error?: string };
-  updateGroupName: (groupId: string, newName: string) => { success: boolean; error?: string };
-  updateGroup: (groupId: string, updates: Partial<Group>) => { success: boolean; error?: string };
-  createGroup: (data: NewGroupInput) => { success: boolean; group?: Group; error?: string };
-  addPerson: (data: NewPersonInput) => { success: boolean; person?: Person; error?: string };
-  updatePerson: (personId: string, updates: Partial<Person>) => { success: boolean; error?: string };
-  addGroupMember: (groupId: string, personId: string) => { success: boolean; error?: string };
-  removeGroupMember: (groupId: string, personId: string) => { success: boolean; error?: string };
-  createTask: (data: NewTaskInput) => { success: boolean; task?: Task; error?: string };
-  deleteTask: (taskId: string) => { success: boolean; error?: string };
-  updateTask: (taskId: string, updates: Partial<Task>) => { success: boolean; error?: string };
-  updateTaskInstruction: (taskId: string, instruction: string) => { success: boolean; error?: string };
-  updateTaskNeededCount: (taskId: string, neededCount: number | undefined) => { success: boolean; error?: string };
-  sendGroupMessage: (groupId: string, content: string, imageUrl?: string) => { success: boolean; message?: GroupMessage; error?: string };
-  deleteGroupMessage: (messageId: string, personId?: string) => { success: boolean; error?: string };
+  createGathering: (data: NewGatheringInput) => ActionResult & { gathering?: Gathering };
+  updateGathering: (gatheringId: string, updates: Partial<Gathering>) => ActionResult;
+  deleteGathering: (gatheringId: string) => ActionResult;
+  sendGatheringInvitation: (gatheringId: string) => ActionResult;
+  assignTaskToPerson: (taskId: string, personId: string, responseStatus?: "confirmed" | "pending") => ActionResult;
+  reportAbsence: (taskId: string, personId: string, reason?: string) => ActionResult;
+  updateAssignmentStatus: (assignmentId: string, response: Assignment["response"]) => ActionResult;
+  removeAssignment: (assignmentId: string) => ActionResult;
+  updateTaskStatus: (taskId: string, status: Task["status"]) => ActionResult;
+  updateGroupName: (groupId: string, newName: string) => ActionResult;
+  updateGroup: (groupId: string, updates: Partial<Group>) => ActionResult;
+  createGroup: (data: NewGroupInput) => ActionResult & { group?: Group };
+  addPerson: (data: NewPersonInput) => ActionResult & { person?: Person };
+  updatePerson: (personId: string, updates: Partial<Person>) => ActionResult;
+  addGroupMember: (groupId: string, personId: string) => ActionResult;
+  removeGroupMember: (groupId: string, personId: string) => ActionResult;
+  createTask: (data: NewTaskInput) => ActionResult & { task?: Task };
+  deleteTask: (taskId: string) => ActionResult;
+  updateTask: (taskId: string, updates: Partial<Task>) => ActionResult;
+  updateTaskInstruction: (taskId: string, instruction: string) => ActionResult;
+  updateTaskNeededCount: (taskId: string, neededCount: number | undefined) => ActionResult;
+  sendGroupMessage: (groupId: string, content: string, imageUrl?: string) => ActionResult & { message?: GroupMessage };
+  deleteGroupMessage: (messageId: string) => ActionResult;
   toggleGroupNotifications: (groupId: string, personId?: string, forceState?: boolean) => { success: boolean; enabled: boolean };
-  respondToGathering: (gatheringId: string, personId: string, status: "attending" | "declined") => Promise<{ success: boolean; error?: string }>;
+  respondToGathering: (gatheringId: string, personId: string, status: "attending" | "declined") => ActionResult;
 }
 
 export const FirebaseDataContext = createContext<FirebaseDataContextType | undefined>(undefined);
 
 /**
- * Lets a write finish in the background while the UI moves on.
- * A failed write is shown to the user; the snapshot listeners then restore the saved state.
+ * Starts a write and lets it finish in the background. Firestore applies it locally at
+ * once, so the snapshot listeners show the change without waiting for the server.
+ * If the write fails, the user is told and the listeners put back what is actually stored.
  */
-function persist(write: Promise<{ success: boolean; error?: string }>, action: string): void {
-  write.then(
-    (result) => {
-      if (!result.success) reportWriteError(action, result.error);
-    },
-    (error) => reportWriteError(action, error)
-  );
+function save(action: string, write: () => Promise<unknown>): { success: true } {
+  // Data Firestore cannot store makes it throw straight away instead of rejecting
+  new Promise((resolve) => resolve(write())).catch((error) => reportWriteError(action, error));
+  return { success: true };
 }
+
+const byStart = (a: Gathering, b: Gathering) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime();
 
 interface FirebaseDataProviderProps {
   children: React.ReactNode;
@@ -145,7 +135,9 @@ interface FirebaseDataProviderProps {
 }
 
 export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ children, internal = true }) => {
-  // Firestore is the only source of data: everything is empty until the first snapshot arrives
+  // Firestore is the only source of data. Everything is empty until the first snapshot
+  // arrives, and no action changes these lists by hand: a write reaches them through
+  // the listeners, so what is shown is always what the database client holds.
   const [persons, setPersons] = useState<Person[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [gatherings, setGatherings] = useState<Gathering[]>([]);
@@ -169,14 +161,9 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
   // Check connection on mount
   useEffect(() => {
     let isMounted = true;
-    (async () => {
-      try {
-        const connected = await testConnection();
-        if (isMounted) setIsFirestoreConnected(connected);
-      } catch (err) {
-        console.warn("Firestore connection check:", err);
-      }
-    })();
+    testConnection().then((connected) => {
+      if (isMounted) setIsFirestoreConnected(connected);
+    });
     return () => {
       isMounted = false;
     };
@@ -184,31 +171,24 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
 
   // Listen in real-time to Firestore collections
   useEffect(() => {
-    const unsubPersons = subscribePersons(setPersons);
-    const unsubGroups = subscribeGroups(setGroups);
-    const unsubGatherings = subscribeGatherings(setGatherings);
-
-    return () => {
-      unsubPersons();
-      unsubGroups();
-      unsubGatherings();
-    };
+    const unsubscribers = [
+      subscribeCollection<Person>(COLLECTIONS.PERSONS, setPersons),
+      subscribeCollection<Group>(COLLECTIONS.GROUPS, setGroups),
+      subscribeCollection<Gathering>(COLLECTIONS.GATHERINGS, setGatherings),
+    ];
+    return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
   }, []);
 
   // Planning data, only behind the public website
   useEffect(() => {
     if (!internal) return;
-    const unsubTasks = subscribeTasks(setTasks);
-    const unsubAssignments = subscribeAssignments(setAssignments);
-    const unsubMessages = subscribeGroupMessages(setGroupMessages);
-    const unsubAttendances = subscribeAttendances(setAttendances);
-
-    return () => {
-      unsubTasks();
-      unsubAssignments();
-      unsubMessages();
-      unsubAttendances();
-    };
+    const unsubscribers = [
+      subscribeCollection<Task>(COLLECTIONS.TASKS, setTasks),
+      subscribeCollection<Assignment>(COLLECTIONS.ASSIGNMENTS, setAssignments),
+      subscribeCollection<GroupMessage>(COLLECTIONS.GROUP_MESSAGES, setGroupMessages),
+      subscribeCollection<GatheringAttendance>(COLLECTIONS.GATHERING_ATTENDANCES, setAttendances),
+    ];
+    return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
   }, [internal]);
 
   // Until real sign-in exists, the mock admin stands in when the database has no persons,
@@ -237,346 +217,178 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
     setModuleStatus("meldinger", moduleConfig.meldinger === "on" ? "off" : "on");
   }, [moduleConfig.meldinger, setModuleStatus]);
 
-  // Adapter queries
-  const getTasksForPerson = useCallback(
-    (personId: string): Task[] => {
-      const userAssignments = assignments.filter((a) => a.personId === personId);
-      const userTaskIds = userAssignments.map((a) => a.taskId);
-      return tasks.filter((t) => userTaskIds.includes(t.id));
-    },
-    [assignments, tasks]
+  // Lookups, grouped by the lists they read so each group is only rebuilt when its lists change
+  const personLookups = useMemo(
+    () => ({
+      getPersonById: (personId: string) => persons.find((p) => p.id === personId),
+    }),
+    [persons]
   );
 
-  const getOpenTasksForGroups = useCallback(
-    (groupIds: string[]): Task[] => {
-      return tasks.filter((t) => groupIds.includes(t.groupId) && (t.status === "open" || t.status === "vacant"));
-    },
-    [tasks]
-  );
-
-  const getTaskById = useCallback((taskId: string) => tasks.find((t) => t.id === taskId), [tasks]);
-  const getGatheringById = useCallback((id: string) => gatherings.find((g) => g.id === id), [gatherings]);
-  const getGroupById = useCallback((id: string) => groups.find((g) => g.id === id), [groups]);
-  const getPersonById = useCallback((id: string) => persons.find((p) => p.id === id), [persons]);
-
-  const getAssignmentForTask = useCallback(
-    (taskId: string) => assignments.find((a) => a.taskId === taskId),
-    [assignments]
-  );
-
-  const getAllAssignmentsForTask = useCallback(
-    (taskId: string) => assignments.filter((a) => a.taskId === taskId),
-    [assignments]
-  );
-
-  const getUserGroups = useCallback(
-    (personId: string): Group[] => {
-      return groups.filter(
-        (g) =>
-          g.memberIds.includes(personId) ||
-          g.leaderIds.includes(personId) ||
-          (g.deputyLeaderIds && g.deputyLeaderIds.includes(personId))
-      );
-    },
-    [groups]
-  );
-
-  const isPersonInGroup = useCallback(
-    (personId: string, groupId: string): boolean => {
-      const g = groups.find((grp) => grp.id === groupId);
-      if (!g) return false;
-      return (
-        g.memberIds.includes(personId) ||
-        g.leaderIds.includes(personId) ||
-        (g.deputyLeaderIds && g.deputyLeaderIds.includes(personId)) ||
-        false
-      );
-    },
-    [groups]
-  );
-
-  const getGroupMessages = useCallback(
-    (groupId: string, _personId?: string) => {
-      return groupMessages
-        .filter((m) => m.groupId === groupId)
-        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    },
-    [groupMessages]
-  );
-
-  const getGatheringAttendances = useCallback(
-    (gatheringId: string) => attendances.filter((a) => a.gatheringId === gatheringId),
-    [attendances]
-  );
-
-  const getPersonAttendance = useCallback(
-    (gatheringId: string, personId: string) =>
-      attendances.find((a) => a.gatheringId === gatheringId && a.personId === personId),
-    [attendances]
-  );
-
-  const getUpcomingGatheringForGroup = useCallback(
-    (groupId: string): Gathering | undefined => {
-      const now = new Date();
-      return gatherings
-        .filter((g) => g.groupId === groupId && !g.cancelled && new Date(g.startsAt) >= now)
-        .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0];
-    },
-    [gatherings]
-  );
-
-  const getGatheringsForGroup = useCallback(
-    (groupId: string): Gathering[] => {
-      return gatherings
-        .filter((g) => g.groupId === groupId)
-        .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
-    },
-    [gatherings]
-  );
-
-  const getGroupNotificationsEnabled = useCallback(
-    (groupId: string, personId: string = currentUserId): boolean => {
-      const grp = groups.find((g) => g.id === groupId);
-      if (!grp || !grp.notificationPreferences) return true;
-      return grp.notificationPreferences[personId] !== false;
-    },
+  const groupLookups = useMemo(
+    () => ({
+      getGroupById: (groupId: string) => groups.find((g) => g.id === groupId),
+      getUserGroups: (personId: string) => groups.filter((g) => isInGroup(g, personId)),
+      isPersonInGroup: (personId: string, groupId: string) => {
+        const group = groups.find((g) => g.id === groupId);
+        return group !== undefined && isInGroup(group, personId);
+      },
+      getGroupNotificationsEnabled: (groupId: string, personId: string = currentUserId) => {
+        const group = groups.find((g) => g.id === groupId);
+        return group?.notificationPreferences?.[personId] !== false;
+      },
+    }),
     [groups, currentUserId]
   );
 
-  const handleCreateGathering = useCallback((data: NewGatheringInput) => {
-    const newGathering = buildGathering(data);
-    setGatherings((prev) => [...prev, newGathering]);
-    persist(createGathering(newGathering), "lagre samlingen");
-    return { success: true, gathering: newGathering };
-  }, []);
-
-  const handleUpdateGathering = useCallback((gatheringId: string, updates: Partial<Gathering>) => {
-    setGatherings((prev) => prev.map((g) => (g.id === gatheringId ? { ...g, ...updates } : g)));
-    persist(updateGathering(gatheringId, updates), "lagre endringene i samlingen");
-    return { success: true };
-  }, []);
-
-  const handleDeleteGathering = useCallback((gatheringId: string) => {
-    setGatherings((prev) => prev.filter((g) => g.id !== gatheringId));
-    persist(deleteGathering(gatheringId), "slette samlingen");
-    return { success: true };
-  }, []);
-
-  const handleSendGatheringInvitation = useCallback((gatheringId: string) => {
-    setGatherings((prev) =>
-      prev.map((g) =>
-        g.id === gatheringId ? { ...g, invitationSent: true, invitationSentAt: new Date().toISOString() } : g
-      )
-    );
-    persist(sendGatheringInvitation(gatheringId), "registrere at invitasjonen er sendt");
-    return { success: true };
-  }, []);
-
-  const handleAssignTaskToPerson = useCallback(
-    async (taskId: string, personId: string, responseStatus: "confirmed" | "pending" = "pending") => {
-      const newAssignment = buildAssignment(taskId, personId, responseStatus);
-      setAssignments((prev) => [...prev, newAssignment]);
-      setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? { ...t, status: responseStatus === "confirmed" ? "confirmed" : "assigned" } : t))
-      );
-      return await assignTaskToPerson(newAssignment);
-    },
-    []
+  const gatheringLookups = useMemo(
+    () => ({
+      getGatheringById: (gatheringId: string) => gatherings.find((g) => g.id === gatheringId),
+      getGatheringsForGroup: (groupId: string) => gatherings.filter((g) => g.groupId === groupId).sort(byStart),
+      getUpcomingGatheringForGroup: (groupId: string): Gathering | undefined => {
+        const now = new Date();
+        return gatherings
+          .filter((g) => g.groupId === groupId && !g.cancelled && new Date(g.startsAt) >= now)
+          .sort(byStart)[0];
+      },
+    }),
+    [gatherings]
   );
 
-  const handleReportAbsence = useCallback(async (taskId: string, personId: string, reason?: string) => {
-    setAssignments((prev) =>
-      prev.map((a) => (a.taskId === taskId && a.personId === personId ? { ...a, response: "declined" } : a))
-    );
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status: "vacant" } : t)));
-    return await reportAbsence(taskId, personId, reason);
-  }, []);
-
-  const handleUpdateAssignmentStatus = useCallback(
-    (assignmentId: string, response: "confirmed" | "pending" | "declined" | "withdrawn") => {
-      setAssignments((prev) => prev.map((a) => (a.id === assignmentId ? { ...a, response } : a)));
-      persist(updateAssignmentStatus(assignmentId, response), "lagre svaret på oppgaven");
-      return { success: true };
-    },
-    []
+  const taskLookups = useMemo(
+    () => ({
+      getTaskById: (taskId: string) => tasks.find((t) => t.id === taskId),
+      getOpenTasksForGroups: (groupIds: string[]) =>
+        tasks.filter((t) => groupIds.includes(t.groupId) && (t.status === "open" || t.status === "vacant")),
+      getTasksForPerson: (personId: string) => {
+        const taskIds = assignments.filter((a) => a.personId === personId).map((a) => a.taskId);
+        return tasks.filter((t) => taskIds.includes(t.id));
+      },
+      getAssignmentForTask: (taskId: string) => assignments.find((a) => a.taskId === taskId),
+      getAllAssignmentsForTask: (taskId: string) => assignments.filter((a) => a.taskId === taskId),
+    }),
+    [tasks, assignments]
   );
 
-  const handleRemoveAssignment = useCallback((assignmentId: string) => {
-    setAssignments((prev) => prev.filter((a) => a.id !== assignmentId));
-    persist(removeAssignment(assignmentId), "fjerne tildelingen");
-    return { success: true };
+  const messageLookups = useMemo(
+    () => ({
+      getGroupMessages: (groupId: string) =>
+        groupMessages
+          .filter((m) => m.groupId === groupId)
+          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+    }),
+    [groupMessages]
+  );
+
+  const attendanceLookups = useMemo(
+    () => ({
+      getGatheringAttendances: (gatheringId: string) => attendances.filter((a) => a.gatheringId === gatheringId),
+      getPersonAttendance: (gatheringId: string, personId: string) =>
+        attendances.find((a) => a.gatheringId === gatheringId && a.personId === personId),
+    }),
+    [attendances]
+  );
+
+  // Actions that need nothing but their arguments
+  const actions = useMemo(() => {
+    const updateTask = (taskId: string, updates: Partial<Task>, action = "lagre endringene i oppgaven") =>
+      save(action, () => updateDocument(COLLECTIONS.TASKS, taskId, updates));
+    const updateGroup = (groupId: string, updates: Partial<Group>, action = "lagre endringene i gruppen") =>
+      save(action, () => updateDocument(COLLECTIONS.GROUPS, groupId, updates));
+
+    return {
+      createGathering: (data: NewGatheringInput) => {
+        const gathering = buildGathering(data);
+        return { ...save("lagre samlingen", () => createDocument(COLLECTIONS.GATHERINGS, gathering)), gathering };
+      },
+      updateGathering: (gatheringId: string, updates: Partial<Gathering>) =>
+        save("lagre endringene i samlingen", () => updateDocument(COLLECTIONS.GATHERINGS, gatheringId, updates)),
+      deleteGathering: (gatheringId: string) =>
+        save("slette samlingen", () => deleteDocument(COLLECTIONS.GATHERINGS, gatheringId)),
+      sendGatheringInvitation: (gatheringId: string) =>
+        save("registrere at invitasjonen er sendt", () =>
+          updateDocument(COLLECTIONS.GATHERINGS, gatheringId, {
+            invitationSent: true,
+            invitationSentAt: new Date().toISOString(),
+          })
+        ),
+
+      createTask: (data: NewTaskInput) => {
+        const task = buildTask(data);
+        return { ...save("lagre oppgaven", () => createDocument(COLLECTIONS.TASKS, task)), task };
+      },
+      updateTask: (taskId: string, updates: Partial<Task>) => updateTask(taskId, updates),
+      updateTaskStatus: (taskId: string, status: Task["status"]) =>
+        updateTask(taskId, { status }, "lagre status på oppgaven"),
+      updateTaskInstruction: (taskId: string, instruction: string) =>
+        updateTask(taskId, { instruction }, "lagre instruksen"),
+      updateTaskNeededCount: (taskId: string, neededCount: number | undefined) =>
+        updateTask(taskId, { neededCount }, "lagre bemanningsbehovet"),
+      deleteTask: (taskId: string) => save("slette oppgaven", () => deleteDocument(COLLECTIONS.TASKS, taskId)),
+
+      assignTaskToPerson: (taskId: string, personId: string, responseStatus: "confirmed" | "pending" = "pending") => {
+        const assignment = buildAssignment(taskId, personId, responseStatus);
+        return save("lagre tildelingen", () => assignTask(assignment));
+      },
+      updateAssignmentStatus: (assignmentId: string, response: Assignment["response"]) =>
+        save("lagre svaret på oppgaven", () => updateDocument(COLLECTIONS.ASSIGNMENTS, assignmentId, { response })),
+      removeAssignment: (assignmentId: string) =>
+        save("fjerne tildelingen", () => deleteDocument(COLLECTIONS.ASSIGNMENTS, assignmentId)),
+
+      createGroup: (data: NewGroupInput) => {
+        const group = buildGroup(data);
+        return { ...save("lagre gruppen", () => createDocument(COLLECTIONS.GROUPS, group)), group };
+      },
+      updateGroup: (groupId: string, updates: Partial<Group>) => updateGroup(groupId, updates),
+      updateGroupName: (groupId: string, newName: string) =>
+        updateGroup(groupId, { name: newName.trim() }, "lagre gruppenavnet"),
+      addGroupMember: (groupId: string, personId: string) =>
+        save("legge til medlemmet i gruppen", () => addGroupMember(groupId, personId)),
+      removeGroupMember: (groupId: string, personId: string) =>
+        save("fjerne medlemmet fra gruppen", () => removeGroupMember(groupId, personId)),
+
+      addPerson: (data: NewPersonInput) => {
+        const person = buildPerson(data);
+        return { ...save("lagre personen", () => createDocument(COLLECTIONS.PERSONS, person)), person };
+      },
+      updatePerson: (personId: string, updates: Partial<Person>) =>
+        save("lagre endringene i personen", () => updateDocument(COLLECTIONS.PERSONS, personId, updates)),
+
+      deleteGroupMessage: (messageId: string) =>
+        save("slette meldingen", () => deleteDocument(COLLECTIONS.GROUP_MESSAGES, messageId)),
+
+      respondToGathering: (gatheringId: string, personId: string, status: "attending" | "declined") => {
+        const attendance = buildAttendance(gatheringId, personId, status);
+        return save("lagre svaret", () => createDocument(COLLECTIONS.GATHERING_ATTENDANCES, attendance));
+      },
+    };
   }, []);
 
-  const handleUpdateTaskStatus = useCallback((taskId: string, status: Task["status"]) => {
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status } : t)));
-    persist(updateTaskStatus(taskId, status), "lagre status på oppgaven");
-    return { success: true };
-  }, []);
-
-  const handleUpdateGroupName = useCallback((groupId: string, newName: string) => {
-    setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, name: newName.trim() } : g)));
-    persist(updateGroupName(groupId, newName), "lagre gruppenavnet");
-    return { success: true };
-  }, []);
-
-  const handleUpdateGroup = useCallback((groupId: string, updates: Partial<Group>) => {
-    setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, ...updates } : g)));
-    persist(updateGroup(groupId, updates), "lagre endringene i gruppen");
-    return { success: true };
-  }, []);
-
-  const handleCreateGroup = useCallback((data: NewGroupInput) => {
-    const newGroup = buildGroup(data);
-    setGroups((prev) => [...prev, newGroup]);
-    persist(createGroup(newGroup), "lagre gruppen");
-    return { success: true, group: newGroup };
-  }, []);
-
-  const handleAddPerson = useCallback((data: NewPersonInput) => {
-    const newPerson = buildPerson(data);
-    setPersons((prev) => [...prev, newPerson]);
-    persist(createPerson(newPerson), "lagre personen");
-    return { success: true, person: newPerson };
-  }, []);
-
-  const handleUpdatePerson = useCallback((personId: string, updates: Partial<Person>) => {
-    setPersons((prev) => prev.map((p) => (p.id === personId ? { ...p, ...updates } : p)));
-    persist(updatePerson(personId, updates), "lagre endringene i personen");
-    return { success: true };
-  }, []);
-
-  const handleAddGroupMember = useCallback((groupId: string, personId: string) => {
-    setGroups((prev) =>
-      prev.map((g) =>
-        g.id === groupId
-          ? {
-              ...g,
-              memberIds: Array.from(new Set([...g.memberIds, personId])),
-              memberJoinedAt: { ...(g.memberJoinedAt || {}), [personId]: new Date().toISOString() },
-            }
-          : g
-      )
-    );
-    persist(addGroupMember(groupId, personId), "legge til medlemmet i gruppen");
-    return { success: true };
-  }, []);
-
-  const handleRemoveGroupMember = useCallback((groupId: string, personId: string) => {
-    setGroups((prev) =>
-      prev.map((g) =>
-        g.id === groupId
-          ? {
-              ...g,
-              memberIds: g.memberIds.filter((id) => id !== personId),
-              leaderIds: g.leaderIds.filter((id) => id !== personId),
-              deputyLeaderIds: g.deputyLeaderIds ? g.deputyLeaderIds.filter((id) => id !== personId) : [],
-            }
-          : g
-      )
-    );
-    persist(removeGroupMember(groupId, personId), "fjerne medlemmet fra gruppen");
-    return { success: true };
-  }, []);
-
-  const handleCreateTask = useCallback((data: NewTaskInput) => {
-    const newTask = buildTask(data);
-    setTasks((prev) => [...prev, newTask]);
-    persist(createTask(newTask), "lagre oppgaven");
-    return { success: true, task: newTask };
-  }, []);
-
-  const handleDeleteTask = useCallback((taskId: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    persist(deleteTask(taskId), "slette oppgaven");
-    return { success: true };
-  }, []);
-
-  const handleUpdateTask = useCallback((taskId: string, updates: Partial<Task>) => {
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t)));
-    persist(updateTask(taskId, updates), "lagre endringene i oppgaven");
-    return { success: true };
-  }, []);
-
-  const handleUpdateTaskInstruction = useCallback((taskId: string, instruction: string) => {
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, instruction } : t)));
-    persist(updateTaskInstruction(taskId, instruction), "lagre instruksen");
-    return { success: true };
-  }, []);
-
-  const handleUpdateTaskNeededCount = useCallback((taskId: string, neededCount: number | undefined) => {
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, neededCount } : t)));
-    persist(updateTaskNeededCount(taskId, neededCount), "lagre bemanningsbehovet");
-    return { success: true };
-  }, []);
-
-  const handleSendGroupMessage = useCallback(
+  // Actions that also read the current data
+  const sendGroupMessage = useCallback(
     (groupId: string, content: string, imageUrl?: string) => {
-      const newMsg = buildGroupMessage(groupId, currentUser, content, imageUrl);
-      setGroupMessages((prev) => [...prev, newMsg]);
-      persist(sendGroupMessage(newMsg), "sende meldingen");
-      return { success: true, message: newMsg };
+      const message = buildGroupMessage(groupId, currentUser, content, imageUrl);
+      return { ...save("sende meldingen", () => createDocument(COLLECTIONS.GROUP_MESSAGES, message)), message };
     },
     [currentUser]
   );
 
-  const handleDeleteGroupMessage = useCallback((messageId: string, _personId?: string) => {
-    setGroupMessages((prev) => prev.filter((m) => m.id !== messageId));
-    persist(deleteGroupMessage(messageId), "slette meldingen");
-    return { success: true };
-  }, []);
-
-  const handleToggleGroupNotifications = useCallback(
-    (groupId: string, personId: string = currentUserId, forceState?: boolean) => {
-      const grp = groups.find((g) => g.id === groupId);
-      const current = grp?.notificationPreferences?.[personId] !== false;
-      const next = forceState !== undefined ? forceState : !current;
-
-      setGroups((prev) =>
-        prev.map((g) =>
-          g.id === groupId
-            ? {
-                ...g,
-                notificationPreferences: {
-                  ...(g.notificationPreferences || {}),
-                  [personId]: next,
-                },
-              }
-            : g
-        )
-      );
-
-      persist(
-        updateGroup(groupId, {
-          notificationPreferences: {
-            ...(grp?.notificationPreferences || {}),
-            [personId]: next,
-          },
-        }),
-        "lagre varslingsvalget"
-      );
-
-      return { success: true, enabled: next };
+  const reportAbsence = useCallback(
+    (taskId: string, personId: string, reason?: string) => {
+      const assignmentIds = assignments.filter((a) => a.taskId === taskId && a.personId === personId).map((a) => a.id);
+      return save("registrere forfallet", () => withdrawFromTask(taskId, assignmentIds, reason));
     },
-    [groups, currentUserId]
+    [assignments]
   );
 
-  const handleRespondToGathering = useCallback(
-    async (gatheringId: string, personId: string, status: "attending" | "declined") => {
-      const id = `att-${gatheringId}-${personId}`;
-      const att: GatheringAttendance = {
-        id,
-        gatheringId,
-        personId,
-        status,
-        updatedAt: new Date().toISOString(),
-      };
-      setAttendances((prev) => {
-        const filtered = prev.filter((a) => !(a.gatheringId === gatheringId && a.personId === personId));
-        return [...filtered, att];
-      });
-      return await respondToGathering(gatheringId, personId, status);
+  const { getGroupNotificationsEnabled } = groupLookups;
+  const toggleGroupNotifications = useCallback(
+    (groupId: string, personId: string = currentUserId, forceState?: boolean) => {
+      const enabled = forceState ?? !getGroupNotificationsEnabled(groupId, personId);
+      save("lagre varslingsvalget", () => setGroupNotifications(groupId, personId, enabled));
+      return { success: true, enabled };
     },
-    []
+    [getGroupNotificationsEnabled, currentUserId]
   );
 
   const contextValue: FirebaseDataContextType = useMemo(
@@ -596,47 +408,16 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       setModuleStatus,
       toggleKalender,
       toggleMeldinger,
-      getTasksForPerson,
-      getOpenTasksForGroups,
-      getTaskById,
-      getGatheringById,
-      getGroupById,
-      getPersonById,
-      getAssignmentForTask,
-      getAllAssignmentsForTask,
-      getUserGroups,
-      isPersonInGroup,
-      getGroupMessages,
-      getGatheringAttendances,
-      getPersonAttendance,
-      getUpcomingGatheringForGroup,
-      getGatheringsForGroup,
-      getGroupNotificationsEnabled,
-      createGathering: handleCreateGathering,
-      updateGathering: handleUpdateGathering,
-      deleteGathering: handleDeleteGathering,
-      sendGatheringInvitation: handleSendGatheringInvitation,
-      assignTaskToPerson: handleAssignTaskToPerson,
-      reportAbsence: handleReportAbsence,
-      updateAssignmentStatus: handleUpdateAssignmentStatus,
-      removeAssignment: handleRemoveAssignment,
-      updateTaskStatus: handleUpdateTaskStatus,
-      updateGroupName: handleUpdateGroupName,
-      updateGroup: handleUpdateGroup,
-      createGroup: handleCreateGroup,
-      addPerson: handleAddPerson,
-      updatePerson: handleUpdatePerson,
-      addGroupMember: handleAddGroupMember,
-      removeGroupMember: handleRemoveGroupMember,
-      createTask: handleCreateTask,
-      deleteTask: handleDeleteTask,
-      updateTask: handleUpdateTask,
-      updateTaskInstruction: handleUpdateTaskInstruction,
-      updateTaskNeededCount: handleUpdateTaskNeededCount,
-      sendGroupMessage: handleSendGroupMessage,
-      deleteGroupMessage: handleDeleteGroupMessage,
-      toggleGroupNotifications: handleToggleGroupNotifications,
-      respondToGathering: handleRespondToGathering,
+      ...personLookups,
+      ...groupLookups,
+      ...gatheringLookups,
+      ...taskLookups,
+      ...messageLookups,
+      ...attendanceLookups,
+      ...actions,
+      sendGroupMessage,
+      reportAbsence,
+      toggleGroupNotifications,
     }),
     [
       isFirestoreConnected,
@@ -653,51 +434,20 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       setModuleStatus,
       toggleKalender,
       toggleMeldinger,
-      getTasksForPerson,
-      getOpenTasksForGroups,
-      getTaskById,
-      getGatheringById,
-      getGroupById,
-      getPersonById,
-      getAssignmentForTask,
-      getAllAssignmentsForTask,
-      getUserGroups,
-      isPersonInGroup,
-      getGroupMessages,
-      getGatheringAttendances,
-      getPersonAttendance,
-      getUpcomingGatheringForGroup,
-      getGatheringsForGroup,
-      getGroupNotificationsEnabled,
-      handleCreateGathering,
-      handleUpdateGathering,
-      handleDeleteGathering,
-      handleSendGatheringInvitation,
-      handleAssignTaskToPerson,
-      handleReportAbsence,
-      handleUpdateAssignmentStatus,
-      handleRemoveAssignment,
-      handleUpdateTaskStatus,
-      handleUpdateGroupName,
-      handleUpdateGroup,
-      handleCreateGroup,
-      handleAddPerson,
-      handleUpdatePerson,
-      handleAddGroupMember,
-      handleRemoveGroupMember,
-      handleCreateTask,
-      handleDeleteTask,
-      handleUpdateTask,
-      handleUpdateTaskInstruction,
-      handleUpdateTaskNeededCount,
-      handleSendGroupMessage,
-      handleDeleteGroupMessage,
-      handleToggleGroupNotifications,
-      handleRespondToGathering,
+      personLookups,
+      groupLookups,
+      gatheringLookups,
+      taskLookups,
+      messageLookups,
+      attendanceLookups,
+      actions,
+      sendGroupMessage,
+      reportAbsence,
+      toggleGroupNotifications,
     ]
   );
 
-  return React.createElement(FirebaseDataContext.Provider, { value: contextValue }, children);
+  return <FirebaseDataContext.Provider value={contextValue}>{children}</FirebaseDataContext.Provider>;
 };
 
 export const useFirebase = (): FirebaseDataContextType => {

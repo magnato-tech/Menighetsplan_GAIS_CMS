@@ -2,6 +2,7 @@ import { useMemo, useCallback } from "react";
 import { useFirebase } from "../context/FirebaseDataContext";
 import { Task, Person, Group, Gathering } from "../types";
 import { calculateTaskStaffingStatus, StaffingStatusResult, getStaffingStatus } from "../utils/staffing";
+import { isInGroup } from "../utils/groups";
 
 export interface LeaderGatheringItem {
   gathering: Gathering;
@@ -158,13 +159,7 @@ export function useLeaderGroupDetail(groupId: string) {
   const isDeputy = Boolean(group && group.deputyLeaderIds?.includes(currentUser.id));
   const isAdmin = currentUser.globalRole === "admin";
   const hasLeaderAccess = Boolean(group && (isLeader || isDeputy || isAdmin));
-  const isMember = Boolean(
-    group &&
-      (group.memberIds.includes(currentUser.id) ||
-        group.leaderIds.includes(currentUser.id) ||
-        (group.deputyLeaderIds && group.deputyLeaderIds.includes(currentUser.id)) ||
-        isAdmin)
-  );
+  const isMember = Boolean(group && (isInGroup(group, currentUser.id) || isAdmin));
   const hasAccess = Boolean(group && (isMember || hasLeaderAccess));
 
   const leaders = useMemo(() => {

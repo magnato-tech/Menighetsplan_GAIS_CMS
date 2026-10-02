@@ -156,8 +156,8 @@ export function useMyPage() {
   ]);
 
   // Handler for taking a task directly from the Attention card
-  const handleTakeTask = async (taskId: string) => {
-    const res = await assignTaskToPerson(taskId, currentUser.id, "confirmed");
+  const handleTakeTask = (taskId: string) => {
+    const res = assignTaskToPerson(taskId, currentUser.id, "confirmed");
     if (res.success) {
       showToast("Takk! Du har tatt oppgaven.", "success");
     } else {
@@ -166,11 +166,11 @@ export function useMyPage() {
   };
 
   // Handler for quick response to gathering from Attention card
-  const handleQuickRespondGathering = async (
+  const handleQuickRespondGathering = (
     gatheringId: string,
     status: "attending" | "declined"
   ) => {
-    const res = await respondToGathering(gatheringId, currentUser.id, status);
+    const res = respondToGathering(gatheringId, currentUser.id, status);
     if (res.success) {
       showToast(
         status === "attending"
@@ -287,7 +287,7 @@ export function useMyPage() {
 
   // Helper to get the latest chat message for a group
   const getGroupLatestMessage = (groupId: string): GroupMessage | null => {
-    const msgs = getGroupMessages(groupId, currentUser.id);
+    const msgs = getGroupMessages(groupId);
     return msgs.length > 0 ? msgs[msgs.length - 1] : null;
   };
 
