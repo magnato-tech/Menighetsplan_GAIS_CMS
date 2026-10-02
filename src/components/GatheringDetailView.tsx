@@ -5,6 +5,7 @@ import {
   formatNorwegianDateTime,
 } from "../hooks/useAppHooks";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
+import { studioTabUrl } from "../pages/admin/studio";
 import { Task, Person, Assignment } from "../types";
 import {
   ArrowLeft,
@@ -359,7 +360,7 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
           </div>
           <div className="pt-2 flex flex-col gap-2">
             <Link
-              to={canAdminister ? "/admin?tab=samlinger" : "/leder?tab=samlinger"}
+              to={canAdminister ? studioTabUrl("planlegger-samlinger") : "/leder?tab=samlinger"}
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -407,7 +408,7 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
   };
 
   const backLink = isExplicitAdminView
-    ? "/admin?tab=arrangementer"
+    ? studioTabUrl("planlegger-samlinger")
     : "/leder?tab=samlinger";
 
   const backLabel = isExplicitAdminView

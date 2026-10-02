@@ -22,6 +22,11 @@ export function toStudioTab(value: string | null): StudioTab {
   return STUDIO_TABS.find((tab) => tab === value) ?? "dashboard";
 }
 
+/** The address of a tab. Links built with this cannot point at a tab that does not exist. */
+export function studioTabUrl(tab: StudioTab): string {
+  return `/admin?tab=${tab}`;
+}
+
 /**
  * Everything useAdminDashboard returns. AdminStudio calls the hook once and hands
  * the result to the tabs, so its derived lists are not recomputed per tab.

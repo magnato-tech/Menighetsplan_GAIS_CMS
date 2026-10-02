@@ -79,6 +79,8 @@ function AppContent() {
             <Route path="/husfellesskap" element={<HusfellesskapPage />} />
             <Route path="/husfellesskap/:groupId" element={<HusfellesskapPage />} />
             <Route path="/meldinger" element={<ModulePlaceholderPage module="meldinger" />} />
+            {/* An internal address that leads nowhere, such as /gruppe without an id */}
+            <Route path="*" element={<Navigate to="/minside" replace />} />
           </Routes>
         </main>
         <footer className="py-6 border-t border-slate-200/60 bg-white/70 text-center text-xs text-slate-500">
