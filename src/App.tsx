@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { FirebaseDataProvider } from "./firebase-service";
 import { CmsProvider } from "./context/CmsContext";
 import { Header } from "./components/Header";
+import { WriteErrorBanner } from "./components/WriteErrorBanner";
 import { PublicNavbar } from "./components/public/PublicNavbar";
 import { PublicFooter } from "./components/public/PublicFooter";
 
@@ -142,6 +143,7 @@ export default function App() {
         <BrowserRouter>
           <AppContent />
         </BrowserRouter>
+        <WriteErrorBanner />
       </CmsProvider>
     </FirebaseDataProvider>
   );

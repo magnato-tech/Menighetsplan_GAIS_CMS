@@ -203,7 +203,7 @@ export const AdminStudio: React.FC = () => {
       .replace(/^\//, "")
       .trim();
 
-    await savePage({
+    const saved = await savePage({
       ...editingPage,
       slug: cleanSlug,
       navOrder: Number(editingPage.navOrder) || 1,
@@ -212,6 +212,8 @@ export const AdminStudio: React.FC = () => {
       parentId: editingPage.parentId || null,
       linkUrl: editingPage.linkUrl?.trim() || undefined,
     });
+    // Keep the editor open on failure so nothing typed is lost
+    if (!saved) return;
     setEditingPage(null);
     showFeedback("Siden ble lagret og menystrukturen ble oppdatert!");
   };
@@ -391,7 +393,7 @@ export const AdminStudio: React.FC = () => {
       showFeedback("Artikkelen må ha en tittel", "error");
       return;
     }
-    await saveNews(editingNews);
+    if (!(await saveNews(editingNews))) return;
     setEditingNews(null);
     showFeedback("Nyhetsartikkelen ble lagret og publisert!");
   };
@@ -428,10 +430,11 @@ export const AdminStudio: React.FC = () => {
       return;
     }
     const cleanVideoUrl = formatYoutubeNoCookieUrl(editingSermon.videoUrl || "");
-    await saveSermon({
+    const saved = await saveSermon({
       ...editingSermon,
       videoUrl: cleanVideoUrl,
     });
+    if (!saved) return;
     setEditingSermon(null);
     showFeedback("Talen ble lagret og publisert til prekenarkivet!");
   };
@@ -465,7 +468,7 @@ export const AdminStudio: React.FC = () => {
       showFeedback("Navn må fylles ut", "error");
       return;
     }
-    await saveStaff(editingStaff);
+    if (!(await saveStaff(editingStaff))) return;
     setEditingStaff(null);
     showFeedback("Stabsmedlemmet ble lagret!");
   };
@@ -1636,10 +1639,10 @@ export const AdminStudio: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        deletePage(deleteConfirmPageId);
+                      onClick={async () => {
+                        const pageId = deleteConfirmPageId;
                         setDeleteConfirmPageId(null);
-                        showFeedback("Siden ble slettet");
+                        if (await deletePage(pageId)) showFeedback("Siden ble slettet");
                       }}
                       className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer"
                     >
@@ -1822,10 +1825,9 @@ export const AdminStudio: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         if (confirm(`Vil du slette artikkelen "${item.title}"?`)) {
-                          deleteNews(item.id);
-                          showFeedback("Artikkelen ble slettet");
+                          if (await deleteNews(item.id)) showFeedback("Artikkelen ble slettet");
                         }
                       }}
                       className="p-2 rounded-lg bg-slate-900 hover:bg-red-950 text-slate-400 hover:text-red-400"
@@ -2043,10 +2045,9 @@ export const AdminStudio: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         if (confirm(`Vil du slette talen "${s.title}"?`)) {
-                          deleteSermon(s.id);
-                          showFeedback("Talen ble slettet");
+                          if (await deleteSermon(s.id)) showFeedback("Talen ble slettet");
                         }
                       }}
                       className="p-2 rounded-lg bg-slate-900 hover:bg-red-950 text-slate-400 hover:text-red-400"
@@ -2202,10 +2203,9 @@ export const AdminStudio: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         if (confirm(`Vil du slette "${member.name}"?`)) {
-                          deleteStaff(member.id);
-                          showFeedback("Medarbeider slettet");
+                          if (await deleteStaff(member.id)) showFeedback("Medarbeider slettet");
                         }
                       }}
                       className="p-2 rounded-lg bg-slate-900 hover:bg-red-950 text-slate-400 hover:text-red-400"

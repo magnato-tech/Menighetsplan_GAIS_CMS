@@ -21,7 +21,12 @@ export const CMS_COLLECTIONS = {
 // cms_settings holds a single document
 export const CMS_SETTINGS_DOC_ID = "global";
 
+// Kept apart from CMS_COLLECTIONS because it has no mock data: a document only
+// exists once an admin has featured or hidden a gathering.
+export const CMS_OVERRIDES_COLLECTION = "cms_overrides";
+
 export const ALL_COLLECTIONS: readonly string[] = [
   ...Object.values(COLLECTIONS),
   ...Object.values(CMS_COLLECTIONS),
+  CMS_OVERRIDES_COLLECTION,
 ];

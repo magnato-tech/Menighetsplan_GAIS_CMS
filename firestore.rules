@@ -103,5 +103,11 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isValidAuditUpdate();
     }
+
+    // CMS overrides: featured / hidden flags per gathering
+    match /cms_overrides/{gatheringId} {
+      allow read: if true;
+      allow write: if isValidAuditUpdate();
+    }
   }
 }

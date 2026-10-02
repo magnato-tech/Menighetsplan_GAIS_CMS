@@ -10,24 +10,32 @@ import {
   onSnapshot,
   query,
   where,
-  orderBy,
-  limit,
 } from "firebase/firestore";
 import { db, handleFirestoreError, OperationType, testConnection as verifyFirebaseConnection } from "./firebase";
 import {
   Person,
   Group,
   Gathering,
-  GatheringVisibility,
   Task,
   Assignment,
   GroupMessage,
   GatheringAttendance,
-  GroupCategory,
-  MeetingSchedule,
 } from "./types";
 import { initialPersons } from "./data/mockData";
 import { COLLECTIONS } from "./data/collections";
+import {
+  NewPersonInput,
+  NewGroupInput,
+  NewGatheringInput,
+  NewTaskInput,
+  buildPerson,
+  buildGroup,
+  buildGathering,
+  buildTask,
+  buildAssignment,
+  buildGroupMessage,
+} from "./data/newDocuments";
+import { reportWriteError } from "./services/writeErrors";
 
 // ============================================================================
 // Firestore Collections & Helpers
@@ -66,53 +74,6 @@ export function sanitizeForFirestore<T>(obj: T): T {
  */
 export async function testConnection(): Promise<boolean> {
   return await verifyFirebaseConnection();
-}
-
-/**
- * Inspect document counts in Firestore.
- */
-export async function getFirestoreStats(): Promise<{
-  connected: boolean;
-  counts: Record<string, number>;
-}> {
-  try {
-    const [pSnap, gSnap, gaSnap, tSnap, aSnap, mSnap, attSnap] = await Promise.all([
-      getDocs(collection(db, COLLECTIONS.PERSONS)),
-      getDocs(collection(db, COLLECTIONS.GROUPS)),
-      getDocs(collection(db, COLLECTIONS.GATHERINGS)),
-      getDocs(collection(db, COLLECTIONS.TASKS)),
-      getDocs(collection(db, COLLECTIONS.ASSIGNMENTS)),
-      getDocs(collection(db, COLLECTIONS.GROUP_MESSAGES)),
-      getDocs(collection(db, COLLECTIONS.GATHERING_ATTENDANCES)),
-    ]);
-
-    return {
-      connected: true,
-      counts: {
-        persons: pSnap.size,
-        groups: gSnap.size,
-        gatherings: gaSnap.size,
-        tasks: tSnap.size,
-        assignments: aSnap.size,
-        messages: mSnap.size,
-        attendances: attSnap.size,
-      },
-    };
-  } catch (error) {
-    console.error("Failed to get Firestore stats:", error);
-    return {
-      connected: false,
-      counts: {
-        persons: 0,
-        groups: 0,
-        gatherings: 0,
-        tasks: 0,
-        assignments: 0,
-        messages: 0,
-        attendances: 0,
-      },
-    };
-  }
 }
 
 // ============================================================================
@@ -204,97 +165,16 @@ export function subscribeAttendances(callback: (attendances: GatheringAttendance
 }
 
 // ============================================================================
-// Direct One-time Queries (CRUD)
-// ============================================================================
-
-export async function fetchPersons(): Promise<Person[]> {
-  const snap = await getDocs(collection(db, COLLECTIONS.PERSONS));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Person));
-}
-
-export async function fetchGroups(): Promise<Group[]> {
-  const snap = await getDocs(collection(db, COLLECTIONS.GROUPS));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Group));
-}
-
-export async function fetchGatherings(): Promise<Gathering[]> {
-  const snap = await getDocs(collection(db, COLLECTIONS.GATHERINGS));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Gathering));
-}
-
-export async function fetchTasks(): Promise<Task[]> {
-  const snap = await getDocs(collection(db, COLLECTIONS.TASKS));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Task));
-}
-
-export async function fetchAssignments(): Promise<Assignment[]> {
-  const snap = await getDocs(collection(db, COLLECTIONS.ASSIGNMENTS));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Assignment));
-}
-
-export async function fetchGroupMessages(groupId?: string): Promise<GroupMessage[]> {
-  if (groupId) {
-    const q = query(collection(db, COLLECTIONS.GROUP_MESSAGES), where("groupId", "==", groupId));
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as GroupMessage));
-  }
-  const snap = await getDocs(collection(db, COLLECTIONS.GROUP_MESSAGES));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as GroupMessage));
-}
-
-export async function fetchAttendances(gatheringId?: string): Promise<GatheringAttendance[]> {
-  if (gatheringId) {
-    const q = query(collection(db, COLLECTIONS.GATHERING_ATTENDANCES), where("gatheringId", "==", gatheringId));
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as GatheringAttendance));
-  }
-  const snap = await getDocs(collection(db, COLLECTIONS.GATHERING_ATTENDANCES));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as GatheringAttendance));
-}
-
-// Single item getters
-export async function getPersonById(id: string): Promise<Person | null> {
-  const snap = await getDoc(doc(db, COLLECTIONS.PERSONS, id));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Person) : null;
-}
-
-export async function getGroupById(id: string): Promise<Group | null> {
-  const snap = await getDoc(doc(db, COLLECTIONS.GROUPS, id));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Group) : null;
-}
-
-export async function getGatheringById(id: string): Promise<Gathering | null> {
-  const snap = await getDoc(doc(db, COLLECTIONS.GATHERINGS, id));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Gathering) : null;
-}
-
-export async function getTaskById(id: string): Promise<Task | null> {
-  const snap = await getDoc(doc(db, COLLECTIONS.TASKS, id));
-  return snap.exists() ? ({ id: snap.id, ...snap.data() } as Task) : null;
-}
-
-// ============================================================================
 // High-Level Domain Mutations (Persisted in Firestore)
 // ============================================================================
 
+// New documents arrive fully built (see data/newDocuments.ts), id included.
+
 // Persons
-export async function createPerson(data: {
-  name: string;
-  phone?: string;
-  email?: string;
-  globalRole?: "member" | "admin";
-}): Promise<{ success: boolean; person?: Person; error?: string }> {
+export async function createPerson(person: Person): Promise<{ success: boolean; error?: string }> {
   try {
-    const id = `person-${Date.now()}`;
-    const newPerson: Person = {
-      id,
-      name: data.name.trim(),
-      phone: data.phone?.trim() || "",
-      email: data.email?.trim() || "",
-      globalRole: data.globalRole || "member",
-    };
-    await setDoc(doc(db, COLLECTIONS.PERSONS, id), sanitizeForFirestore(newPerson));
-    return { success: true, person: newPerson };
+    await setDoc(doc(db, COLLECTIONS.PERSONS, person.id), sanitizeForFirestore(person));
+    return { success: true };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     return { success: false, error: msg };
@@ -325,33 +205,10 @@ export async function deletePerson(personId: string): Promise<{ success: boolean
 }
 
 // Groups
-export async function createGroup(data: {
-  name: string;
-  description?: string;
-  category?: GroupCategory;
-  tags?: string[];
-  isPublic?: boolean;
-  leaderIds?: string[];
-  deputyLeaderIds?: string[];
-  memberIds?: string[];
-  meetingSchedule?: MeetingSchedule;
-}): Promise<{ success: boolean; group?: Group; error?: string }> {
+export async function createGroup(group: Group): Promise<{ success: boolean; error?: string }> {
   try {
-    const id = `group-${Date.now()}`;
-    const newGroup: Group = {
-      id,
-      name: data.name.trim(),
-      description: data.description?.trim(),
-      category: data.category || "tjenestegruppe",
-      tags: data.tags || [],
-      isPublic: data.isPublic !== false,
-      leaderIds: data.leaderIds || [],
-      deputyLeaderIds: data.deputyLeaderIds || [],
-      memberIds: data.memberIds || [],
-      meetingSchedule: data.meetingSchedule,
-    };
-    await setDoc(doc(db, COLLECTIONS.GROUPS, id), sanitizeForFirestore(newGroup));
-    return { success: true, group: newGroup };
+    await setDoc(doc(db, COLLECTIONS.GROUPS, group.id), sanitizeForFirestore(group));
+    return { success: true };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     return { success: false, error: msg };
@@ -423,44 +280,10 @@ export async function deleteGroup(groupId: string): Promise<{ success: boolean; 
 }
 
 // Gatherings
-export async function createGathering(data: {
-  groupId?: string;
-  title: string;
-  startsAt: string;
-  endsAt?: string;
-  location?: string;
-  type?: "arrangement" | "gruppesamling";
-  theme?: string;
-  bibleText?: string;
-  hostPersonId?: string;
-  visibility?: GatheringVisibility;
-  isPublic?: boolean;
-  isGudstjeneste?: boolean;
-  cancelled?: boolean;
-  sendInvitationImmediately?: boolean;
-}): Promise<{ success: boolean; gathering?: Gathering; error?: string }> {
+export async function createGathering(gathering: Gathering): Promise<{ success: boolean; error?: string }> {
   try {
-    const id = `gathering-${Date.now()}`;
-    const newGathering: Gathering = {
-      id,
-      groupId: data.groupId || "group-lyd",
-      title: data.title.trim(),
-      startsAt: data.startsAt,
-      endsAt: data.endsAt,
-      location: data.location,
-      type: data.type || "arrangement",
-      theme: data.theme,
-      bibleText: data.bibleText,
-      hostPersonId: data.hostPersonId,
-      invitationSent: !!data.sendInvitationImmediately,
-      invitationSentAt: data.sendInvitationImmediately ? new Date().toISOString() : undefined,
-      visibility: data.visibility || (data.type === "gruppesamling" ? "intern" : "offentlig"),
-      isPublic: data.visibility ? data.visibility !== "intern" : data.type !== "gruppesamling",
-      isGudstjeneste: data.isGudstjeneste ?? (data.type === "arrangement"),
-      cancelled: data.cancelled ?? false,
-    };
-    await setDoc(doc(db, COLLECTIONS.GATHERINGS, id), sanitizeForFirestore(newGathering));
-    return { success: true, gathering: newGathering };
+    await setDoc(doc(db, COLLECTIONS.GATHERINGS, gathering.id), sanitizeForFirestore(gathering));
+    return { success: true };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     return { success: false, error: msg };
@@ -507,29 +330,10 @@ export async function sendGatheringInvitation(gatheringId: string): Promise<{ su
 }
 
 // Tasks
-export async function createTask(data: {
-  gatheringId: string;
-  groupId: string;
-  title: string;
-  description?: string;
-  instruction?: string;
-  status?: Task["status"];
-  neededCount?: number;
-}): Promise<{ success: boolean; task?: Task; error?: string }> {
+export async function createTask(task: Task): Promise<{ success: boolean; error?: string }> {
   try {
-    const id = `task-${Date.now()}`;
-    const newTask: Task = {
-      id,
-      gatheringId: data.gatheringId,
-      groupId: data.groupId,
-      title: data.title.trim(),
-      description: data.description,
-      instruction: data.instruction,
-      status: data.status || "open",
-      neededCount: data.neededCount || 1,
-    };
-    await setDoc(doc(db, COLLECTIONS.TASKS, id), sanitizeForFirestore(newTask));
-    return { success: true, task: newTask };
+    await setDoc(doc(db, COLLECTIONS.TASKS, task.id), sanitizeForFirestore(task));
+    return { success: true };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     return { success: false, error: msg };
@@ -581,23 +385,12 @@ export async function updateTaskNeededCount(
 }
 
 // Assignments
-export async function assignTaskToPerson(
-  taskId: string,
-  personId: string,
-  responseStatus: "confirmed" | "pending" = "pending"
-): Promise<{ success: boolean; error?: string }> {
+export async function assignTaskToPerson(assignment: Assignment): Promise<{ success: boolean; error?: string }> {
   try {
-    const assignmentId = `assign-${taskId}-${personId}-${Date.now()}`;
-    const assignment: Assignment = {
-      id: assignmentId,
-      taskId,
-      personId,
-      response: responseStatus,
-    };
-    await setDoc(doc(db, COLLECTIONS.ASSIGNMENTS, assignmentId), sanitizeForFirestore(assignment));
+    await setDoc(doc(db, COLLECTIONS.ASSIGNMENTS, assignment.id), sanitizeForFirestore(assignment));
     await updateDoc(
-      doc(db, COLLECTIONS.TASKS, taskId),
-      sanitizeForFirestore({ status: responseStatus === "confirmed" ? "confirmed" : "assigned" })
+      doc(db, COLLECTIONS.TASKS, assignment.taskId),
+      sanitizeForFirestore({ status: assignment.response === "confirmed" ? "confirmed" : "assigned" })
     );
     return { success: true };
   } catch (error) {
@@ -650,26 +443,10 @@ export async function reportAbsence(
 }
 
 // Group Messages
-export async function sendGroupMessage(
-  groupId: string,
-  senderPersonId: string,
-  senderName: string,
-  content: string,
-  imageUrl?: string
-): Promise<{ success: boolean; message?: GroupMessage; error?: string }> {
+export async function sendGroupMessage(message: GroupMessage): Promise<{ success: boolean; error?: string }> {
   try {
-    const id = `msg-${Date.now()}`;
-    const newMsg: GroupMessage = {
-      id,
-      groupId,
-      senderPersonId,
-      senderName,
-      content: content.trim(),
-      imageUrl,
-      createdAt: new Date().toISOString(),
-    };
-    await setDoc(doc(db, COLLECTIONS.GROUP_MESSAGES, id), sanitizeForFirestore(newMsg));
-    return { success: true, message: newMsg };
+    await setDoc(doc(db, COLLECTIONS.GROUP_MESSAGES, message.id), sanitizeForFirestore(message));
+    return { success: true };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     return { success: false, error: msg };
@@ -757,22 +534,7 @@ export interface FirebaseDataContextType {
   getGroupNotificationsEnabled: (groupId: string, personId?: string) => boolean;
 
   // Actions
-  createGathering: (data: {
-    groupId?: string;
-    title: string;
-    startsAt: string;
-    endsAt?: string;
-    location?: string;
-    type?: "arrangement" | "gruppesamling";
-    theme?: string;
-    bibleText?: string;
-    hostPersonId?: string;
-    visibility?: GatheringVisibility;
-    isPublic?: boolean;
-    isGudstjeneste?: boolean;
-    cancelled?: boolean;
-    sendInvitationImmediately?: boolean;
-  }) => { success: boolean; gathering?: Gathering; error?: string };
+  createGathering: (data: NewGatheringInput) => { success: boolean; gathering?: Gathering; error?: string };
   updateGathering: (gatheringId: string, updates: Partial<Gathering>) => { success: boolean; gathering?: Gathering; error?: string };
   deleteGathering: (gatheringId: string) => { success: boolean; error?: string };
   sendGatheringInvitation: (gatheringId: string) => { success: boolean; error?: string };
@@ -783,30 +545,12 @@ export interface FirebaseDataContextType {
   updateTaskStatus: (taskId: string, status: Task["status"]) => { success: boolean; error?: string };
   updateGroupName: (groupId: string, newName: string) => { success: boolean; error?: string };
   updateGroup: (groupId: string, updates: Partial<Group>) => { success: boolean; error?: string };
-  createGroup: (data: {
-    name: string;
-    description?: string;
-    category?: GroupCategory;
-    tags?: string[];
-    isPublic?: boolean;
-    leaderIds?: string[];
-    deputyLeaderIds?: string[];
-    memberIds?: string[];
-    meetingSchedule?: MeetingSchedule;
-  }) => { success: boolean; group?: Group; error?: string };
-  addPerson: (data: { name: string; phone?: string; email?: string }) => { success: boolean; person?: Person; error?: string };
+  createGroup: (data: NewGroupInput) => { success: boolean; group?: Group; error?: string };
+  addPerson: (data: NewPersonInput) => { success: boolean; person?: Person; error?: string };
   updatePerson: (personId: string, updates: Partial<Person>) => { success: boolean; error?: string };
   addGroupMember: (groupId: string, personId: string) => { success: boolean; error?: string };
   removeGroupMember: (groupId: string, personId: string) => { success: boolean; error?: string };
-  createTask: (data: {
-    gatheringId: string;
-    groupId: string;
-    title: string;
-    description?: string;
-    instruction?: string;
-    status?: Task["status"];
-    neededCount?: number;
-  }) => { success: boolean; task?: Task; error?: string };
+  createTask: (data: NewTaskInput) => { success: boolean; task?: Task; error?: string };
   deleteTask: (taskId: string) => { success: boolean; error?: string };
   updateTask: (taskId: string, updates: Partial<Task>) => { success: boolean; error?: string };
   updateTaskInstruction: (taskId: string, instruction: string) => { success: boolean; error?: string };
@@ -818,6 +562,19 @@ export interface FirebaseDataContextType {
 }
 
 export const FirebaseDataContext = createContext<FirebaseDataContextType | undefined>(undefined);
+
+/**
+ * Lets a write finish in the background while the UI moves on.
+ * A failed write is shown to the user; the snapshot listeners then restore the saved state.
+ */
+function persist(write: Promise<{ success: boolean; error?: string }>, action: string): void {
+  write.then(
+    (result) => {
+      if (!result.success) reportWriteError(action, result.error);
+    },
+    (error) => reportWriteError(action, error)
+  );
+}
 
 export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Firestore is the only source of data: everything is empty until the first snapshot arrives
@@ -1010,58 +767,22 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     [groups, currentUserId]
   );
 
-  const handleCreateGathering = useCallback(
-    (data: {
-      groupId?: string;
-      title: string;
-      startsAt: string;
-      endsAt?: string;
-      location?: string;
-      type?: "arrangement" | "gruppesamling";
-      theme?: string;
-      bibleText?: string;
-      hostPersonId?: string;
-      visibility?: GatheringVisibility;
-      isPublic?: boolean;
-      isGudstjeneste?: boolean;
-      cancelled?: boolean;
-      sendInvitationImmediately?: boolean;
-    }) => {
-      const id = `gathering-${Date.now()}`;
-      const newGathering: Gathering = {
-        id,
-        groupId: data.groupId || groups[0]?.id || "group-lyd",
-        title: data.title.trim(),
-        startsAt: data.startsAt,
-        endsAt: data.endsAt,
-        location: data.location || "Menighetssalen",
-        type: data.type || "arrangement",
-        theme: data.theme,
-        bibleText: data.bibleText,
-        hostPersonId: data.hostPersonId,
-        invitationSent: !!data.sendInvitationImmediately,
-        invitationSentAt: data.sendInvitationImmediately ? new Date().toISOString() : undefined,
-        visibility: data.visibility || (data.type === "gruppesamling" ? "intern" : "offentlig"),
-        isPublic: data.visibility ? data.visibility !== "intern" : (data.isPublic ?? (data.type !== "gruppesamling")),
-        isGudstjeneste: data.isGudstjeneste ?? (data.type === "arrangement"),
-        cancelled: data.cancelled ?? false,
-      };
-      setGatherings((prev) => [...prev, newGathering]);
-      createGathering(data).catch(console.error);
-      return { success: true, gathering: newGathering };
-    },
-    [groups]
-  );
+  const handleCreateGathering = useCallback((data: NewGatheringInput) => {
+    const newGathering = buildGathering(data);
+    setGatherings((prev) => [...prev, newGathering]);
+    persist(createGathering(newGathering), "lagre samlingen");
+    return { success: true, gathering: newGathering };
+  }, []);
 
   const handleUpdateGathering = useCallback((gatheringId: string, updates: Partial<Gathering>) => {
     setGatherings((prev) => prev.map((g) => (g.id === gatheringId ? { ...g, ...updates } : g)));
-    updateGathering(gatheringId, updates).catch(console.error);
+    persist(updateGathering(gatheringId, updates), "lagre endringene i samlingen");
     return { success: true };
   }, []);
 
   const handleDeleteGathering = useCallback((gatheringId: string) => {
     setGatherings((prev) => prev.filter((g) => g.id !== gatheringId));
-    deleteGathering(gatheringId).catch(console.error);
+    persist(deleteGathering(gatheringId), "slette samlingen");
     return { success: true };
   }, []);
 
@@ -1071,23 +792,18 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
         g.id === gatheringId ? { ...g, invitationSent: true, invitationSentAt: new Date().toISOString() } : g
       )
     );
-    sendGatheringInvitation(gatheringId).catch(console.error);
+    persist(sendGatheringInvitation(gatheringId), "registrere at invitasjonen er sendt");
     return { success: true };
   }, []);
 
   const handleAssignTaskToPerson = useCallback(
     async (taskId: string, personId: string, responseStatus: "confirmed" | "pending" = "pending") => {
-      const newAssignment: Assignment = {
-        id: `assign-${taskId}-${personId}-${Date.now()}`,
-        taskId,
-        personId,
-        response: responseStatus,
-      };
+      const newAssignment = buildAssignment(taskId, personId, responseStatus);
       setAssignments((prev) => [...prev, newAssignment]);
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, status: responseStatus === "confirmed" ? "confirmed" : "assigned" } : t))
       );
-      return await assignTaskToPerson(taskId, personId, responseStatus);
+      return await assignTaskToPerson(newAssignment);
     },
     []
   );
@@ -1103,7 +819,7 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const handleUpdateAssignmentStatus = useCallback(
     (assignmentId: string, response: "confirmed" | "pending" | "declined" | "withdrawn") => {
       setAssignments((prev) => prev.map((a) => (a.id === assignmentId ? { ...a, response } : a)));
-      updateAssignmentStatus(assignmentId, response).catch(console.error);
+      persist(updateAssignmentStatus(assignmentId, response), "lagre svaret på oppgaven");
       return { success: true };
     },
     []
@@ -1111,77 +827,45 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const handleRemoveAssignment = useCallback((assignmentId: string) => {
     setAssignments((prev) => prev.filter((a) => a.id !== assignmentId));
-    removeAssignment(assignmentId).catch(console.error);
+    persist(removeAssignment(assignmentId), "fjerne tildelingen");
     return { success: true };
   }, []);
 
   const handleUpdateTaskStatus = useCallback((taskId: string, status: Task["status"]) => {
     setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status } : t)));
-    updateTaskStatus(taskId, status).catch(console.error);
+    persist(updateTaskStatus(taskId, status), "lagre status på oppgaven");
     return { success: true };
   }, []);
 
   const handleUpdateGroupName = useCallback((groupId: string, newName: string) => {
     setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, name: newName.trim() } : g)));
-    updateGroupName(groupId, newName).catch(console.error);
+    persist(updateGroupName(groupId, newName), "lagre gruppenavnet");
     return { success: true };
   }, []);
 
   const handleUpdateGroup = useCallback((groupId: string, updates: Partial<Group>) => {
     setGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, ...updates } : g)));
-    updateGroup(groupId, updates).catch(console.error);
+    persist(updateGroup(groupId, updates), "lagre endringene i gruppen");
     return { success: true };
   }, []);
 
-  const handleCreateGroup = useCallback(
-    (data: {
-      name: string;
-      description?: string;
-      category?: GroupCategory;
-      tags?: string[];
-      isPublic?: boolean;
-      leaderIds?: string[];
-      deputyLeaderIds?: string[];
-      memberIds?: string[];
-      meetingSchedule?: MeetingSchedule;
-    }) => {
-      const id = `group-${Date.now()}`;
-      const newGroup: Group = {
-        id,
-        name: data.name.trim(),
-        description: data.description?.trim(),
-        category: data.category || "tjenestegruppe",
-        tags: data.tags || [],
-        isPublic: data.isPublic !== false,
-        leaderIds: data.leaderIds || [],
-        deputyLeaderIds: data.deputyLeaderIds || [],
-        memberIds: data.memberIds || [],
-        meetingSchedule: data.meetingSchedule,
-      };
-      setGroups((prev) => [...prev, newGroup]);
-      createGroup(data).catch(console.error);
-      return { success: true, group: newGroup };
-    },
-    []
-  );
+  const handleCreateGroup = useCallback((data: NewGroupInput) => {
+    const newGroup = buildGroup(data);
+    setGroups((prev) => [...prev, newGroup]);
+    persist(createGroup(newGroup), "lagre gruppen");
+    return { success: true, group: newGroup };
+  }, []);
 
-  const handleAddPerson = useCallback((data: { name: string; phone?: string; email?: string }) => {
-    const id = `person-${Date.now()}`;
-    const newPerson: Person = {
-      id,
-      name: data.name.trim(),
-      phone: data.phone?.trim() || "",
-      email: data.email?.trim() || "",
-      globalRole: "member",
-    };
+  const handleAddPerson = useCallback((data: NewPersonInput) => {
+    const newPerson = buildPerson(data);
     setPersons((prev) => [...prev, newPerson]);
-    createPerson(data).catch(console.error);
+    persist(createPerson(newPerson), "lagre personen");
     return { success: true, person: newPerson };
   }, []);
 
   const handleUpdatePerson = useCallback((personId: string, updates: Partial<Person>) => {
     setPersons((prev) => prev.map((p) => (p.id === personId ? { ...p, ...updates } : p)));
-    updatePerson(personId, updates).catch(console.error);
+    persist(updatePerson(personId, updates), "lagre endringene i personen");
     return { success: true };
   }, []);
 
@@ -1197,7 +881,7 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
           : g
       )
     );
-    addGroupMember(groupId, personId).catch(console.error);
+    persist(addGroupMember(groupId, personId), "legge til medlemmet i gruppen");
     return { success: true };
   }, []);
 
@@ -1214,76 +898,46 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
           : g
       )
     );
-    removeGroupMember(groupId, personId).catch(console.error);
+    persist(removeGroupMember(groupId, personId), "fjerne medlemmet fra gruppen");
     return { success: true };
   }, []);
 
-  const handleCreateTask = useCallback(
-    (data: {
-      gatheringId: string;
-      groupId: string;
-      title: string;
-      description?: string;
-      instruction?: string;
-      status?: Task["status"];
-      neededCount?: number;
-    }) => {
-      const id = `task-${Date.now()}`;
-      const newTask: Task = {
-        id,
-        gatheringId: data.gatheringId,
-        groupId: data.groupId,
-        title: data.title.trim(),
-        description: data.description,
-        instruction: data.instruction,
-        status: data.status || "open",
-        neededCount: data.neededCount || 1,
-      };
-      setTasks((prev) => [...prev, newTask]);
-      createTask(data).catch(console.error);
-      return { success: true, task: newTask };
-    },
-    []
-  );
+  const handleCreateTask = useCallback((data: NewTaskInput) => {
+    const newTask = buildTask(data);
+    setTasks((prev) => [...prev, newTask]);
+    persist(createTask(newTask), "lagre oppgaven");
+    return { success: true, task: newTask };
+  }, []);
 
   const handleDeleteTask = useCallback((taskId: string) => {
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    deleteTask(taskId).catch(console.error);
+    persist(deleteTask(taskId), "slette oppgaven");
     return { success: true };
   }, []);
 
   const handleUpdateTask = useCallback((taskId: string, updates: Partial<Task>) => {
     setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updates } : t)));
-    updateTask(taskId, updates).catch(console.error);
+    persist(updateTask(taskId, updates), "lagre endringene i oppgaven");
     return { success: true };
   }, []);
 
   const handleUpdateTaskInstruction = useCallback((taskId: string, instruction: string) => {
     setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, instruction } : t)));
-    updateTaskInstruction(taskId, instruction).catch(console.error);
+    persist(updateTaskInstruction(taskId, instruction), "lagre instruksen");
     return { success: true };
   }, []);
 
   const handleUpdateTaskNeededCount = useCallback((taskId: string, neededCount: number | undefined) => {
     setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, neededCount } : t)));
-    updateTaskNeededCount(taskId, neededCount).catch(console.error);
+    persist(updateTaskNeededCount(taskId, neededCount), "lagre bemanningsbehovet");
     return { success: true };
   }, []);
 
   const handleSendGroupMessage = useCallback(
     (groupId: string, content: string, imageUrl?: string) => {
-      const id = `msg-${Date.now()}`;
-      const newMsg: GroupMessage = {
-        id,
-        groupId,
-        senderPersonId: currentUser.id,
-        senderName: currentUser.name,
-        content: content.trim(),
-        imageUrl,
-        createdAt: new Date().toISOString(),
-      };
+      const newMsg = buildGroupMessage(groupId, currentUser, content, imageUrl);
       setGroupMessages((prev) => [...prev, newMsg]);
-      sendGroupMessage(groupId, currentUser.id, currentUser.name, content, imageUrl).catch(console.error);
+      persist(sendGroupMessage(newMsg), "sende meldingen");
       return { success: true, message: newMsg };
     },
     [currentUser]
@@ -1291,7 +945,7 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const handleDeleteGroupMessage = useCallback((messageId: string, _personId?: string) => {
     setGroupMessages((prev) => prev.filter((m) => m.id !== messageId));
-    deleteGroupMessage(messageId).catch(console.error);
+    persist(deleteGroupMessage(messageId), "slette meldingen");
     return { success: true };
   }, []);
 
@@ -1315,12 +969,15 @@ export const FirebaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
         )
       );
 
-      updateGroup(groupId, {
-        notificationPreferences: {
-          ...(grp?.notificationPreferences || {}),
-          [personId]: next,
-        },
-      }).catch(console.error);
+      persist(
+        updateGroup(groupId, {
+          notificationPreferences: {
+            ...(grp?.notificationPreferences || {}),
+            [personId]: next,
+          },
+        }),
+        "lagre varslingsvalget"
+      );
 
       return { success: true, enabled: next };
     },
