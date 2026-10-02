@@ -1,4 +1,4 @@
-import { deleteField } from "firebase/firestore";
+import { deleteField, type DocumentData, type UpdateData } from "firebase/firestore";
 
 /**
  * Sanitizes object to remove undefined values since Firestore rejects them.
@@ -27,8 +27,8 @@ export function sanitizeForFirestore<T>(obj: T): T {
  * A field explicitly set to `undefined` is cleared. Dropping it, as sanitizeForFirestore
  * does, leaves the old value in place: an emptied phone number would come straight back.
  */
-export function forUpdate(updates: object): Record<string, unknown> {
-  const prepared: Record<string, unknown> = {};
+export function forUpdate(updates: object): UpdateData<DocumentData> {
+  const prepared: UpdateData<DocumentData> = {};
   for (const [key, value] of Object.entries(updates)) {
     prepared[key] = value === undefined ? deleteField() : sanitizeForFirestore(value);
   }

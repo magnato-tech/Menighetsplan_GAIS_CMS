@@ -3,17 +3,11 @@ import { useParams, Link } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
 import {
   ArrowLeft,
-  Calendar,
   Heart,
-  MapPin,
   Phone,
   Mail,
   Clock,
-  CheckCircle2,
-  HelpCircle,
   Users,
-  Shield,
-  Sparkles,
 } from "lucide-react";
 
 interface PublicStaticPageProps {

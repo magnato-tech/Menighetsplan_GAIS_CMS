@@ -83,7 +83,7 @@ app.get('/api/offentlig/arrangementer', async (req: Request, res: Response) => {
 /**
  * Public JSON API: Gatherings (with embedded recurring and groups for simplicity)
  */
-app.get('/api/public/gatherings', async (req: Request, res: Response) => {
+app.get('/api/public/gatherings', async (_req: Request, res: Response) => {
   try {
     const [gatheringDocs, groupDocs] = await Promise.all([loadGatheringDocs(), loadGroupDocs()]);
     const items = toPublicGatherings(gatheringDocs).map(toV11);
@@ -115,7 +115,7 @@ app.get('/api/public/gatherings', async (req: Request, res: Response) => {
 /**
  * Dedicated Public JSON API: Groups (Husfellesskap, Tjenestegrupper osv.)
  */
-app.get('/api/public/groups', async (req: Request, res: Response) => {
+app.get('/api/public/groups', async (_req: Request, res: Response) => {
   try {
     const groups = toPublicGroups(await loadGroupDocs());
     res.json({
@@ -135,7 +135,7 @@ app.get('/api/public/groups', async (req: Request, res: Response) => {
 /**
  * Dedicated Public JSON API: Recurring Events (faste møtetider, gudstjenester, husfellesskap)
  */
-app.get('/api/public/recurring', async (req: Request, res: Response) => {
+app.get('/api/public/recurring', async (_req: Request, res: Response) => {
   try {
     const recurringEvents = toRecurringEvents(await loadGroupDocs());
     res.json({
@@ -155,7 +155,7 @@ app.get('/api/public/recurring', async (req: Request, res: Response) => {
 /**
  * All-in-one endpoint
  */
-app.get('/api/public/all', async (req: Request, res: Response) => {
+app.get('/api/public/all', async (_req: Request, res: Response) => {
   try {
     const [gatheringDocs, groupDocs] = await Promise.all([loadGatheringDocs(), loadGroupDocs()]);
     res.json({
@@ -175,7 +175,7 @@ app.get('/api/public/all', async (req: Request, res: Response) => {
 async function startServer() {
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static('dist'));
-    app.get('*', (req: Request, res: Response) => {
+    app.get('*', (_req: Request, res: Response) => {
       res.sendFile('dist/index.html', { root: '.' });
     });
   } else {

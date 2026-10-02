@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatNorwegianDateTime } from "../../utils/dates";
-import { Group } from "../../types";
 import { LeaderGroupDetail } from "./leaderGroupDetail";
 import {
   Calendar,
@@ -17,11 +16,10 @@ import {
 
 interface GroupActivitiesProps {
   detail: LeaderGroupDetail;
-  group: Group;
   showToast: (text: string) => void;
 }
 
-export const GroupActivities: React.FC<GroupActivitiesProps> = ({ detail, group, showToast }) => {
+export const GroupActivities: React.FC<GroupActivitiesProps> = ({ detail, showToast }) => {
   const { hasLeaderAccess, members, groupGatherings, assignTaskToPerson } = detail;
   const navigate = useNavigate();
 
@@ -79,7 +77,7 @@ export const GroupActivities: React.FC<GroupActivitiesProps> = ({ detail, group,
       const { gathering, taskItems } = item;
       const gType = gathering.type === "arrangement" || !gathering.type ? "arrangement" : "gruppesamling";
 
-      taskItems.forEach(({ task, assignedPersons, confirmedCount, neededCount, hasForfall }) => {
+      taskItems.forEach(({ task, assignedPersons, confirmedCount, neededCount }) => {
         if (assignedPersons.length > 0) {
           assignedPersons.forEach(({ assignment, person, statusLabel, response }) => {
             rows.push({
@@ -386,7 +384,7 @@ export const GroupActivities: React.FC<GroupActivitiesProps> = ({ detail, group,
                             {/* Assigned persons tags */}
                             <div className="flex items-center gap-1.5 flex-wrap">
                               {assignedPersons.length > 0 ? (
-                                assignedPersons.map(({ assignment, person, statusLabel, response }) => (
+                                assignedPersons.map(({ assignment, person, response }) => (
                                   <span
                                     key={assignment.id}
                                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium ${

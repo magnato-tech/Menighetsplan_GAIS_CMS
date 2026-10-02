@@ -7,7 +7,6 @@ import {
   Phone,
   Mail,
   Clock,
-  Heart,
   ExternalLink,
   Shield,
   LayoutDashboard,

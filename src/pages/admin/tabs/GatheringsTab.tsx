@@ -76,7 +76,6 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
   const [newGatheringTitle, setNewGatheringTitle] = useState("");
   const [newGatheringDate, setNewGatheringDate] = useState("");
   const [newGatheringTime, setNewGatheringTime] = useState("11:00");
-  const [newGatheringType, setNewGatheringType] = useState<"gudstjeneste" | "møte" | "annet">("gudstjeneste");
   const [newGatheringTheme, setNewGatheringTheme] = useState("");
 
   const handleCreateGathering = async (e: React.FormEvent) => {

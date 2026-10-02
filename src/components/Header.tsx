@@ -1,20 +1,17 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { UserSwitcher } from "./UserSwitcher";
-import { useLeaderDashboard, useModuleConfig } from "../hooks/useAppHooks";
-import { Globe, ArrowLeft, Shield, LayoutDashboard } from "lucide-react";
+import { useLeaderDashboard } from "../hooks/useAppHooks";
+import { ArrowLeft, Shield } from "lucide-react";
 
 export const Header: React.FC = () => {
   const location = useLocation();
   const { isLeader, urgentGatherings, currentUser } = useLeaderDashboard();
-  const { isKalenderOn, isMeldingerOn } = useModuleConfig();
 
   const isAdmin = currentUser.globalRole === "admin";
 
   const isLeaderPath = location.pathname.startsWith("/leder");
   const isAdminPath = location.pathname.startsWith("/admin");
-  const isKalenderPath = location.pathname.startsWith("/kalender");
-  const isMeldingerPath = location.pathname.startsWith("/meldinger");
   const isMyPagePath = location.pathname === "/minside" || location.pathname === "/";
 
   return (

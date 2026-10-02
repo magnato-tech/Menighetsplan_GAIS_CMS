@@ -10,7 +10,7 @@ export function isPubliclyVisible(g: Pick<Partial<Gathering>, "visibility" | "is
 }
 
 /** The fields to store for a visibility. `isPublic` is written along with it so the two never disagree. */
-export function visibilityFields(visibility: GatheringVisibility): Pick<Gathering, "visibility" | "isPublic"> {
+export function visibilityFields(visibility: GatheringVisibility): { visibility: GatheringVisibility; isPublic: boolean } {
   return { visibility, isPublic: visibility !== "intern" };
 }
 

@@ -782,7 +782,7 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
                       </span>
 
                       {row.assignedPersons.length > 0 ? (
-                        row.assignedPersons.map(({ assignment, person, statusLabel, response }) => (
+                        row.assignedPersons.map(({ assignment, person, response }) => (
                           <div
                             key={assignment ? assignment.id : person?.id || Math.random()}
                             className="relative group inline-flex items-center"

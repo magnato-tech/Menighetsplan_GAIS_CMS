@@ -6,12 +6,7 @@ import {
   Calendar,
   Clock,
   MapPin,
-  Filter,
-  CheckCircle2,
   XCircle,
-  ExternalLink,
-  ChevronRight,
-  BookOpen,
 } from "lucide-react";
 
 export const PublicCalendarPage: React.FC = () => {
@@ -194,12 +189,6 @@ export const PublicCalendarPage: React.FC = () => {
                   <p className="text-sm text-stone-600">
                     <span className="font-semibold text-stone-800">Tema:</span> {item.theme}
                     {item.bibleText && ` (${item.bibleText})`}
-                  </p>
-                )}
-
-                {item.description && (
-                  <p className="text-xs text-stone-500 line-clamp-2 max-w-xl">
-                    {item.description}
                   </p>
                 )}
               </div>

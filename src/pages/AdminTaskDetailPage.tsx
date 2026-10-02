@@ -13,7 +13,6 @@ import {
   Calendar,
   MapPin,
   Users,
-  User,
   Phone,
   Mail,
   FileText,
@@ -36,7 +35,6 @@ export const AdminTaskDetailPage: React.FC = () => {
     task,
     gathering,
     group,
-    assignedPerson,
     allAssignedPersonsWithStatus,
     confirmedCount,
     isFullyCovered,
@@ -335,7 +333,7 @@ export const AdminTaskDetailPage: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                {allAssignedPersonsWithStatus.map(({ person, assignment, statusLabel, response }) => (
+                {allAssignedPersonsWithStatus.map(({ person, assignment, response }) => (
                   <div
                     key={assignment.id}
                     className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-start justify-between gap-2"

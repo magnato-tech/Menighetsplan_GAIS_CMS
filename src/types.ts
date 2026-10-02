@@ -123,7 +123,8 @@ export interface Task {
   description?: string;
   instruction?: string;
   status: "open" | "assigned" | "confirmed" | "vacant" | "cancelled";
-  neededCount: number;
+  // Absent when an admin has reset the need to "not set"; readers then count it as 1
+  neededCount?: number;
   lastReminded?: string; // ISO timestamp when reminder was sent/copied
   updatedBy?: string;
   updatedAt?: string;

@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { useFirebase } from "../context/FirebaseDataContext";
 import { Task, Person, Group, Gathering, Assignment, ActionCardModel, QueryResult, BadgeVariant } from "../types";
 import { formatNorwegianDateTime } from "../utils/dates";
@@ -20,25 +20,22 @@ export function useCurrentUser() {
 // 2. Hook: useMyTasks
 export function useMyTasks(): QueryResult<Task[]> {
   const { currentUser, getTasksForPerson, tasks, assignments } = useFirebase();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const myTasks = useMemo(() => {
     return getTasksForPerson(currentUser.id);
   }, [getTasksForPerson, currentUser.id, tasks, assignments]);
 
+  // The data comes straight from the snapshot listeners: nothing to wait for, nothing to fail here
   return {
     data: myTasks,
-    loading,
-    error,
+    loading: false,
+    error: null,
   };
 }
 
 // 3. Hook: useOpenTasks
 export function useOpenTasks(): QueryResult<Task[]> {
   const { currentUser, getUserGroups, getOpenTasksForGroups, tasks } = useFirebase();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const userGroups = useMemo(() => getUserGroups(currentUser.id), [getUserGroups, currentUser.id]);
   const groupIds = useMemo(() => userGroups.map((g) => g.id), [userGroups]);
@@ -49,8 +46,8 @@ export function useOpenTasks(): QueryResult<Task[]> {
 
   return {
     data: openTasks,
-    loading,
-    error,
+    loading: false,
+    error: null,
     permissionDenied: false,
   };
 }
@@ -86,9 +83,6 @@ export function useTaskDetail(taskId: string | undefined): TaskDetailResult {
     tasks,
     assignments,
   } = useFirebase();
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const task = useMemo(() => {
     if (!taskId) return null;
@@ -159,8 +153,8 @@ export function useTaskDetail(taskId: string | undefined): TaskDetailResult {
     canClaim,
     canReportAbsence,
     permissionDenied,
-    loading,
-    error,
+    loading: false,
+    error: null,
     claimTask,
     reportAbsence: reportAbsenceAction,
   };

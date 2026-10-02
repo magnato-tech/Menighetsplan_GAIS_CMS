@@ -23,7 +23,7 @@ export const PersonsTab: React.FC<PersonsTabProps> = ({ studio }) => {
       </div>
 
       <div className="space-y-3">
-        {adminPersons.map((person) => {
+        {adminPersons.map(({ person }) => {
           const isAdminRole = person.globalRole === "admin";
           const hasPoliceCert = Boolean(person.policeCertificateValidUntil);
           const unavailableCount = person.unavailablePeriods?.length || 0;

@@ -4,7 +4,6 @@ import { useFirebase } from "../../context/FirebaseDataContext";
 import { useCms } from "../../context/CmsContext";
 import { publicProfilesOf } from "../../utils/publicProfile";
 import {
-  Users,
   Shield,
   Phone,
   Mail,
@@ -123,7 +122,7 @@ export const PublicLeadershipPage: React.FC = () => {
                   </p>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                  {members.map(({ person, roleInGroup, isLeader }) => (
+                  {members.map(({ person, isLeader }) => (
                     <div
                       key={person.id}
                       className="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-xs hover:border-indigo-300 transition-all flex flex-col justify-between space-y-4"
@@ -239,7 +238,7 @@ export const PublicLeadershipPage: React.FC = () => {
                   </p>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {members.map(({ person, roleInGroup, isLeader }) => (
+                  {members.map(({ person, isLeader }) => (
                     <div
                       key={person.id}
                       className="bg-white rounded-xl border border-stone-200/80 p-4 shadow-xs flex items-center justify-between"
@@ -280,7 +279,7 @@ export const PublicLeadershipPage: React.FC = () => {
                   <span>{group.name}</span>
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {members.map(({ person, roleInGroup, isLeader }) => (
+                  {members.map(({ person, roleInGroup }) => (
                     <div key={person.id} className="bg-white rounded-xl border p-4">
                       <div className="font-bold text-sm text-stone-900">{person.name}</div>
                       <div className="text-xs text-stone-500">{person.title || roleInGroup}</div>

@@ -4,10 +4,8 @@ import {
   useLeaderDashboard,
   formatNorwegianDateTime,
   formatCompactGatheringSubtitle,
-  LeaderGatheringItem,
 } from "../hooks/useAppHooks";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
-import { Task, Person } from "../types";
 import {
   ShieldAlert,
   Clock,
@@ -15,8 +13,6 @@ import {
   ChevronRight,
   Users,
   Calendar,
-  Layers,
-  CheckCircle2,
 } from "lucide-react";
 
 export const LeaderPage: React.FC = () => {
@@ -25,10 +21,8 @@ export const LeaderPage: React.FC = () => {
     leaderData,
     allSemesterGatherings,
     urgentGatherings,
-    urgentTasks,
     urgentTasksCount,
     currentUser,
-    assignTaskToPerson,
   } = useLeaderDashboard();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -48,25 +42,6 @@ export const LeaderPage: React.FC = () => {
     setSearchParams({ tab });
   };
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<"all" | "red" | "yellow" | "green">("all");
-  const [feedback, setFeedback] = useState<{ text: string; type: "success" | "info" } | null>(null);
-
-  const showFeedback = (text: string, type: "success" | "info" = "success") => {
-    setFeedback({ text, type });
-    setTimeout(() => setFeedback(null), 4000);
-  };
-
-  const handleAssign = async (taskId: string, personId: string, personName: string) => {
-    const res = await assignTaskToPerson(taskId, personId);
-    if (res.success) {
-      showFeedback(`Oppgaven ble direkte tildelt ${personName}. Arrangementet er nå oppdatert!`);
-    } else {
-      showFeedback(res.error || "Kunne ikke tildele oppgaven.", "info");
-    }
-  };
-
-  const handleFollowUp = (taskId: string) => {
-    showFeedback("Oppgaven er markert for personlig oppfølging av gruppeleder.", "info");
-  };
 
   // Shortcut from urgent banner: switch to Semesteroversikt and select 'red' status
   const handleShowUrgentInSemester = () => {
@@ -177,21 +152,6 @@ export const LeaderPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Feedback Toast */}
-      {feedback && (
-        <div
-          id="leader-feedback-toast"
-          className={`mx-5 mt-4 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200 ${
-            feedback.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-              : "bg-amber-50 text-amber-800 border border-amber-200"
-          }`}
-        >
-          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-          <span>{feedback.text}</span>
-        </div>
-      )}
-
       <div className="p-5 space-y-6">
         {/* Executive Summary: Rolig og kompakt statusindikator */}
         <section aria-labelledby="leader-summary-title">
@@ -253,7 +213,7 @@ export const LeaderPage: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              {leaderData.map(({ group, members, gatherings, totalVacantTasks, totalOpenTasks }) => {
+              {leaderData.map(({ group, members, gatherings }) => {
                 const isMainLeader = group.leaderIds.includes(currentUser.id);
                 const isDeputy = group.deputyLeaderIds?.includes(currentUser.id);
 

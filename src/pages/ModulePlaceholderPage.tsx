@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Calendar, MessageSquare, ArrowLeft, ToggleLeft } from "lucide-react";
 import { useModuleConfig } from "../hooks/useAppHooks";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useCurrentUser } from "../hooks/useAppHooks";
-import { UserCheck, ChevronDown } from "lucide-react";
+import { UserCheck } from "lucide-react";
 
 export const UserSwitcher: React.FC = () => {
   const { currentUser, allPersons, setCurrentUserId, userGroups } = useCurrentUser();

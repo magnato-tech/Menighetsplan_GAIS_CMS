@@ -22,7 +22,6 @@ export const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({ detail, gath
     group?.id || (involvedGroups[0]?.id || "group-verter")
   );
   const [newTaskNeededCount, setNewTaskNeededCount] = useState<number>(1);
-  const [newTaskTime, setNewTaskTime] = useState<string>("11:00");
   const [newTaskDescription, setNewTaskDescription] = useState<string>("");
   const [newTaskInstruction, setNewTaskInstruction] = useState<string>("");
 

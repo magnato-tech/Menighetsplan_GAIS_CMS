@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCurrentUser, useMyTasks, useOpenTasks } from "../../hooks/memberHooks";
+import { useCurrentUser, useMyTasks } from "../../hooks/memberHooks";
 import { formatNorwegianDateTime } from "../../utils/dates";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { Task, GroupMessage, Gathering, Group } from "../../types";
@@ -12,7 +12,6 @@ import { Task, GroupMessage, Gathering, Group } from "../../types";
 export function useMyPage() {
   const { currentUser } = useCurrentUser();
   const { data: myTasks } = useMyTasks();
-  const { data: openTasks } = useOpenTasks();
   const {
     tasks,
     assignments,

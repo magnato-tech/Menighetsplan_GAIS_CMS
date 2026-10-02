@@ -13,8 +13,6 @@ export interface ActionCardProps {
   statusVariant?: BadgeVariant;
   primaryButtonText?: string;
   onPrimaryClick?: (e: React.MouseEvent) => void;
-  secondaryButtonText?: string;
-  onSecondaryClick?: (e: React.MouseEvent) => void;
   detailUrl?: string;
   isMine?: boolean;
 }
@@ -30,8 +28,6 @@ export const ActionCard: React.FC<ActionCardProps> = ({
   statusVariant = "neutral",
   primaryButtonText,
   onPrimaryClick,
-  secondaryButtonText,
-  onSecondaryClick,
   detailUrl,
   isMine = false,
 }) => {

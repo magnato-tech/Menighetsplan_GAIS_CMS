@@ -33,7 +33,7 @@ function getSpotifyEmbedUrl(url: string | undefined): string | null {
 }
 
 export const PublicHomePage: React.FC = () => {
-  const { gatherings, groups } = useFirebase();
+  const { gatherings } = useFirebase();
   const { settings, news, sermons } = useCms();
   const [isPlayingSermon, setIsPlayingSermon] = useState(false);
 

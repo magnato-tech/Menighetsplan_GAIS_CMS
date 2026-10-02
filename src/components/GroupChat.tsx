@@ -3,7 +3,6 @@ import { useGroupRoom, formatChatMessageTime } from "../hooks/useAppHooks";
 import { GroupMessage } from "../types";
 import {
   Send,
-  Image as ImageIcon,
   Trash2,
   Bell,
   BellOff,
@@ -15,7 +14,6 @@ import {
   Smile,
   Info,
   Camera,
-  Check,
 } from "lucide-react";
 
 // Helper to extract URLs

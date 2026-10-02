@@ -7,13 +7,8 @@ import {
   Menu,
   X,
   Church,
-  Calendar,
-  Users,
-  Info,
-  Phone,
   LayoutDashboard,
   Shield,
-  Heart,
   ChevronRight,
 } from "lucide-react";
 

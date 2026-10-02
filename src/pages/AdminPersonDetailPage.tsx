@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useAdminPersonDetail } from "../hooks/useAppHooks";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
 import { toPublicProfile, publicProfileFields } from "../utils/publicProfile";
@@ -18,7 +18,6 @@ import {
   Save,
   CheckSquare,
   BadgeCheck,
-  Calendar,
   CalendarX,
   Plus,
   Trash2,
@@ -26,15 +25,12 @@ import {
 
 export const AdminPersonDetailPage: React.FC = () => {
   const { personId } = useParams<{ personId: string }>();
-  const navigate = useNavigate();
 
   const {
     isAdmin,
     currentUser,
     person,
     personGroups,
-    leaderInGroups,
-    deputyInGroups,
     personTasks,
     updatePerson,
   } = useAdminPersonDetail(personId || "");

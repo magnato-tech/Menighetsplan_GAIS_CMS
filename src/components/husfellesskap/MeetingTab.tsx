@@ -31,7 +31,6 @@ export const MeetingTab: React.FC<MeetingTabProps> = ({ model, showToast, onCrea
 
   const isAttending = currentUserAttendance?.status === "attending";
   const isDeclined = currentUserAttendance?.status === "declined";
-  const hasResponded = !!currentUserAttendance;
 
   const handleRespond = async (status: "attending" | "declined") => {
     if (!activeMeeting) return;

@@ -135,7 +135,6 @@ export function useLeaderGroupDetail(groupId: string) {
   const {
     currentUser,
     allPersons,
-    groups,
     gatherings,
     tasks,
     assignments,

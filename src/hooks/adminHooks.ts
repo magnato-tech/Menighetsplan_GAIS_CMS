@@ -19,11 +19,11 @@ export interface AdminTaskItem {
   task: Task;
   gathering?: Gathering;
   group?: Group;
-  assignment: Assignment | null;
-  assignedPerson: Person | null;
+  assignment?: Assignment;
+  assignedPerson?: Person | null;
   assignedPersonsList: Array<{
     assignment: Assignment;
-    person: Person | null;
+    person?: Person;
     statusLabel: string;
     response: Assignment["response"];
   }>;
@@ -54,7 +54,6 @@ export function useAdminDashboard() {
     getGatheringById,
     getPersonById,
     getAssignmentForTask,
-    getAllAssignmentsForTask,
     createGathering,
     updateGathering,
     deleteGathering,
@@ -95,7 +94,7 @@ export function useAdminDashboard() {
     });
   }, [groups, allPersons, tasks]);
 
-  const adminGatherings = useMemo(() => {
+  const adminGatherings = useMemo<AdminGatheringItem[]>(() => {
     return gatherings
       .filter((gathering) => {
         const group = getGroupById(gathering.groupId);
@@ -140,7 +139,7 @@ export function useAdminDashboard() {
       });
   }, [gatherings, tasks, assignments, getGroupById]);
 
-  const adminTasks = useMemo(() => {
+  const adminTasks = useMemo<AdminTaskItem[]>(() => {
     return tasks.map((task) => {
       const gathering = getGatheringById(task.gatheringId);
       const group = getGroupById(task.groupId);
@@ -329,7 +328,6 @@ export function useAdminGroupDetail(groupId: string) {
   const {
     currentUser,
     allPersons,
-    groups,
     gatherings,
     tasks,
     assignments,

@@ -11,13 +11,9 @@ import {
   ChevronRight,
   Compass,
   Target,
-  Sparkles,
-  Smile,
-  Shield,
   Tag,
   CheckCircle2,
 } from "lucide-react";
-import { GroupCategory } from "../../types";
 
 export const PublicGroupsPage: React.FC = () => {
   const { groups, allPersons } = useFirebase();

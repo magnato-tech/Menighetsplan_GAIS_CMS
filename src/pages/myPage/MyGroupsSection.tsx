@@ -47,7 +47,7 @@ export const MyGroupsSection: React.FC<MyGroupsSectionProps> = ({ page }) => {
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
                       {group.category === "husgruppe"
                         ? "Husfellesskap"
-                        : group.category === "tjeneste" || group.category === "tjenestegruppe"
+                        : group.category === "tjenestegruppe"
                         ? "Tjenestegruppe"
                         : group.category}
                     </span>

@@ -3,11 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
 import {
   ArrowLeft,
-  Calendar,
   User,
-  Share2,
-  Tag,
-  Clock,
 } from "lucide-react";
 
 export const PublicArticlePage: React.FC = () => {

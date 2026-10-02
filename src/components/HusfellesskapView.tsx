@@ -17,8 +17,7 @@ import {
 export const HusfellesskapView: React.FC<{
   groupId?: string;
   defaultTab?: "meeting" | "chat" | "members";
-  compact?: boolean;
-}> = ({ groupId, defaultTab = "meeting", compact = false }) => {
+}> = ({ groupId, defaultTab = "meeting" }) => {
   const model = useHusfellesskap(groupId);
   const { group, isLeader, isDeputyLeader, leaders, deputyLeaders, members, activeMeeting, messages } = model;
 

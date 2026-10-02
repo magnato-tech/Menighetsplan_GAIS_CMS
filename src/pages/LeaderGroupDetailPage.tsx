@@ -201,7 +201,7 @@ export const LeaderGroupDetailPage: React.FC = () => {
         <div>
           <div id="section-group-aktiviteter-tab" className="space-y-6" hidden={activeRoomTab !== "aktiviteter"}>
             <GroupScheduleCard detail={detail} group={group} showToast={showToast} />
-            <GroupActivities detail={detail} group={group} showToast={showToast} />
+            <GroupActivities detail={detail} showToast={showToast} />
           </div>
 
           {/* TAB 2: CHAT */}

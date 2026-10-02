@@ -387,7 +387,11 @@ export async function reportAbsence(
       query(collection(db, COLLECTIONS.ASSIGNMENTS), where("taskId", "==", taskId), where("personId", "==", personId))
     );
     for (const d of aSnap.docs) {
-      await updateDoc(doc(db, COLLECTIONS.ASSIGNMENTS, d.id), { response: "declined" });
+      await updateDoc(doc(db, COLLECTIONS.ASSIGNMENTS, d.id), {
+        response: "declined",
+        // The reason was accepted here but never stored
+        ...(reason ? { withdrawalReason: reason } : {}),
+      });
     }
     await updateDoc(doc(db, COLLECTIONS.TASKS, taskId), { status: "vacant" });
     return { success: true };

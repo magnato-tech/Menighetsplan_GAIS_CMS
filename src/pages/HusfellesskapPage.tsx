@@ -9,17 +9,14 @@ import {
   FlaskConical,
   UserPlus,
   UserMinus,
-  CheckCircle2,
   ChevronDown,
   ChevronUp,
-  ShieldAlert,
   Info,
 } from "lucide-react";
 
 export const HusfellesskapPage: React.FC = () => {
   const { groupId } = useParams<{ groupId?: string }>();
   const {
-    allPersons,
     currentUserId,
     setCurrentUserId,
     addGroupMember,
