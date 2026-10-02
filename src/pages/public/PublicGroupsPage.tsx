@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { useCms } from "../../context/CmsContext";
+import { publicProfilesOf } from "../../utils/publicProfile";
 import {
   Users,
   Home,
@@ -132,7 +133,8 @@ export const PublicGroupsPage: React.FC = () => {
         {filteredGroups.map((g) => {
           const cat = g.category || "tjenestegruppe";
           const config = categoryConfig[cat] || categoryConfig.tjenestegruppe;
-          const leader = allPersons.find((p) => g.leaderIds?.includes(p.id));
+          // A leader is named only when they have consented to a public profile
+          const leader = publicProfilesOf(g.leaderIds || [], allPersons)[0];
 
           return (
             <div

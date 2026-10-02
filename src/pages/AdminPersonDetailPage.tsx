@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAdminPersonDetail } from "../hooks/useAppHooks";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
+import { toPublicProfile, publicProfileFields } from "../utils/publicProfile";
 import {
   Shield,
+  Globe,
   ArrowLeft,
   User,
   Phone,
@@ -47,6 +49,10 @@ export const AdminPersonDetailPage: React.FC = () => {
   const [newUnavailFrom, setNewUnavailFrom] = useState<string>("");
   const [newUnavailTo, setNewUnavailTo] = useState<string>("");
   const [newUnavailReason, setNewUnavailReason] = useState<string>("");
+  const [isPublicProfile, setIsPublicProfile] = useState<boolean>(false);
+  const [publicTitle, setPublicTitle] = useState<string>("");
+  const [publicPhone, setPublicPhone] = useState<string>("");
+  const [publicEmail, setPublicEmail] = useState<string>("");
 
   const [feedback, setFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
@@ -58,6 +64,10 @@ export const AdminPersonDetailPage: React.FC = () => {
       setGlobalRole(person.globalRole || "member");
       setPoliceCert(person.policeCertificateValidUntil || "");
       setUnavailablePeriods(person.unavailablePeriods || []);
+      setIsPublicProfile(toPublicProfile(person) !== null);
+      setPublicTitle(person.publicTitle || "");
+      setPublicPhone(person.publicPhone || "");
+      setPublicEmail(person.publicEmail || "");
     }
   }, [person]);
 
@@ -106,6 +116,11 @@ export const AdminPersonDetailPage: React.FC = () => {
       globalRole,
       policeCertificateValidUntil: policeCert || undefined,
       unavailablePeriods,
+      ...publicProfileFields(
+        person,
+        { isPublic: isPublicProfile, title: publicTitle, phone: publicPhone, email: publicEmail },
+        currentUser.id
+      ),
     });
 
     if (res.success) {
@@ -413,6 +428,77 @@ export const AdminPersonDetailPage: React.FC = () => {
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* 7. Offentlig profil på nettsiden (krever samtykke) */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-indigo-600" />
+                  Offentlig profil på nettsiden:
+                </span>
+                {toPublicProfile(person) ? (
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                    Vises offentlig
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-slate-400 font-normal">Vises ikke</span>
+                )}
+              </div>
+
+              <label htmlFor="input-edit-person-public" className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="input-edit-person-public"
+                  checked={isPublicProfile}
+                  onChange={(e) => setIsPublicProfile(e.target.checked)}
+                  className="w-4 h-4 mt-0.5 border border-slate-300 rounded-md cursor-pointer"
+                />
+                <span className="text-[11px] font-semibold text-slate-700">
+                  Personen har samtykket til å stå med navn på den offentlige nettsiden
+                </span>
+              </label>
+
+              {person.consentToPublishGivenAt && (
+                <p className="text-[10px] text-slate-500">
+                  Samtykke registrert {new Date(person.consentToPublishGivenAt).toLocaleDateString("no-NO")}.
+                </p>
+              )}
+
+              {isPublicProfile && (
+                <div className="space-y-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                  <input
+                    type="text"
+                    id="input-edit-person-public-title"
+                    aria-label="Tittel utad"
+                    value={publicTitle}
+                    onChange={(e) => setPublicTitle(e.target.value)}
+                    placeholder="Tittel utad, f.eks. Hovedpastor"
+                    className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                  />
+                  <input
+                    type="tel"
+                    id="input-edit-person-public-phone"
+                    aria-label="Telefon utad"
+                    value={publicPhone}
+                    onChange={(e) => setPublicPhone(e.target.value)}
+                    placeholder="Telefon utad (valgfritt)"
+                    className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                  />
+                  <input
+                    type="email"
+                    id="input-edit-person-public-email"
+                    aria-label="E-post utad"
+                    value={publicEmail}
+                    onChange={(e) => setPublicEmail(e.target.value)}
+                    placeholder="E-post utad (valgfritt)"
+                    className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                  />
+                  <p className="text-[10px] text-slate-500">
+                    Bare navnet og disse feltene vises utad. Privat mobilnummer og e-postadresse publiseres aldri.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Save Button */}

@@ -1,5 +1,7 @@
 import { Person, Group, Gathering, Task, Assignment, GroupMessage, GatheringAttendance } from "../types";
 
+// Three of the four have a public profile with a registered consent. Ingrid has not
+// consented, so she is never named on the public website although she leads a group.
 export const initialPersons: Person[] = [
   {
     id: "person-1",
@@ -7,6 +9,12 @@ export const initialPersons: Person[] = [
     phone: "912 34 567",
     email: "kari.nordmann@eksempel.no",
     globalRole: "admin",
+    isPublicProfile: true,
+    publicTitle: "Hovedpastor",
+    publicPhone: "37 00 00 01",
+    publicEmail: "pastor@eksempel.no",
+    consentToPublishGivenAt: "2026-09-01T10:00:00.000Z",
+    consentGivenBy: "person-1",
   },
   {
     id: "person-2",
@@ -14,6 +22,11 @@ export const initialPersons: Person[] = [
     phone: "987 65 432",
     email: "ola.hansen@eksempel.no",
     globalRole: "member",
+    isPublicProfile: true,
+    publicTitle: "Daglig leder",
+    publicEmail: "post@eksempel.no",
+    consentToPublishGivenAt: "2026-09-01T10:05:00.000Z",
+    consentGivenBy: "person-1",
   },
   {
     id: "person-3",
@@ -28,6 +41,11 @@ export const initialPersons: Person[] = [
     phone: "923 45 678",
     email: "jonas.lie@eksempel.no",
     globalRole: "member",
+    isPublicProfile: true,
+    publicTitle: "Leder i menighetsrådet",
+    publicEmail: "menighetsrad@eksempel.no",
+    consentToPublishGivenAt: "2026-09-03T18:30:00.000Z",
+    consentGivenBy: "person-1",
   },
 ];
 

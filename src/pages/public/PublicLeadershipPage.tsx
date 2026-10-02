@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { useCms } from "../../context/CmsContext";
+import { publicProfilesOf } from "../../utils/publicProfile";
 import {
   Users,
   Shield,
@@ -17,8 +18,36 @@ export const PublicLeadershipPage: React.FC = () => {
   const { groups, allPersons } = useFirebase();
   const { settings } = useCms();
 
-  // All groups in the "ledergruppe" category
-  const ledergrupper = groups.filter((g) => g.category === "ledergruppe");
+  // Only people who have consented to a public profile are listed, and with
+  // their public contact details, never the private ones.
+  const getGroupMembersWithRoles = (group: typeof groups[0]) => {
+    const leaderIds = new Set(group.leaderIds || []);
+    const deputyIds = new Set(group.deputyLeaderIds || []);
+    const allIds = Array.from(new Set([...(group.leaderIds || []), ...(group.memberIds || [])]));
+
+    return publicProfilesOf(allIds, allPersons)
+      .map((person) => {
+        let roleInGroup = "Medlem";
+        if (leaderIds.has(person.id)) roleInGroup = "Leder";
+        else if (deputyIds.has(person.id)) roleInGroup = "Nestleder";
+
+        return {
+          person,
+          roleInGroup,
+          isLeader: leaderIds.has(person.id),
+        };
+      })
+      .sort((a, b) => {
+        if (a.isLeader && !b.isLeader) return -1;
+        if (!a.isLeader && b.isLeader) return 1;
+        return a.person.name.localeCompare(b.person.name);
+      });
+  };
+
+  // All groups in the "ledergruppe" category that have someone to show
+  const ledergrupper = groups.filter(
+    (g) => g.category === "ledergruppe" && getGroupMembersWithRoles(g).length > 0
+  );
 
   // Specific groups
   const stabsgrupper = ledergrupper.filter(
@@ -43,33 +72,6 @@ export const PublicLeadershipPage: React.FC = () => {
       !styregrupper.some((sg) => sg.id === g.id) &&
       !gruppeledergrupper.some((sg) => sg.id === g.id)
   );
-
-  // Helper to resolve persons with their roles in a group
-  const getGroupMembersWithRoles = (group: typeof groups[0]) => {
-    const leaderIds = new Set(group.leaderIds || []);
-    const deputyIds = new Set(group.deputyLeaderIds || []);
-    const allIds = Array.from(new Set([...(group.leaderIds || []), ...(group.memberIds || [])]));
-
-    return allIds
-      .map((id) => allPersons.find((p) => p.id === id))
-      .filter((p): p is typeof allPersons[0] => Boolean(p))
-      .map((person) => {
-        let roleInGroup = "Medlem";
-        if (leaderIds.has(person.id)) roleInGroup = "Leder";
-        else if (deputyIds.has(person.id)) roleInGroup = "Nestleder";
-
-        return {
-          person,
-          roleInGroup,
-          isLeader: leaderIds.has(person.id),
-        };
-      })
-      .sort((a, b) => {
-        if (a.isLeader && !b.isLeader) return -1;
-        if (!a.isLeader && b.isLeader) return 1;
-        return a.person.name.localeCompare(b.person.name);
-      });
-  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-12">
@@ -109,7 +111,7 @@ export const PublicLeadershipPage: React.FC = () => {
         </div>
 
         {stabsgrupper.length === 0 ? (
-          <p className="text-xs text-stone-500">Ingen stabsgruppe opprettet ennå.</p>
+          <p className="text-xs text-stone-500">Ingen kontaktpersoner er lagt ut ennå.</p>
         ) : (
           stabsgrupper.map((group) => {
             const members = getGroupMembersWithRoles(group);
@@ -128,7 +130,7 @@ export const PublicLeadershipPage: React.FC = () => {
                     >
                       <div className="space-y-1.5">
                         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-800">
-                          {isLeader ? "Hovedpastor / Leder" : "Stabsmedlem"}
+                          {person.title || (isLeader ? "Hovedpastor / Leder" : "Stabsmedlem")}
                         </span>
                         <h3 className="font-bold text-stone-900 text-lg">{person.name}</h3>
                       </div>
@@ -175,7 +177,7 @@ export const PublicLeadershipPage: React.FC = () => {
         </div>
 
         {styregrupper.length === 0 ? (
-          <p className="text-xs text-stone-500">Ingen lederskapsgruppe opprettet ennå.</p>
+          <p className="text-xs text-stone-500">Ingen kontaktpersoner er lagt ut ennå.</p>
         ) : (
           styregrupper.map((group) => {
             const members = getGroupMembersWithRoles(group);
@@ -194,7 +196,7 @@ export const PublicLeadershipPage: React.FC = () => {
                     >
                       <div className="space-y-1">
                         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-900">
-                          {isLeader ? "Menighetsrådsleder" : roleInGroup}
+                          {person.title || (isLeader ? "Menighetsrådsleder" : roleInGroup)}
                         </span>
                         <h4 className="font-bold text-stone-900 text-base">{person.name}</h4>
                       </div>
@@ -245,7 +247,7 @@ export const PublicLeadershipPage: React.FC = () => {
                       <div>
                         <div className="font-bold text-stone-900 text-sm">{person.name}</div>
                         <div className="text-[11px] text-stone-500">
-                          {isLeader ? "Koordinator" : "Gruppeleder"}
+                          {person.title || (isLeader ? "Koordinator" : "Gruppeleder")}
                         </div>
                       </div>
                       {person.phone && (
@@ -281,7 +283,7 @@ export const PublicLeadershipPage: React.FC = () => {
                   {members.map(({ person, roleInGroup, isLeader }) => (
                     <div key={person.id} className="bg-white rounded-xl border p-4">
                       <div className="font-bold text-sm text-stone-900">{person.name}</div>
-                      <div className="text-xs text-stone-500">{roleInGroup}</div>
+                      <div className="text-xs text-stone-500">{person.title || roleInGroup}</div>
                     </div>
                   ))}
                 </div>

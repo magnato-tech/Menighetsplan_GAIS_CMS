@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test": "tsx tests/gathering-validation.test.ts && tsx tests/menu-hierarchy.test.ts && tsx tests/public-api.test.ts && tsx tests/database-admin.test.ts && tsx tests/new-documents.test.ts && tsx tests/write-errors.test.ts && tsx tests/staffing.test.ts && tsx tests/firestore-data.test.ts"
+    "test": "tsx tests/gathering-validation.test.ts && tsx tests/menu-hierarchy.test.ts && tsx tests/public-api.test.ts && tsx tests/database-admin.test.ts && tsx tests/new-documents.test.ts && tsx tests/write-errors.test.ts && tsx tests/staffing.test.ts && tsx tests/firestore-data.test.ts && tsx tests/public-profile.test.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",
