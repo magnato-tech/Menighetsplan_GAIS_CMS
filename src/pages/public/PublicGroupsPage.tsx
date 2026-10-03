@@ -21,7 +21,7 @@ export const PublicGroupsPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("alle");
   const [interestedGroupId, setInterestedGroupId] = useState<string | null>(null);
 
-  // Group categories configuration
+  // Each category has a fixed colour of its own, so the four stay apart whatever the theme is
   const categoryConfig: Record<
     string,
     { label: string; icon: React.ReactNode; color: string; description: string }
@@ -34,8 +34,8 @@ export const PublicGroupsPage: React.FC = () => {
     },
     interessegruppe: {
       label: "Interessegrupper",
-      icon: <Compass className="w-4 h-4 text-amber-600" />,
-      color: "bg-amber-50 text-amber-900 border-amber-200",
+      icon: <Compass className="w-4 h-4 text-orange-600" />,
+      color: "bg-orange-50 text-orange-900 border-orange-200",
       description: "Lavterskel grupper rundt felles hobbyer, friluft, turer, kor og sosiale treff.",
     },
     strategigruppe: {
@@ -46,8 +46,8 @@ export const PublicGroupsPage: React.FC = () => {
     },
     tjenestegruppe: {
       label: "Tjenestegrupper",
-      icon: <Heart className="w-4 h-4 text-indigo-600" />,
-      color: "bg-indigo-50 text-indigo-900 border-indigo-200",
+      icon: <Heart className="w-4 h-4 text-sky-600" />,
+      color: "bg-sky-50 text-sky-900 border-sky-200",
       description: "Frivillige team som bidrar i gudstjenester, lyd, kirkekaffe og barnekirke.",
     },
   };
@@ -224,7 +224,7 @@ export const PublicGroupsPage: React.FC = () => {
       </div>
 
       {/* Info Callout for Menighetsskolen and Growth Groups */}
-      <div className="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-3xl text-white p-8 sm:p-10 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-lg">
+      <div className="bg-gradient-to-r from-purple-900 to-primary-900 rounded-3xl text-white p-8 sm:p-10 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-lg">
         <div className="space-y-2 max-w-2xl">
           <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-white/20 text-purple-200">
             Menighetsskolen

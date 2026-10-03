@@ -54,15 +54,15 @@ export const PublicNavbar: React.FC = () => {
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo & Brand Name */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-900 to-indigo-700 flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-              <Church className="w-5 h-5 text-amber-300" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-900 to-primary-700 flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
+              <Church className="w-5 h-5 text-accent-300" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-lg font-black tracking-tight text-slate-900 group-hover:text-indigo-950 transition-colors">
+                <span className="text-lg font-black tracking-tight text-slate-900 group-hover:text-primary-950 transition-colors">
                   {settings.appName || "Menighetsplan"}
                 </span>
-                <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-primary-50 text-primary-700 border border-primary-200/60">
                   {settings.churchName || "Lillesand"}
                 </span>
               </div>
@@ -82,7 +82,7 @@ export const PublicNavbar: React.FC = () => {
                     to={item.targetUrl}
                     className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
                       item.isActive
-                        ? "text-indigo-900 bg-indigo-50/80 font-bold"
+                        ? "text-primary-900 bg-primary-50/80 font-bold"
                         : "text-stone-600 hover:text-stone-900 hover:bg-stone-100/70"
                     }`}
                   >
@@ -97,12 +97,12 @@ export const PublicNavbar: React.FC = () => {
                     to={item.targetUrl}
                     className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
                       item.isActive
-                        ? "text-indigo-900 bg-indigo-50/80 font-bold"
+                        ? "text-primary-900 bg-primary-50/80 font-bold"
                         : "text-stone-600 hover:text-stone-900 hover:bg-stone-100/70"
                     }`}
                   >
                     <span>{item.page.title}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-stone-400 rotate-90 group-hover:rotate-270 group-hover:text-indigo-700 transition-transform" />
+                    <ChevronRight className="w-3.5 h-3.5 text-stone-400 rotate-90 group-hover:rotate-270 group-hover:text-primary-700 transition-transform" />
                   </Link>
 
                   {/* Dropdown Menu */}
@@ -110,7 +110,7 @@ export const PublicNavbar: React.FC = () => {
                     <div className="bg-white/98 backdrop-blur-md rounded-2xl shadow-xl border border-stone-200/90 py-2 min-w-[210px] space-y-0.5">
                       <Link
                         to={item.targetUrl}
-                        className="block px-3.5 py-2 text-xs font-bold text-stone-900 hover:bg-indigo-50/80 hover:text-indigo-900 rounded-lg mx-1.5 transition-colors border-b border-stone-100 mb-1"
+                        className="block px-3.5 py-2 text-xs font-bold text-stone-900 hover:bg-primary-50/80 hover:text-primary-900 rounded-lg mx-1.5 transition-colors border-b border-stone-100 mb-1"
                       >
                         Oversikt: {item.page.title}
                       </Link>
@@ -120,7 +120,7 @@ export const PublicNavbar: React.FC = () => {
                           to={child.targetUrl}
                           className={`block px-3.5 py-2 text-xs font-medium rounded-lg mx-1.5 transition-colors ${
                             child.isActive
-                              ? "bg-indigo-50 text-indigo-950 font-bold"
+                              ? "bg-primary-50 text-primary-950 font-bold"
                               : "text-stone-600 hover:text-stone-900 hover:bg-stone-100/80"
                           }`}
                         >
@@ -147,7 +147,7 @@ export const PublicNavbar: React.FC = () => {
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs hover:shadow transition-all"
               title="Gå til Min Side for planlegging og oppgaver"
             >
-              <LayoutDashboard className="w-3.5 h-3.5 text-amber-300" />
+              <LayoutDashboard className="w-3.5 h-3.5 text-accent-300" />
               <span>Min Side</span>
             </Link>
 
@@ -155,10 +155,10 @@ export const PublicNavbar: React.FC = () => {
             {isAdmin && (
               <Link
                 to="/admin"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold shadow-xs hover:shadow transition-all"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary-700 hover:bg-primary-800 text-white text-xs font-bold shadow-xs hover:shadow transition-all"
                 title="Åpne Fullskjerm Admin & CMS Workspace"
               >
-                <Shield className="w-3.5 h-3.5 text-amber-200" />
+                <Shield className="w-3.5 h-3.5 text-accent-200" />
                 <span>Admin Studio</span>
               </Link>
             )}
@@ -200,7 +200,7 @@ export const PublicNavbar: React.FC = () => {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`block flex-1 px-3 py-2 rounded-lg text-sm font-semibold ${
                         item.isActive
-                          ? "bg-indigo-50 text-indigo-900 font-bold"
+                          ? "bg-primary-50 text-primary-900 font-bold"
                           : "text-stone-700 hover:bg-stone-50"
                       }`}
                     >
@@ -215,7 +215,7 @@ export const PublicNavbar: React.FC = () => {
                         aria-label="Fold ut underfane"
                       >
                         <ChevronRight
-                          className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-90 text-indigo-600" : ""}`}
+                          className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-90 text-primary-600" : ""}`}
                         />
                       </button>
                     )}
@@ -223,7 +223,7 @@ export const PublicNavbar: React.FC = () => {
 
                   {/* Mobile Submenu Accordion */}
                   {hasSub && isExpanded && (
-                    <div className="pl-4 ml-2 border-l-2 border-indigo-100 space-y-1 pb-1">
+                    <div className="pl-4 ml-2 border-l-2 border-primary-100 space-y-1 pb-1">
                       {item.children.map((child) => (
                         <Link
                           key={child.page.id}
@@ -231,7 +231,7 @@ export const PublicNavbar: React.FC = () => {
                           onClick={() => setMobileMenuOpen(false)}
                           className={`block px-3 py-1.5 rounded-lg text-xs font-medium ${
                             child.isActive
-                              ? "bg-indigo-50 text-indigo-950 font-bold"
+                              ? "bg-primary-50 text-primary-950 font-bold"
                               : "text-stone-600 hover:bg-stone-50"
                           }`}
                         >
@@ -252,7 +252,7 @@ export const PublicNavbar: React.FC = () => {
               className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold shadow-sm"
             >
               <div className="flex items-center gap-2">
-                <LayoutDashboard className="w-4 h-4 text-amber-300" />
+                <LayoutDashboard className="w-4 h-4 text-accent-300" />
                 <span>Gå til Min Side (Planlegger)</span>
               </div>
               <ChevronRight className="w-4 h-4 text-stone-400" />
@@ -262,13 +262,13 @@ export const PublicNavbar: React.FC = () => {
               <Link
                 to="/admin"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-indigo-700 text-white text-sm font-bold shadow-sm"
+                className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-primary-700 text-white text-sm font-bold shadow-sm"
               >
                 <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-amber-200" />
+                  <Shield className="w-4 h-4 text-accent-200" />
                   <span>Admin & CMS Studio</span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-indigo-200" />
+                <ChevronRight className="w-4 h-4 text-primary-200" />
               </Link>
             )}
 

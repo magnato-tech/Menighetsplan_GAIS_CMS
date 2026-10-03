@@ -1,89 +1,59 @@
-import React from "react";
-import { CmsDesignTheme, defaultCmsDesignTheme, THEME_PRESETS, ThemePreset } from "../data/cmsData";
+import type React from "react";
+import { CmsDesignTheme, defaultCmsDesignTheme } from "../data/cmsData";
+import { ACCENT_LADDER, PRIMARY_LADDER, SCALE_STEPS, ShadeLadder, buildColorScale } from "./colorScale";
 
-export interface ThemeCssVariables extends React.CSSProperties {
-  "--cms-primary"?: string;
-  "--cms-accent"?: string;
-  "--cms-radius"?: string;
-  "--cms-radius-sm"?: string;
-  "--cms-bg"?: string;
-  "--cms-font-heading"?: string;
-  "--cms-font-body"?: string;
+/** CSS custom properties, to be set as the inline style of the element the theme applies within. */
+export type ThemeCssVariables = React.CSSProperties & Record<`--${string}`, string>;
+
+/** The class that goes with the variables. It applies the theme's fonts (see src/index.css). */
+export const SITE_THEME_CLASS = "site-theme";
+
+const PAGE_BACKGROUNDS: Record<CmsDesignTheme["backgroundTone"], string> = {
+  stone: "#fafaf9",
+  slate: "#f8fafc",
+  warm: "#fdfbf7",
+  "pure-white": "#ffffff",
+};
+
+const SANS = "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+const SERIF = "ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif";
+
+// "display" has no typeface of its own yet, so it reads as sans
+const HEADING_FONTS: Record<CmsDesignTheme["headingFont"], string> = { sans: SANS, serif: SERIF, display: SANS };
+const BODY_FONTS: Record<CmsDesignTheme["bodyFont"], string> = { sans: SANS, serif: SERIF };
+
+// Tailwind's own radii are the middle choice. A card (rounded-2xl) is 6, 16 or 24 px.
+const RADII: Record<CmsDesignTheme["borderRadius"], Record<"lg" | "xl" | "2xl" | "3xl", string>> = {
+  sharp: { lg: "0.25rem", xl: "0.375rem", "2xl": "0.375rem", "3xl": "0.5rem" },
+  medium: { lg: "0.5rem", xl: "0.75rem", "2xl": "1rem", "3xl": "1.5rem" },
+  smooth: { lg: "0.75rem", xl: "1rem", "2xl": "1.5rem", "3xl": "2rem" },
+};
+
+/** The eleven shades of one theme colour, as the variables Tailwind's `bg-primary-700` and the like read. */
+function shadeVariables(name: "primary" | "accent", picked: string, fallback: string, ladder: ShadeLadder) {
+  // What is stored may be half-typed or missing; then the default colour stands in
+  const scale = buildColorScale(picked, ladder) ?? buildColorScale(fallback, ladder)!;
+  return Object.fromEntries(SCALE_STEPS.map((step) => [`--color-${name}-${step}`, scale[step]]));
 }
 
-export function getThemeCssVariables(theme?: CmsDesignTheme): ThemeCssVariables {
-  const t = theme || defaultCmsDesignTheme;
-
-  const radiusMap = {
-    sharp: { base: "6px", sm: "4px" },
-    medium: { base: "16px", sm: "8px" },
-    smooth: { base: "24px", sm: "12px" },
-  };
-
-  const bgMap = {
-    stone: "#fafaf9",      // Tailwind stone-50
-    slate: "#f8fafc",      // Tailwind slate-50
-    warm: "#fdfbf7",       // Warm organic sand
-    "pure-white": "#ffffff",
-  };
-
-  const fontHeadingMap = {
-    sans: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    serif: "ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif",
-    display: "ui-sans-serif, system-ui, sans-serif",
-  };
-
-  const fontBodyMap = {
-    sans: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    serif: "ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif",
-  };
-
-  const radiusValues = radiusMap[t.borderRadius] || radiusMap.medium;
+/**
+ * Everything the chosen theme decides, as CSS variables: the shades of the primary and the
+ * accent colour, the page background, the fonts and the corner radii. Set them on an element
+ * together with SITE_THEME_CLASS, and everything inside follows the theme.
+ */
+export function getThemeCssVariables(theme?: Partial<CmsDesignTheme>): ThemeCssVariables {
+  const chosen = { ...defaultCmsDesignTheme, ...theme };
+  const radii = RADII[chosen.borderRadius] ?? RADII.medium;
 
   return {
-    "--cms-primary": t.primaryColor || "#1e3a8a",
-    "--cms-accent": t.accentColor || "#d97706",
-    "--cms-radius": radiusValues.base,
-    "--cms-radius-sm": radiusValues.sm,
-    "--cms-bg": bgMap[t.backgroundTone] || bgMap.stone,
-    "--cms-font-heading": fontHeadingMap[t.headingFont] || fontHeadingMap.sans,
-    "--cms-font-body": fontBodyMap[t.bodyFont] || fontBodyMap.sans,
+    ...shadeVariables("primary", chosen.primaryColor, defaultCmsDesignTheme.primaryColor, PRIMARY_LADDER),
+    ...shadeVariables("accent", chosen.accentColor, defaultCmsDesignTheme.accentColor, ACCENT_LADDER),
+    "--color-page": PAGE_BACKGROUNDS[chosen.backgroundTone] ?? PAGE_BACKGROUNDS.stone,
+    "--site-font-heading": HEADING_FONTS[chosen.headingFont] ?? SANS,
+    "--site-font-body": BODY_FONTS[chosen.bodyFont] ?? SANS,
+    "--radius-lg": radii.lg,
+    "--radius-xl": radii.xl,
+    "--radius-2xl": radii["2xl"],
+    "--radius-3xl": radii["3xl"],
   };
-}
-
-export function getThemeBackgroundClass(theme?: CmsDesignTheme): string {
-  const tone = theme?.backgroundTone || "stone";
-  switch (tone) {
-    case "slate":
-      return "bg-slate-50";
-    case "warm":
-      return "bg-stone-50/80";
-    case "pure-white":
-      return "bg-white";
-    case "stone":
-    default:
-      return "bg-stone-50";
-  }
-}
-
-export function getThemeHeadingFontFamily(theme?: CmsDesignTheme): string {
-  return theme?.headingFont === "serif" ? "serif" : "sans-serif";
-}
-
-export function getThemeRadiusClass(theme?: CmsDesignTheme): string {
-  const radius = theme?.borderRadius || "medium";
-  switch (radius) {
-    case "sharp":
-      return "rounded-lg";
-    case "smooth":
-      return "rounded-3xl";
-    case "medium":
-    default:
-      return "rounded-2xl";
-  }
-}
-
-export function findThemePreset(presetId?: string): ThemePreset | undefined {
-  if (!presetId) return undefined;
-  return THEME_PRESETS.find((p) => p.id === presetId);
 }

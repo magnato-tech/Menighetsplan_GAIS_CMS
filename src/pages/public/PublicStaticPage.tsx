@@ -10,7 +10,6 @@ import {
   Users,
 } from "lucide-react";
 import { CmsContentRenderer } from "../../components/cms/CmsContentRenderer";
-import { getThemeCssVariables, getThemeRadiusClass } from "../../utils/themeUtils";
 import { injectPageSeo } from "../../utils/seoUtils";
 import { isPagePublished } from "../../utils/menu";
 import { formatNorwegianDateTime } from "../../utils/dates";
@@ -25,9 +24,6 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
 
   const currentSlug = forcedSlug || paramSlug || "om-oss";
   const page = getPageBySlug(currentSlug);
-  const theme = settings?.theme;
-  const themeCssVars = getThemeCssVariables(theme);
-  const cardRadiusClass = getThemeRadiusClass(theme);
 
   const isAvailable = page ? isPagePublished(page) : false;
 
@@ -101,10 +97,7 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
   const isContactPage = currentSlug.includes("kontakt");
 
   return (
-    <div
-      style={themeCssVars}
-      className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10"
-    >
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10">
       {/* Header */}
       <div className="space-y-3 border-b border-stone-200 pb-6">
         <Link
@@ -114,10 +107,7 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
           <ArrowLeft className="w-4 h-4" />
           <span>Tilbake til forsiden</span>
         </Link>
-        <h1
-          style={{ fontFamily: themeCssVars["--cms-font-heading"] }}
-          className="text-3xl sm:text-4xl lg:text-5xl font-black text-stone-900 tracking-tight"
-        >
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-stone-900 tracking-tight">
           {page.title}
         </h1>
         {page.summary && (
@@ -129,7 +119,7 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
 
       {/* Hovedbilde (Hero Image) */}
       {page.heroImage && (
-        <div className={`w-full h-56 sm:h-72 md:h-96 ${cardRadiusClass} overflow-hidden border border-stone-200/80 shadow-xs relative bg-stone-100`}>
+        <div className="w-full h-56 sm:h-72 md:h-96 rounded-2xl overflow-hidden border border-stone-200/80 shadow-xs relative bg-stone-100">
           <img
             src={page.heroImage}
             alt={page.title}
@@ -139,8 +129,8 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
       )}
 
       {/* Main Content Area */}
-      <div className={`bg-white ${cardRadiusClass} border border-stone-200/80 p-6 sm:p-10 shadow-xs space-y-4`}>
-        <CmsContentRenderer content={page.content} theme={theme} />
+      <div className="bg-white rounded-2xl border border-stone-200/80 p-6 sm:p-10 shadow-xs space-y-4">
+        <CmsContentRenderer content={page.content} />
       </div>
 
       {/* Lederskap & Stab (vises under Om oss) */}
@@ -149,7 +139,7 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
           <div className="border-b border-stone-200 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="text-2xl font-black text-stone-900 flex items-center gap-2">
-                <Users className="w-5 h-5 text-indigo-700" />
+                <Users className="w-5 h-5 text-primary-700" />
                 <span>Lederskap & Stab</span>
               </h2>
               <p className="text-xs text-stone-500 mt-1">
@@ -158,7 +148,7 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
             </div>
             <Link
               to="/lederskap"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 px-3.5 py-2 rounded-xl transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary-700 hover:text-primary-900 bg-primary-50 px-3.5 py-2 rounded-xl transition-colors"
             >
               <span>Se full oversikt over Stab & Lederskap</span>
               <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
@@ -172,7 +162,7 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
                 className="bg-white rounded-2xl border border-stone-200/80 p-5 shadow-xs flex flex-col justify-between space-y-3"
               >
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-800">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-primary-50 text-primary-800">
                     {person.role}
                   </span>
                   <h3 className="font-bold text-stone-900 text-lg">{person.name}</h3>
@@ -206,15 +196,15 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
       {/* Special highlight box for Contact Page */}
       {isContactPage && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-          <div className="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-6 space-y-3">
-            <h3 className="font-bold text-indigo-950 text-base flex items-center gap-2">
-              <Heart className="w-4 h-4 text-indigo-700" />
+          <div className="bg-primary-50/70 border border-primary-100 rounded-2xl p-6 space-y-3">
+            <h3 className="font-bold text-primary-950 text-base flex items-center gap-2">
+              <Heart className="w-4 h-4 text-primary-700" />
               <span>Givertjeneste & Skattefradrag</span>
             </h3>
-            <p className="text-xs text-indigo-900/80 leading-relaxed">
+            <p className="text-xs text-primary-900/80 leading-relaxed">
               Vi setter stor pris på alle faste givere og enkeltgaver. Gaver over 500 kr i året rapporteres til Skatteetaten for fradrag dersom du oppgir fødselsnummer.
             </p>
-            <div className="pt-2 text-xs font-bold text-indigo-950">
+            <div className="pt-2 text-xs font-bold text-primary-950">
               Vipps: {settings.vippsNumber} · Konto: {settings.bankAccount}
             </div>
           </div>

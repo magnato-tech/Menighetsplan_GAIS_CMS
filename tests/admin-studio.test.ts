@@ -11,7 +11,7 @@ import { CHURCH_HERO_PRESETS } from "../src/utils/imageUpload";
 import { ThemeTab } from "../src/pages/admin/tabs/ThemeTab";
 import { THEME_PRESETS, defaultCmsDesignTheme } from "../src/data/cmsData";
 import { CmsContentRenderer } from "../src/components/cms/CmsContentRenderer";
-import { getThemeCssVariables, getThemeRadiusClass } from "../src/utils/themeUtils";
+import { getThemeCssVariables } from "../src/utils/themeUtils";
 import {
   ContentBlockPickerModal,
   CONTENT_BLOCKS,
@@ -56,9 +56,11 @@ describe("Admin Studio", () => {
   assert(THEME_PRESETS.length >= 4, "Det finnes minst 4 kuraterte menighetstemaer");
   assert(typeof defaultCmsDesignTheme.primaryColor === "string", "Standard primærfarge er definert");
   assert(typeof defaultCmsDesignTheme.accentColor === "string", "Standard aksentfarge er definert");
-  const sampleThemeVars = getThemeCssVariables(defaultCmsDesignTheme);
-  assert(typeof sampleThemeVars["--cms-primary"] === "string", "getThemeCssVariables genererer --cms-primary");
-  assert(typeof getThemeRadiusClass(defaultCmsDesignTheme) === "string", "getThemeRadiusClass returnerer gyldig avrundingsklasse");
+  // What the theme does to the website is tested in site-theme.test.ts
+  assert(
+    Object.values(getThemeCssVariables(defaultCmsDesignTheme)).includes(defaultCmsDesignTheme.primaryColor),
+    "Standardtemaets primærfarge er blant fargene nettsiden får"
+  );
 
   // Draft vs Published checks
   const publishedPages = initialCmsPages.filter((p) => p.isPublished !== false);

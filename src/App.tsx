@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { FirebaseDataProvider } from "./context/FirebaseDataContext";
 import { CmsProvider, useCms } from "./context/CmsContext";
-import { getThemeCssVariables } from "./utils/themeUtils";
+import { SITE_THEME_CLASS, getThemeCssVariables } from "./utils/themeUtils";
 import { Header } from "./components/Header";
 import { WriteErrorBanner } from "./components/WriteErrorBanner";
 import { PublicNavbar } from "./components/public/PublicNavbar";
@@ -49,6 +49,8 @@ function isMinSidePath(pathname: string): boolean {
 function AppContent() {
   const location = useLocation();
   const { settings } = useCms();
+  // The design chosen in admin, as the CSS variables the public pages read
+  const themeVariables = useMemo(() => getThemeCssVariables(settings?.theme), [settings?.theme]);
 
   // Route type checks
   const isAdminStudio = isAdminStudioPath(location.pathname);
@@ -99,10 +101,7 @@ function AppContent() {
 
   // 3. Public Website Layout (Menighetsplan - Offentlig nettside for Lillesand Misjonskirke)
   return (
-    <div
-      style={getThemeCssVariables(settings?.theme)}
-      className="min-h-screen flex flex-col bg-stone-50 text-stone-900 font-sans"
-    >
+    <div style={themeVariables} className={`${SITE_THEME_CLASS} min-h-screen flex flex-col bg-page text-stone-900`}>
       <PublicNavbar />
       <main className="flex-1">
         <Routes>

@@ -60,7 +60,7 @@ export const PublicArticlePage: React.FC = () => {
       {/* Article Header */}
       <header className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-800">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-primary-50 text-primary-800">
             {article.category}
           </span>
           <span className="text-xs text-stone-400">·</span>
@@ -99,7 +99,7 @@ export const PublicArticlePage: React.FC = () => {
       <div className="pt-8 border-t border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-4">
         <Link
           to="/"
-          className="text-xs font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-1.5"
+          className="text-xs font-bold text-primary-700 hover:text-primary-900 flex items-center gap-1.5"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Flere nyheter og hva som skjer</span>

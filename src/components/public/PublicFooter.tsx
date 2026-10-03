@@ -22,8 +22,8 @@ export const PublicFooter: React.FC = () => {
           {/* Col 1: Brand & Church info */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
-                <Church className="w-5 h-5 text-amber-300" />
+              <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center text-white">
+                <Church className="w-5 h-5 text-accent-300" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white tracking-tight">
@@ -47,23 +47,23 @@ export const PublicFooter: React.FC = () => {
             </h4>
             <ul className="space-y-2.5 text-xs text-stone-300">
               <li className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-accent-400 shrink-0 mt-0.5" />
                 <span>{settings.address}</span>
               </li>
               <li className="flex items-center gap-2.5">
-                <Phone className="w-4 h-4 text-amber-400 shrink-0" />
+                <Phone className="w-4 h-4 text-accent-400 shrink-0" />
                 <a href={`tel:${settings.phone}`} className="hover:text-white transition-colors">
                   {settings.phone}
                 </a>
               </li>
               <li className="flex items-center gap-2.5">
-                <Mail className="w-4 h-4 text-amber-400 shrink-0" />
+                <Mail className="w-4 h-4 text-accent-400 shrink-0" />
                 <a href={`mailto:${settings.email}`} className="hover:text-white transition-colors">
                   {settings.email}
                 </a>
               </li>
               <li className="flex items-start gap-2.5">
-                <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <Clock className="w-4 h-4 text-accent-400 shrink-0 mt-0.5" />
                 <span>{settings.officeHours}</span>
               </li>
             </ul>
@@ -77,7 +77,7 @@ export const PublicFooter: React.FC = () => {
             <div className="p-3.5 rounded-xl bg-stone-800/80 border border-stone-700/60 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-stone-200">Vipps</span>
-                <span className="text-xs font-black text-amber-300 px-2 py-0.5 bg-amber-400/10 rounded">
+                <span className="text-xs font-black text-accent-300 px-2 py-0.5 bg-accent-400/10 rounded">
                   {settings.vippsNumber}
                 </span>
               </div>
@@ -100,7 +100,7 @@ export const PublicFooter: React.FC = () => {
             <ul className="space-y-2 text-xs">
               <li>
                 <Link to="/minside" className="text-stone-300 hover:text-white flex items-center gap-1.5 transition-colors">
-                  <LayoutDashboard className="w-3.5 h-3.5 text-amber-400" />
+                  <LayoutDashboard className="w-3.5 h-3.5 text-accent-400" />
                   <span>Min Side (For frivillige og ledere)</span>
                 </Link>
               </li>
@@ -130,7 +130,7 @@ export const PublicFooter: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin" className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 font-semibold transition-colors">
+                <Link to="/admin" className="text-primary-400 hover:text-primary-300 flex items-center gap-1.5 font-semibold transition-colors">
                   <Shield className="w-3.5 h-3.5" />
                   <span>Admin & CMS Studio</span>
                 </Link>

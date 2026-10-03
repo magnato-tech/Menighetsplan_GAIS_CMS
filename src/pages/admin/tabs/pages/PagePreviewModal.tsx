@@ -16,7 +16,7 @@ import {
   Share2,
 } from "lucide-react";
 import { CmsContentRenderer } from "../../../../components/cms/CmsContentRenderer";
-import { getThemeCssVariables, getThemeRadiusClass } from "../../../../utils/themeUtils";
+import { SITE_THEME_CLASS, getThemeCssVariables } from "../../../../utils/themeUtils";
 import { formatNorwegianDateTime } from "../../../../utils/dates";
 
 export interface PagePreviewModalProps {
@@ -36,9 +36,13 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
 }) => {
   const [viewport, setViewport] = useState<ViewportType>("desktop");
   const { settings } = useCms();
-  const theme = settings?.theme;
-  const themeCssVars = getThemeCssVariables(theme);
-  const cardRadiusClass = getThemeRadiusClass(theme);
+  const themeCssVars = getThemeCssVariables(settings?.theme);
+  const churchInitials = settings.churchName
+    .split(/\s+/)
+    .map((word) => word.charAt(0))
+    .join("")
+    .slice(0, 3)
+    .toUpperCase();
 
   // Close on Escape key press
   useEffect(() => {
@@ -326,22 +330,18 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
             </div>
           </div>
         ) : (
-        <div
-          style={themeCssVars}
-          className={`${getViewportContainerStyles()} bg-stone-50 text-stone-900 flex flex-col overflow-hidden transition-all duration-300`}
-        >
+        <div className={`${getViewportContainerStyles()} flex flex-col overflow-hidden transition-all duration-300`}>
+        {/* The frame above belongs to admin. Everything inside follows the website's theme. */}
+        <div style={themeCssVars} className={`${SITE_THEME_CLASS} bg-page text-stone-900 flex flex-col flex-1`}>
           {/* Simulated Public Navigation Bar */}
           <nav className="border-b border-stone-200 bg-white/95 backdrop-blur-xs px-4 sm:px-8 py-3.5 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5">
-              <div
-                style={{ backgroundColor: themeCssVars["--cms-primary"] }}
-                className="w-8 h-8 rounded-xl text-white font-black flex items-center justify-center text-xs shadow-xs"
-              >
-                LMK
+              <div className="w-8 h-8 rounded-xl bg-primary-700 text-white font-black flex items-center justify-center text-xs shadow-xs">
+                {churchInitials}
               </div>
               <div>
                 <span className="font-black text-stone-900 text-sm tracking-tight block">
-                  Lillesand Misjonskirke
+                  {settings.churchName}
                 </span>
                 <span className="text-[10px] text-stone-500 uppercase tracking-widest block font-medium">
                   Offentlig forhåndsvisning
@@ -353,13 +353,7 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
               <span className="text-stone-400">Hva skjer</span>
               <span className="text-stone-400">Grupper</span>
               <span className="text-stone-400">Taler</span>
-              <span
-                style={{
-                  color: themeCssVars["--cms-primary"],
-                  borderColor: themeCssVars["--cms-primary"],
-                }}
-                className="font-bold border-b-2 pb-0.5"
-              >
+              <span className="font-bold border-b-2 pb-0.5 text-primary-700 border-primary-700">
                 {parentPageTitle || page.title || "Aktuell side"}
               </span>
             </div>
@@ -382,10 +376,7 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
                 <span className="text-stone-900 font-bold">{page.title || "Uten tittel"}</span>
               </div>
 
-              <h1
-                style={{ fontFamily: themeCssVars["--cms-font-heading"] }}
-                className="text-3xl sm:text-4xl lg:text-5xl font-black text-stone-900 tracking-tight"
-              >
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-stone-900 tracking-tight">
                 {page.title || "Tittel på siden"}
               </h1>
 
@@ -398,7 +389,7 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
 
             {/* Hovedbilde (Hero Image) */}
             {page.heroImage && (
-              <div className={`w-full h-48 sm:h-64 md:h-80 ${cardRadiusClass} overflow-hidden border border-stone-200/80 shadow-xs relative bg-stone-100`}>
+              <div className="w-full h-48 sm:h-64 md:h-80 rounded-2xl overflow-hidden border border-stone-200/80 shadow-xs relative bg-stone-100">
                 <img
                   src={page.heroImage}
                   alt={page.title || "Hovedbilde"}
@@ -408,41 +399,32 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
             )}
 
             {/* Main Content Area */}
-            <div className={`bg-white ${cardRadiusClass} border border-stone-200/80 p-6 sm:p-10 shadow-xs space-y-4`}>
-              <CmsContentRenderer content={page.content} theme={theme} />
+            <div className="bg-white rounded-2xl border border-stone-200/80 p-6 sm:p-10 shadow-xs space-y-4">
+              <CmsContentRenderer content={page.content} />
             </div>
 
             {/* Simulated About section for Om oss pages */}
             {isAboutPage && (
               <section className="space-y-4 pt-4 border-t border-stone-200">
                 <div className="flex items-center gap-2 text-stone-900 font-black text-lg">
-                  <Users className="w-5 h-5 text-indigo-700" />
-                  <span>Lederskap & Stab (Eksempelvisning)</span>
+                  <Users className="w-5 h-5 text-primary-700" />
+                  <span>Lederskap & Stab</span>
                 </div>
                 <p className="text-xs text-stone-500">
-                  På offentlig nettside vises pastorer og stabsmedlemmer automatisk under Om oss.
+                  På nettsiden vises stab og lederskap her, under innholdet på «Om oss».
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div className="bg-white rounded-xl border border-stone-200 p-4 space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">
-                      Hovedpastor
-                    </span>
-                    <div className="font-bold text-stone-900 text-sm">Magnar Totland</div>
-                    <div className="text-stone-500">pastor@lillesandmisjonskirke.no</div>
-                  </div>
-                </div>
               </section>
             )}
 
             {/* Simulated Contact section for Kontakt pages */}
             {isContactPage && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                <div className="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-5 space-y-2">
-                  <h4 className="font-bold text-indigo-950 text-sm flex items-center gap-2">
-                    <Heart className="w-4 h-4 text-indigo-700" />
+                <div className="bg-primary-50/70 border border-primary-100 rounded-2xl p-5 space-y-2">
+                  <h4 className="font-bold text-primary-950 text-sm flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-primary-700" />
                     <span>Givertjeneste & Gaver</span>
                   </h4>
-                  <p className="text-xs text-indigo-900/80">
+                  <p className="text-xs text-primary-900/80">
                     Vipps og kontonummer vises automatisk for menighetens kontakt- og giversider.
                   </p>
                 </div>
@@ -461,11 +443,12 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
 
           {/* Simulated Public Footer */}
           <footer className="border-t border-stone-200 bg-stone-100/90 px-6 py-6 text-center text-xs text-stone-500 space-y-2 mt-auto">
-            <div className="font-bold text-stone-700">Lillesand Misjonskirke</div>
+            <div className="font-bold text-stone-700">{settings.churchName}</div>
             <div className="text-[11px] text-stone-400">
               Dette er en forhåndsvisning av hvordan siden vil se ut for offentlige besøkende.
             </div>
           </footer>
+        </div>
         </div>
         )}
       </main>

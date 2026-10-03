@@ -84,7 +84,7 @@ export const PublicLeadershipPage: React.FC = () => {
           <ArrowLeft className="w-4 h-4" />
           <span>Tilbake til Om menigheten</span>
         </Link>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-semibold">
           <Shield className="w-3.5 h-3.5" />
           <span>Ledergrupper & Stab</span>
         </div>
@@ -100,7 +100,7 @@ export const PublicLeadershipPage: React.FC = () => {
       <section className="space-y-6">
         <div className="border-b border-stone-200 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-lg bg-primary-100 text-primary-800 flex items-center justify-center font-bold">
               <Briefcase className="w-4 h-4" />
             </div>
             <div>
@@ -126,10 +126,10 @@ export const PublicLeadershipPage: React.FC = () => {
                   {members.map(({ person, isLeader }) => (
                     <div
                       key={person.id}
-                      className="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-xs hover:border-indigo-300 transition-all flex flex-col justify-between space-y-4"
+                      className="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-xs hover:border-primary-300 transition-all flex flex-col justify-between space-y-4"
                     >
                       <div className="space-y-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-800">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-primary-50 text-primary-800">
                           {person.title || (isLeader ? "Hovedpastor / Leder" : "Stabsmedlem")}
                         </span>
                         <h3 className="font-bold text-stone-900 text-lg">{person.name}</h3>
@@ -166,7 +166,7 @@ export const PublicLeadershipPage: React.FC = () => {
       <section className="space-y-6 pt-4">
         <div className="border-b border-stone-200 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-lg bg-accent-100 text-accent-800 flex items-center justify-center font-bold">
               <Shield className="w-4 h-4" />
             </div>
             <div>
@@ -192,10 +192,10 @@ export const PublicLeadershipPage: React.FC = () => {
                   {members.map(({ person, roleInGroup, isLeader }) => (
                     <div
                       key={person.id}
-                      className="bg-white rounded-2xl border border-stone-200/80 p-5 shadow-xs hover:border-amber-300 transition-all flex flex-col justify-between space-y-3"
+                      className="bg-white rounded-2xl border border-stone-200/80 p-5 shadow-xs hover:border-accent-300 transition-all flex flex-col justify-between space-y-3"
                     >
                       <div className="space-y-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-900">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-accent-50 text-accent-900">
                           {person.title || (isLeader ? "Menighetsrådsleder" : roleInGroup)}
                         </span>
                         <h4 className="font-bold text-stone-900 text-base">{person.name}</h4>
@@ -276,7 +276,7 @@ export const PublicLeadershipPage: React.FC = () => {
             return (
               <div key={group.id} className="space-y-3">
                 <h3 className="text-base font-bold text-stone-900 flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-indigo-600" />
+                  <Layers className="w-4 h-4 text-primary-600" />
                   <span>{group.name}</span>
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

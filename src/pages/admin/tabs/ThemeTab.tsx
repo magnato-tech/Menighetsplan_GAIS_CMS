@@ -16,7 +16,7 @@ import {
   Info,
   Layers,
 } from "lucide-react";
-import { getThemeCssVariables, getThemeRadiusClass } from "../../../utils/themeUtils";
+import { SITE_THEME_CLASS, getThemeCssVariables } from "../../../utils/themeUtils";
 
 interface ThemeTabProps {
   showFeedback?: (text: string, type?: "success" | "error") => void;
@@ -71,7 +71,7 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
     if (success) {
       setIsSavedRecently(true);
       setTimeout(() => setIsSavedRecently(false), 3000);
-      showFeedback?.("Designtema og fargeprofil ble lagret i Firestore!");
+      showFeedback?.("Designet er lagret og gjelder nettsiden nå.");
     } else {
       showFeedback?.("Kunne ikke lagre designtema", "error");
     }
@@ -81,8 +81,8 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
     setTheme({ ...defaultCmsDesignTheme });
   };
 
+  // The same variables the website gets, so the preview card is drawn exactly as the site will be
   const previewVars = getThemeCssVariables(theme);
-  const previewRadiusClass = getThemeRadiusClass(theme);
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -94,8 +94,8 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
             <span>Tema & Designsystem</span>
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Sentral styring av menighetens globale farger, typografi, overflater og hjørneavrunding.
-            Alle endringer oppdateres automatisk på alle offentlige CMS-sider og i forhåndsvisningen.
+            Farger, skrift, bakgrunn og hjørneavrunding for hele nettsiden. Det du lagrer her,
+            gjelder alle offentlige sider med en gang.
           </p>
         </div>
 
@@ -191,8 +191,9 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
                       title={`Aksent: ${preset.theme.accentColor}`}
                     />
                   </div>
-                  <span className="text-[11px] font-mono text-slate-400">
-                    {preset.theme.headingFont === "serif" ? "Klassisk Serif" : "Moderne Sans"} · {preset.theme.borderRadius}
+                  <span className="text-[11px] text-slate-400">
+                    {preset.theme.headingFont === "serif" ? "Klassisk serif" : "Moderne sans"} ·{" "}
+                    {{ sharp: "skarpe hjørner", medium: "balanserte hjørner", smooth: "myke hjørner" }[preset.theme.borderRadius]}
                   </span>
                 </div>
               </button>
@@ -211,7 +212,7 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
               <div>
                 <h4 className="text-sm font-bold text-white">Primærfarge (Hovedprofil)</h4>
                 <p className="text-xs text-slate-400">
-                  Benyttes til primærknapper, tittelaksenter, fremhevede bokser og logo.
+                  Brukes til knapper, lenker, menyen, fremhevede bokser og de mørke flatene på forsiden.
                 </p>
               </div>
               <div
@@ -268,7 +269,7 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
               <div>
                 <h4 className="text-sm font-bold text-white">Aksentfarge (Detaljer & Kontraster)</h4>
                 <p className="text-xs text-slate-400">
-                  Benyttes til varsler, understreker, merker og sekundære fokuspunkter.
+                  Brukes til handlingsknapper, merker og ikoner på mørk bakgrunn.
                 </p>
               </div>
               <div
@@ -327,10 +328,10 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
             </h4>
             <div className="grid grid-cols-2 gap-2.5 text-xs">
               {[
-                { id: "stone", label: "Nøytral Grå (Stone)", desc: "Klassisk, harmonisk og rolig tone" },
-                { id: "warm", label: "Varm Sand (Warm)", desc: "Lun, innbydende og organisk følelse" },
-                { id: "slate", label: "Kjølig Skifer (Slate)", desc: "Frisk, moderne og nøytral kontrast" },
-                { id: "pure-white", label: "Ren Hvit (Pure)", desc: "Maksimalt lys og minimalistisk preg" },
+                { id: "stone", label: "Nøytral grå", desc: "Klassisk, harmonisk og rolig tone" },
+                { id: "warm", label: "Varm sand", desc: "Lun, innbydende og organisk følelse" },
+                { id: "slate", label: "Kjølig skifer", desc: "Frisk, moderne og nøytral kontrast" },
+                { id: "pure-white", label: "Ren hvit", desc: "Maksimalt lys og minimalistisk preg" },
               ].map((bg) => (
                 <button
                   key={bg.id}
@@ -361,7 +362,7 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Overskrifter (Heading font)</label>
+                <label className="font-semibold text-slate-300 block">Overskrifter</label>
                 <select
                   value={theme.headingFont}
                   onChange={(e) => setTheme({ ...theme, headingFont: e.target.value as any })}
@@ -369,12 +370,11 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
                 >
                   <option value="sans">Moderne Sans-serif (Ren og tydelig)</option>
                   <option value="serif">Klassisk Serif (Høytidelig og tradisjonsrik)</option>
-                  <option value="display">Display Grotesk (Markant og kraftfull)</option>
                 </select>
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Brødtekst (Body font)</label>
+                <label className="font-semibold text-slate-300 block">Brødtekst</label>
                 <select
                   value={theme.bodyFont}
                   onChange={(e) => setTheme({ ...theme, bodyFont: e.target.value as any })}
@@ -419,72 +419,50 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
           <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                Sanntids forhåndsvisning av designtema
+                Forhåndsvisning
               </span>
-              <span className="text-[10px] text-emerald-400 font-mono">Direkte gjengivelse</span>
+              <span className="text-[10px] text-emerald-400">Slik blir nettsiden</span>
             </div>
 
-            {/* Mocked public card */}
+            {/* A piece of the website, drawn with the theme being edited */}
             <div
               style={previewVars}
-              className={`p-6 bg-stone-50 border border-stone-200 text-stone-900 ${previewRadiusClass} space-y-4 shadow-sm`}
+              className={`${SITE_THEME_CLASS} p-6 bg-page border border-stone-200 text-stone-900 rounded-2xl space-y-4 shadow-sm`}
             >
               <div className="flex items-center justify-between border-b border-stone-200/80 pb-3">
                 <div className="flex items-center gap-2">
-                  <div
-                    style={{ backgroundColor: previewVars["--cms-primary"] }}
-                    className="w-6 h-6 rounded-lg text-white font-black text-[10px] flex items-center justify-center shadow-xs"
-                  >
-                    LMK
+                  <div className="w-7 h-7 rounded-lg bg-primary-800 text-accent-300 flex items-center justify-center shadow-xs">
+                    <Sparkles className="w-3.5 h-3.5" />
                   </div>
-                  <span className="font-bold text-xs text-stone-800">Lillesand Misjonskirke</span>
+                  <span className="font-bold text-xs text-stone-800">{settings.churchName}</span>
                 </div>
-                <span
-                  style={{
-                    backgroundColor: `${theme.accentColor}20`,
-                    color: theme.accentColor,
-                    borderColor: `${theme.accentColor}50`,
-                  }}
-                  className="px-2 py-0.5 rounded-full text-[10px] font-bold border"
-                >
-                  Eksempelaksent
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border bg-accent-100 text-accent-900 border-accent-300">
+                  Aksentfarge
                 </span>
               </div>
 
               <div>
-                <h3
-                  style={{ fontFamily: previewVars["--cms-font-heading"] }}
-                  className="text-lg font-black text-stone-900"
-                >
-                  Varmt fellesskap og tydelig tro
-                </h3>
+                <h3 className="text-lg font-black text-stone-900">Varmt fellesskap og tydelig tro</h3>
                 <p className="text-xs text-stone-600 mt-1 leading-relaxed">
-                  Dette viser hvordan typografi, bakgrunn og fargetoner samspiller på menighetens offentlige sider.
+                  Slik ser overskrifter, brødtekst, <span className="font-semibold text-primary-700 underline">lenker</span> og
+                  farger ut på nettsiden.
                 </p>
               </div>
 
-              {/* Sample callout */}
-              <div className={`p-3 bg-sky-50 border border-sky-200 text-sky-950 ${previewRadiusClass} text-xs flex items-start gap-2 shadow-xs`}>
-                <Info className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+              <div className="p-3 bg-primary-50 border border-primary-200 text-primary-950 rounded-xl text-xs flex items-start gap-2 shadow-xs">
+                <Info className="w-4 h-4 text-primary-600 shrink-0 mt-0.5" />
                 <div className="leading-snug">
-                  <strong className="block text-[11px] uppercase tracking-wide">Ferdig infoboks</strong>
-                  Komponenter bruker designsystemets avrunding og proporsjoner.
+                  <strong className="block text-[11px] uppercase tracking-wide">Fremhevet boks</strong>
+                  Bokser og kort får avrundingen du velger.
                 </div>
               </div>
 
-              {/* Action button */}
-              <div className="pt-1 flex items-center justify-between">
-                <button
-                  type="button"
-                  style={{
-                    backgroundColor: previewVars["--cms-primary"],
-                  }}
-                  className={`px-4 py-2 text-white text-xs font-bold ${previewRadiusClass} shadow-xs`}
-                >
+              <div className="pt-1 flex flex-wrap items-center gap-2">
+                <span className="px-4 py-2 bg-primary-700 text-white text-xs font-bold rounded-xl shadow-xs">
                   Primærknapp
-                </button>
-                <span className="text-[11px] font-mono text-stone-500">
-                  {theme.primaryColor} · {theme.headingFont}
+                </span>
+                <span className="px-4 py-2 bg-accent-400 text-stone-950 text-xs font-bold rounded-xl shadow-xs">
+                  Aksentknapp
                 </span>
               </div>
             </div>
@@ -512,7 +490,7 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
           ) : (
             <>
               <Save className="w-4 h-4" />
-              <span>{isSaving ? "Lagrer tema..." : "Lagre tema til Firestore"}</span>
+              <span>{isSaving ? "Lagrer tema..." : "Lagre designtema"}</span>
             </>
           )}
         </button>

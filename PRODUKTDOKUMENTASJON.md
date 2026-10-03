@@ -93,7 +93,7 @@ Adminpanelet ligger på `/admin` og har én meny med to deler. Hver fane har sin
 | **Aktuelt & nyheter** | Skriver og publiserer artikler | Levert |
 | **Taler & prekener** | Legger inn taler med lyd, Spotify og video | Levert |
 | **Lederskap & stab** | Holder listen over stab som vises på «Om oss» | Delvis: en egen liste ved siden av personregisteret, uten samtykke (kapittel 13) |
-| **Tema & designsystem** | Velger ferdig tema eller egne farger, skrift, avrunding og luft | Delvis: valget lagres og vises i forhåndsvisningen, men nettsiden bruker bare overskriftsskriften og avrundingen på CMS-sidene. Farger, bakgrunnstone, brødtekst og luft har ingen virkning ennå |
+| **Tema & designsystem** | Velger ferdig tema eller egne farger, bakgrunn, skrift og avrunding. Forhåndsvisningen er tegnet med de samme fargene nettsiden får | Levert |
 | **Nettside-innstillinger** | Menighetens navn, slagord, velkomsttekst, kontaktinfo, Vipps, konto og sosiale medier | Levert |
 | **Forside-overstyring** | Fremhever en samling på forsiden eller skjuler den fra kalenderen | Levert |
 
@@ -276,7 +276,7 @@ Felles begrep for enhver samling: gudstjeneste, ungdomsmøte, bønnemøte, dugna
 |:---|:---|
 | `CmsStaffMember` | `id`, `name`, `role`, `email`, `phone`, `category` (`pastor`, `stab`, `lederskap`, `barneleder`), `imageUrl?`, `bio?` |
 | `CmsSettings` (ett dokument) | `churchName`, `appName`, `tagline`, `welcomeHeadline`, `welcomeSubtext`, `address`, `phone`, `email`, `officeHours`, `vippsNumber`, `vippsDescription`, `bankAccount`, `orgNumber`, lenker til Facebook, Instagram, YouTube og podkast, og `theme` |
-| `CmsDesignTheme` | `primaryColor`, `accentColor`, `backgroundTone` (`stone`, `slate`, `warm`, `pure-white`), `headingFont` (`sans`, `serif`, `display`), `bodyFont` (`sans`, `serif`), `borderRadius` (`sharp`, `medium`, `smooth`), `spacingDensity` (`compact`, `normal`, `spacious`) |
+| `CmsDesignTheme` | `primaryColor`, `accentColor`, `backgroundTone` (`stone`, `slate`, `warm`, `pure-white`), `headingFont` (`sans`, `serif`), `bodyFont` (`sans`, `serif`), `borderRadius` (`sharp`, `medium`, `smooth`). `spacingDensity` lagres med de ferdige temaene, men brukes ikke, og kan ikke velges |
 
 ---
 
@@ -386,9 +386,19 @@ Et hovedbilde lastes opp fra maskinen, limes inn som adresse eller velges blant 
 **Delvis:** bildet lagres inne i selve sidedokumentet, ikke i en bildelagring. Se 8.7.
 
 ### 8.5 Design
-Fanen «Tema & designsystem» har fem ferdige temaer (Klassisk menighetsblå, Nordisk salvie, Varm terracotta, Dyp vinrød, Moderne indigo) og egne valg for farger, skrift, avrunding og luft.
+Fanen «Tema & designsystem» har fem ferdige temaer (Klassisk menighetsblå, Nordisk salvie, Varm terracotta, Dyp vinrød, Moderne indigo) og egne valg. Det som lagres, gjelder hele nettsiden med en gang:
 
-**Delvis:** se 2.2. Målet er at ett valg her endrer hele nettsiden.
+| Valg | Virkning på nettsiden |
+|:---|:---|
+| **Primærfarge** | Knapper, lenker, menyen, fremhevede bokser og de mørke flatene |
+| **Aksentfarge** | Handlingsknapper, merker og ikoner på mørk bakgrunn |
+| **Bakgrunnstone** | Bakgrunnen på alle sider |
+| **Skrift** | Overskrifter og brødtekst, hver for seg: sans eller serif |
+| **Hjørneavrunding** | Kort, bokser, bilder og knapper: skarp, balansert eller myk |
+
+Administratoren velger én farge. Løsningen lager elleve toner av den, fra nesten hvit til nesten svart, slik at hver flate får en tone som passer. Tonene har fast lyshet uansett hvilken farge som velges. Derfor er hvit tekst lesbar på en primærknapp og mørk tekst lesbar på en aksentknapp også når noen velger gult eller lyseblått (WCAG AA, dekket av tester).
+
+Fargene som har en fast betydning, følger ikke temaet: rødt for avlyst, gult for varsel, grønt for bekreftet, og fargen som skiller gruppekategoriene fra hverandre. Adminpanelet og Min side har sitt eget, faste utseende.
 
 ### 8.6 Søk og deling
 Hver side kan ha egen beskrivelse og eget delebilde. Mangler de, brukes ingressen og hovedbildet. Redaktøren ser en forhåndsvisning av søkeresultatet og delingskortet.
@@ -400,7 +410,7 @@ Hver side kan ha egen beskrivelse og eget delebilde. Mangler de, brukes ingresse
 | Område | I dag | Konsekvens |
 |:---|:---|:---|
 | Bilder | Lagres som tekst inne i sidedokumentet | Alle besøkende laster ned alle sidenes bilder ved første besøk. Et dokument kan ikke være større enn 1 MB. Et opplastet bilde kan ikke brukes som delebilde |
-| Design | Bare overskriftsskrift og avrunding på CMS-sidene følger temaet | Fargevalg i admin endrer ikke nettsiden |
+| Design | Skriftvalget står mellom skriftene maskinen alt har | Menigheten kan ikke velge en egen skrift eller laste opp logo |
 | Deling | Søk- og delefeltene settes inn i nettleseren | Delingskort i sosiale medier viser ikke sidens egen tittel og bilde |
 | Kladder | Skjules i visningen, men leveres til nettleseren | En kladd er ikke hemmelig. Løses sammen med innlogging |
 | Forside | Tre infobokser, fellesskaps- og gaveteksten står i koden | Kan ikke endres uten en utvikler |
@@ -468,13 +478,14 @@ De tre flatene, Firestore-databasen, bemanningsmotoren, husfellesskap, gruppemel
 
 | Område | Levert |
 |:---|:---|
-| **Fundament** | Streng typesjekk. Testløp med Vitest: 406 tester som kjører den ekte koden. Nye dokumenter bygges ett sted. En lagring som feiler, vises for brukeren |
+| **Fundament** | Streng typesjekk. Testløp med Vitest: over 430 tester som kjører den ekte koden. Nye dokumenter bygges ett sted. En lagring som feiler, vises for brukeren |
 | **Datalaget** | Skjermen viser bare det databasen har. Det som hører sammen, lagres i én operasjon. To samtidige endringer kan ikke overskrive hverandre. Testene kjører mot den ekte Firestore-klienten uten nett |
 | **Bemanning** | Oppgavens status regnes ut av tildelingene. Et medlem kan ta en ledig oppgave og svare på en forespørsel. Forfall med 48-timersregel og tidsstempler |
 | **Min side** | Bruker dagens dato i stedet for en fast demodato. «Trenger svar» er sortert etter hva som haster |
 | **Nettsiden** | Forsiden følger «fremhevet», ellers neste gudstjeneste. Kalenderen viser kommende samlinger. Grupper kan skjules. Et interesseskjema som ikke lagret noe, er erstattet med hvem man kan kontakte. Personer vises bare med samtykke |
 | **Kjøreplan** | Viser bare det som er registrert. Et oppdiktet standardprogram og oppdiktede navn er fjernet |
 | **CMS** (AI Studio, 2. oktober) | Sidetre med dra og slipp, innholdsblokker, hovedbilde, design-fane, søk og deling, planlagt publisering, forhåndsvisning |
+| **Design** (3. oktober) | Temaet som velges i admin, styrer hele nettsiden: farger, bakgrunn, skrift og avrunding. Lesbarheten er sikret for alle fargevalg |
 | **Opprydding** | De største filene er delt i én fil per fane og dialog. Hardkodede demo-ID-er, datoer og steder er ute av logikken. Utviklerord er ute av skjermbildene |
 
 ---
@@ -488,18 +499,17 @@ Sortert etter hvor mye de betyr for en menighet som skal ta løsningen i bruk.
 | 1 | Ingen innlogging, og databasereglene er åpne | Fase 1 |
 | 2 | Personregisteret og kladder leveres til alle nettlesere | Fase 1 |
 | 3 | Testbryter og testverktøy vises i løsningen | Fase 1 |
-| 4 | Designvalget styrer ikke nettsiden | Fase 2 |
-| 5 | Forsidens tekster og menighetens navn står delvis i koden | Fase 2 |
-| 6 | Bilder lagres inne i sidedokumentene | Fase 2 |
-| 7 | Delingskort i sosiale medier viser ikke sidens innhold | Fase 2 |
-| 8 | To kilder for stab og lederskap, den ene uten samtykke | Fase 2 |
-| 9 | Programmet i kjøreplanen kan ikke redigeres | Fase 3 |
-| 10 | Ingen varsling: forespørsler og forfall når ingen uten at de åpner appen | Fase 3 |
-| 11 | Modulvalg lagres bare i én nettleser | Fase 3 |
-| 12 | En besøkende kan ikke melde interesse for en gruppe i løsningen | Fase 3 |
-| 13 | Et nytt gruppemedlem ser hele meldingshistorikken | Fase 3 |
-| 14 | Medlemmet kan ikke oppgi grunn for et forfall, og lederen ser den ikke | Fase 3 |
-| 15 | Hele løsningen lastes på første besøk (1,6 MB) | Fase 4 |
+| 4 | Forsidens tekster og menighetens navn står delvis i koden | Fase 2 |
+| 5 | Bilder lagres inne i sidedokumentene | Fase 2 |
+| 6 | Delingskort i sosiale medier viser ikke sidens innhold | Fase 2 |
+| 7 | To kilder for stab og lederskap, den ene uten samtykke | Fase 2 |
+| 8 | Programmet i kjøreplanen kan ikke redigeres | Fase 3 |
+| 9 | Ingen varsling: forespørsler og forfall når ingen uten at de åpner appen | Fase 3 |
+| 10 | Modulvalg lagres bare i én nettleser | Fase 3 |
+| 11 | En besøkende kan ikke melde interesse for en gruppe i løsningen | Fase 3 |
+| 12 | Et nytt gruppemedlem ser hele meldingshistorikken | Fase 3 |
+| 13 | Medlemmet kan ikke oppgi grunn for et forfall, og lederen ser den ikke | Fase 3 |
+| 14 | Hele løsningen lastes på første besøk (1,6 MB) | Fase 4 |
 
 ---
 
@@ -515,13 +525,14 @@ Rekkefølgen innen hver fase er prioritert. Fase 1 er forutsetningen for ekte da
 5. Personregisteret lastes ikke på nettsiden.
 
 ### Fase 2 – CMS-et styrer hele nettsiden
-1. **Temaet virker:** farger, skrift, bakgrunn og avrunding fra design-fanen gjelder hele nettsiden.
+1. ~~**Temaet virker:** farger, skrift, bakgrunn og avrunding fra design-fanen gjelder hele nettsiden.~~ **Levert 3. oktober.**
 2. **Forsiden kan redigeres:** forsidebilde, infoboksene, fellesskaps- og gaveseksjonen. Menighetens navn hentes fra innstillingene overalt.
 3. **Bilder i egen lagring**, med bilder også i nyheter, stab og innholdsblokker.
 4. **Delingskort fra serveren:** tittel, beskrivelse og bilde ligger i siden slik den sendes ut.
 5. **Én kilde for stab og lederskap:** personregisteret med samtykke. CMS-fanen bestemmer rekkefølge, bilde og omtale.
 6. **Nyheter:** arkivside, utløpsdato og kobling til samling. **Taler:** kobling til person og samling.
-7. Senere: visuell redigering av blokker, og historikk med angre.
+7. **Menighetens egen profil:** logo og egen skrift.
+8. Senere: visuell redigering av blokker, og historikk med angre.
 
 ### Fase 3 – Webappen ferdig
 1. **Kjøreplan-editor:** program med klokkeslett, koblet til oppgaver.

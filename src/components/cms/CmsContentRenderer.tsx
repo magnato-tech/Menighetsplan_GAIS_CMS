@@ -9,12 +9,9 @@ import {
   ArrowRight,
   ExternalLink,
 } from "lucide-react";
-import { CmsDesignTheme } from "../../data/cmsData";
-import { getThemeRadiusClass } from "../../utils/themeUtils";
 
 interface CmsContentRendererProps {
   content?: string;
-  theme?: CmsDesignTheme;
   className?: string;
 }
 
@@ -322,7 +319,7 @@ function renderInlineFormatting(text: string): React.ReactNode {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-indigo-600 hover:text-indigo-800 underline underline-offset-2 font-medium inline-flex items-center gap-0.5"
+          className="text-primary-600 hover:text-primary-800 underline underline-offset-2 font-medium inline-flex items-center gap-0.5"
         >
           <span>{label}</span>
           <ExternalLink className="w-3 h-3 inline opacity-70" />
@@ -333,7 +330,7 @@ function renderInlineFormatting(text: string): React.ReactNode {
         <Link
           key={`link-${match.index}`}
           to={url}
-          className="text-indigo-600 hover:text-indigo-800 underline underline-offset-2 font-medium"
+          className="text-primary-600 hover:text-primary-800 underline underline-offset-2 font-medium"
         >
           {label}
         </Link>
@@ -385,11 +382,9 @@ function renderSimpleStyles(str: string): React.ReactNode {
 
 export const CmsContentRenderer: React.FC<CmsContentRendererProps> = ({
   content = "",
-  theme,
   className = "",
 }) => {
   const blocks = parseCmsContent(content);
-  const radiusClass = getThemeRadiusClass(theme);
 
   return (
     <div className={`cms-prose-sandbox space-y-4 text-stone-800 ${className}`}>
@@ -481,8 +476,8 @@ export const CmsContentRenderer: React.FC<CmsContentRendererProps> = ({
                 title: "Kunngjøring",
               },
               primary: {
-                bg: "bg-indigo-50/70 border-indigo-200 text-indigo-950",
-                icon: <Bookmark className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />,
+                bg: "bg-primary-50/70 border-primary-200 text-primary-950",
+                icon: <Bookmark className="w-5 h-5 text-primary-600 shrink-0 mt-0.5" />,
                 title: "Fremhevet",
               },
             }[block.variant];
@@ -512,7 +507,7 @@ export const CmsContentRenderer: React.FC<CmsContentRendererProps> = ({
             return (
               <div
                 key={idx}
-                className={`my-6 flex flex-col md:flex-row items-center gap-6 p-5 sm:p-6 bg-stone-50 border border-stone-200/80 ${radiusClass} shadow-xs ${
+                className={`my-6 flex flex-col md:flex-row items-center gap-6 p-5 sm:p-6 bg-stone-50 border border-stone-200/80 rounded-2xl shadow-xs ${
                   isLeft ? "" : "md:flex-row-reverse"
                 }`}
               >
@@ -548,7 +543,7 @@ export const CmsContentRenderer: React.FC<CmsContentRendererProps> = ({
                 {block.cards.map((card, cardIdx) => (
                   <div
                     key={cardIdx}
-                    className={`p-4 sm:p-5 bg-stone-50 border border-stone-200/80 ${radiusClass} space-y-2 shadow-xs`}
+                    className="p-4 sm:p-5 bg-stone-50 border border-stone-200/80 rounded-2xl space-y-2 shadow-xs"
                   >
                     {card.title && (
                       <h4 className="font-bold text-stone-900 text-base">
@@ -567,9 +562,9 @@ export const CmsContentRenderer: React.FC<CmsContentRendererProps> = ({
             return (
               <div
                 key={idx}
-                className="relative my-4 pl-5 sm:pl-6 py-2 border-l-4 border-indigo-600 bg-stone-50/60 rounded-r-xl"
+                className="relative my-4 pl-5 sm:pl-6 py-2 border-l-4 border-primary-600 bg-stone-50/60 rounded-r-xl"
               >
-                <Quote className="w-6 h-6 text-indigo-400/40 absolute -top-2 left-2 pointer-events-none" />
+                <Quote className="w-6 h-6 text-primary-400/40 absolute -top-2 left-2 pointer-events-none" />
                 <p className="text-stone-800 italic text-base sm:text-lg leading-relaxed font-serif">
                   «{renderInlineFormatting(block.text)}»
                 </p>
@@ -584,7 +579,7 @@ export const CmsContentRenderer: React.FC<CmsContentRendererProps> = ({
           case "cta": {
             const isExternal = block.url.startsWith("http://") || block.url.startsWith("https://");
             const btnClass =
-              "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white shadow-sm hover:shadow-md transition-all my-2 bg-indigo-600 hover:bg-indigo-700 cursor-pointer";
+              "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white shadow-sm hover:shadow-md transition-all my-2 bg-primary-600 hover:bg-primary-700 cursor-pointer";
 
             if (isExternal) {
               return (

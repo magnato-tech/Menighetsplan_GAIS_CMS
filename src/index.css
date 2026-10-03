@@ -1,1 +1,46 @@
 @import "tailwindcss";
+
+/*
+ * The website's theme colours. `primary` and `accent` are what the public pages use
+ * (bg-primary-700, text-accent-300 …), so that they follow the theme chosen in admin.
+ * The values here are only the fallback: the public layout sets all of them from the
+ * chosen theme (getThemeCssVariables in src/utils/themeUtils.ts).
+ */
+@theme {
+  --color-primary-50: oklch(96.2% 0.018 272.314);
+  --color-primary-100: oklch(93% 0.034 272.788);
+  --color-primary-200: oklch(87% 0.065 274.039);
+  --color-primary-300: oklch(78.5% 0.115 274.713);
+  --color-primary-400: oklch(67.3% 0.182 276.935);
+  --color-primary-500: oklch(58.5% 0.233 277.117);
+  --color-primary-600: oklch(51.1% 0.262 276.966);
+  --color-primary-700: oklch(45.7% 0.24 277.023);
+  --color-primary-800: oklch(39.8% 0.195 277.366);
+  --color-primary-900: oklch(35.9% 0.144 278.697);
+  --color-primary-950: oklch(25.7% 0.09 281.288);
+
+  --color-accent-50: oklch(98.7% 0.022 95.277);
+  --color-accent-100: oklch(96.2% 0.059 95.617);
+  --color-accent-200: oklch(92.4% 0.12 95.746);
+  --color-accent-300: oklch(87.9% 0.169 91.605);
+  --color-accent-400: oklch(82.8% 0.189 84.429);
+  --color-accent-500: oklch(76.9% 0.188 70.08);
+  --color-accent-600: oklch(66.6% 0.179 58.318);
+  --color-accent-700: oklch(55.5% 0.163 48.998);
+  --color-accent-800: oklch(47.3% 0.137 46.201);
+  --color-accent-900: oklch(41.4% 0.112 45.904);
+  --color-accent-950: oklch(27.9% 0.077 45.635);
+
+  --color-page: #fafaf9;
+}
+
+/* Inside a themed element, body text and headings use the theme's fonts */
+@layer base {
+  .site-theme {
+    font-family: var(--site-font-body, var(--font-sans));
+  }
+
+  .site-theme :is(h1, h2, h3, h4) {
+    font-family: var(--site-font-heading, inherit);
+  }
+}

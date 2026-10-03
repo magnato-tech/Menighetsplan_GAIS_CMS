@@ -74,8 +74,8 @@ export const PublicSermonsPage: React.FC = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-stone-200 pb-6">
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold">
-            <Headphones className="w-3.5 h-3.5 text-amber-700" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-100 text-accent-900 text-xs font-semibold">
+            <Headphones className="w-3.5 h-3.5 text-accent-700" />
             <span>Taler & Forkynnelse</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-stone-900 tracking-tight">
@@ -106,7 +106,7 @@ export const PublicSermonsPage: React.FC = () => {
       {activeAudioUrl && (
         <div className="sticky top-20 z-30 p-4 rounded-2xl bg-slate-900 text-white shadow-xl border border-slate-800 space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-amber-300 flex items-center gap-1.5">
+            <span className="font-semibold text-accent-300 flex items-center gap-1.5">
               <Volume2 className="w-4 h-4 animate-pulse" />
               Spiller nå: {activeAudioTitle}
             </span>
@@ -144,7 +144,7 @@ export const PublicSermonsPage: React.FC = () => {
               onClick={() => setSelectedSeries(s)}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 selectedSeries === s
-                  ? "bg-amber-500 text-slate-950"
+                  ? "bg-accent-500 text-slate-950"
                   : "bg-white text-stone-600 hover:bg-stone-100 border border-stone-200"
               }`}
             >
@@ -180,13 +180,13 @@ export const PublicSermonsPage: React.FC = () => {
             return (
               <div
                 key={sermon.id}
-                className="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-xs hover:border-amber-300 hover:shadow-md transition-all space-y-4"
+                className="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-xs hover:border-accent-300 hover:shadow-md transition-all space-y-4"
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                   <div className="space-y-2 max-w-2xl">
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       {sermon.series && (
-                        <span className="px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[10px] bg-amber-50 text-amber-900 border border-amber-200/60">
+                        <span className="px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[10px] bg-accent-50 text-accent-900 border border-accent-200/60">
                           {sermon.series}
                         </span>
                       )}
@@ -245,7 +245,7 @@ export const PublicSermonsPage: React.FC = () => {
                           setActiveAudioUrl(sermon.audioUrl || null);
                           setActiveAudioTitle(`${sermon.title} - ${sermon.speaker}`);
                         }}
-                        className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+                        className="px-4 py-2 rounded-xl bg-accent-400 hover:bg-accent-300 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
                       >
                         <Play className="w-3.5 h-3.5 fill-slate-950" />
                         <span>Hør tale (Lydfil)</span>

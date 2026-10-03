@@ -42,7 +42,7 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 | `src/data/collections.ts` | Navn på alle Firestore-samlinger |
 | `src/data/newDocuments.ts` | Bygger nye personer, grupper, samlinger, oppgaver, tildelinger og meldinger |
 | `src/hooks/` | Hooks per rolle: `memberHooks`, `leaderHooks`, `adminHooks`, `useHusfellesskap`. `useAppHooks.ts` eksporterer alle |
-| `src/utils/` | Rene funksjoner: `staffing` (bemanning), `visibility` (hva som er offentlig), `publicProfile` (samtykke), `firestoreData` (klargjøring før skriving), `menu` (sidetreet og menyen), `gatherings` (kommende samlinger og forsidens utvalg), `groups` (hvem som er med i en gruppe), `runSheet` (kjøreplanen), `dates`. For CMS-et: `themeUtils` (design), `seoUtils` (søk og deling), `imageUpload` (bilder) |
+| `src/utils/` | Rene funksjoner: `staffing` (bemanning), `visibility` (hva som er offentlig), `publicProfile` (samtykke), `firestoreData` (klargjøring før skriving), `menu` (sidetreet og menyen), `gatherings` (kommende samlinger og forsidens utvalg), `groups` (hvem som er med i en gruppe), `runSheet` (kjøreplanen), `dates`. For CMS-et: `themeUtils` og `colorScale` (design), `seoUtils` (søk og deling), `imageUpload` (bilder) |
 | `src/components/cms/CmsContentRenderer.tsx` | Tolker innholdsblokkene på en CMS-side og tegner dem |
 | `src/services/writeErrors.ts` | Melder mislykkede skrivinger til `WriteErrorBanner` |
 | `src/services/databaseAdmin.ts` | Fyll databasen med demodata / slett alt |
@@ -69,6 +69,7 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 - **Ikke dikt opp innhold.** Mangler noe i databasen, vises det som manglende: ingen standardprogram, ingen navn, ingen gruppe-ID-er eller datoer fra demodataene i koden. Kjøreplanen bygges av `buildRunSheet` i `src/utils/runSheet.ts`, og en samling uten sted vises med `locationOf` fra `src/utils/gatherings.ts`.
 - **Ikke lag skjema som ikke lagrer.** Et felt en besøkende fyller ut skal enten lagres og kunne leses av noen, eller ikke finnes. Det samme gjelder et valg i admin: det skal virke der det sier at det virker.
 - **Ingen utviklerord i skjermbildene.** Feltnavn (`isPublic`, `Group.leaderIds`), ID-er, «mock» og «prototype» hører hjemme i koden. Brukeren ser norske ord for det samme.
+- **Nettsiden bruker temafargene.** På offentlige sider (`src/pages/public/`, `src/components/public/`, `src/components/cms/`) heter hovedfargene `primary-*` og `accent-*`, aldri `indigo-*` eller `amber-*`. Da følger siden designet som er valgt i admin. Farger med fast betydning (rødt for avlyst, gult for varsel, grønt for bekreftet) er unntatt. En test feiler hvis regelen brytes.
 - **Meldinger som forsvinner av seg selv** bruker `useTimedMessage` fra `src/hooks/`. Skriv ikke `setTimeout(() => setX(null), …)` ved siden av en `useState`.
 - **Ingen person vises offentlig uten registrert samtykke.** Offentlige sider henter personer gjennom `toPublicProfile` / `publicProfilesOf` i `src/utils/publicProfile.ts`, som bare gir navn og kontaktinfo utad. Bruk aldri `person.phone` eller `person.email` på en offentlig side.
 - **Persondata skal ikke ut i det offentlige API-et.** Nye felt i `server/publicApi.ts` må hvitelistes bevisst.
@@ -83,7 +84,6 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 ## 5. Kjente mangler
 Disse er ikke løst ennå. Rekkefølgen de skal løses i står i kapittel 14 i `PRODUKTDOKUMENTASJON.md`, og detaljene i `ARKITEKTUR.md`.
 
-- Designvalget i admin styrer ikke nettsiden: CSS-variablene settes, men ingen stil leser dem.
 - Opplastede bilder lagres som tekst inne i sidedokumentene.
 - Søk- og delefeltene settes inn i nettleseren, så delingskort i sosiale medier ser dem ikke.
 - Forsidens faste tekster og menighetens navn står flere steder i koden.

@@ -80,7 +80,7 @@ export const PublicCalendarPage: React.FC = () => {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 space-y-8">
       {/* Page Header */}
       <div className="space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-semibold">
           <Calendar className="w-3.5 h-3.5" />
           <span>Møtekalender</span>
         </div>
@@ -110,7 +110,7 @@ export const PublicCalendarPage: React.FC = () => {
           onClick={() => setSelectedCategory("gudstjeneste")}
           className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             selectedCategory === "gudstjeneste"
-              ? "bg-indigo-700 text-white shadow-xs"
+              ? "bg-primary-700 text-white shadow-xs"
               : "bg-white text-stone-600 hover:bg-stone-100 border border-stone-200"
           }`}
         >
@@ -121,7 +121,7 @@ export const PublicCalendarPage: React.FC = () => {
           onClick={() => setSelectedCategory("ungdom")}
           className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             selectedCategory === "ungdom"
-              ? "bg-indigo-700 text-white shadow-xs"
+              ? "bg-primary-700 text-white shadow-xs"
               : "bg-white text-stone-600 hover:bg-stone-100 border border-stone-200"
           }`}
         >
@@ -132,7 +132,7 @@ export const PublicCalendarPage: React.FC = () => {
           onClick={() => setSelectedCategory("barn")}
           className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             selectedCategory === "barn"
-              ? "bg-indigo-700 text-white shadow-xs"
+              ? "bg-primary-700 text-white shadow-xs"
               : "bg-white text-stone-600 hover:bg-stone-100 border border-stone-200"
           }`}
         >
@@ -155,12 +155,12 @@ export const PublicCalendarPage: React.FC = () => {
               className={`bg-white rounded-2xl border p-5 sm:p-6 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
                 item.isCancelled
                   ? "border-red-200 bg-red-50/20 opacity-75"
-                  : "border-stone-200/80 hover:border-indigo-300 shadow-xs hover:shadow"
+                  : "border-stone-200/80 hover:border-primary-300 shadow-xs hover:shadow"
               }`}
             >
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 capitalize">
+                  <span className="text-xs font-bold uppercase tracking-wider text-primary-700 capitalize">
                     {formatDate(item.startsAt)}
                   </span>
                   {item.categories.map((c) => (
@@ -193,7 +193,7 @@ export const PublicCalendarPage: React.FC = () => {
 
               <div className="shrink-0 flex flex-col sm:flex-row md:flex-col items-start md:items-end justify-center gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-stone-100">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-stone-800 bg-stone-50 px-3 py-1.5 rounded-lg border border-stone-200/60">
-                  <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                  <Clock className="w-3.5 h-3.5 text-primary-600" />
                   <span>Kl. {formatTime(item.startsAt)}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-stone-600">

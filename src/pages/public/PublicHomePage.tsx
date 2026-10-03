@@ -85,12 +85,12 @@ export const PublicHomePage: React.FC = () => {
   return (
     <div className="space-y-16 lg:space-y-24 pb-16">
       {/* 1. Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-stone-900 via-indigo-950 to-stone-900 text-white py-16 sm:py-24 lg:py-28 px-4 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden bg-gradient-to-b from-stone-900 via-primary-950 to-stone-900 text-white py-16 sm:py-24 lg:py-28 px-4 sm:px-6 lg:px-8">
         {/* Subtle decorative glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-primary-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-5xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-semibold text-amber-300">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-semibold text-accent-300">
             <Sparkles className="w-3.5 h-3.5" />
             <span>{settings.churchName}</span>
           </div>
@@ -107,7 +107,7 @@ export const PublicHomePage: React.FC = () => {
           <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/hva-skjer"
-              className="px-6 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+              className="px-6 py-3.5 rounded-xl bg-accent-400 hover:bg-accent-300 text-stone-950 font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2"
             >
               <span>Se hva som skjer</span>
               <ArrowRight className="w-4 h-4" />
@@ -127,8 +127,8 @@ export const PublicHomePage: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-xl border border-stone-200/80 p-6 sm:p-8 lg:p-10">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-stone-100">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-800 text-xs font-bold uppercase tracking-wider">
-                <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-primary-50 text-primary-800 text-xs font-bold uppercase tracking-wider">
+                <Calendar className="w-3.5 h-3.5 text-primary-600" />
                 <span>{highlightLabel}</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
@@ -145,15 +145,15 @@ export const PublicHomePage: React.FC = () => {
             {nextWorship && (
               <div className="flex flex-wrap items-center gap-4 text-sm text-stone-700 bg-stone-50 p-4 rounded-xl border border-stone-200/60">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-indigo-600" />
+                  <Calendar className="w-4 h-4 text-primary-600" />
                   <span className="font-semibold capitalize">{formatDate(nextWorship.startsAt)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-indigo-600" />
+                  <Clock className="w-4 h-4 text-primary-600" />
                   <span>Kl. {formatTime(nextWorship.startsAt)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-indigo-600" />
+                  <MapPin className="w-4 h-4 text-primary-600" />
                   <span>{locationOf(nextWorship)}</span>
                 </div>
               </div>
@@ -162,7 +162,7 @@ export const PublicHomePage: React.FC = () => {
 
           <div className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-stone-600">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-accent-50 text-accent-700 flex items-center justify-center shrink-0">
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
@@ -174,7 +174,7 @@ export const PublicHomePage: React.FC = () => {
             </div>
 
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-primary-50 text-primary-700 flex items-center justify-center shrink-0">
                 <Coffee className="w-4 h-4" />
               </div>
               <div>
@@ -204,14 +204,14 @@ export const PublicHomePage: React.FC = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-700">Kalender</h2>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-primary-700">Kalender</h2>
             <h3 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-1">
               Hva skjer i Lillesand Misjonskirke
             </h3>
           </div>
           <Link
             to="/hva-skjer"
-            className="inline-flex items-center gap-1.5 text-sm font-bold text-indigo-700 hover:text-indigo-900 group"
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-primary-700 hover:text-primary-900 group"
           >
             <span>Se hele kalenderen</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -222,10 +222,10 @@ export const PublicHomePage: React.FC = () => {
           {upcomingEvents.map((item) => (
             <div
               key={item.id}
-              className="bg-white rounded-xl border border-stone-200/80 p-5 hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between"
+              className="bg-white rounded-xl border border-stone-200/80 p-5 hover:border-primary-300 hover:shadow-md transition-all flex flex-col justify-between"
             >
               <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-primary-700">
                   {formatDate(item.startsAt)}
                 </div>
                 {item.cancelled && (
@@ -263,14 +263,14 @@ export const PublicHomePage: React.FC = () => {
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-700">Aktuelt</h2>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-primary-700">Aktuelt</h2>
               <h3 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-1">
                 Nyheter og artikler
               </h3>
             </div>
             <Link
               to="/om-oss"
-              className="inline-flex items-center gap-1.5 text-sm font-bold text-indigo-700 hover:text-indigo-900 group"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-primary-700 hover:text-primary-900 group"
             >
               <span>Les mer om arbeidet vårt</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -308,7 +308,7 @@ export const PublicHomePage: React.FC = () => {
                   </span>
                   <Link
                     to={`/artikkel/${article.id}`}
-                    className="text-xs font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-1"
+                    className="text-xs font-bold text-primary-700 hover:text-primary-900 flex items-center gap-1"
                   >
                     <span>Les saken</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -323,11 +323,11 @@ export const PublicHomePage: React.FC = () => {
       {/* 4B. Siste Tale & Forkynnelse (Benchmark: Fløymk / Lillesand) */}
       {latestSermon && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-amber-50/70 border border-amber-200/80 rounded-3xl p-6 sm:p-10 shadow-xs space-y-6">
+          <div className="bg-accent-50/70 border border-accent-200/80 rounded-3xl p-6 sm:p-10 shadow-xs space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-3 max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold">
-                  <Headphones className="w-3.5 h-3.5 text-amber-800" />
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-100 text-accent-900 text-xs font-semibold">
+                  <Headphones className="w-3.5 h-3.5 text-accent-800" />
                   <span>Siste tale fra søndagen</span>
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
@@ -349,7 +349,7 @@ export const PublicHomePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsPlayingSermon(!isPlayingSermon)}
-                  className="px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                  className="px-5 py-3 rounded-xl bg-accent-400 hover:bg-accent-300 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
                 >
                   <Play className="w-4 h-4 fill-slate-950" />
                   <span>{isPlayingSermon ? "Pause / Lukk avspiller" : "Spill av tale direkte"}</span>
@@ -379,10 +379,10 @@ export const PublicHomePage: React.FC = () => {
 
             {/* Inline Direct Player */}
             {isPlayingSermon && (
-              <div className="pt-4 border-t border-amber-200/80 space-y-3">
-                <div className="flex items-center justify-between text-xs text-amber-950 font-semibold">
+              <div className="pt-4 border-t border-accent-200/80 space-y-3">
+                <div className="flex items-center justify-between text-xs text-accent-950 font-semibold">
                   <span className="flex items-center gap-2">
-                    <Volume2 className="w-4 h-4 text-amber-700 animate-pulse" />
+                    <Volume2 className="w-4 h-4 text-accent-700 animate-pulse" />
                     <span>Spiller nå: {latestSermon.title} ({latestSermon.speaker})</span>
                   </span>
                   <button
@@ -418,9 +418,9 @@ export const PublicHomePage: React.FC = () => {
 
       {/* 5. Husfellesskap & Grupper CTA */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-br from-indigo-900 to-indigo-800 rounded-3xl text-white p-8 sm:p-12 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-xl">
+        <div className="bg-gradient-to-br from-primary-900 to-primary-800 rounded-3xl text-white p-8 sm:p-12 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-xl">
           <div className="space-y-4 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-amber-300 text-xs font-semibold">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-accent-300 text-xs font-semibold">
               <Users className="w-3.5 h-3.5" />
               <span>Nære fellesskap</span>
             </div>
@@ -432,15 +432,15 @@ export const PublicHomePage: React.FC = () => {
             </p>
             <div className="pt-2 flex flex-wrap gap-4 text-xs text-stone-200">
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-amber-300" />
+                <CheckCircle2 className="w-4 h-4 text-accent-300" />
                 <span>Grupper for alle aldre</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-amber-300" />
+                <CheckCircle2 className="w-4 h-4 text-accent-300" />
                 <span>Annenhver uke</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-amber-300" />
+                <CheckCircle2 className="w-4 h-4 text-accent-300" />
                 <span>Uforpliktende å prøve</span>
               </div>
             </div>
@@ -480,7 +480,7 @@ export const PublicHomePage: React.FC = () => {
           <div className="px-6 py-4 rounded-2xl bg-white border border-stone-200/90 shadow-sm flex items-center gap-4">
             <div className="text-left">
               <div className="text-xs text-stone-500 font-medium">Vipps til nummer</div>
-              <div className="text-xl font-black text-amber-600">{settings.vippsNumber}</div>
+              <div className="text-xl font-black text-accent-700">{settings.vippsNumber}</div>
             </div>
           </div>
 
