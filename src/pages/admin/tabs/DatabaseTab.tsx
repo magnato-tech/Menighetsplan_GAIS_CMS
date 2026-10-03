@@ -8,7 +8,6 @@ import {
   type DatabaseAdminResult,
 } from "../../../services/databaseAdmin";
 import { ShowFeedback, StudioData } from "../studio";
-import { DatabaseTestdataTab } from "../../../components/admin/DatabaseTestdataTab";
 import {
   Database,
   RefreshCw,
@@ -103,7 +102,6 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
 
   // Checkbox for clearing planner records before population
   const [clearBeforePopulate, setClearBeforePopulate] = useState<boolean>(true);
-  const [generatorMode, setGeneratorMode] = useState<"standard" | "advanced">("standard");
 
   // Operation state
   const [isWorking, setIsWorking] = useState<boolean>(false);
@@ -148,7 +146,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
         );
       }
     } catch (err) {
-      showFeedback(err instanceof Error ? err.message : "En feil oppstod under fylling av Firestore.", "error");
+      showFeedback(err instanceof Error ? err.message : "En feil oppstod under fylling av databasen.", "error");
     } finally {
       setIsWorking(false);
     }
@@ -229,12 +227,12 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
       const res = await fetch("/api/public/gatherings");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      setApiTestResponse(`Suksess: Mottok ${data.gatherings?.length ?? 0} offentlige samlinger fra API.`);
-      showFeedback("API-endepunktet svarer som forventet!");
+      setApiTestResponse(`Suksess: Mottok ${data.gatherings?.length ?? 0} offentlige samlinger.`);
+      showFeedback("Utvekslingen med eksterne nettsider svarer som forventet.");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "API-feil";
+      const msg = err instanceof Error ? err.message : "Ukjent feil";
       setApiTestResponse(`Feil: ${msg}`);
-      showFeedback(`Kunne ikke nå API-endepunkt: ${msg}`, "error");
+      showFeedback(`Kunne ikke nå utvekslingen med eksterne nettsider: ${msg}`, "error");
     } finally {
       setIsTestingApi(false);
     }
@@ -260,12 +258,12 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             <span>Database og Testdata</span>
           </h2>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
-            Administrer Firestore-databasen, fyll inn testdata for menigheten med egne glidebrytere eller ferdige pakker, styr moduler og
+            Administrer databasen, fyll inn testdata for menigheten med egne glidebrytere eller ferdige pakker, styr moduler og
             overvåk sanntidsstatus.
           </p>
         </div>
 
-        {/* Live Firestore Connection Status */}
+        {/* Live status for databasen */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/80 shrink-0 self-start sm:self-auto">
           <span
             className={`w-2 h-2 rounded-full ${
@@ -273,7 +271,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             }`}
           />
           <span className="text-xs font-semibold text-slate-200">
-            {isFirestoreConnected ? "Firestore tilkoblet" : "Kobler til Firestore..."}
+            {isFirestoreConnected ? "Databasen er tilkoblet" : "Kobler til databasen …"}
           </span>
         </div>
       </div>
@@ -284,7 +282,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
             Gjeldende innhold i databasen ({totalDocuments} dokumenter)
           </h3>
-          <span className="text-[11px] text-slate-400">Sanntidssynkronisert med Firestore</span>
+          <span className="text-[11px] text-slate-400">Oppdateres fortløpende</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -354,292 +352,260 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
 
       {/* Seksjon 2: Populeringsvelger */}
       <section className="space-y-4">
-        {/* Modus-velger */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-3">
-          <button
-            type="button"
-            onClick={() => setGeneratorMode("standard")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              generatorMode === "standard"
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "bg-slate-800/80 text-slate-400 hover:text-white"
-            }`}
-          >
-            Hurtiggenerator (Datatyper & slider 1-100)
-          </button>
-          <button
-            type="button"
-            onClick={() => setGeneratorMode("advanced")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              generatorMode === "advanced"
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "bg-slate-800/80 text-slate-400 hover:text-white"
-            }`}
-          >
-            Avansert planlegger-oppsett (Pakker & detaljglidere)
-          </button>
-        </div>
-
-        {generatorMode === "standard" ? (
-          <div className="p-5 sm:p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80">
-            <DatabaseTestdataTab showFeedback={showFeedback} />
-          </div>
-        ) : (
-          <div className="p-5 sm:p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-700/60 pb-4">
-              <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span>Generer og populer testdata</span>
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Velg en ferdig pakke eller finjuster glidebryterne for nøyaktig antall personer, grupper, samlinger og oppgaver.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-indigo-300 font-semibold bg-indigo-950/80 border border-indigo-800/80 px-2.5 py-1 rounded-lg">
-                  Maks oppsett: 32 personer / 12 grupper
-                </span>
-              </div>
+        <div className="p-5 sm:p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-700/60 pb-4">
+            <div>
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>Generer og populer testdata</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Velg en ferdig pakke eller finjuster glidebryterne for nøyaktig antall personer, grupper, samlinger og oppgaver.
+              </p>
             </div>
-
-        {/* 1. Pakkevelgere */}
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-300">Velg en forhåndsdefinert pakke:</label>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {PRESET_PACKAGES.map((preset) => {
-              const isSelected = activePreset === preset.id;
-              return (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => applyPreset(preset)}
-                  className={`p-4 rounded-xl text-left border transition-all cursor-pointer flex flex-col justify-between space-y-2 ${
-                    isSelected
-                      ? "bg-indigo-950/60 border-indigo-500 shadow-md ring-1 ring-indigo-500/50"
-                      : "bg-slate-900/60 border-slate-700 hover:border-slate-600 hover:bg-slate-900"
-                  }`}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-white text-sm">{preset.name}</span>
-                      {isSelected ? (
-                        <span className="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center">
-                          <Check className="w-3 h-3" />
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-semibold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
-                          {preset.tag}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-400 leading-relaxed">{preset.description}</p>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-800/80 text-[11px] text-slate-300 font-mono flex items-center justify-between">
-                    <span>{preset.persons} personer</span>
-                    <span>{preset.groups} grupper</span>
-                    <span>{preset.gatherings} samlinger</span>
-                  </div>
-                </button>
-              );
-            })}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-indigo-300 font-semibold bg-indigo-950/80 border border-indigo-800/80 px-2.5 py-1 rounded-lg">
+                Maks oppsett: 32 personer / 12 grupper
+              </span>
+            </div>
           </div>
-        </div>
 
-        {/* 2. Glidebrytere for finjustering */}
-        <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-700/60 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-              <Sliders className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Finjuster antall elementer for populering</span>
+      {/* 1. Pakkevelgere */}
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-slate-300">Velg en forhåndsdefinert pakke:</label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {PRESET_PACKAGES.map((preset) => {
+            const isSelected = activePreset === preset.id;
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => applyPreset(preset)}
+                className={`p-4 rounded-xl text-left border transition-all cursor-pointer flex flex-col justify-between space-y-2 ${
+                  isSelected
+                    ? "bg-indigo-950/60 border-indigo-500 shadow-md ring-1 ring-indigo-500/50"
+                    : "bg-slate-900/60 border-slate-700 hover:border-slate-600 hover:bg-slate-900"
+                }`}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-white text-sm">{preset.name}</span>
+                    {isSelected ? (
+                      <span className="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                        <Check className="w-3 h-3" />
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-semibold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
+                        {preset.tag}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">{preset.description}</p>
+                </div>
+
+                <div className="pt-2 border-t border-slate-800/80 text-[11px] text-slate-300 font-mono flex items-center justify-between">
+                  <span>{preset.persons} personer</span>
+                  <span>{preset.groups} grupper</span>
+                  <span>{preset.gatherings} samlinger</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 2. Glidebrytere for finjustering */}
+      <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-700/60 space-y-4">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+            <Sliders className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Finjuster antall elementer for populering</span>
+          </span>
+          {activePreset === "custom" && (
+            <span className="text-[10px] text-amber-300 font-semibold bg-amber-950/80 border border-amber-800 px-2 py-0.5 rounded">
+              Egendefinert oppsett
             </span>
-            {activePreset === "custom" && (
-              <span className="text-[10px] text-amber-300 font-semibold bg-amber-950/80 border border-amber-800 px-2 py-0.5 rounded">
-                Egendefinert oppsett
-              </span>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-1">
-            {/* Personer */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-300 font-semibold">Personer:</span>
-                <span className="font-mono font-bold text-indigo-400 text-sm">{personCount} av 32</span>
-              </div>
-              <input
-                type="range"
-                min={4}
-                max={32}
-                value={personCount}
-                onChange={(e) => handleCustomChange(setPersonCount, Number(e.target.value))}
-                className="w-full accent-indigo-500 cursor-pointer"
-              />
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                <span>4 (Minimum)</span>
-                <span>16</span>
-                <span>32 (Maks)</span>
-              </div>
-            </div>
-
-            {/* Grupper */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-300 font-semibold">Grupper & Husfellesskap:</span>
-                <span className="font-mono font-bold text-emerald-400 text-sm">{groupCount} av 12</span>
-              </div>
-              <input
-                type="range"
-                min={2}
-                max={12}
-                value={groupCount}
-                onChange={(e) => handleCustomChange(setGroupCount, Number(e.target.value))}
-                className="w-full accent-emerald-500 cursor-pointer"
-              />
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                <span>2 (Kjerne)</span>
-                <span>6</span>
-                <span>12 (Maks)</span>
-              </div>
-            </div>
-
-            {/* Samlinger */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-300 font-semibold">Samlinger & Gudstjenester:</span>
-                <span className="font-mono font-bold text-amber-400 text-sm">{gatheringCount} av 19</span>
-              </div>
-              <input
-                type="range"
-                min={2}
-                max={19}
-                value={gatheringCount}
-                onChange={(e) => handleCustomChange(setGatheringCount, Number(e.target.value))}
-                className="w-full accent-amber-500 cursor-pointer"
-              />
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                <span>2</span>
-                <span>10</span>
-                <span>19 (Maks)</span>
-              </div>
-            </div>
-
-            {/* Oppgaver */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-300 font-semibold">Bemanningsoppgaver:</span>
-                <span className="font-mono font-bold text-sky-400 text-sm">{taskCount} av 21</span>
-              </div>
-              <input
-                type="range"
-                min={2}
-                max={21}
-                value={taskCount}
-                onChange={(e) => handleCustomChange(setTaskCount, Number(e.target.value))}
-                className="w-full accent-sky-500 cursor-pointer"
-              />
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                <span>2</span>
-                <span>11</span>
-                <span>21 (Maks)</span>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Dynamisk oppsummering av hva som inkluderes */}
-        <div className="p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-900/50 text-xs text-slate-300 space-y-1">
-          <div className="font-bold text-indigo-300 flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Hva inkluderes med {personCount} personer og {groupCount} grupper:</span>
-          </div>
-          <p className="text-slate-400 text-[11px] leading-relaxed">
-            {personCount >= 32
-              ? "Alle 3 pastorer (Hovedpastor, Ungdomspastor, Barne- og familiepastor), hele menighetsrådet (7 personer), hele staben (diakon, musikk, teknikk), samtlige frivillige teamledere og 4 husfellesskap (Sentrum, Havna, Borkedalen, Ung Voksen)."
-              : personCount >= 16
-              ? "Pastorer, rådsmedlemmer, stabsmedlemmer (diakoni, musikk), frivillige teamledere (kaffe, lovsang, lyd) og husfellesskap."
-              : personCount >= 8
-              ? "Hovedpastor, daglig leder, menighetsrådsleder, ungdomspastor, barne- og familiepastor og sentrale nøkkelpersoner."
-              : "Hovedpastor Kari Nordmann, daglig leder Ola Hansen, barneleder Ingrid Berg og menighetsrådsleder Jonas Lie."}
-          </p>
-        </div>
-
-        {/* 3. Avkrysningsboks for selektiv tømming før populering */}
-        <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-700/80 flex items-start gap-3">
-          <input
-            id="clear-before-populate-checkbox"
-            type="checkbox"
-            checked={clearBeforePopulate}
-            onChange={(e) => setClearBeforePopulate(e.target.checked)}
-            className="mt-0.5 w-4 h-4 rounded border-slate-600 bg-slate-800 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900 cursor-pointer accent-indigo-600"
-          />
-          <label htmlFor="clear-before-populate-checkbox" className="text-xs space-y-0.5 cursor-pointer">
-            <div className="font-bold text-slate-200 flex items-center gap-1.5">
-              <span>Tøm eksisterende testpersoner og planleggerdata før fylling</span>
-              <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-1.5 py-0.2 rounded">
-                Standard / Anbefalt
-              </span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-1">
+          {/* Personer */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-300 font-semibold">Personer:</span>
+              <span className="font-mono font-bold text-indigo-400 text-sm">{personCount} av 32</span>
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Fjerner tidligere testpersoner, grupper, samlinger og oppgaver i planleggeren før nye data legges inn, slik at databasen forblir ren og fri for duplikater.
-              <span className="text-emerald-300 font-medium ml-1">
-                CMS-sider, artikler, taler og nettstedsinnstillinger bevares trygt intakt.
-              </span>
-            </p>
-          </label>
-        </div>
-
-        {/* Hovedhandlinger for populering */}
-        <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="text-xs text-slate-400">
-            {clearBeforePopulate ? (
-              <span className="text-amber-300/90 flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
-                Tømmer eksisterende planleggerdata før fylling
-              </span>
-            ) : (
-              <span className="text-slate-400">
-                Overskriver eksisterende dokumenter med samme ID (uten sletting)
-              </span>
-            )}
+            <input
+              type="range"
+              min={4}
+              max={32}
+              value={personCount}
+              onChange={(e) => handleCustomChange(setPersonCount, Number(e.target.value))}
+              className="w-full accent-indigo-500 cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>4 (Minimum)</span>
+              <span>16</span>
+              <span>32 (Maks)</span>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Hurtigknapp: 32 personer fullskala */}
-            <button
-              type="button"
-              onClick={handleQuickPopulate32}
-              disabled={isWorking}
-              className="px-4 py-2.5 rounded-xl bg-indigo-950/80 hover:bg-indigo-900/80 border border-indigo-700/70 text-indigo-200 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-50"
-            >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>Populer 32 testpersoner</span>
-            </button>
+          {/* Grupper */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-300 font-semibold">Grupper & Husfellesskap:</span>
+              <span className="font-mono font-bold text-emerald-400 text-sm">{groupCount} av 12</span>
+            </div>
+            <input
+              type="range"
+              min={2}
+              max={12}
+              value={groupCount}
+              onChange={(e) => handleCustomChange(setGroupCount, Number(e.target.value))}
+              className="w-full accent-emerald-500 cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>2 (Kjerne)</span>
+              <span>6</span>
+              <span>12 (Maks)</span>
+            </div>
+          </div>
 
-            {/* Hovedknapp med valgte glidebryter-verdier */}
-            <button
-              type="button"
-              onClick={handlePopulate}
-              disabled={isWorking}
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer shrink-0"
-            >
-              {isWorking ? (
-                <Loader2 className="w-4 h-4 animate-spin text-white" />
-              ) : (
-                <RefreshCw className="w-4 h-4 text-white" />
-              )}
-              <span>
-                {isWorking
-                  ? "Skriver til Firestore..."
-                  : `Populer databasen (${personCount} personer, ${groupCount} grupper)`}
-              </span>
-            </button>
+          {/* Samlinger */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-300 font-semibold">Samlinger & Gudstjenester:</span>
+              <span className="font-mono font-bold text-amber-400 text-sm">{gatheringCount} av 19</span>
+            </div>
+            <input
+              type="range"
+              min={2}
+              max={19}
+              value={gatheringCount}
+              onChange={(e) => handleCustomChange(setGatheringCount, Number(e.target.value))}
+              className="w-full accent-amber-500 cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>2</span>
+              <span>10</span>
+              <span>19 (Maks)</span>
+            </div>
+          </div>
+
+          {/* Oppgaver */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-300 font-semibold">Bemanningsoppgaver:</span>
+              <span className="font-mono font-bold text-sky-400 text-sm">{taskCount} av 21</span>
+            </div>
+            <input
+              type="range"
+              min={2}
+              max={21}
+              value={taskCount}
+              onChange={(e) => handleCustomChange(setTaskCount, Number(e.target.value))}
+              className="w-full accent-sky-500 cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>2</span>
+              <span>11</span>
+              <span>21 (Maks)</span>
+            </div>
           </div>
         </div>
       </div>
-    )}
-  </section>
+
+      {/* Dynamisk oppsummering av hva som inkluderes */}
+      <div className="p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-900/50 text-xs text-slate-300 space-y-1">
+        <div className="font-bold text-indigo-300 flex items-center gap-1.5">
+          <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />
+          <span>Hva inkluderes med {personCount} personer og {groupCount} grupper:</span>
+        </div>
+        <p className="text-slate-400 text-[11px] leading-relaxed">
+          {personCount >= 32
+            ? "Alle 3 pastorer (Hovedpastor, Ungdomspastor, Barne- og familiepastor), hele menighetsrådet (7 personer), hele staben (diakon, musikk, teknikk), samtlige frivillige teamledere og 4 husfellesskap (Sentrum, Havna, Borkedalen, Ung Voksen)."
+            : personCount >= 16
+            ? "Pastorer, rådsmedlemmer, stabsmedlemmer (diakoni, musikk), frivillige teamledere (kaffe, lovsang, lyd) og husfellesskap."
+            : personCount >= 8
+            ? "Hovedpastor, daglig leder, menighetsrådsleder, ungdomspastor, barne- og familiepastor og sentrale nøkkelpersoner."
+            : "Hovedpastor Kari Nordmann, daglig leder Ola Hansen, barneleder Ingrid Berg og menighetsrådsleder Jonas Lie."}
+        </p>
+      </div>
+
+      {/* 3. Avkrysningsboks for selektiv tømming før populering */}
+      <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-700/80 flex items-start gap-3">
+        <input
+          id="clear-before-populate-checkbox"
+          type="checkbox"
+          checked={clearBeforePopulate}
+          onChange={(e) => setClearBeforePopulate(e.target.checked)}
+          className="mt-0.5 w-4 h-4 rounded border-slate-600 bg-slate-800 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900 cursor-pointer accent-indigo-600"
+        />
+        <label htmlFor="clear-before-populate-checkbox" className="text-xs space-y-0.5 cursor-pointer">
+          <div className="font-bold text-slate-200 flex items-center gap-1.5">
+            <span>Tøm eksisterende testpersoner og planleggerdata før fylling</span>
+            <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-1.5 py-0.2 rounded">
+              Standard / Anbefalt
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Fjerner tidligere testpersoner, grupper, samlinger og oppgaver i planleggeren før nye data legges inn, slik at databasen forblir ren og fri for duplikater.
+            <span className="text-emerald-300 font-medium ml-1">
+              CMS-sider, artikler, taler og nettstedsinnstillinger bevares trygt intakt.
+            </span>
+          </p>
+        </label>
+      </div>
+
+      {/* Hovedhandlinger for populering */}
+      <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="text-xs text-slate-400">
+          {clearBeforePopulate ? (
+            <span className="text-amber-300/90 flex items-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+              Tømmer eksisterende planleggerdata før fylling
+            </span>
+          ) : (
+            <span className="text-slate-400">
+              Overskriver eksisterende dokumenter med samme ID (uten sletting)
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Hurtigknapp: 32 personer fullskala */}
+          <button
+            type="button"
+            onClick={handleQuickPopulate32}
+            disabled={isWorking}
+            className="px-4 py-2.5 rounded-xl bg-indigo-950/80 hover:bg-indigo-900/80 border border-indigo-700/70 text-indigo-200 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+          >
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span>Populer 32 testpersoner</span>
+          </button>
+
+          {/* Hovedknapp med valgte glidebryter-verdier */}
+          <button
+            type="button"
+            onClick={handlePopulate}
+            disabled={isWorking}
+            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer shrink-0"
+          >
+            {isWorking ? (
+              <Loader2 className="w-4 h-4 animate-spin text-white" />
+            ) : (
+              <RefreshCw className="w-4 h-4 text-white" />
+            )}
+            <span>
+              {isWorking
+                ? "Skriver til databasen …"
+                : `Populer databasen (${personCount} personer, ${groupCount} grupper)`}
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+      </section>
 
       {/* Seksjon 3: Valgfrie Tilleggsmoduler (Kalender & Meldinger) */}
       <section className="p-5 sm:p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-4">
@@ -722,7 +688,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
         </div>
       </section>
 
-      {/* Seksjon 4: Offentlig API-endepunkt & Integrasjon */}
+      {/* Seksjon 4: Utveksling med eksterne nettsider */}
       <section className="p-5 sm:p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-4">
         <div>
           <h3 className="text-base font-bold text-white flex items-center gap-2">
@@ -738,10 +704,10 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-bold text-sky-300">GET /api/public/gatherings</span>
-              <span className="text-[10px] text-slate-400">JSON API</span>
+              <span className="text-[10px] text-slate-400">Eksterne nettsider</span>
             </div>
             <p className="text-xs text-slate-400">
-              Leverer sanitert JSON-format i henhold til API-kontrakten. Kun samlinger merket som offentlige deles.
+              Gir eksterne nettsider de offentlige samlingene i et fast format. Bare samlinger merket som offentlige deles.
             </p>
             {apiTestResponse && (
               <p
@@ -761,7 +727,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             className="px-4 py-2 rounded-xl bg-sky-950/80 hover:bg-sky-900 border border-sky-800 text-sky-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
           >
             {isTestingApi ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-            <span>Test API-endepunkt nå</span>
+            <span>Test utvekslingen nå</span>
           </button>
         </div>
       </section>
@@ -779,7 +745,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             </p>
           </div>
           <span className="text-xs font-mono font-bold text-red-300 bg-red-950/80 border border-red-800/80 px-2 py-0.5 rounded self-start sm:self-auto">
-            {totalDocuments} dokumenter i Firestore
+            {totalDocuments} dokumenter i databasen
           </span>
         </div>
 
@@ -895,7 +861,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Dette vil permanent slette <strong>{totalDocuments} dokumenter</strong> fra Firestore for alle brukere
+              Dette vil permanent slette <strong>{totalDocuments} dokumenter</strong> fra databasen for alle brukere
               (personer, grupper, samlinger, oppgaver, meldinger og CMS-innhold som sider og nyheter).
             </p>
 

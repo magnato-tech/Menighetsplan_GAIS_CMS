@@ -1,11 +1,7 @@
 import { describe, expect, test, vi, beforeEach } from "vitest";
 import {
   generateTestdata,
-  generate32TestPersons,
   clearTestdata,
-  deletePersonsTestdata,
-  deleteGroupsTestdata,
-  deleteRolesTestdata,
   clearPlannerTestData,
 } from "../services/testdataService";
 import { COLLECTIONS, CMS_COLLECTIONS } from "../data/collections";
@@ -56,14 +52,6 @@ describe("testdataService", () => {
     expect(result.total).toBeGreaterThan(44);
   });
 
-  test("generate32TestPersons genererer nøyaktig 32 testpersoner", async () => {
-    const result = await generate32TestPersons({ clearExisting: false });
-
-    expect(result.success).toBe(true);
-    expect(result.counts[COLLECTIONS.PERSONS]).toBe(32);
-    expect(result.counts[COLLECTIONS.GROUPS]).toBe(12);
-  });
-
   test("clearTestdata sletter kun planlegger-samlinger og bevarer CMS-innhold", async () => {
     const result = await clearTestdata();
 
@@ -87,34 +75,5 @@ describe("testdataService", () => {
     expect(result.success).toBe(true);
     expect(result.counts[COLLECTIONS.PERSONS]).toBeDefined();
     expect(result.counts[COLLECTIONS.GROUPS]).toBeDefined();
-  });
-
-  test("deletePersonsTestdata sletter kun personer og tildelinger", async () => {
-    const result = await deletePersonsTestdata();
-    expect(result.success).toBe(true);
-    const deleted = Object.keys(result.counts);
-    expect(deleted).toContain(COLLECTIONS.PERSONS);
-    expect(deleted).toContain(COLLECTIONS.ASSIGNMENTS);
-    expect(deleted).not.toContain(COLLECTIONS.GROUPS);
-    expect(deleted).not.toContain(COLLECTIONS.GATHERINGS);
-  });
-
-  test("deleteGroupsTestdata sletter kun grupper, samlinger og oppgaver", async () => {
-    const result = await deleteGroupsTestdata();
-    expect(result.success).toBe(true);
-    const deleted = Object.keys(result.counts);
-    expect(deleted).toContain(COLLECTIONS.GROUPS);
-    expect(deleted).toContain(COLLECTIONS.GATHERINGS);
-    expect(deleted).toContain(COLLECTIONS.TASKS);
-    expect(deleted).not.toContain(COLLECTIONS.PERSONS);
-  });
-
-  test("deleteRolesTestdata sletter kun roller og tildelinger", async () => {
-    const result = await deleteRolesTestdata();
-    expect(result.success).toBe(true);
-    const deleted = Object.keys(result.counts);
-    expect(deleted).toContain(COLLECTIONS.ASSIGNMENTS);
-    expect(deleted).not.toContain(COLLECTIONS.PERSONS);
-    expect(deleted).not.toContain(COLLECTIONS.GROUPS);
   });
 });

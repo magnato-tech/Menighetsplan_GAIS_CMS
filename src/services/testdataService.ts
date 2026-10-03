@@ -144,51 +144,6 @@ export async function clearTestdata(
 }
 
 /**
- * Sletter kun testpersoner og tilhørende tildelinger i Firestore.
- */
-export async function deletePersonsTestdata(): Promise<TestdataServiceResult> {
-  return clearTestdata({
-    persons: true,
-    roles: true,
-    groups: false,
-    gatherings: false,
-    tasks: false,
-    groupMessages: false,
-    attendance: false,
-  });
-}
-
-/**
- * Sletter kun testgrupper og tilhørende samlinger/oppgaver i Firestore.
- */
-export async function deleteGroupsTestdata(): Promise<TestdataServiceResult> {
-  return clearTestdata({
-    persons: false,
-    roles: false,
-    groups: true,
-    gatherings: true,
-    tasks: true,
-    groupMessages: true,
-    attendance: true,
-  });
-}
-
-/**
- * Sletter roller og tildelinger i Firestore.
- */
-export async function deleteRolesTestdata(): Promise<TestdataServiceResult> {
-  return clearTestdata({
-    persons: false,
-    groups: false,
-    roles: true,
-    gatherings: false,
-    tasks: false,
-    groupMessages: false,
-    attendance: false,
-  });
-}
-
-/**
  * Genererer et konsistent sett med testdata for personer, grupper og roller i Firestore.
  * Opprettholder referanseintegritet mellom medlemmer, grupper, oppgaver og lederroller.
  */
@@ -246,23 +201,6 @@ export async function generateTestdata(
   result.durationMs = Date.now() - startTime;
   result.success = result.failures.length === 0;
   return result;
-}
-
-/**
- * Genererer nøyaktig 32 testpersoner med varierende tilhørighet og roller i Firestore.
- * Dekker administrasjon, pastorer, stab, lovsangsledelse, teknisk team og husfellesskap.
- */
-export async function generate32TestPersons(options?: {
-  clearExisting?: boolean;
-  groupCount?: number;
-  roleCount?: number;
-}): Promise<TestdataServiceResult> {
-  return generateTestdata({
-    personCount: 32,
-    groupCount: options?.groupCount ?? 12,
-    roleCount: options?.roleCount ?? 14,
-    clearExisting: options?.clearExisting ?? true,
-  });
 }
 
 /**
