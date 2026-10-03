@@ -30,7 +30,6 @@ describe("Filstørrelse: en fil som får mer enn 400 linjer bør deles", () => {
    */
   const KNOWN_LARGE: Record<string, number> = {
     "src/components/GroupChat.tsx": 634,
-    "src/pages/admin/tabs/pages/PageTreeList.tsx": 605,
     "src/pages/leaderGroup/GroupActivities.tsx": 591,
     "src/components/GatheringDetailView.tsx": 584,
     "src/context/FirebaseDataContext.tsx": 520,
