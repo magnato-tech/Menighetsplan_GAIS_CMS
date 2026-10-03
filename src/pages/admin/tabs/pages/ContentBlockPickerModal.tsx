@@ -139,7 +139,7 @@ Husk å ta med egen kopp til kirkekaffen om du har lyst! Det er gratis parkering
   },
   {
     id: "cta",
-    title: "Handlingsknapp (CTA)",
+    title: "Handlingsknapp",
     category: "Interaksjon",
     description: "Sentrert eller venstrestilt farget handlingsknapp for påmelding, kontakt eller arrangementer.",
     icon: <MousePointerClick className="w-5 h-5 text-rose-400" />,
@@ -189,7 +189,7 @@ export const ContentBlockPickerModal: React.FC<ContentBlockPickerModalProps> = (
             <div>
               <h3 className="text-base font-bold text-white">Legg til ferdig innholdsblokk</h3>
               <p className="text-xs text-slate-400">
-                Velg en forhåndsformatert Tailwind-blokk. Malen settes rett inn i innholdet for enkel redigering.
+                Velg en ferdig blokk. Malen settes rett inn i innholdet, der du bytter ut teksten.
               </p>
             </div>
           </div>

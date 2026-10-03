@@ -121,7 +121,7 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
           <div>
             <h2 className="text-xl sm:text-2xl font-black text-white">Gudstjenester & Møter</h2>
             <p className="text-xs text-slate-400">
-              Full oversikt over menighetens samlinger fra Firestore. Opprett nye og administrer oppgaver.
+              Full oversikt over menighetens samlinger. Opprett nye og administrer oppgaver.
             </p>
           </div>
         </div>

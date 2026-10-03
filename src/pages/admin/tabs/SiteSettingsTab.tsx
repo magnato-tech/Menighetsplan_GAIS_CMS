@@ -30,7 +30,7 @@ export const SiteSettingsTab: React.FC = () => {
       <div className="border-b border-slate-800 pb-4">
         <h2 className="text-xl sm:text-2xl font-black text-white">Nettside-innstillinger</h2>
         <p className="text-xs text-slate-400">
-          Oppdater menighetens faste informasjon, Vipps-nummer, bankkonto, adresse og sosiale medier på felles Firestore.
+          Oppdater menighetens faste informasjon, Vipps-nummer, bankkonto, adresse og sosiale medier.
         </p>
       </div>
 
@@ -211,7 +211,7 @@ export const SiteSettingsTab: React.FC = () => {
             className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md flex items-center gap-2"
           >
             <Save className="w-4 h-4" />
-            <span>Lagre alle innstillinger til Firestore</span>
+            <span>Lagre alle innstillinger</span>
           </button>
         </div>
       </form>

@@ -162,7 +162,7 @@ export const SermonsTab: React.FC<SermonsTabProps> = ({ studio, showFeedback }) 
             </div>
 
             <div className="space-y-1 md:col-span-2">
-              <label className="font-semibold text-slate-300">Video-URL (YouTube/Vimeo)</label>
+              <label className="font-semibold text-slate-300">Videoadresse (YouTube/Vimeo)</label>
               <input
                 type="url"
                 value={editingSermon.videoUrl || ""}
@@ -195,7 +195,7 @@ export const SermonsTab: React.FC<SermonsTabProps> = ({ studio, showFeedback }) 
               type="submit"
               className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-sm"
             >
-              Lagre tale til Firestore
+              Lagre tale
             </button>
           </div>
         </form>

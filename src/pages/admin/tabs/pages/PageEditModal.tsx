@@ -217,7 +217,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
 
         {/* URL Slug */}
         <div className="space-y-1">
-          <label className="text-xs font-semibold text-slate-300 block">Adresse / Slug (f.eks. /om-oss)</label>
+          <label className="text-xs font-semibold text-slate-300 block">Adresse (f.eks. om-oss)</label>
           <input
             type="text"
             value={editingPage.slug || ""}
@@ -235,7 +235,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             Overstyr lenkeadresse (valgfritt)
           </label>
           <span className="text-[10px] text-slate-400">
-            For lenker til eksisterende moduler som /hva-skjer, /grupper, /taler, eller full URL
+            Peker menyvalget til en innebygd side som /hva-skjer, /fellesskap eller /taler, eller til en full nettadresse
           </span>
         </div>
         <input
@@ -267,7 +267,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             ))}
           </select>
           <p className="text-[11px] text-slate-400">
-            Velg om siden skal ligge direkte i menylinjen eller som et valg i en dropdown under en hovedfane.
+            Velg om siden skal ligge direkte i menylinjen eller som et valg i nedtrekksmenyen under en hovedfane.
           </p>
         </div>
 
@@ -312,9 +312,8 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
       <div className="space-y-2">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
           <label className="text-xs font-semibold text-slate-300 block">
-            Hovedinnhold (Markdown & kontrollerte komponenter)
+            Hovedinnhold
           </label>
-          <span className="text-[10px] text-indigo-400">Kontrollert Tailwind designsystem</span>
         </div>
 
         {/* Komponent-verktøylinje */}
@@ -399,10 +398,10 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
                 )
               }
               className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-              title="Sett inn handlingsknapp (CTA)"
+              title="Sett inn handlingsknapp"
             >
               <MousePointerClick className="w-3 h-3 text-indigo-400" />
-              <span>Handlingsknapp (CTA)</span>
+              <span>Handlingsknapp</span>
             </button>
           </div>
         </div>
@@ -428,7 +427,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
                 <span>Søk og deling</span>
               </h3>
               <p className="text-[11px] text-slate-400">
-                Styr hvordan siden vises på Google og ved deling på Facebook, X, Slack og iMessage.
+                Styr hvordan siden vises i søkeresultater og når noen deler lenken.
               </p>
             </div>
           </div>
@@ -438,7 +437,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             onClick={() => setShowSeoDetails(!showSeoDetails)}
             className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
           >
-            <span>{showSeoDetails ? "Skjul detaljer" : "Rediger SEO-felter"}</span>
+            <span>{showSeoDetails ? "Skjul detaljer" : "Rediger søk og deling"}</span>
             {showSeoDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
         </div>
@@ -517,7 +516,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
                   type="text"
                   value={editingPage.ogImage || ""}
                   onChange={(e) => onUpdate({ ...editingPage, ogImage: e.target.value })}
-                  placeholder="https://... (URL til delebilde, anbefalt 1200x630px)"
+                  placeholder="https://... (adressen til delebildet, helst 1200 × 630 piksler)"
                   className="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-hidden focus:border-indigo-500"
                 />
                 {editingPage.ogImage && (
@@ -644,7 +643,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             <div>
               <span className="font-semibold block text-white text-xs">Vis i offentlig meny</span>
               <span className="text-[11px] text-slate-400 block leading-tight mt-0.5">
-                Vises i toppmenyen eller dropdown (hvis av: kun tilgjengelig via direkte lenke).
+                Vises i toppmenyen eller nedtrekksmenyen. Slått av er siden bare tilgjengelig via direkte lenke.
               </span>
             </div>
           </label>
@@ -772,7 +771,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             type="submit"
             className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-sm cursor-pointer transition-colors"
           >
-            Lagre side til Firestore
+            Lagre side
           </button>
         </div>
       </div>

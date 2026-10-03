@@ -197,7 +197,7 @@ export const AdminCmsPanel: React.FC<AdminCmsPanelProps> = ({
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-white">Sider & Innhold på nettsiden</h2>
           <p className="text-xs text-slate-400">
-            Administrer nettsidens hierarkiske menystruktur, hovedfaner og underfaner (dropdowns).
+            Bygg menyen på nettsiden: hovedfaner og underfaner.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -207,7 +207,7 @@ export const AdminCmsPanel: React.FC<AdminCmsPanelProps> = ({
             title="Gå til Tema & Designsystem for fargetilpasning og typografi"
           >
             <Palette className="w-4 h-4 text-pink-400" />
-            <span>Designsystem & CSS</span>
+            <span>Design</span>
           </Link>
 
           <button

@@ -73,7 +73,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
                 <h2 className="text-sm font-black text-white tracking-tight">Admin & CMS Studio</h2>
                 <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-semibold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Firestore Sanntid</span>
+                  <span>Oppdateres i sanntid</span>
                 </div>
               </div>
             </div>
@@ -216,9 +216,6 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
                 <Palette className="w-4 h-4 text-pink-400" />
                 <span>Tema & Designsystem</span>
               </div>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
-                CSS
-              </span>
             </button>
 
             <button

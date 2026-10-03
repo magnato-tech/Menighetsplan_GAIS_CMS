@@ -210,7 +210,7 @@ export const HeroImageUploader: React.FC<HeroImageUploaderProps> = ({
                   className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-300 hover:text-white border border-slate-700 font-medium flex items-center gap-1 cursor-pointer transition-colors"
                 >
                   <LinkIcon className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Lim inn URL</span>
+                  <span>Lim inn bildeadresse</span>
                 </button>
 
                 <button

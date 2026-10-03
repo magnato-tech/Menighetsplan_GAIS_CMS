@@ -111,7 +111,7 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
                 type="email"
                 value={editingStaff.email || ""}
                 onChange={(e) => setEditingStaff({ ...editingStaff, email: e.target.value })}
-                placeholder="pastor@lillesandmisjonskirke.no"
+                placeholder="fornavn@menigheten.no"
                 className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
               />
             </div>
@@ -150,7 +150,7 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
               type="submit"
               className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm"
             >
-              Lagre til Firestore
+              Lagre
             </button>
           </div>
         </form>

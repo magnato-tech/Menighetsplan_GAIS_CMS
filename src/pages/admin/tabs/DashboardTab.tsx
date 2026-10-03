@@ -36,7 +36,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ studio, onTabChange,
             Velkommen til Admin Studio
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Komplett administrasjon av {settings.churchName}: offentlig nettside, gudstjenestelister og frivillige på felles Firestore-database.
+            Komplett administrasjon av {settings.churchName}: nettsiden, samlingene og de frivillige på ett sted.
           </p>
         </div>
 

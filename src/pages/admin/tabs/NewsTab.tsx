@@ -185,7 +185,7 @@ export const NewsTab: React.FC<NewsTabProps> = ({ studio, showFeedback, createRe
                 type="submit"
                 className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-sm"
               >
-                Lagre artikkel til Firestore
+                Lagre artikkel
               </button>
             </div>
           </div>
