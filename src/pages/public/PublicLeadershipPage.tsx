@@ -88,7 +88,7 @@ export const PublicLeadershipPage: React.FC = () => {
           Lederskap og medarbeidere
         </h1>
         <p className="text-base sm:text-lg text-stone-600 max-w-2xl font-medium leading-relaxed">
-          I {settings.churchName} ledes arbeidet av stabsgruppen, det valgte menighetsrådet og et dedikert lag av gruppeledere.
+          I {settings.churchName} ledes arbeidet av staben, lederskapet og gruppelederne.
         </p>
       </div>
 
@@ -101,7 +101,7 @@ export const PublicLeadershipPage: React.FC = () => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-stone-900">Stabsgruppe</h2>
-              <p className="text-xs text-stone-500">Menighetens ansatte og koordinerende medarbeidere</p>
+              <p className="text-xs text-stone-500">Menighetens ansatte</p>
             </div>
           </div>
         </div>

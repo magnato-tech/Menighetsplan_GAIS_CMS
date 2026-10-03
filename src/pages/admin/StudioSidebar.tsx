@@ -351,7 +351,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
                 <span>Database og Testdata</span>
               </div>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
-                Firestore
+                Database
               </span>
             </button>
           </div>
