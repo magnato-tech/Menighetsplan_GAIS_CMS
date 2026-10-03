@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
 import {
   Globe,
-  Settings,
   Calendar,
   FileText,
   ExternalLink,
@@ -21,6 +20,7 @@ import {
   Headphones,
   User,
   Palette,
+  Database,
 } from "lucide-react";
 import { StudioData, StudioTab, countUrgentTasks } from "./studio";
 
@@ -329,6 +329,31 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
               </span>
             </button>
           </div>
+
+          {/* Nav Section: System & Database */}
+          <div className="space-y-1">
+            <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-3 py-1">
+              System & Database
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onTabChange("database-admin")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                activeTab === "database-admin"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white hover:bg-slate-900"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Database className="w-4 h-4 text-indigo-400" />
+                <span>Database og Testdata</span>
+              </div>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+                Firestore
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Sidebar Footer / Quick Switchers */}
@@ -356,16 +381,21 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
 
-          <Link
-            to="/admin/settings"
-            className="flex items-center justify-between w-full px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold transition-colors"
+          <button
+            type="button"
+            onClick={() => onTabChange("database-admin")}
+            className={`flex items-center justify-between w-full px-3 py-2 rounded-lg font-semibold transition-colors cursor-pointer text-left ${
+              activeTab === "database-admin"
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-900 hover:bg-slate-800 text-slate-300"
+            }`}
           >
             <div className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              <span>Database & innstillinger</span>
+              <Database className="w-4 h-4 text-indigo-400" />
+              <span>Database & Testdata</span>
             </div>
             <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
+          </button>
 
           <div className="pt-2 border-t border-slate-800/60 text-[11px] text-slate-400 flex items-center justify-between">
             <span>Innlogget som:</span>

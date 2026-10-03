@@ -128,11 +128,18 @@ export const PublicLeadershipPage: React.FC = () => {
                       key={person.id}
                       className="bg-white rounded-2xl border border-stone-200/80 p-6 shadow-xs hover:border-primary-300 transition-all flex flex-col justify-between space-y-4"
                     >
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-primary-50 text-primary-800">
-                          {person.title || (isLeader ? "Hovedpastor / Leder" : "Stabsmedlem")}
-                        </span>
-                        <h3 className="font-bold text-stone-900 text-lg">{person.name}</h3>
+                      <div className="space-y-3">
+                        {person.avatarUrl && (
+                          <div className="w-16 h-16 rounded-2xl overflow-hidden bg-stone-100 border border-stone-200">
+                            <img src={person.avatarUrl} alt={person.name} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-primary-50 text-primary-800">
+                            {person.title || (isLeader ? "Hovedpastor / Leder" : "Stabsmedlem")}
+                          </span>
+                          <h3 className="font-bold text-stone-900 text-lg">{person.name}</h3>
+                        </div>
                       </div>
 
                       <div className="pt-3 border-t border-stone-100 flex flex-col gap-1.5 text-xs text-stone-600">
@@ -194,11 +201,18 @@ export const PublicLeadershipPage: React.FC = () => {
                       key={person.id}
                       className="bg-white rounded-2xl border border-stone-200/80 p-5 shadow-xs hover:border-accent-300 transition-all flex flex-col justify-between space-y-3"
                     >
-                      <div className="space-y-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-accent-50 text-accent-900">
-                          {person.title || (isLeader ? "Menighetsrådsleder" : roleInGroup)}
-                        </span>
-                        <h4 className="font-bold text-stone-900 text-base">{person.name}</h4>
+                      <div className="space-y-3">
+                        {person.avatarUrl && (
+                          <div className="w-14 h-14 rounded-2xl overflow-hidden bg-stone-100 border border-stone-200">
+                            <img src={person.avatarUrl} alt={person.name} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-accent-50 text-accent-900">
+                            {person.title || (isLeader ? "Menighetsrådsleder" : roleInGroup)}
+                          </span>
+                          <h4 className="font-bold text-stone-900 text-base">{person.name}</h4>
+                        </div>
                       </div>
 
                       <div className="pt-2 border-t border-stone-100 flex flex-col gap-1 text-xs text-stone-500">

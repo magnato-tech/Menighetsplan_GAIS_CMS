@@ -23,6 +23,9 @@ import {
   Image as ImageIcon,
   Clock,
   Calendar,
+  Briefcase,
+  Shield,
+  Users,
 } from "lucide-react";
 import { HeroImageUploader } from "./HeroImageUploader";
 import { ContentBlockPickerModal } from "./ContentBlockPickerModal";
@@ -402,6 +405,50 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             >
               <MousePointerClick className="w-3 h-3 text-indigo-400" />
               <span>Handlingsknapp</span>
+            </button>
+
+            <span className="w-px h-4 bg-slate-700 mx-1 hidden sm:inline-block" />
+
+            <button
+              type="button"
+              onClick={() =>
+                insertComponentSnippet(
+                  `:::personer[stab]`
+                )
+              }
+              className="px-2.5 py-1 rounded-lg bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/60 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              title="Sett inn alle ansatte i staben med bilde og kontaktinfo"
+            >
+              <Briefcase className="w-3 h-3 text-indigo-400" />
+              <span>Stab (ansatte)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                insertComponentSnippet(
+                  `:::personer[lederskap]`
+                )
+              }
+              className="px-2.5 py-1 rounded-lg bg-amber-950/60 hover:bg-amber-900 text-amber-300 border border-amber-800/60 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              title="Sett inn valgt lederskap / menighetsråd med verv"
+            >
+              <Shield className="w-3 h-3 text-amber-400" />
+              <span>Lederskap</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                insertComponentSnippet(
+                  `:::personer[pastor]`
+                )
+              }
+              className="px-2.5 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border border-emerald-800/60 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              title="Sett inn kun pastoren"
+            >
+              <Users className="w-3 h-3 text-emerald-400" />
+              <span>Kun pastor</span>
             </button>
           </div>
         </div>

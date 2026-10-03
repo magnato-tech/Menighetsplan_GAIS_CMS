@@ -1,6 +1,8 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
+import { useFirebase } from "../../context/FirebaseDataContext";
+import { toPublicProfile } from "../../utils/publicProfile";
 import {
   ArrowLeft,
   Heart,
@@ -15,11 +17,13 @@ import { formatNorwegianDateTime } from "../../utils/dates";
 
 interface PublicStaticPageProps {
   forcedSlug?: string;
+  fallbackComponent?: React.ReactNode;
 }
 
-export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }) => {
+export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug, fallbackComponent }) => {
   const { slug: paramSlug } = useParams<{ slug: string }>();
-  const { getPageBySlug, staff, settings } = useCms();
+  const { getPageBySlug, settings } = useCms();
+  const { allPersons } = useFirebase();
 
   const currentSlug = forcedSlug || paramSlug || "om-oss";
   const page = getPageBySlug(currentSlug);
@@ -28,6 +32,9 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
   const isAvailable = page ? isPagePublished(page) : false;
 
   if (!page || !isAvailable) {
+    if (fallbackComponent) {
+      return <>{fallbackComponent}</>;
+    }
     const isFutureScheduled =
       Boolean(page && page.publishAt && new Date(page.publishAt).getTime() > Date.now());
 
@@ -92,8 +99,8 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
         <CmsContentRenderer content={page.content} />
       </div>
 
-      {/* Lederskap & Stab (vises under Om oss) */}
-      {isAboutPage && (
+      {/* Lederskap & Stab (vises under Om oss hvis ikke allerede inkludert i blokk) */}
+      {isAboutPage && !page.content.includes(":::personer") && !page.content.includes(":::stab") && (
         <section className="space-y-6 pt-4">
           <div className="border-b border-stone-200 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -105,49 +112,78 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
                 Pastoren, ansatte i staben og menighetens valgte lederskap.
               </p>
             </div>
-            <Link
-              to="/lederskap"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary-700 hover:text-primary-900 bg-primary-50 px-3.5 py-2 rounded-xl transition-colors"
-            >
-              <span>Se full oversikt over Stab & Lederskap</span>
-              <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                to="/stab"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-primary-700 hover:text-primary-900 bg-primary-50 px-3.5 py-2 rounded-xl transition-colors"
+              >
+                <span>Våre ansatte (Stab)</span>
+                <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+              </Link>
+              <Link
+                to="/lederskap"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-700 hover:text-stone-900 bg-stone-100 px-3.5 py-2 rounded-xl transition-colors"
+              >
+                <span>Valgt lederskap</span>
+                <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+              </Link>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {staff.map((person) => (
-              <div
-                key={person.id}
-                className="bg-white rounded-2xl border border-stone-200/80 p-5 shadow-xs flex flex-col justify-between space-y-3"
-              >
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-primary-50 text-primary-800">
-                    {person.role}
-                  </span>
-                  <h3 className="font-bold text-stone-900 text-lg">{person.name}</h3>
-                  {person.bio && <p className="text-xs text-stone-500 leading-relaxed">{person.bio}</p>}
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {allPersons
+              .filter((p) => p.isStaff && toPublicProfile(p))
+              .map((person) => {
+                const profile = toPublicProfile(person)!;
+                return (
+                  <div
+                    key={person.id}
+                    className="bg-white rounded-2xl border border-stone-200/90 overflow-hidden shadow-xs hover:border-primary-300 transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      {profile.avatarUrl ? (
+                        <div className="w-full h-48 bg-stone-100 overflow-hidden">
+                          <img
+                            src={profile.avatarUrl}
+                            alt={profile.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-48 bg-stone-100 flex items-center justify-center text-3xl font-bold text-stone-400">
+                          {profile.name.charAt(0)}
+                        </div>
+                      )}
+                      <div className="p-4 space-y-1.5">
+                        <h3 className="font-bold text-stone-900 text-base">{profile.name}</h3>
+                        <p className="text-xs text-primary-700 font-semibold">{profile.title || "Medarbeider"}</p>
+                        {profile.bio && <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed">{profile.bio}</p>}
+                      </div>
+                    </div>
 
-                <div className="pt-3 border-t border-stone-100 flex flex-col gap-1.5 text-xs text-stone-600">
-                  {person.phone && (
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5 text-stone-400" />
-                      <a href={`tel:${person.phone}`} className="hover:text-stone-900">
-                        {person.phone}
-                      </a>
-                    </div>
-                  )}
-                  {person.email && (
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-3.5 h-3.5 text-stone-400" />
-                      <a href={`mailto:${person.email}`} className="hover:text-stone-900 truncate">
-                        {person.email}
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+                    {(profile.phone || profile.email) && (
+                      <div className="p-4 pt-2 border-t border-stone-100 flex flex-col gap-1 text-xs text-stone-600">
+                        {profile.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-3.5 h-3.5 text-stone-400" />
+                            <a href={`tel:${profile.phone}`} className="hover:text-stone-900 font-medium">
+                              {profile.phone}
+                            </a>
+                          </div>
+                        )}
+                        {profile.email && (
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-3.5 h-3.5 text-stone-400" />
+                            <a href={`mailto:${profile.email}`} className="hover:text-stone-900 truncate font-medium">
+                              {profile.email}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
           </div>
         </section>
       )}

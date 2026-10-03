@@ -2,7 +2,7 @@ import { describe } from "vitest";
 import { assert } from "./assert";
 import { readFileSync } from "node:fs";
 import { ALL_COLLECTIONS, COLLECTIONS, CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID } from "../src/data/collections";
-import { getMockDocuments } from "../src/data/mockDocuments";
+import { getMockDocuments, getCustomMockDocuments } from "../src/data/mockDocuments";
 import { chunk } from "../src/utils/chunk";
 
 describe("Fylling og sletting av databasen", () => {
@@ -71,4 +71,47 @@ describe("Fylling og sletting av databasen", () => {
   const rules = readFileSync(new URL("../firestore.rules", import.meta.url), "utf8");
   const missing = ALL_COLLECTIONS.filter((name) => !rules.includes(`match /${name}/{`));
   assert(missing.length === 0, `firestore.rules har en regel for hver samling (mangler: ${missing.join(", ") || "ingen"})`);
+
+  // 6. Configurable custom mock data maintain relational integrity
+  const customDocs = getCustomMockDocuments({ personCount: 8, groupCount: 4, gatheringCount: 5, taskCount: 6 });
+  const cPersons = new Set(customDocs.filter((d) => d.collection === COLLECTIONS.PERSONS).map((d) => d.id));
+  const cGroups = new Set(customDocs.filter((d) => d.collection === COLLECTIONS.GROUPS).map((d) => d.id));
+  const cGatherings = new Set(customDocs.filter((d) => d.collection === COLLECTIONS.GATHERINGS).map((d) => d.id));
+  const cTasks = new Set(customDocs.filter((d) => d.collection === COLLECTIONS.TASKS).map((d) => d.id));
+  const cRows = (name: string) => customDocs.filter((d) => d.collection === name).map((d) => d.data as Record<string, any>);
+
+  assert(cPersons.size === 8, "getCustomMockDocuments genererer nøyaktig 8 personer");
+  assert(cGroups.size === 4, "getCustomMockDocuments genererer nøyaktig 4 grupper");
+  assert(cGatherings.size <= 5, "getCustomMockDocuments genererer maksimalt 5 samlinger");
+  assert(
+    cRows(COLLECTIONS.GROUPS).every((g) => [...g.memberIds, ...g.leaderIds].every((id: string) => cPersons.has(id))),
+    "Tilpassede grupper peker kun på inkluderte personer"
+  );
+  assert(cRows(COLLECTIONS.GATHERINGS).every((g) => cGroups.has(g.groupId)), "Tilpassede samlinger peker kun på inkluderte grupper");
+  assert(
+    cRows(COLLECTIONS.TASKS).every((t) => cGatherings.has(t.gatheringId) && cGroups.has(t.groupId)),
+    "Tilpassede oppgaver peker kun på gyldige samlinger og grupper"
+  );
+  assert(
+    cRows(COLLECTIONS.ASSIGNMENTS).every((a) => cTasks.has(a.taskId) && cPersons.has(a.personId)),
+    "Tilpassede tildelinger peker kun på gyldige oppgaver og personer"
+  );
+
+  // 7. Fullscale 32-person mock dataset verification
+  const fullDocs = getCustomMockDocuments({ personCount: 32, groupCount: 12, gatheringCount: 19, taskCount: 21 });
+  const fPersons = fullDocs.filter((d) => d.collection === COLLECTIONS.PERSONS);
+  const fGroups = fullDocs.filter((d) => d.collection === COLLECTIONS.GROUPS);
+  assert(fPersons.length === 32, "Fullskala oppsett genererer nøyaktig 32 personer");
+  assert(fGroups.length === 12, "Fullskala oppsett genererer 12 grupper");
+  const staffMembers = fPersons.filter((p: any) => p.data.isStaff === true);
+  assert(staffMembers.length >= 8, "Fullskala oppsett inneholder minst 8 stabsmedlemmer");
+  const pastors = staffMembers.filter((p: any) => p.data.staffCategory === "pastor");
+  assert(pastors.length >= 3, "Fullskala oppsett inneholder minst 3 pastorer");
+
+  // 8. Planner collections vs CMS collections separation
+  const plannerCols = new Set(Object.values(COLLECTIONS));
+  const cmsCols = new Set(Object.values(CMS_COLLECTIONS));
+  for (const c of plannerCols) {
+    assert(!cmsCols.has(c as any), `Planlegger-samling ${c} overlapper ikke med CMS-samlinger`);
+  }
 });

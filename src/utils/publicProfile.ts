@@ -11,6 +11,9 @@ export interface PublicProfile {
   phone?: string;
   email?: string;
   avatarUrl?: string;
+  bio?: string;
+  category?: string;
+  isStaff?: boolean;
 }
 
 /**
@@ -22,10 +25,13 @@ export function toPublicProfile(person: Person): PublicProfile | null {
   return {
     id: person.id,
     name: person.name,
-    title: person.publicTitle || undefined,
+    title: person.staffRole || person.publicTitle || undefined,
     phone: person.publicPhone || undefined,
     email: person.publicEmail || undefined,
     avatarUrl: person.avatarUrl || undefined,
+    bio: person.staffBio || undefined,
+    category: person.staffCategory || undefined,
+    isStaff: Boolean(person.isStaff),
   };
 }
 

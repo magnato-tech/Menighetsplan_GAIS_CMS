@@ -1,5 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useFirebase } from "../../context/FirebaseDataContext";
+import { toPublicProfile, publicProfilesOf, PublicProfile } from "../../utils/publicProfile";
 import {
   Info,
   AlertTriangle,
@@ -8,6 +10,8 @@ import {
   Quote,
   ArrowRight,
   ExternalLink,
+  Phone,
+  Mail,
 } from "lucide-react";
 
 interface CmsContentRendererProps {
@@ -15,7 +19,7 @@ interface CmsContentRendererProps {
   className?: string;
 }
 
-type ParsedBlock =
+export type ParsedBlock =
   | { type: "heading"; level: 1 | 2 | 3; text: string }
   | { type: "callout"; variant: "info" | "warning" | "success" | "primary"; title?: string; body: string }
   | { type: "media"; alignment: "left" | "right"; imageUrl: string; title?: string; body: string }
@@ -24,13 +28,14 @@ type ParsedBlock =
   | { type: "cta"; label: string; url: string; primary?: boolean }
   | { type: "list"; items: string[]; ordered?: boolean }
   | { type: "paragraph"; text: string }
+  | { type: "person-grid"; filter: string }
   | { type: "spacer" };
 
 /**
  * Parses CMS markdown with support for controlled components and safe formatting.
  * Sandboxes all output so it cannot disrupt outer navigation or global layout.
  */
-function parseCmsContent(rawContent: string): ParsedBlock[] {
+export function parseCmsContent(rawContent: string): ParsedBlock[] {
   if (!rawContent || !rawContent.trim()) return [];
 
   const lines = rawContent.split("\n");
@@ -238,6 +243,25 @@ function parseCmsContent(rawContent: string): ParsedBlock[] {
         primary: true,
       });
       i++;
+      continue;
+    }
+
+    // Person / Stab / Lederskap grid block: :::personer[filter] or :::stab or :::lederskap
+    if (trimmed.startsWith(":::personer") || trimmed.startsWith(":::stab") || trimmed.startsWith(":::lederskap")) {
+      let filter = "stab";
+      if (trimmed.startsWith(":::lederskap")) filter = "lederskap";
+      const match = trimmed.match(/^:::(?:personer|stab|lederskap)(?:\[(.*?)\])?/);
+      if (match && match[1]) {
+        filter = match[1].trim();
+      }
+      i++;
+      if (i < lines.length && lines[i].trim() === ":::") {
+        i++;
+      }
+      blocks.push({
+        type: "person-grid",
+        filter,
+      });
       continue;
     }
 
@@ -606,10 +630,214 @@ export const CmsContentRenderer: React.FC<CmsContentRendererProps> = ({
             );
           }
 
+          case "person-grid":
+            return <PersonGridRenderer key={idx} filter={block.filter} />;
+
           default:
             return null;
         }
       })}
+    </div>
+  );
+};
+
+interface PersonCardProps {
+  profile: PublicProfile & { isLeader?: boolean };
+}
+
+const PersonCard: React.FC<PersonCardProps> = ({ profile }) => {
+  return (
+    <div className="bg-white rounded-2xl border border-stone-200/90 overflow-hidden shadow-xs hover:border-primary-300 hover:shadow-md transition-all flex flex-col justify-between">
+      <div>
+        {profile.avatarUrl ? (
+          <div className="w-full h-52 sm:h-56 bg-stone-100 overflow-hidden relative">
+            <img
+              src={profile.avatarUrl}
+              alt={profile.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="w-full h-52 sm:h-56 bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center text-4xl font-black text-stone-400 select-none">
+            {profile.name.charAt(0)}
+          </div>
+        )}
+
+        <div className="p-5 space-y-2">
+          <div>
+            <h3 className="font-bold text-stone-900 text-lg leading-tight">{profile.name}</h3>
+            <p className="text-xs text-primary-700 font-semibold mt-0.5">
+              {profile.title || (profile.isLeader ? "Leder" : "Medarbeider")}
+            </p>
+          </div>
+
+          {profile.bio && (
+            <p className="text-xs text-stone-600 leading-relaxed pt-1 line-clamp-3">
+              {profile.bio}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {(profile.phone || profile.email) && (
+        <div className="px-5 pb-5 pt-2 border-t border-stone-100/80 flex flex-col gap-1.5 text-xs text-stone-600">
+          {profile.phone && (
+            <a
+              href={`tel:${profile.phone}`}
+              className="inline-flex items-center gap-2 hover:text-stone-900 font-medium transition-colors"
+            >
+              <Phone className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+              <span>{profile.phone}</span>
+            </a>
+          )}
+          {profile.email && (
+            <a
+              href={`mailto:${profile.email}`}
+              className="inline-flex items-center gap-2 hover:text-stone-900 font-medium truncate transition-colors"
+            >
+              <Mail className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+              <span className="truncate">{profile.email}</span>
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface PersonGridRendererProps {
+  filter: string;
+}
+
+const PersonGridRenderer: React.FC<PersonGridRendererProps> = ({ filter }) => {
+  const { allPersons, groups } = useFirebase();
+  const normalized = filter.toLowerCase().trim();
+
+  // Filter 1: Lederskap or Group
+  if (
+    normalized === "lederskap" ||
+    normalized === "menighetsråd" ||
+    normalized === "menighetsrad" ||
+    normalized === "styre" ||
+    normalized.startsWith("gruppe=")
+  ) {
+    const groupNameOrId = normalized.replace(/^gruppe=/, "");
+    const targetGroup =
+      groups.find((g) => g.id === groupNameOrId || g.name.toLowerCase().includes(groupNameOrId)) ||
+      groups.find((g) => g.category === "ledergruppe");
+
+    if (!targetGroup) {
+      return (
+        <div className="p-4 rounded-xl bg-stone-100 text-stone-500 text-xs italic">
+          Ingen lederskapsgruppe funnet.
+        </div>
+      );
+    }
+
+    const leaderIds = new Set(targetGroup.leaderIds || []);
+    const deputyIds = new Set(targetGroup.deputyLeaderIds || []);
+    const allIds = Array.from(new Set([...(targetGroup.leaderIds || []), ...(targetGroup.memberIds || [])]));
+
+    const profiles = publicProfilesOf(allIds, allPersons).map((p) => {
+      let role = p.title || "Medlem";
+      if (leaderIds.has(p.id)) role = p.title || "Leder i menighetsrådet";
+      else if (deputyIds.has(p.id)) role = p.title || "Nestleder";
+      return {
+        ...p,
+        title: role,
+        isLeader: leaderIds.has(p.id),
+      };
+    });
+
+    profiles.sort((a, b) => {
+      if (a.isLeader && !b.isLeader) return -1;
+      if (!a.isLeader && b.isLeader) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    if (profiles.length === 0) {
+      return (
+        <div className="p-4 rounded-xl bg-stone-100 text-stone-500 text-xs italic">
+          Ingen offentlige profiler med registrert samtykke i lederskapsgruppen ennå.
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 my-6">
+        {profiles.map((p) => (
+          <PersonCard key={p.id} profile={p} />
+        ))}
+      </div>
+    );
+  }
+
+  // Filter 2: Explicit Person IDs
+  if (normalized.startsWith("ids=") || normalized.includes(",") || allPersons.some((p) => p.id === normalized)) {
+    const rawIds = normalized.replace(/^ids=/, "").split(",").map((s) => s.trim());
+    const profiles = publicProfilesOf(rawIds, allPersons);
+
+    if (profiles.length === 0) {
+      return (
+        <div className="p-4 rounded-xl bg-stone-100 text-stone-500 text-xs italic">
+          Ingen profiler funnet for de oppgitte personene.
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 my-6">
+        {profiles.map((p) => (
+          <PersonCard key={p.id} profile={p} />
+        ))}
+      </div>
+    );
+  }
+
+  // Filter 3: Category or Staff
+  const isCategory =
+    normalized.startsWith("kategori=") ||
+    normalized === "pastor" ||
+    normalized === "barneleder" ||
+    normalized === "diakoni";
+
+  const targetCategory = normalized.replace(/^kategori=/, "");
+
+  let matching = allPersons.filter((p) => {
+    const prof = toPublicProfile(p);
+    if (!prof) return false;
+
+    if (isCategory) {
+      return (
+        p.staffCategory?.toLowerCase() === targetCategory ||
+        p.staffRole?.toLowerCase().includes(targetCategory) ||
+        p.publicTitle?.toLowerCase().includes(targetCategory)
+      );
+    }
+
+    // Default: Stab
+    return Boolean(p.isStaff);
+  });
+
+  if (matching.length === 0 && (normalized === "stab" || normalized === "alle")) {
+    matching = allPersons.filter((p) => toPublicProfile(p) !== null);
+  }
+
+  const profiles = matching.map((p) => toPublicProfile(p)!).filter(Boolean);
+
+  if (profiles.length === 0) {
+    return (
+      <div className="p-4 rounded-xl bg-stone-100 text-stone-500 text-xs italic">
+        Ingen stabsmedlemmer med registrert samtykke funnet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 my-6">
+      {profiles.map((p) => (
+        <PersonCard key={p.id} profile={p} />
+      ))}
     </div>
   );
 };

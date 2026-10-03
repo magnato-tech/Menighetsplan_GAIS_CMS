@@ -5,6 +5,7 @@ import { AdminAccessRequired } from "../components/AdminAccessRequired";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
 import { useTimedMessage } from "../hooks/useTimedMessage";
 import { toPublicProfile, publicProfileFields } from "../utils/publicProfile";
+import { compressImageFile } from "../utils/imageUpload";
 import {
   Globe,
   ArrowLeft,
@@ -23,6 +24,8 @@ import {
   Plus,
   Trash2,
   Shield,
+  Camera,
+  Briefcase,
 } from "lucide-react";
 
 export const AdminPersonDetailPage: React.FC = () => {
@@ -51,6 +54,12 @@ export const AdminPersonDetailPage: React.FC = () => {
   const [publicTitle, setPublicTitle] = useState<string>("");
   const [publicPhone, setPublicPhone] = useState<string>("");
   const [publicEmail, setPublicEmail] = useState<string>("");
+  // Stabs- og bildefelter
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [isStaff, setIsStaff] = useState<boolean>(false);
+  const [staffRole, setStaffRole] = useState<string>("");
+  const [staffCategory, setStaffCategory] = useState<"pastor" | "stab" | "barneleder" | "diakoni" | "annet">("stab");
+  const [staffBio, setStaffBio] = useState<string>("");
 
   const [feedback, setFeedback] = useTimedMessage<{ text: string; type: "success" | "error" }>();
 
@@ -66,10 +75,27 @@ export const AdminPersonDetailPage: React.FC = () => {
       setPublicTitle(person.publicTitle || "");
       setPublicPhone(person.publicPhone || "");
       setPublicEmail(person.publicEmail || "");
+      setAvatarUrl(person.avatarUrl || "");
+      setIsStaff(Boolean(person.isStaff));
+      setStaffRole(person.staffRole || person.publicTitle || "");
+      setStaffCategory(person.staffCategory || "stab");
+      setStaffBio(person.staffBio || "");
     }
   }, [person]);
 
   const showFeedback = (text: string, type: "success" | "error" = "success") => setFeedback({ text, type });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await compressImageFile(file, { maxDimension: 500, quality: 0.85 });
+      setAvatarUrl(dataUrl);
+      showFeedback("Portrettbilde klargjort! Husk å trykke lagre.");
+    } catch (err) {
+      showFeedback(err instanceof Error ? err.message : "Kunne ikke laste bilde.", "error");
+    }
+  };
 
   const handleAddUnavailablePeriod = () => {
     if (!newUnavailFrom || !newUnavailTo) {
@@ -109,11 +135,21 @@ export const AdminPersonDetailPage: React.FC = () => {
       phone: phone.trim() || undefined,
       email: email.trim() || undefined,
       globalRole,
+      avatarUrl: avatarUrl.trim() || undefined,
+      isStaff,
+      staffRole: staffRole.trim() || undefined,
+      staffCategory,
+      staffBio: staffBio.trim() || undefined,
       policeCertificateValidUntil: policeCert || undefined,
       unavailablePeriods,
       ...publicProfileFields(
         person,
-        { isPublic: isPublicProfile, title: publicTitle, phone: publicPhone, email: publicEmail },
+        {
+          isPublic: isPublicProfile || isStaff,
+          title: (staffRole || publicTitle).trim(),
+          phone: publicPhone,
+          email: publicEmail,
+        },
         currentUser.id
       ),
     });
@@ -195,14 +231,45 @@ export const AdminPersonDetailPage: React.FC = () => {
         {/* Main Person Edit Card */}
         <form onSubmit={handleSave} className="space-y-4">
           <div className="p-4 bg-white rounded-2xl border border-slate-200/80 space-y-4 shadow-xs">
-            {/* Header info */}
+            {/* Header info with Avatar */}
             <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
-                  {person.name.charAt(0)}
+              <div className="flex items-center gap-3">
+                <div className="relative group">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={person.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-indigo-200 shadow-2xs"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-base">
+                      {person.name.charAt(0)}
+                    </div>
+                  )}
+                  <label
+                    htmlFor="input-avatar-upload"
+                    className="absolute -bottom-1 -right-1 p-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full cursor-pointer shadow-xs"
+                    title="Last opp portrettbilde"
+                  >
+                    <Camera className="w-3 h-3" />
+                  </label>
+                  <input
+                    type="file"
+                    id="input-avatar-upload"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-800">{person.name}</h3>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                    {staffRole ? (
+                      <span className="font-semibold text-indigo-600">{staffRole}</span>
+                    ) : (
+                      <span>{person.email || "Ingen e-post"}</span>
+                    )}
+                  </div>
                 </div>
               </div>
               <span
@@ -402,7 +469,113 @@ export const AdminPersonDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 7. Offentlig profil på nettsiden (krever samtykke) */}
+            {/* 7. Stab & Ansettelse */}
+            <div className="space-y-3 pt-3 border-t border-slate-100 bg-indigo-50/40 p-3.5 rounded-2xl border border-indigo-100/80">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <Briefcase className="w-3.5 h-3.5 text-indigo-600" />
+                  Stab & Ansettelse:
+                </span>
+                {isStaff ? (
+                  <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded">
+                    Ansatt i staben
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-slate-400 font-normal">Frivillig / Ikke stab</span>
+                )}
+              </div>
+
+              <label htmlFor="input-edit-person-is-staff" className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="input-edit-person-is-staff"
+                  checked={isStaff}
+                  onChange={(e) => {
+                    setIsStaff(e.target.checked);
+                    if (e.target.checked && !isPublicProfile) {
+                      setIsPublicProfile(true);
+                    }
+                  }}
+                  className="w-4 h-4 mt-0.5 border border-slate-300 rounded-md cursor-pointer accent-indigo-600"
+                />
+                <span className="text-[11px] font-semibold text-slate-800">
+                  Personen er ansatt i staben og kan vises i stabsseksjoner på nettsiden
+                </span>
+              </label>
+
+              {isStaff && (
+                <div className="space-y-2.5 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Stillingstittel utad
+                      </label>
+                      <input
+                        type="text"
+                        value={staffRole}
+                        onChange={(e) => setStaffRole(e.target.value)}
+                        placeholder="f.eks. Hovedpastor, Daglig leder..."
+                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-medium"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Kategori
+                      </label>
+                      <select
+                        value={staffCategory}
+                        onChange={(e) => setStaffCategory(e.target.value as any)}
+                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                      >
+                        <option value="pastor">Pastor / Forkynner</option>
+                        <option value="stab">Administrasjon & Ledelse</option>
+                        <option value="barneleder">Barn & Ungdom</option>
+                        <option value="diakoni">Diakoni & Omsorg</option>
+                        <option value="annet">Annet</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Kort bio / introduksjon for nettsiden
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={staffBio}
+                      onChange={(e) => setStaffBio(e.target.value)}
+                      placeholder="Skriv 1-3 setninger om personens ansvarsområde eller bakgrunn..."
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1 text-xs">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 shrink-0">
+                      Bilde-URL:
+                    </label>
+                    <input
+                      type="url"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="https://... eller bruk kamerasymbolet øverst"
+                      className="flex-1 px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs"
+                    />
+                    {avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setAvatarUrl("")}
+                        className="text-rose-500 hover:text-rose-700 text-xs px-1 cursor-pointer"
+                        title="Fjern bilde"
+                      >
+                        Fjern
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 8. Offentlig profil på nettsiden (krever samtykke) */}
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">

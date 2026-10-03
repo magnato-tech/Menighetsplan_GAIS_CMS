@@ -8,6 +8,9 @@ import {
   MousePointerClick,
   Sparkles,
   Plus,
+  Users,
+  Shield,
+  Briefcase,
 } from "lucide-react";
 
 export interface ContentBlockDefinition {
@@ -149,6 +152,70 @@ Husk å ta med egen kopp til kirkekaffen om du har lyst! Det er gratis parkering
         <div className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white font-bold text-[11px] shadow-xs flex items-center gap-1.5">
           <span>Meld deg på samlingen</span>
           <span>→</span>
+        </div>
+      </div>
+    ),
+  },
+  // Spesialblokker for Stab og Lederskap (brukes typisk kun på spesifikke temasider)
+  {
+    id: "personer-stab",
+    title: "Stab & Ansatte (alle)",
+    category: "Personer & Roller",
+    description: "Viser alle ansatte i staben med bilde, stillingstittel, bio, telefon og e-post direkte fra personregisteret.",
+    icon: <Briefcase className="w-5 h-5 text-indigo-400" />,
+    template: `:::personer[stab]`,
+    previewNode: (
+      <div className="grid grid-cols-2 gap-2 text-[10px] w-full p-1.5 bg-stone-100 rounded-lg border border-stone-300">
+        <div className="p-2 rounded bg-white border border-stone-200 space-y-1">
+          <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-[9px]">K</div>
+          <div className="font-bold text-stone-900 truncate">Kari Nordmann</div>
+          <div className="text-[8px] text-stone-500">Hovedpastor</div>
+        </div>
+        <div className="p-2 rounded bg-white border border-stone-200 space-y-1">
+          <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-[9px]">O</div>
+          <div className="font-bold text-stone-900 truncate">Ola Hansen</div>
+          <div className="text-[8px] text-stone-500">Daglig leder</div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "personer-lederskap",
+    title: "Menighetsråd & Lederskap",
+    category: "Personer & Roller",
+    description: "Viser menighetens valgte lederskap (styreleder, nestleder og medlemmer) direkte fra lederskapsgruppen.",
+    icon: <Shield className="w-5 h-5 text-amber-400" />,
+    template: `:::personer[lederskap]`,
+    previewNode: (
+      <div className="grid grid-cols-2 gap-2 text-[10px] w-full p-1.5 bg-stone-100 rounded-lg border border-stone-300">
+        <div className="p-2 rounded bg-white border border-stone-200 space-y-1">
+          <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-[9px]">J</div>
+          <div className="font-bold text-stone-900 truncate">Jonas Lie</div>
+          <div className="text-[8px] text-amber-700 font-semibold">Leder i menighetsrådet</div>
+        </div>
+        <div className="p-2 rounded bg-white border border-stone-200 space-y-1">
+          <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-[9px]">K</div>
+          <div className="font-bold text-stone-900 truncate">Kari Nordmann</div>
+          <div className="text-[8px] text-slate-500">Nestleder</div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "personer-pastor",
+    title: "Kun Pastor / Forkynnere",
+    category: "Personer & Roller",
+    description: "Viser kun pastoren og forkynnere. Ideelt for forsiden, Om oss-siden eller kontaktsider.",
+    icon: <Users className="w-5 h-5 text-emerald-400" />,
+    template: `:::personer[pastor]`,
+    previewNode: (
+      <div className="w-full p-2 bg-stone-100 rounded-lg border border-stone-300">
+        <div className="p-2 rounded bg-white border border-stone-200 flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">K</div>
+          <div>
+            <div className="font-bold text-stone-900 text-[11px]">Kari Nordmann</div>
+            <div className="text-[9px] text-stone-500">Hovedpastor</div>
+          </div>
         </div>
       </div>
     ),

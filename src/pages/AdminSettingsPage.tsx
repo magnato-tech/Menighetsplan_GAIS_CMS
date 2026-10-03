@@ -354,7 +354,7 @@ export const AdminSettingsPage: React.FC = () => {
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
               >
                 <RefreshCw className={`w-4 h-4 ${isWorking && dialog === "populate" ? "animate-spin" : ""}`} />
-                Fyll databasen med demodata
+                Fyll databasen med demodata (32 personer)
               </button>
               <button
                 type="button"
@@ -396,15 +396,14 @@ export const AdminSettingsPage: React.FC = () => {
         {dialog === "populate" && (
           <ConfirmDialog
             key="populate"
-            title="Fylle databasen med demodata?"
-            confirmLabel={isWorking ? "Fyller..." : "Fyll med demodata"}
+            title="Fylle databasen med demodata (32 personer)?"
+            confirmLabel={isWorking ? "Fyller..." : "Fyll med 32 personer & grupper"}
             busy={isWorking}
             onConfirm={handlePopulate}
             onCancel={() => setDialog(null)}
           >
             <p>
-              Demodata skrives til Firestore. Dokumenter med samme ID blir overskrevet, så endringer du har gjort i
-              testdataene går tapt. Andre dokumenter blir stående.
+              Dette fyller <strong>32 personer</strong> i Firestore fordelt på pastorer, menighetsråd, stab, lovsangsteam, teknikere, bønnetjeneste og husfellesskap, samt samlinger og innhold. Dokumenter med samme ID blir overskrevet. Andre dokumenter blir stående.
             </p>
           </ConfirmDialog>
         )}

@@ -35,7 +35,6 @@ import { AdminGroupDetailPage } from "./pages/AdminGroupDetailPage";
 import { AdminPersonDetailPage } from "./pages/AdminPersonDetailPage";
 import { AdminGatheringDetailPage } from "./pages/AdminGatheringDetailPage";
 import { AdminTaskDetailPage } from "./pages/AdminTaskDetailPage";
-import { AdminSettingsPage } from "./pages/AdminSettingsPage";
 
 /**
  * Keeps the tab title, the description and the share card in step with the page being shown.
@@ -84,7 +83,7 @@ function AppContent() {
             <Route path="/admin/person/:personId" element={<AdminPersonDetailPage />} />
             <Route path="/admin/samling/:gatheringId" element={<AdminGatheringDetailPage />} />
             <Route path="/admin/oppgave/:taskId" element={<AdminTaskDetailPage />} />
-            <Route path="/admin/settings" element={<AdminSettingsPage />} />
+            <Route path="/admin/settings" element={<Navigate to="/admin?tab=database-admin" replace />} />
             <Route path="/oppgave/:taskId" element={<TaskDetailPage />} />
             <Route path="/gruppe/:groupId" element={<LeaderGroupDetailPage />} />
             <Route path="/samling/:gatheringId" element={<LeaderGatheringDetailPage />} />
@@ -129,8 +128,8 @@ function AppContent() {
 
           {/* Public Static CMS Pages */}
           <Route path="/om-oss" element={<PublicStaticPage forcedSlug="om-oss" />} />
-          <Route path="/lederskap" element={<PublicLeadershipPage />} />
-          <Route path="/stab" element={<PublicLeadershipPage />} />
+          <Route path="/stab" element={<PublicStaticPage forcedSlug="stab" fallbackComponent={<PublicLeadershipPage />} />} />
+          <Route path="/lederskap" element={<PublicStaticPage forcedSlug="lederskap" fallbackComponent={<PublicLeadershipPage />} />} />
           <Route path="/kontakt" element={<PublicStaticPage forcedSlug="kontakt" />} />
           <Route path="/side/:slug" element={<PublicStaticPage />} />
           <Route path="/:slug" element={<PublicStaticPage />} />

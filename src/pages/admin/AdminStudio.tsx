@@ -17,6 +17,7 @@ import { GatheringsTab } from "./tabs/GatheringsTab";
 import { TasksTab } from "./tabs/TasksTab";
 import { GroupsTab } from "./tabs/GroupsTab";
 import { PersonsTab } from "./tabs/PersonsTab";
+import { DatabaseTab } from "./tabs/DatabaseTab";
 
 export const AdminStudio: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -113,7 +114,8 @@ export const AdminStudio: React.FC = () => {
         {panel("planlegger-samlinger", <GatheringsTab studio={studio} showFeedback={showFeedback} />)}
         {panel("planlegger-oppgaver", <TasksTab studio={studio} showFeedback={showFeedback} />)}
         {panel("planlegger-grupper", <GroupsTab studio={studio} showFeedback={showFeedback} />)}
-        {panel("planlegger-personer", <PersonsTab studio={studio} />)}
+        {panel("planlegger-personer", <PersonsTab studio={studio} showFeedback={showFeedback} />)}
+        {panel("database-admin", <DatabaseTab studio={studio} showFeedback={showFeedback} />)}
       </main>
     </div>
   );

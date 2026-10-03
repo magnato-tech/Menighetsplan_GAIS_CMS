@@ -1,6 +1,6 @@
 {
-  "summary":  "Gjennomføringsplan for en visuell 'Legg til innhold'-blokkvelger i AdminCmsPanel med forhåndsvisningskort for to-kolonne-grid, bilde-med-tekst og sitatblokker, direkte innsetting av Tailwind-formaterte maler, og støtte i CmsContentRenderer.",
-  "updatedAt":  "2026-10-02T20:20:45.707029747Z",
+  "summary":  "Plan for ny 'Database & Testdata'-fane i Admin Studio med glidebrytere, ferdige pakker, standard avkryssing for tømming av testpersoner/grupper (bevaring av CMS) og ett-klikks populering av 32 medlemmer.",
+  "updatedAt":  "2026-10-03T09:29:06.310466730Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

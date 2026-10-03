@@ -14,6 +14,7 @@ export const STUDIO_TABS = [
   "planlegger-oppgaver",
   "planlegger-grupper",
   "planlegger-personer",
+  "database-admin",
 ] as const;
 
 export type StudioTab = (typeof STUDIO_TABS)[number];

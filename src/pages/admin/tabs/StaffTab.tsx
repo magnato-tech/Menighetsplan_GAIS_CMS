@@ -1,205 +1,467 @@
 import React, { useState } from "react";
-import { useCms } from "../../../context/CmsContext";
-import { CmsStaffMember } from "../../../data/cmsData";
+import { Link } from "react-router-dom";
+import { useFirebase } from "../../../context/FirebaseDataContext";
+import { toPublicProfile, publicProfilesOf } from "../../../utils/publicProfile";
 import {
-  Plus,
-  Trash2,
-  Edit2,
   Users,
-  X,
+  Shield,
+  Briefcase,
+  ExternalLink,
+  Edit2,
+  Plus,
+  CheckCircle2,
+  AlertTriangle,
+  Copy,
+  Phone,
+  Mail,
+  UserCheck,
+  Database,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { ShowFeedback } from "../studio";
+import { populateWithMockData } from "../../../services/databaseAdmin";
 
 interface StaffTabProps {
   showFeedback: ShowFeedback;
 }
 
 export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
-  const { staff, saveStaff, deleteStaff } = useCms();
+  const { allPersons, groups, updatePerson } = useFirebase();
 
-  const [editingStaff, setEditingStaff] = useState<Partial<CmsStaffMember> | null>(null);
-  const [isNewStaff, setIsNewStaff] = useState(false);
+  const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
+  const [showAddStaffModal, setShowAddStaffModal] = useState<boolean>(false);
+  const [selectedPersonIdToAdd, setSelectedPersonIdToAdd] = useState<string>("");
+  const [isPopulating, setIsPopulating] = useState<boolean>(false);
 
-  const handleOpenEditStaff = (member: CmsStaffMember) => {
-    setEditingStaff({ ...member });
-    setIsNewStaff(false);
-  };
-
-  const handleOpenNewStaff = () => {
-    setEditingStaff({
-      name: "",
-      role: "Medarbeider",
-      email: "",
-      phone: "",
-      category: "stab",
-      bio: "",
-    });
-    setIsNewStaff(true);
-  };
-
-  const handleSaveStaff = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingStaff || !editingStaff.name) {
-      showFeedback("Navn må fylles ut", "error");
-      return;
+  const handlePopulateTestData = async () => {
+    if (isPopulating) return;
+    setIsPopulating(true);
+    try {
+      const result = await populateWithMockData();
+      if (result.failures.length > 0) {
+        showFeedback(`Fylling fullført med noen feil: ${result.failures[0].message}`, "error");
+      } else {
+        showFeedback("Databasen er nå fylt med 32 personer for stab, lederskap, pastorer og grupper!");
+      }
+    } catch (err) {
+      showFeedback(err instanceof Error ? err.message : "Kunne ikke fylle testdata", "error");
+    } finally {
+      setIsPopulating(false);
     }
-    if (!(await saveStaff(editingStaff))) return;
-    setEditingStaff(null);
-    showFeedback("Stabsmedlemmet ble lagret!");
+  };
+
+  // 1. Staff members (isStaff === true, or fallback to persons with staffRole)
+  const staffPersons = allPersons.filter((p) => p.isStaff || (p.staffRole && p.isPublicProfile));
+
+  // 2. Leadership group (Menighetsråd & Lederskap)
+  const leadershipGroup =
+    groups.find((g) => g.id === "group-lederskap" || g.name.toLowerCase().includes("lederskap")) ||
+    groups.find((g) => g.category === "ledergruppe");
+
+  const leaderIds = new Set(leadershipGroup?.leaderIds || []);
+  const deputyIds = new Set(leadershipGroup?.deputyLeaderIds || []);
+  const leadershipMemberIds = Array.from(
+    new Set([...(leadershipGroup?.leaderIds || []), ...(leadershipGroup?.memberIds || [])])
+  );
+  const leadershipPersons = publicProfilesOf(leadershipMemberIds, allPersons).map((p) => {
+    let role = p.title || "Rådsmedlem";
+    if (leaderIds.has(p.id)) role = p.title || "Leder i menighetsrådet";
+    else if (deputyIds.has(p.id)) role = p.title || "Nestleder";
+    return {
+      ...p,
+      roleInGroup: role,
+      isLeader: leaderIds.has(p.id),
+    };
+  });
+
+  // Non-staff persons that can be added
+  const availableNonStaffPersons = allPersons.filter((p) => !staffPersons.some((sp) => sp.id === p.id));
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedSnippet(text);
+    showFeedback(`Kopierte «${text}» til utklippstavlen!`);
+    setTimeout(() => setCopiedSnippet(null), 2500);
+  };
+
+  const handleAddPersonAsStaff = () => {
+    if (!selectedPersonIdToAdd) return;
+    const res = updatePerson(selectedPersonIdToAdd, {
+      isStaff: true,
+      staffRole: "Medarbeider",
+      isPublicProfile: true,
+    });
+    if (res.success) {
+      showFeedback("Personen er nå registrert som ansatt i staben!");
+      setShowAddStaffModal(false);
+      setSelectedPersonIdToAdd("");
+    } else {
+      showFeedback(res.error || "Kunne ikke legge til som ansatt.", "error");
+    }
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-8">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-white">Lederskap & Stab</h2>
-          <p className="text-xs text-slate-400">
-            Administrer personer som presenteres under Om oss og Kontakt med tittel, bilde, telefon og e-post.
+          <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5">
+            <Users className="w-6 h-6 text-emerald-400" />
+            <span>Lederskap & Stab</span>
+          </h2>
+          <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+            Her administreres menighetens ansatte (stab) og valgte lederskap (menighetsråd). Dataene hentes direkte fra
+            personregisteret og gruppene, slik at du slipper dobbeltarbeid.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleOpenNewStaff}
-          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Ny medarbeider</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={handlePopulateTestData}
+            disabled={isPopulating}
+            className="px-3.5 py-2 rounded-xl bg-indigo-600/90 hover:bg-indigo-600 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            title="Fyller databasen i Firebase med 32 personer (pastorer, lederskap, stab, frivillige og medlemmer)"
+          >
+            {isPopulating ? (
+              <Loader2 className="w-4 h-4 animate-spin text-white" />
+            ) : (
+              <Database className="w-4 h-4 text-indigo-300" />
+            )}
+            <span>{isPopulating ? "Fyller testdata..." : "Populer testdata (32 personer)"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowAddStaffModal(true)}
+            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Legg til person i staben</span>
+          </button>
+        </div>
       </div>
 
-      {/* Staff Editor Form */}
-      {editingStaff && (
-        <form onSubmit={handleSaveStaff} className="p-6 rounded-2xl bg-slate-800 border border-emerald-500/80 shadow-2xl space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-700 pb-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Users className="w-4 h-4 text-emerald-400" />
-              <span>{isNewStaff ? "Legg til medarbeider" : `Rediger: ${editingStaff.name}`}</span>
-            </h3>
-            <button type="button" onClick={() => setEditingStaff(null)} className="text-slate-400 hover:text-white">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div className="space-y-1">
-              <label className="font-semibold text-slate-300">Navn</label>
-              <input
-                type="text"
-                value={editingStaff.name || ""}
-                onChange={(e) => setEditingStaff({ ...editingStaff, name: e.target.value })}
-                placeholder="f.eks. Kari Nordmann"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-semibold text-slate-300">Stilling / Rolle</label>
-              <input
-                type="text"
-                value={editingStaff.role || ""}
-                onChange={(e) => setEditingStaff({ ...editingStaff, role: e.target.value })}
-                placeholder="f.eks. Hovedpastor"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-semibold text-slate-300">E-post</label>
-              <input
-                type="email"
-                value={editingStaff.email || ""}
-                onChange={(e) => setEditingStaff({ ...editingStaff, email: e.target.value })}
-                placeholder="fornavn@menigheten.no"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-semibold text-slate-300">Telefon</label>
-              <input
-                type="text"
-                value={editingStaff.phone || ""}
-                onChange={(e) => setEditingStaff({ ...editingStaff, phone: e.target.value })}
-                placeholder="912 34 567"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
-              />
+      {staffPersons.length < 3 && (
+        <div className="p-4 rounded-2xl bg-indigo-950/60 border border-indigo-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-start gap-2.5">
+            <Sparkles className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-white">Trenger du flere personer i stab, lederskap og grupper?</p>
+              <p className="text-slate-300">
+                Klikk på «Populer testdata» for å fylle databasen med 32 personer: pastorer, menighetsråd, diakoni, lovsangsteam og aktive medlemmer.
+              </p>
             </div>
           </div>
-
-          <div className="space-y-1 text-xs">
-            <label className="font-semibold text-slate-300">Kort bio / beskrivelse</label>
-            <textarea
-              rows={2}
-              value={editingStaff.bio || ""}
-              onChange={(e) => setEditingStaff({ ...editingStaff, bio: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"
-            />
-          </div>
-
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setEditingStaff(null)}
-              className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold"
-            >
-              Avbryt
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm"
-            >
-              Lagre
-            </button>
-          </div>
-        </form>
+          <button
+            type="button"
+            onClick={handlePopulateTestData}
+            disabled={isPopulating}
+            className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold shrink-0 shadow-sm cursor-pointer"
+          >
+            {isPopulating ? "Fyller data..." : "Fyll inn testdata nå"}
+          </button>
+        </div>
       )}
 
-      {/* List of Staff */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {staff.map((member) => (
-          <div
-            key={member.id}
-            className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex flex-col justify-between space-y-3"
-          >
-            <div className="space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded">
-                {member.role}
-              </span>
-              <h3 className="font-bold text-white text-base">{member.name}</h3>
-              {member.bio && <p className="text-xs text-slate-400 line-clamp-2">{member.bio}</p>}
-              <div className="text-xs text-slate-400 space-y-0.5 pt-1">
-                {member.phone && <div>Tlf: {member.phone}</div>}
-                {member.email && <div>E-post: {member.email}</div>}
-              </div>
-            </div>
+      {/* Seksjon 1: Ansatte i staben */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+          <div className="flex items-center gap-2">
+            <Briefcase className="w-4 h-4 text-indigo-400" />
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+              Ansatte i staben ({staffPersons.length})
+            </h3>
+          </div>
+          <span className="text-[11px] text-slate-400">
+            Definert av rolle/ansettelse på personkortet
+          </span>
+        </div>
 
-            <div className="flex items-center justify-end gap-2 text-xs pt-2 border-t border-slate-700/60">
+        {staffPersons.length === 0 ? (
+          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-2">
+            <p className="text-xs text-slate-400">Ingen personer er registrert som ansatt i staben ennå.</p>
+            <button
+              type="button"
+              onClick={() => setShowAddStaffModal(true)}
+              className="text-xs text-indigo-400 font-bold hover:underline"
+            >
+              + Merk en person fra registeret som stab
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {staffPersons.map((person) => {
+              const isConsented = toPublicProfile(person) !== null;
+              return (
+                <div
+                  key={person.id}
+                  className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex flex-col justify-between space-y-3"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      {person.avatarUrl ? (
+                        <img
+                          src={person.avatarUrl}
+                          alt={person.name}
+                          className="w-12 h-12 rounded-xl object-cover border border-slate-600 shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-slate-700 text-indigo-300 font-black text-base flex items-center justify-center shrink-0">
+                          {person.name.charAt(0)}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-white text-sm truncate">{person.name}</h4>
+                        <p className="text-xs text-indigo-400 font-semibold truncate">
+                          {person.staffRole || person.publicTitle || "Stabsmedlem"}
+                        </p>
+                        <div className="pt-1 flex items-center gap-1.5 text-[10px]">
+                          {isConsented ? (
+                            <span className="text-emerald-400 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                              Synlig på nettsiden
+                            </span>
+                          ) : (
+                            <span className="text-amber-400 flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 text-amber-400" />
+                              Mangler samtykke
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {person.staffBio && (
+                      <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
+                        {person.staffBio}
+                      </p>
+                    )}
+
+                    <div className="text-[11px] text-slate-400 space-y-0.5 pt-1 border-t border-slate-700/60">
+                      {person.publicPhone && (
+                        <div className="flex items-center gap-1.5 truncate">
+                          <Phone className="w-3 h-3 text-slate-500" />
+                          <span>{person.publicPhone}</span>
+                        </div>
+                      )}
+                      {person.publicEmail && (
+                        <div className="flex items-center gap-1.5 truncate">
+                          <Mail className="w-3 h-3 text-slate-500" />
+                          <span className="truncate">{person.publicEmail}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-700/60 flex items-center justify-between text-xs">
+                    <span className="text-[10px] text-slate-500 uppercase font-mono">
+                      {person.staffCategory || "stab"}
+                    </span>
+                    <Link
+                      to={`/admin/person/${person.id}`}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 text-white font-semibold flex items-center gap-1 transition-colors"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                      <span>Rediger personkort</span>
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Seksjon 2: Lederskap (Menighetsråd) */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-amber-400" />
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+              Valgt Lederskap / Menighetsråd ({leadershipPersons.length})
+            </h3>
+          </div>
+          {leadershipGroup && (
+            <Link
+              to="/admin?tab=planlegger-grupper"
+              className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
+            >
+              <span>Administrer lederskapsgruppen</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+          )}
+        </div>
+
+        {leadershipPersons.length === 0 ? (
+          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-1">
+            <p className="text-xs text-slate-400">Ingen medlemmer funnet i lederskapsgruppen.</p>
+            <Link to="/admin?tab=planlegger-grupper" className="text-xs text-indigo-400 font-bold hover:underline">
+              Gå til Grupper & Husfellesskap for å legge til medlemmer
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {leadershipPersons.map((member) => (
+              <div
+                key={member.id}
+                className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex flex-col justify-between space-y-3"
+              >
+                <div className="flex items-start gap-3">
+                  {member.avatarUrl ? (
+                    <img
+                      src={member.avatarUrl}
+                      alt={member.name}
+                      className="w-10 h-10 rounded-xl object-cover border border-slate-600 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-xl bg-amber-950/80 text-amber-400 font-black text-sm flex items-center justify-center shrink-0 border border-amber-900/60">
+                      {member.name.charAt(0)}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-white text-sm truncate">{member.name}</h4>
+                    <p className="text-xs text-amber-300 font-medium truncate">{member.roleInGroup}</p>
+                    {member.email && <p className="text-[11px] text-slate-400 truncate mt-1">{member.email}</p>}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-700/60 flex items-center justify-end text-xs">
+                  <Link
+                    to={`/admin/person/${member.id}`}
+                    className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 text-white font-semibold flex items-center gap-1 transition-colors"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                    <span>Rediger profil</span>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Seksjon 3: Innholdsblokker for nettsiden */}
+      <section className="p-5 rounded-2xl bg-indigo-950/30 border border-indigo-900/60 space-y-3">
+        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <Copy className="w-4 h-4 text-indigo-400" />
+          <span>Slik setter du inn stab og lederskap på CMS-sider</span>
+        </h3>
+        <p className="text-xs text-slate-300 leading-relaxed">
+          Når du redigerer en side under <strong>Sider & Innhold</strong> (f.eks. «Stab» eller «Om oss»), kan du klikke{" "}
+          <strong>+ Sett inn innholdsblokk</strong> og velge en av personblokkene. Du kan også lime inn disse kodene
+          direkte i teksten:
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5 flex flex-col justify-between">
+            <div>
+              <div className="text-[11px] font-bold text-white">Hele staben</div>
+              <code className="text-xs font-mono text-indigo-300 bg-slate-950 px-1.5 py-0.5 rounded block my-1">
+                :::personer[stab]
+              </code>
+              <p className="text-[10px] text-slate-400">Brukes f.eks. på siden «Stab» under Om menigheten.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleCopy(":::personer[stab]")}
+              className="mt-2 w-full py-1 text-[11px] font-bold rounded bg-slate-800 hover:bg-slate-700 text-white transition-colors cursor-pointer"
+            >
+              {copiedSnippet === ":::personer[stab]" ? "Kopiert!" : "Kopier kode"}
+            </button>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5 flex flex-col justify-between">
+            <div>
+              <div className="text-[11px] font-bold text-white">Kun Pastor</div>
+              <code className="text-xs font-mono text-emerald-300 bg-slate-950 px-1.5 py-0.5 rounded block my-1">
+                :::personer[pastor]
+              </code>
+              <p className="text-[10px] text-slate-400">Brukes f.eks. på Om oss-siden eller forsiden.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleCopy(":::personer[pastor]")}
+              className="mt-2 w-full py-1 text-[11px] font-bold rounded bg-slate-800 hover:bg-slate-700 text-white transition-colors cursor-pointer"
+            >
+              {copiedSnippet === ":::personer[pastor]" ? "Kopiert!" : "Kopier kode"}
+            </button>
+          </div>
+
+          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5 flex flex-col justify-between">
+            <div>
+              <div className="text-[11px] font-bold text-white">Valgt Lederskap</div>
+              <code className="text-xs font-mono text-amber-300 bg-slate-950 px-1.5 py-0.5 rounded block my-1">
+                :::personer[lederskap]
+              </code>
+              <p className="text-[10px] text-slate-400">Brukes f.eks. på siden «Lederskap» for menighetsrådet.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleCopy(":::personer[lederskap]")}
+              className="mt-2 w-full py-1 text-[11px] font-bold rounded bg-slate-800 hover:bg-slate-700 text-white transition-colors cursor-pointer"
+            >
+              {copiedSnippet === ":::personer[lederskap]" ? "Kopiert!" : "Kopier kode"}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Modal: Velg person fra registeret og merk som stab */}
+      {showAddStaffModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-emerald-400" />
+                <span>Legg til person i staben</span>
+              </h3>
               <button
                 type="button"
-                onClick={() => handleOpenEditStaff(member)}
-                className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-semibold flex items-center gap-1.5"
+                onClick={() => setShowAddStaffModal(false)}
+                className="text-slate-400 hover:text-white"
               >
-                <Edit2 className="w-3.5 h-3.5" />
-                <span>Rediger</span>
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              Velg en person fra personregisteret for å registrere vedkommende som ansatt i staben:
+            </p>
+
+            <select
+              value={selectedPersonIdToAdd}
+              onChange={(e) => setSelectedPersonIdToAdd(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 text-white text-xs rounded-xl"
+            >
+              <option value="">-- Velg person --</option>
+              {availableNonStaffPersons.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.phone || p.email || "Ingen kontaktinfo"})
+                </option>
+              ))}
+            </select>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowAddStaffModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs"
+              >
+                Avbryt
               </button>
               <button
                 type="button"
-                onClick={async () => {
-                  if (confirm(`Vil du slette "${member.name}"?`)) {
-                    if (await deleteStaff(member.id)) showFeedback("Medarbeider slettet");
-                  }
-                }}
-                className="p-2 rounded-lg bg-slate-900 hover:bg-red-950 text-slate-400 hover:text-red-400"
-                title="Slett"
+                disabled={!selectedPersonIdToAdd}
+                onClick={handleAddPersonAsStaff}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold shadow-sm"
               >
-                <Trash2 className="w-4 h-4" />
+                Legg til som stab
               </button>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -22,6 +22,12 @@ export interface Person {
   avatarUrl?: string;
   consentToPublishGivenAt?: string; // ISO timestamp
   consentGivenBy?: string; // UID of admin who registered consent
+  // Stab og ansettelse
+  isStaff?: boolean;
+  staffRole?: string; // f.eks. "Hovedpastor", "Daglig leder", "Barne- og ungdomsarbeider"
+  staffCategory?: "pastor" | "stab" | "barneleder" | "diakoni" | "annet";
+  staffBio?: string;
+  staffOrder?: number;
   updatedBy?: string;
   updatedAt?: string;
 }
