@@ -12,11 +12,9 @@ import {
 } from "../types";
 import { newId } from "../utils/id";
 import { visibilityFields } from "../utils/visibility";
+import { isWorshipService } from "../utils/gatherings";
 
-// Each new document is built here exactly once. The same object goes into local
-// state and into Firestore, so the two can never disagree on the id or the defaults.
-
-const DEFAULT_GROUP_ID = "group-lyd";
+// Each new document is built here exactly once, so its id and its defaults are decided in one place.
 
 export interface NewPersonInput {
   name: string;
@@ -38,7 +36,8 @@ export interface NewGroupInput {
 }
 
 export interface NewGatheringInput {
-  groupId?: string;
+  /** The group responsible for the gathering. */
+  groupId: string;
   title: string;
   startsAt: string;
   endsAt?: string;
@@ -93,11 +92,11 @@ export function buildGathering(data: NewGatheringInput): Gathering {
   const visibility = data.visibility || (data.type === "gruppesamling" ? "intern" : "offentlig");
   return {
     id: newId("gathering"),
-    groupId: data.groupId || DEFAULT_GROUP_ID,
+    groupId: data.groupId,
     title: data.title.trim(),
     startsAt: data.startsAt,
     endsAt: data.endsAt,
-    location: data.location,
+    location: data.location?.trim() || undefined,
     type: data.type || "arrangement",
     theme: data.theme,
     bibleText: data.bibleText,
@@ -105,7 +104,8 @@ export function buildGathering(data: NewGatheringInput): Gathering {
     invitationSent: !!data.sendInvitationImmediately,
     invitationSentAt: data.sendInvitationImmediately ? new Date().toISOString() : undefined,
     ...visibilityFields(visibility),
-    isGudstjeneste: data.isGudstjeneste ?? (data.type === "arrangement"),
+    // Said outright by the form when it asks; otherwise the title decides, as it does for older documents
+    isGudstjeneste: data.isGudstjeneste ?? isWorshipService({ title: data.title }),
     cancelled: data.cancelled ?? false,
   };
 }

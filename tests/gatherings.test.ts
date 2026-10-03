@@ -1,6 +1,6 @@
 import { describe } from "vitest";
 import { assert } from "./assert";
-import { pickHighlight, upcomingPublicGatherings } from "../src/utils/gatherings";
+import { DEFAULT_LOCATION, locationOf, pickHighlight, upcomingPublicGatherings } from "../src/utils/gatherings";
 import type { Gathering } from "../src/types";
 
 describe("Samlinger på den offentlige nettsiden", () => {
@@ -69,4 +69,11 @@ describe("Samlinger på den offentlige nettsiden", () => {
   // 4. A service that has just begun is still the one to show
   assert(pick([gathering("paagaar", -2, { isGudstjeneste: true }), concert]) === "worship:paagaar", "En gudstjeneste som startet for to timer siden vises fortsatt");
   assert(pick([gathering("ferdig", -5, { isGudstjeneste: true }), concert]) === "next:konsert", "Etter fire timer er den over");
+
+  // 5. One default place, for a gathering that does not say where it is
+  assert(locationOf({ location: "Ungdomssalen" }) === "Ungdomssalen", "Et oppgitt sted vises som det er");
+  assert(
+    locationOf({}) === DEFAULT_LOCATION && locationOf({ location: "  " }) === DEFAULT_LOCATION,
+    "Uten sted brukes standardstedet"
+  );
 });

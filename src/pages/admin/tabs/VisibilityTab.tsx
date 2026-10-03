@@ -4,6 +4,7 @@ import {
 } from "../../../hooks/useAppHooks";
 import { GatheringVisibility } from "../../../types";
 import { visibilityOf, visibilityFields } from "../../../utils/visibility";
+import { locationOf } from "../../../utils/gatherings";
 import {
   Globe,
   Star,
@@ -69,7 +70,7 @@ export const VisibilityTab: React.FC<VisibilityTabProps> = ({ studio, showFeedba
                   )}
                 </div>
                 <div className="text-xs text-slate-400">
-                  {formatNorwegianDateTime(g.startsAt)} · {g.location || "Misjonskirken"}
+                  {formatNorwegianDateTime(g.startsAt)} · {locationOf(g)}
                   {g.theme && ` · Tema: ${g.theme}`}
                 </div>
               </div>

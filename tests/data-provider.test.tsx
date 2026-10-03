@@ -133,13 +133,23 @@ describe("Lesing", () => {
 describe("Nye dokumenter", () => {
   test("En ny samling vises og lagres slik den ble returnert", async () => {
     const data = await mountProvider();
-    const result = data.current.createGathering({ title: " Høsttakkefest ", startsAt: "2026-10-18T09:00:00.000Z" });
+    const result = data.current.createGathering({
+      groupId: "group-lyd",
+      title: " Høsttakkefest ",
+      startsAt: "2026-10-18T09:00:00.000Z",
+    });
     expect(result.success).toBe(true);
     const created = result.gathering!;
 
     await waitFor(() => expect(data.current.getGatheringById(created.id)?.title).toBe("Høsttakkefest"));
     const saved = await stored(COLLECTIONS.GATHERINGS, created.id);
-    expect(saved).toMatchObject({ id: created.id, title: "Høsttakkefest", visibility: "offentlig", isPublic: true });
+    expect(saved).toMatchObject({
+      id: created.id,
+      groupId: "group-lyd",
+      title: "Høsttakkefest",
+      visibility: "offentlig",
+      isPublic: true,
+    });
     // Fields that were never filled in are left out, not stored as empty values
     expect(saved).not.toHaveProperty("theme");
   });

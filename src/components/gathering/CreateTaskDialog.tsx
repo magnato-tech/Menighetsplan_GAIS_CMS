@@ -18,11 +18,11 @@ export const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({ detail, gath
   const { group, involvedGroups, allGroups, createTask } = detail;
 
   const [newTaskTitle, setNewTaskTitle] = useState<string>("");
+  // Starts on the user's own group, then the gathering's, then the first group there is
   const [newTaskGroupId, setNewTaskGroupId] = useState<string>(
-    group?.id || (involvedGroups[0]?.id || "group-verter")
+    group?.id || involvedGroups[0]?.id || allGroups[0]?.id || ""
   );
   const [newTaskNeededCount, setNewTaskNeededCount] = useState<number>(1);
-  const [newTaskDescription, setNewTaskDescription] = useState<string>("");
   const [newTaskInstruction, setNewTaskInstruction] = useState<string>("");
 
   // Admin: Create Task
@@ -32,12 +32,15 @@ export const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({ detail, gath
       showToast("Vennligst oppgi en tittel på oppgaven.");
       return;
     }
+    if (!newTaskGroupId) {
+      showToast("Velg hvilken gruppe som har ansvaret for oppgaven.");
+      return;
+    }
 
     const res = createTask({
       gatheringId: gathering.id,
       groupId: newTaskGroupId,
       title: newTaskTitle.trim(),
-      description: newTaskDescription.trim() || undefined,
       instruction: newTaskInstruction.trim() || undefined,
       neededCount: newTaskNeededCount || 1,
     });
@@ -46,7 +49,6 @@ export const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({ detail, gath
       showToast(`Oppgaven «${newTaskTitle.trim()}» ble lagt til i samlingen!`);
       onClose();
       setNewTaskTitle("");
-      setNewTaskDescription("");
       setNewTaskInstruction("");
       setNewTaskNeededCount(1);
     } else {

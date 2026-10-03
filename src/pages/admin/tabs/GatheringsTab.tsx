@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   formatNorwegianDateTime,
   combineDateAndTimeToIso,
+  parseIsoToDateAndTime,
   AdminGatheringItem,
 } from "../../../hooks/useAppHooks";
 import {
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import { StudioData, ShowFeedback } from "../studio";
 import { visibilityOf } from "../../../utils/visibility";
+import { DEFAULT_LOCATION, isWorshipService, locationOf } from "../../../utils/gatherings";
 
 interface GatheringsTabProps {
   studio: StudioData;
@@ -23,15 +25,15 @@ interface GatheringsTabProps {
 }
 
 export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedback }) => {
-  const { adminGatherings, createGathering, createTask } = studio;
+  const { adminGatherings, adminGroups, createGathering, createTask } = studio;
 
   // "Lag neste arrangement" Modal State
   const [nextGatheringSource, setNextGatheringSource] = useState<AdminGatheringItem | null>(null);
   const [nextGatheringDate, setNextGatheringDate] = useState("");
   const [nextGatheringTime, setNextGatheringTime] = useState("11:00");
-  const [nextGatheringLocation, setNextGatheringLocation] = useState("Misjonskirken");
+  const [nextGatheringLocation, setNextGatheringLocation] = useState("");
 
-  const handleCreateNextGathering = async (e: React.FormEvent) => {
+  const handleCreateNextGathering = (e: React.FormEvent) => {
     e.preventDefault();
     if (!nextGatheringSource || !nextGatheringDate) {
       showFeedback("Vennligst oppgi dato for det nye arrangementet", "error");
@@ -45,12 +47,12 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
       title: sourceG.title,
       groupId: sourceG.groupId,
       startsAt: isoDateTime,
-      location: nextGatheringLocation || sourceG.location,
+      location: nextGatheringLocation.trim() || undefined,
       theme: sourceG.theme,
       type: sourceG.type,
       // An internal gathering stays internal when it is copied, also one from before `visibility` existed
       visibility: visibilityOf(sourceG),
-      isGudstjeneste: sourceG.isGudstjeneste,
+      isGudstjeneste: isWorshipService(sourceG),
     });
     if (!res.success || !res.gathering) {
       showFeedback("Kunne ikke opprette arrangementet", "error");
@@ -80,21 +82,30 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
   const [newGatheringDate, setNewGatheringDate] = useState("");
   const [newGatheringTime, setNewGatheringTime] = useState("11:00");
   const [newGatheringTheme, setNewGatheringTheme] = useState("");
+  const [newGatheringGroupId, setNewGatheringGroupId] = useState("");
+  const [newGatheringIsWorship, setNewGatheringIsWorship] = useState(true);
+  // Every gathering has a responsible group. The first one is chosen until the admin picks another.
+  const responsibleGroupId = newGatheringGroupId || adminGroups[0]?.group.id || "";
 
-  const handleCreateGathering = async (e: React.FormEvent) => {
+  const handleCreateGathering = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newGatheringTitle || !newGatheringDate) {
       showFeedback("Tittel og dato må fylles ut", "error");
+      return;
+    }
+    if (!responsibleGroupId) {
+      showFeedback("Opprett en gruppe først. En samling må ha en ansvarlig gruppe.", "error");
       return;
     }
 
     const iso = combineDateAndTimeToIso(newGatheringDate, newGatheringTime);
     createGathering({
       title: newGatheringTitle,
+      groupId: responsibleGroupId,
       startsAt: iso,
-      location: "Hovedsalen",
       type: "arrangement",
-      theme: newGatheringTheme,
+      theme: newGatheringTheme.trim() || undefined,
+      isGudstjeneste: newGatheringIsWorship,
     });
 
     setNewGatheringTitle("");
@@ -151,14 +162,42 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
               />
             </div>
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+            <div className="sm:col-span-2">
+              <input
+                type="text"
+                value={newGatheringTheme}
+                onChange={(e) => setNewGatheringTheme(e.target.value)}
+                placeholder="Valgfritt tema..."
+                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <select
+                value={responsibleGroupId}
+                onChange={(e) => setNewGatheringGroupId(e.target.value)}
+                aria-label="Ansvarlig gruppe"
+                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
+              >
+                {adminGroups.length === 0 && <option value="">Ingen grupper finnes ennå</option>}
+                {adminGroups.map(({ group }) => (
+                  <option key={group.id} value={group.id}>
+                    Ansvarlig gruppe: {group.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-            <input
-              type="text"
-              value={newGatheringTheme}
-              onChange={(e) => setNewGatheringTheme(e.target.value)}
-              placeholder="Valgfritt tema for gudstjenesten..."
-              className="w-full sm:max-w-md px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"
-            />
+            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={newGatheringIsWorship}
+                onChange={(e) => setNewGatheringIsWorship(e.target.checked)}
+                className="w-4 h-4 rounded text-indigo-600 focus:ring-0"
+              />
+              <span>Dette er en gudstjeneste</span>
+            </label>
             <button
               type="submit"
               className="w-full sm:w-auto px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-sm"
@@ -182,7 +221,7 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-bold text-white text-base">{g.title}</h3>
-                    {g.isGudstjeneste && (
+                    {isWorshipService(g) && (
                       <span className="text-[10px] font-bold text-indigo-300 bg-indigo-950/80 px-2 py-0.5 rounded">
                         Gudstjeneste
                       </span>
@@ -209,7 +248,7 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
                     )}
                   </div>
                   <p className="text-xs text-slate-400">
-                    {formatNorwegianDateTime(g.startsAt)} · {g.location || "Hovedsalen"}
+                    {formatNorwegianDateTime(g.startsAt)} · {locationOf(g)}
                     {g.theme && ` · Tema: ${g.theme}`}
                   </p>
                 </div>
@@ -218,10 +257,11 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
                   <button
                     type="button"
                     onClick={() => {
+                      // The next one is suggested at the same time of day and place as this one
                       setNextGatheringSource(item);
                       setNextGatheringDate("");
-                      setNextGatheringTime("11:00");
-                      setNextGatheringLocation(g.location || "Misjonskirken");
+                      setNextGatheringTime(parseIsoToDateAndTime(g.startsAt).time);
+                      setNextGatheringLocation(g.location || "");
                     }}
                     className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-700"
                     title="Opprett neste arrangement og klon oppgaver med tom personliste"
@@ -274,7 +314,7 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
                 Kilde: {nextGatheringSource.gathering.title}
               </p>
               <p className="text-[11px] text-slate-400">
-                Systemet oppretter et nytt arrangement og kopierer over alle {nextGatheringSource.tasks.length} oppgaver med definert antall som trengs (neededCount). Personlisten etterlates tom slik at frivillige kan tildeles eller inviteres på nytt.
+                Systemet oppretter et nytt arrangement og kopierer over alle {nextGatheringSource.tasks.length} oppgaver med antallet hver av dem trenger. Personlisten etterlates tom slik at frivillige kan tildeles eller inviteres på nytt.
               </p>
             </div>
 
@@ -308,7 +348,7 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
                   type="text"
                   value={nextGatheringLocation}
                   onChange={(e) => setNextGatheringLocation(e.target.value)}
-                  placeholder="f.eks. Misjonskirken eller Hovedsalen"
+                  placeholder={`Tomt felt betyr ${DEFAULT_LOCATION}`}
                   className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-hidden focus:border-indigo-500 text-xs"
                 />
               </div>

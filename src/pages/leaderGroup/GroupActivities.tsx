@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { formatNorwegianDateTime } from "../../utils/dates";
+import { formatNorwegianDateTime, monthKeyOf, monthOptionsOf } from "../../utils/dates";
 import { LeaderGroupDetail } from "./leaderGroupDetail";
 import {
   Calendar,
@@ -23,29 +23,26 @@ export const GroupActivities: React.FC<GroupActivitiesProps> = ({ detail, showTo
   const { hasLeaderAccess, members, groupGatherings, assignTaskToPerson } = detail;
   const navigate = useNavigate();
 
-  // Semester Filter states (Aug 2026 - Jan 2027)
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<"all" | "red" | "yellow" | "green">("all");
   const [viewMode, setViewMode] = useState<"kort" | "tabell">("kort");
   const [expandedGatheringId, setExpandedGatheringId] = useState<string | null>(null);
   const [quickAssignTaskId, setQuickAssignTaskId] = useState<string | null>(null);
 
-  const monthOptions = [
-    { id: "all", label: "Alle måneder" },
-    { id: "2026-08", label: "Aug 2026" },
-    { id: "2026-09", label: "Sep 2026" },
-    { id: "2026-10", label: "Okt 2026" },
-    { id: "2026-11", label: "Nov 2026" },
-    { id: "2026-12", label: "Des 2026" },
-    { id: "2027-01", label: "Jan 2027" },
-  ];
+  // The months the group has activities in
+  const monthOptions = useMemo(
+    () => [
+      { id: "all", label: "Alle måneder" },
+      ...monthOptionsOf(groupGatherings.map((item) => item.gathering.startsAt)),
+    ],
+    [groupGatherings]
+  );
 
   // Filtered gatherings for this group
   const filteredGroupGatherings = useMemo(() => {
     return groupGatherings.filter((item) => {
-      if (selectedMonth !== "all") {
-        const itemMonth = item.gathering.startsAt.substring(0, 7);
-        if (itemMonth !== selectedMonth) return false;
+      if (selectedMonth !== "all" && monthKeyOf(item.gathering.startsAt) !== selectedMonth) {
+        return false;
       }
       if (selectedStatusFilter !== "all") {
         if (item.staffing.color !== selectedStatusFilter) return false;

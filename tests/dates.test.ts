@@ -6,6 +6,8 @@ import {
   formatNorwegianDateTime,
   formatCompactGatheringSubtitle,
   formatChatMessageTime,
+  monthKeyOf,
+  monthOptionsOf,
 } from "../src/utils/dates";
 
 describe("Datoer og klokkeslett", () => {
@@ -47,4 +49,22 @@ describe("Datoer og klokkeslett", () => {
   assert(formatChatMessageTime(at(0, "08:15")) === "I dag kl. 08:15", "En melding fra i dag");
   assert(formatChatMessageTime(at(1, "21:40")) === "I går kl. 21:40", "En melding fra i går");
   assert(/^\d{1,2}\. \S+ kl\. 12:00$/.test(formatChatMessageTime(at(10, "12:00"))), "En eldre melding vises med dato");
+
+  // 4. The months a list of moments covers, for a month filter
+  const moments = [
+    combineDateAndTimeToIso("2026-11-15", "11:00"),
+    combineDateAndTimeToIso("2026-10-11", "11:00"),
+    combineDateAndTimeToIso("2027-01-10", "11:00"),
+    combineDateAndTimeToIso("2026-10-25", "19:00"),
+    "ikke en dato",
+  ];
+  const options = monthOptionsOf(moments);
+  assert(options.map((o) => o.id).join() === "2026-10,2026-11,2027-01", "Hver måned én gang, i rekkefølge, og uten ugyldige datoer");
+  assert(options.map((o) => o.label).join() === "Okt 2026,Nov 2026,Jan 2027", "Månedene heter «Okt 2026»");
+  assert(monthOptionsOf([]).length === 0, "Uten datoer er det ingen måneder å velge");
+  assert(
+    monthKeyOf(combineDateAndTimeToIso("2026-11-01", "00:30")) === "2026-11",
+    "En samling like etter midnatt hører til måneden den har for den som ser på, ikke måneden i UTC"
+  );
+  assert(monthKeyOf("ikke en dato") === "", "En ugyldig dato har ingen måned");
 });

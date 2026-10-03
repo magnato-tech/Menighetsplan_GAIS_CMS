@@ -13,6 +13,13 @@ export function isWorshipService(g: Pick<Partial<Gathering>, "title" | "isGudstj
   return (g.title || "").toLowerCase().includes("gudstjeneste");
 }
 
+/** Where a gathering is held when nothing else is said (PRODUKTDOKUMENTASJON.md 2.1). */
+export const DEFAULT_LOCATION = "Misjonskirken";
+
+export function locationOf(g: Pick<Gathering, "location">): string {
+  return g.location?.trim() || DEFAULT_LOCATION;
+}
+
 const startOf = (g: Pick<Gathering, "startsAt">) => new Date(g.startsAt).getTime();
 
 /** The public gatherings that start at `from` or later, the nearest first. */

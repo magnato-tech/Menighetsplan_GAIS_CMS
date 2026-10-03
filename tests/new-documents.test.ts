@@ -29,14 +29,23 @@ describe("Opprettelse av nye dokumenter", () => {
   assert(task.status === "open" && task.neededCount === 1, "Ny oppgave er åpen og trenger én person");
 
   // 4. Gatherings: `visibility` decides, `isPublic` only mirrors it
-  const arrangement = buildGathering({ title: "Gudstjeneste", startsAt: "2026-10-18T11:00:00" });
+  const gathering = (extra: Partial<Parameters<typeof buildGathering>[0]> & { title: string }) =>
+    buildGathering({ groupId: "group-1", startsAt: "2026-10-18T09:00:00.000Z", ...extra });
+  const arrangement = gathering({ title: "Gudstjeneste" });
   assert(arrangement.visibility === "offentlig" && arrangement.isPublic === true, "Arrangement er offentlig som standard");
-  const groupGathering = buildGathering({ title: "Husfellesskap", startsAt: "2026-10-20T19:00:00", type: "gruppesamling" });
+  assert(arrangement.groupId === "group-1", "Samlingen får gruppen som ble oppgitt som ansvarlig");
+  const groupGathering = gathering({ title: "Husfellesskap", type: "gruppesamling" });
   assert(groupGathering.visibility === "intern" && groupGathering.isPublic === false, "Gruppesamling er intern som standard");
-  const internal = buildGathering({ title: "Lederforum", startsAt: "2026-10-21T19:00:00", visibility: "intern" });
+  const internal = gathering({ title: "Lederforum", visibility: "intern" });
   assert(internal.isPublic === false, "Et arrangement som opprettes som internt er ikke offentlig");
-  const featured = buildGathering({ title: "Julekonsert", startsAt: "2026-12-14T18:00:00", visibility: "fremhevet" });
+  const featured = gathering({ title: "Julekonsert", visibility: "fremhevet" });
   assert(featured.isPublic === true, "Fremhevet samling er offentlig");
+
+  // Worship service: what the form says, and the title when it says nothing
+  assert(arrangement.isGudstjeneste === true && featured.isGudstjeneste === false, "Uten avkrysning avgjør tittelen om det er en gudstjeneste");
+  assert(gathering({ title: "Høsttakkefest", isGudstjeneste: true }).isGudstjeneste === true, "Avkrysning for gudstjeneste gjelder uansett tittel");
+  assert(gathering({ title: "Gudstjenesteverksted", isGudstjeneste: false }).isGudstjeneste === false, "Avkrysning imot gjelder også uansett tittel");
+  assert(gathering({ title: "Kveldsmøte", location: "  " }).location === undefined, "Et tomt sted lagres ikke");
   try {
     validateGathering(arrangement);
     assert(true, "Ny samling består valideringen");

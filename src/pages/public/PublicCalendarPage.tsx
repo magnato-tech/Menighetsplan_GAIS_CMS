@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { useCms } from "../../context/CmsContext";
-import { isWorshipService, upcomingPublicGatherings } from "../../utils/gatherings";
+import { isWorshipService, locationOf, upcomingPublicGatherings } from "../../utils/gatherings";
 import {
   Calendar,
   Clock,
@@ -198,7 +198,7 @@ export const PublicCalendarPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-stone-600">
                   <MapPin className="w-3.5 h-3.5 text-stone-400" />
-                  <span>{item.location || "Lillesand Misjonskirke"}</span>
+                  <span>{locationOf(item)}</span>
                 </div>
               </div>
             </div>

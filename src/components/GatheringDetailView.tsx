@@ -6,7 +6,8 @@ import {
 } from "../hooks/useAppHooks";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
 import { studioTabUrl } from "../pages/admin/studio";
-import { Task, Person, Assignment } from "../types";
+import { buildRunSheet } from "../utils/runSheet";
+import { locationOf } from "../utils/gatherings";
 import {
   ArrowLeft,
   Calendar,
@@ -17,45 +18,18 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertTriangle,
-  UserPlus,
-  FileText,
   Info,
-  Check,
-  ChevronDown,
   SlidersHorizontal,
   Edit3,
   Plus,
-  Trash2,
   Printer,
 } from "lucide-react";
+import { RunSheetRowCard } from "./gathering/RunSheetRowCard";
 import { InstructionDialog } from "./gathering/InstructionDialog";
 import { AssignPersonDialog } from "./gathering/AssignPersonDialog";
 import { EditTaskDialog } from "./gathering/EditTaskDialog";
 import { CreateTaskDialog } from "./gathering/CreateTaskDialog";
 import { EditGatheringDialog } from "./gathering/EditGatheringDialog";
-
-export interface IntegratedScheduleRow {
-  id: string;
-  time: string;
-  programTitle: string;
-  programDescription?: string;
-  roleTitle: string;
-  groupName: string;
-  groupId?: string;
-  isMyGroup: boolean;
-  task?: Task;
-  neededCount: number;
-  confirmedCount: number;
-  isFullyCovered: boolean;
-  hasForfall: boolean;
-  assignedPersons: Array<{
-    assignment?: Assignment;
-    person?: Person;
-    statusLabel: string;
-    response: "confirmed" | "pending" | "declined" | "withdrawn";
-  }>;
-  instruction?: string;
-}
 
 interface GatheringDetailViewProps {
   gatheringId: string;
@@ -126,190 +100,20 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Build the unified "Kjøreplan & Hvem gjør hva" schedule timeline
-  const integratedSchedule = useMemo<IntegratedScheduleRow[]>(() => {
-    if (!gathering) return [];
+  // The programme and the tasks on one timeline, built from what is registered and nothing else
+  const integratedSchedule = useMemo(
+    () => buildRunSheet(programSchedule, tasksWithDetails),
+    [programSchedule, tasksWithDetails]
+  );
 
-    const rows: IntegratedScheduleRow[] = [];
-    const usedTaskIds = new Set<string>();
-
-    // 1. First, find preparation tasks that happen BEFORE service (e.g. oppmøte 09:30, 10:15, 10:35, 10:45)
-    tasksWithDetails.forEach((td) => {
-      const task = td.task;
-      const lowerInstr = (task.instruction || "").toLowerCase();
-      const lowerDesc = (task.description || "").toLowerCase();
-
-      // Check if task has specific earlier prep time in instruction
-      let prepTime = "";
-      if (lowerInstr.includes("09:30") || lowerDesc.includes("09:30")) prepTime = "09:30";
-      else if (lowerInstr.includes("10:00") || lowerDesc.includes("10:00")) prepTime = "10:00";
-      else if (lowerInstr.includes("10:15") || lowerDesc.includes("10:15")) prepTime = "10:15";
-      else if (lowerInstr.includes("10:20") || lowerDesc.includes("10:20")) prepTime = "10:20";
-      else if (lowerInstr.includes("10:35") || lowerDesc.includes("10:35")) prepTime = "10:35";
-      else if (lowerInstr.includes("10:45") || lowerDesc.includes("10:45")) prepTime = "10:45";
-
-      if (prepTime) {
-        usedTaskIds.add(task.id);
-        rows.push({
-          id: `prep-${task.id}`,
-          time: prepTime,
-          programTitle: prepTime < "10:30" ? "Teknisk rigg & forberedelser" : "Før gudstjenesten / Vertskap",
-          programDescription: task.description || "Forberedelse i forkant av samlingen",
-          roleTitle: task.title,
-          groupName: td.taskGroup?.name || (td.isMyGroup ? group?.name || "Min gruppe" : "Tjenestegruppe"),
-          groupId: task.groupId,
-          isMyGroup: td.isMyGroup,
-          task: task,
-          neededCount: td.neededCount || 1,
-          confirmedCount: td.confirmedPersonsCount,
-          isFullyCovered: td.isFullyCovered,
-          hasForfall: td.hasWithdrawn || task.status === "vacant",
-          assignedPersons: td.assignedPersons,
-          instruction: task.instruction || task.description,
-        });
-      }
-    });
-
-    // 2. Iterate through each ProgramItem in programSchedule
-    programSchedule.forEach((item, index) => {
-      // Find matching task if any
-      let matchedTaskDetail = tasksWithDetails.find(
-        (td) => td.task.id === item.taskId || (!usedTaskIds.has(td.task.id) && td.task.title.toLowerCase().includes(item.title.toLowerCase()))
-      );
-
-      // Specific domain mappings if taskId not explicitly bound
-      if (!matchedTaskDetail) {
-        const itemTitleLow = item.title.toLowerCase();
-        if (itemTitleLow.includes("kirkekaffe") || itemTitleLow.includes("lunsj") || itemTitleLow.includes("kaffe")) {
-          matchedTaskDetail = tasksWithDetails.find((td) => !usedTaskIds.has(td.task.id) && td.task.groupId === "group-kaffe");
-        } else if (itemTitleLow.includes("lovsang") || itemTitleLow.includes("sang")) {
-          matchedTaskDetail = tasksWithDetails.find((td) => !usedTaskIds.has(td.task.id) && td.task.groupId === "group-lovsang");
-        } else if (itemTitleLow.includes("lyd") || itemTitleLow.includes("teknisk") || itemTitleLow.includes("bilde")) {
-          matchedTaskDetail = tasksWithDetails.find((td) => !usedTaskIds.has(td.task.id) && td.task.groupId === "group-lyd");
-        } else if (itemTitleLow.includes("barnekirke") || itemTitleLow.includes("søndagsskole")) {
-          matchedTaskDetail = tasksWithDetails.find((td) => !usedTaskIds.has(td.task.id) && td.task.groupId === "group-barn");
-        }
-      }
-
-      if (matchedTaskDetail) {
-        usedTaskIds.add(matchedTaskDetail.task.id);
-        rows.push({
-          id: `prog-${matchedTaskDetail.task.id}-${index}`,
-          time: item.time,
-          programTitle: item.title,
-          programDescription: item.description,
-          roleTitle: matchedTaskDetail.task.title,
-          groupName: matchedTaskDetail.taskGroup?.name || (matchedTaskDetail.isMyGroup ? group?.name || "Min gruppe" : "Gruppe"),
-          groupId: matchedTaskDetail.task.groupId,
-          isMyGroup: matchedTaskDetail.isMyGroup,
-          task: matchedTaskDetail.task,
-          neededCount: matchedTaskDetail.neededCount || 1,
-          confirmedCount: matchedTaskDetail.confirmedPersonsCount,
-          isFullyCovered: matchedTaskDetail.isFullyCovered,
-          hasForfall: matchedTaskDetail.hasWithdrawn || matchedTaskDetail.task.status === "vacant",
-          assignedPersons: matchedTaskDetail.assignedPersons,
-          instruction: matchedTaskDetail.task.instruction || matchedTaskDetail.task.description,
-        });
-      } else {
-        // Program item without a specific volunteer Task object in DB
-        let role = "Liturg / Møteleder";
-        let responsiblePersonName = "Jonas Lie";
-        let roleGroupName = "Felles / Liturgi";
-        let roleGroupId = "group-liturgi";
-
-        const titleLow = item.title.toLowerCase();
-        if (titleLow.includes("preken") || titleLow.includes("tale")) {
-          role = "Taler / Pastor";
-          responsiblePersonName = "Per prest";
-          roleGroupName = "Pastorteam";
-        } else if (titleLow.includes("lovsang") || titleLow.includes("sang")) {
-          role = "Lovsangsleder";
-          responsiblePersonName = "Line & team";
-          roleGroupName = "Lovsang";
-          roleGroupId = "group-lovsang";
-        } else if (titleLow.includes("dåp")) {
-          role = "Liturg / Prest";
-          responsiblePersonName = "Kari Nordmann";
-          roleGroupName = "Prester";
-        } else if (titleLow.includes("barnekirke") || titleLow.includes("søndagsskole")) {
-          role = "Barnekirkeleder";
-          responsiblePersonName = "Ingrid Berg";
-          roleGroupName = "Barnekirke";
-          roleGroupId = "group-barn";
-        } else if (titleLow.includes("nattverd") || titleLow.includes("forbønn")) {
-          role = "Forbønnsteam & nattverd";
-          responsiblePersonName = "Kari + Ola";
-          roleGroupName = "Diakoni";
-        } else if (titleLow.includes("kirkekaffe")) {
-          role = "Kaffeteam";
-          responsiblePersonName = "Kaffegruppen";
-          roleGroupName = "Kirkekaffe";
-          roleGroupId = "group-kaffe";
-        }
-
-        rows.push({
-          id: `prog-general-${index}`,
-          time: item.time,
-          programTitle: item.title,
-          programDescription: item.description,
-          roleTitle: role,
-          groupName: roleGroupName,
-          groupId: roleGroupId,
-          isMyGroup: false,
-          neededCount: 1,
-          confirmedCount: 1,
-          isFullyCovered: true,
-          hasForfall: false,
-          assignedPersons: [
-            {
-              person: { id: `resp-${index}`, name: responsiblePersonName, globalRole: "member" },
-              statusLabel: "Bekreftet",
-              response: "confirmed",
-            },
-          ],
-        });
-      }
-    });
-
-    // 3. Add any remaining tasks that were not matched to the program
-    tasksWithDetails.forEach((td, idx) => {
-      if (!usedTaskIds.has(td.task.id)) {
-        rows.push({
-          id: `task-extra-${td.task.id}-${idx}`,
-          time: "11:00",
-          programTitle: "Gudstjeneste & gjennomføring",
-          programDescription: td.task.description,
-          roleTitle: td.task.title,
-          groupName: td.taskGroup?.name || (td.isMyGroup ? group?.name || "Min gruppe" : "Gruppe"),
-          groupId: td.task.groupId,
-          isMyGroup: td.isMyGroup,
-          task: td.task,
-          neededCount: td.neededCount || 1,
-          confirmedCount: td.confirmedPersonsCount,
-          isFullyCovered: td.isFullyCovered,
-          hasForfall: td.hasWithdrawn || td.task.status === "vacant",
-          assignedPersons: td.assignedPersons,
-          instruction: td.task.instruction || td.task.description,
-        });
-      }
-    });
-
-    // Sort chronologically by time
-    return rows.sort((a, b) => {
-      const timeA = a.time.replace(/[^0-9:]/g, "") || "99:99";
-      const timeB = b.time.replace(/[^0-9:]/g, "") || "99:99";
-      return timeA.localeCompare(timeB);
-    });
-  }, [gathering, tasksWithDetails, programSchedule, group]);
-
-  // Distinct groups present in the schedule for filtering
+  // The groups that have tasks in the schedule, for filtering
   const groupsInSchedule = useMemo(() => {
     const map = new Map<string, { id: string; name: string; count: number }>();
     integratedSchedule.forEach((r) => {
-      const gId = r.groupId || r.groupName;
-      const curr = map.get(gId) || { id: gId, name: r.groupName, count: 0 };
+      if (!r.groupId) return;
+      const curr = map.get(r.groupId) || { id: r.groupId, name: r.groupName || "Gruppe", count: 0 };
       curr.count += 1;
-      map.set(gId, curr);
+      map.set(r.groupId, curr);
     });
     return Array.from(map.values());
   }, [integratedSchedule]);
@@ -317,10 +121,8 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
   // Filtered rows based on view filters
   const filteredSchedule = useMemo(() => {
     return integratedSchedule.filter((row) => {
-      if (selectedGroupFilter !== "all") {
-        if (row.groupId !== selectedGroupFilter && row.groupName !== selectedGroupFilter) {
-          return false;
-        }
+      if (selectedGroupFilter !== "all" && row.groupId !== selectedGroupFilter) {
+        return false;
       }
       if (viewFilter === "my-group") {
         return row.isMyGroup;
@@ -676,7 +478,7 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
         <div className="hidden print:block mb-4 border-b border-slate-300 pb-2">
           <h1 className="text-xl font-bold text-black">{gathering.title}</h1>
           <p className="text-xs text-slate-600">
-            {formatNorwegianDateTime(gathering.startsAt)} • {gathering.location || "Kirken"}
+            {formatNorwegianDateTime(gathering.startsAt)} • {locationOf(gathering)}
           </p>
           <p className="text-[10px] text-slate-500 mt-1">
             Offisiell kjøreplan og bemanningsliste – Menighetsplan
@@ -703,249 +505,38 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
           </div>
         ) : (
           <div className="space-y-2 print:space-y-1">
-            {filteredSchedule.map((row) => {
-              const hasTask = Boolean(row.task);
-              const isVacant = !row.isFullyCovered || row.hasForfall;
-              const canIntervene = canAdminister || (row.isMyGroup && isLeader);
-
-              return (
-                <div
-                  key={row.id}
-                  id={`schedule-row-${row.id}`}
-                  className={`p-3 bg-white rounded-2xl border transition-all ${
-                    row.hasForfall
-                      ? "border-red-300/80 bg-red-50/20 shadow-xs"
-                      : !row.isFullyCovered
-                      ? "border-amber-300/80 bg-amber-50/10 shadow-xs"
-                      : "border-slate-200/80 hover:border-slate-300"
-                  } print:rounded-none print:border-b print:border-t-0 print:border-l-0 print:border-r-0 print:border-slate-200 print:p-1.5`}
-                >
-                  {/* Top line: Time, Program Item, Group & Status indicator */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2.5 min-w-0">
-                      {/* Time pill */}
-                      <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200/60 shrink-0 mt-0.5">
-                        {row.time}
-                      </span>
-
-                      {/* Program Item and Role */}
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <h3 className="text-xs font-extrabold text-slate-900">
-                            {row.programTitle}
-                          </h3>
-                          <span className="text-slate-300">•</span>
-                          <span className="text-xs font-semibold text-slate-700">
-                            {row.roleTitle}
-                          </span>
-                        </div>
-
-                        {/* Program note / description if present */}
-                        {row.programDescription && (
-                          <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                            {row.programDescription}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Group Badge & Staffing Fraction */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                          row.isMyGroup
-                            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                            : "bg-slate-100 text-slate-700 border-slate-200"
-                        }`}
-                      >
-                        {row.groupName}
-                      </span>
-
-                      {hasTask && row.neededCount > 1 && (
-                        <span
-                          className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                            row.isFullyCovered
-                              ? "bg-emerald-100 text-emerald-800"
-                              : "bg-amber-100 text-amber-800"
-                          }`}
-                        >
-                          {row.confirmedCount}/{row.neededCount}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Middle Line: Assigned Person(s) with interactive status */}
-                  <div className="mt-2 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
-                      <span className="text-[10px] font-bold uppercase text-slate-400 shrink-0">
-                        Ansvarlig:
-                      </span>
-
-                      {row.assignedPersons.length > 0 ? (
-                        row.assignedPersons.map(({ assignment, person, response }) => (
-                          <div
-                            key={assignment ? assignment.id : person?.id || Math.random()}
-                            className="relative group inline-flex items-center"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (assignment && canIntervene) {
-                                  setActivePersonActionId(
-                                    activePersonActionId === assignment.id ? null : assignment.id
-                                  );
-                                }
-                              }}
-                              disabled={!assignment || !canIntervene}
-                              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all ${
-                                response === "confirmed"
-                                  ? "bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100/80"
-                                  : response === "withdrawn"
-                                  ? "bg-red-50 text-red-900 border-red-300 hover:bg-red-100/80"
-                                  : response === "declined"
-                                  ? "bg-slate-100 text-slate-700 border-slate-300 line-through"
-                                  : "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100/80"
-                              } ${assignment && canIntervene ? "cursor-pointer" : "cursor-default"}`}
-                            >
-                              <span>{person?.name || "Ukjent person"}</span>
-                              {response !== "confirmed" && (
-                                <span
-                                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                                    response === "withdrawn"
-                                      ? "bg-red-200 text-red-800"
-                                      : response === "declined"
-                                      ? "bg-slate-200 text-slate-700"
-                                      : "bg-amber-200 text-amber-900"
-                                  }`}
-                                >
-                                  {response === "withdrawn" ? "Forfall" : response === "declined" ? "Avslått" : "Forespurt"}
-                                </span>
-                              )}
-                              {assignment && canIntervene && (
-                                <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600 print:hidden" />
-                              )}
-                            </button>
-
-                            {/* Person Status Dropdown Menu (hidden in print) */}
-                            {assignment && activePersonActionId === assignment.id && (
-                              <div className="absolute left-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-slate-200 z-30 p-1.5 space-y-1 text-xs animate-fadeIn print:hidden">
-                                <div className="px-2 py-1 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-100">
-                                  Endre status for {person?.name}
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleStatusChange(assignment.id, "confirmed", person?.name)}
-                                  className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-emerald-50 text-emerald-800 font-medium flex items-center justify-between cursor-pointer"
-                                >
-                                  <span>Akseptert / Bekreftet</span>
-                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleStatusChange(assignment.id, "pending", person?.name)}
-                                  className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-amber-50 text-amber-800 font-medium flex items-center justify-between cursor-pointer"
-                                >
-                                  <span>Sett som Forespurt</span>
-                                  <Clock className="w-3.5 h-3.5 text-amber-600" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleStatusChange(assignment.id, "withdrawn", person?.name)}
-                                  className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-red-50 text-red-700 font-medium flex items-center justify-between cursor-pointer"
-                                >
-                                  <span>Meld forfall (Trenger vikar)</span>
-                                  <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
-                                </button>
-                                <div className="border-t border-slate-100 pt-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemovePerson(assignment.id, person?.name)}
-                                    className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-red-50 text-red-600 font-semibold flex items-center justify-between cursor-pointer"
-                                  >
-                                    <span>Fjern fra oppgave</span>
-                                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200/60">
-                          Ubesatt (Trenger frivillig)
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Actions on this row (hidden in print) */}
-                    <div className="flex items-center gap-1.5 print:hidden">
-                      {/* On-demand Instruction button (Requirement 4) */}
-                      {row.instruction && (
-                        <button
-                          type="button"
-                          id={`btn-instruction-${row.id}`}
-                          onClick={() => {
-                            setViewInstructionTask({
-                              taskId: row.task?.id,
-                              title: `${row.programTitle} – ${row.roleTitle}`,
-                              instruction: row.instruction || "",
-                              time: row.time,
-                              groupName: row.groupName,
-                            });
-                          }}
-                          className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50/80 hover:bg-indigo-100 px-2 py-1 rounded-lg border border-indigo-200/60 transition-colors cursor-pointer"
-                        >
-                          <FileText className="w-3 h-3 text-indigo-600" />
-                          <span>Instruks</span>
-                        </button>
-                      )}
-
-                      {/* Direct assign button (Requirement 5) */}
-                      {row.task && canIntervene && (
-                        <button
-                          type="button"
-                          id={`btn-intervene-assign-${row.task.id}`}
-                          onClick={() => {
-                            setActiveInterveneTaskId(row.task!.id);
-                          }}
-                          className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                            isVacant
-                              ? "bg-red-600 hover:bg-red-700 text-white shadow-xs"
-                              : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
-                          }`}
-                        >
-                          <UserPlus className="w-3 h-3" />
-                          <span>{isVacant ? "Grip inn / Tildel" : "Tildel flere"}</span>
-                        </button>
-                      )}
-
-                      {/* Admin Task Edit button (Requirement 5) */}
-                      {row.task && canAdminister && (
-                        <button
-                          type="button"
-                          id={`btn-admin-edit-task-${row.task.id}`}
-                          onClick={() => {
-                            setEditingTask({
-                              id: row.task!.id,
-                              title: row.task!.title,
-                              groupId: row.task!.groupId,
-                              neededCount: row.task!.neededCount || 1,
-                              description: row.task!.description || "",
-                              instruction: row.task!.instruction || "",
-                            });
-                          }}
-                          className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-                          title="Rediger oppgave, behov eller gruppe"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {filteredSchedule.map((row) => (
+              <RunSheetRowCard
+                key={row.id}
+                row={row}
+                canIntervene={canAdminister || (row.isMyGroup && isLeader)}
+                canAdminister={canAdminister}
+                openMenuAssignmentId={activePersonActionId}
+                onToggleMenu={setActivePersonActionId}
+                onStatusChange={handleStatusChange}
+                onRemovePerson={handleRemovePerson}
+                onShowInstruction={(shown) =>
+                  setViewInstructionTask({
+                    taskId: shown.task?.id,
+                    title: shown.roleTitle ? `${shown.title} – ${shown.roleTitle}` : shown.title,
+                    instruction: shown.instruction || "",
+                    time: shown.time,
+                    groupName: shown.groupName,
+                  })
+                }
+                onAssign={setActiveInterveneTaskId}
+                onEditTask={(task) =>
+                  setEditingTask({
+                    id: task.id,
+                    title: task.title,
+                    groupId: task.groupId,
+                    neededCount: task.neededCount || 1,
+                    description: task.description || "",
+                    instruction: task.instruction || "",
+                  })
+                }
+              />
+            ))}
           </div>
         )}
       </div>

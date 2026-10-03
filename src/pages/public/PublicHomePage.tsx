@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { useCms } from "../../context/CmsContext";
-import { pickHighlight, upcomingPublicGatherings } from "../../utils/gatherings";
+import { locationOf, pickHighlight, upcomingPublicGatherings } from "../../utils/gatherings";
 import {
   Calendar,
   Clock,
@@ -154,7 +154,7 @@ export const PublicHomePage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-indigo-600" />
-                  <span>{nextWorship.location || "Hovedsalen"}</span>
+                  <span>{locationOf(nextWorship)}</span>
                 </div>
               </div>
             )}
@@ -250,7 +250,7 @@ export const PublicHomePage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-1.5 truncate max-w-[120px]">
                   <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0" />
-                  <span className="truncate">{item.location || "Misjonskirken"}</span>
+                  <span className="truncate">{locationOf(item)}</span>
                 </div>
               </div>
             </div>

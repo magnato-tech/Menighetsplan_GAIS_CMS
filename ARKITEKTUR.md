@@ -69,6 +69,15 @@ Reglene i kapittel 3 i `PRODUKTDOKUMENTASJON.md` ligger i `src/utils/staffing.ts
 - Hver handling som endrer en tildeling eller behovet, lagrer denne statusen i samme skriving. Statusen kan derfor ikke si noe annet enn tildelingene.
 - En direkte tildeling og en oppgave et medlem tar selv er bekreftet med en gang. En forespørsel står som «venter» til medlemmet svarer på oppgavesiden eller på Min side. Tildelinger får `assignedAt` når de opprettes og `respondedAt` når svaret registreres. Et forfall lagres som `withdrawn` med valgfri grunn; et nei på en forespørsel som `declined`.
 
+### Kjøreplan
+Samlingsvisningen (`GatheringDetailView.tsx`) viser programmet og oppgavene på én tidslinje. `buildRunSheet` i `src/utils/runSheet.ts` bygger den av det som er registrert, og ikke noe annet:
+
+- Et programpunkt (`programSchedule`) vises med klokkeslett og tittel. Er det lenket til en oppgave (`taskId`), vises oppgaven og hvem som står på den der.
+- Et programpunkt uten oppgave har ingen ansvarlig. En samling uten program viser bare oppgavene sine.
+- En oppgave utenfor programmet står på oppmøtetiden når instruksen åpner med den («Møt opp kl. 09:30 …»), ellers til slutt.
+
+Det finnes ennå ikke noe skjermbilde for å redigere programmet; bare demodataene har et.
+
 ### Testing av datalaget
 `tests/data-provider.test.tsx` og `tests/cms-provider.test.tsx` kjører `FirebaseDataProvider` og `CmsProvider` mot den ekte Firestore-klienten, koblet fra nettet (`tests/support/offlineFirestore.ts`). `tests/member-flow.test.tsx` gjør det samme med det et medlem ser og gjør: ta en oppgave, svare på en forespørsel, melde forfall. Testene ser dermed det samme som appen: en skriving når listene gjennom lytterne. Ingenting sendes til en server.
 

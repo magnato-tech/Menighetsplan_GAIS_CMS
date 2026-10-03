@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from "react";
 import { useFirebase } from "../context/FirebaseDataContext";
-import { Task, Person, Group, Gathering } from "../types";
+import { Task, Person, Group, Gathering, ProgramItem } from "../types";
 import { calculateTaskStaffingStatus, describeAssignments, StaffingStatusResult, getStaffingStatus } from "../utils/staffing";
 import { isInGroup } from "../utils/groups";
 
@@ -278,6 +278,9 @@ export function useLeaderGroupDetail(groupId: string) {
   };
 }
 
+// One shared empty list, so a gathering without a programme does not look changed on every render
+const NO_PROGRAM: ProgramItem[] = [];
+
 // 15. Hook: useLeaderGatheringDetail
 export function useLeaderGatheringDetail(gatheringId: string) {
   const {
@@ -391,21 +394,8 @@ export function useLeaderGatheringDetail(gatheringId: string) {
     });
   }, [gathering, gatheringTasks, assignments, getPersonById, getGroupById, group]);
 
-  // Combined program schedule including items with or without task links
-  const programSchedule = useMemo(() => {
-    if (!gathering) return [];
-    if (gathering.programSchedule && gathering.programSchedule.length > 0) {
-      return gathering.programSchedule;
-    }
-    // Fallback: build default program schedule from gathering tasks
-    return [
-      { time: "11:00", title: "Velkommen & åpningsbønn" },
-      { time: "11:05", title: "Fellessang & lovsang" },
-      { time: "11:50", title: "Preken / Dagens tale" },
-      { time: "12:15", title: "Nattverd & forbønn" },
-      { time: "12:35", title: "Kirkekaffe & fellesskap" },
-    ];
-  }, [gathering]);
+  // The programme registered on the gathering. A gathering without one has none; nothing is made up for it.
+  const programSchedule = gathering?.programSchedule ?? NO_PROGRAM;
 
   return {
     hasAccess,
