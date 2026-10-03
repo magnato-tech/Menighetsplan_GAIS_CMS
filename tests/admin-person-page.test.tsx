@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { Group, Person, Task } from "../src/types";
 
-const updatePerson = vi.fn(() => ({ success: true as const }));
+const updatePerson = vi.fn((_personId: string, _updates: Partial<Person>) => ({ success: true as const }));
 let person: Person | undefined;
 let isAdmin = true;
 const groups: Group[] = [
