@@ -169,7 +169,7 @@ export const PublicLeadershipPage: React.FC = () => {
         )}
       </section>
 
-      {/* Seksjon 2: Lederskapsgruppe (Menighetsråd & Styre) */}
+      {/* Seksjon 2: Lederskapsgruppe  */}
       <section className="space-y-6 pt-4">
         <div className="border-b border-stone-200 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -177,8 +177,8 @@ export const PublicLeadershipPage: React.FC = () => {
               <Shield className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-stone-900">Lederskapsgruppe (Menighetsråd)</h2>
-              <p className="text-xs text-stone-500">Valgt styre og åndelig lederskap</p>
+              <h2 className="text-xl font-bold text-stone-900">Lederskap</h2>
+              <p className="text-xs text-stone-500">Frivillige som leder menigheten</p>
             </div>
           </div>
         </div>
@@ -209,7 +209,7 @@ export const PublicLeadershipPage: React.FC = () => {
                         )}
                         <div className="space-y-1">
                           <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-accent-50 text-accent-900">
-                            {person.title || (isLeader ? "Menighetsrådsleder" : roleInGroup)}
+                            {person.title || (isLeader ? "Leder" : roleInGroup)}
                           </span>
                           <h4 className="font-bold text-stone-900 text-base">{person.name}</h4>
                         </div>

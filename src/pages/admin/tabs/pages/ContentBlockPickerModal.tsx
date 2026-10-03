@@ -181,7 +181,7 @@ Husk å ta med egen kopp til kirkekaffen om du har lyst! Det er gratis parkering
   },
   {
     id: "personer-lederskap",
-    title: "Menighetsråd & Lederskap",
+    title: "Lederskap",
     category: "Personer & Roller",
     description: "Viser menighetens valgte lederskap (styreleder, nestleder og medlemmer) direkte fra lederskapsgruppen.",
     icon: <Shield className="w-5 h-5 text-amber-400" />,

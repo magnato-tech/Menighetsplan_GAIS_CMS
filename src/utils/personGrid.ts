@@ -13,11 +13,11 @@ export type PersonGridResult =
   | { kind: "no-group" }
   | { kind: "empty"; of: "group" | "ids" | "staff" };
 
-const GROUP_KEYWORDS = new Set(["lederskap", "menighetsråd", "menighetsrad", "styre"]);
+const GROUP_KEYWORDS = new Set(["lederskap"]);
 const CATEGORY_KEYWORDS = new Set(["pastor", "barneleder", "diakoni"]);
 
 function groupGrid(filter: string, persons: Person[], groups: Group[]): PersonGridResult {
-  const wanted = filter.replace(/^gruppe=/i, "").trim().replace(/^menighetsrad$/i, "menighetsråd");
+  const wanted = filter.replace(/^gruppe=/i, "").trim();
   const publicGroups = groups.filter(isGroupPublic);
   // Leadership is volunteers and staff is employees, so a group is never found by its category: only by name or id
   const group = publicGroups.find(

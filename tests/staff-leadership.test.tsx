@@ -151,7 +151,7 @@ describe("Innholdsblokk-velger: CONTENT_BLOCKS", () => {
     expect(block?.template).toBe(":::personer[stab]");
   });
 
-  test("inneholder definisjon for Menighetsråd & Lederskap", () => {
+  test("inneholder definisjon for Lederskap", () => {
     const block = CONTENT_BLOCKS.find((b) => b.id === "personer-lederskap");
     expect(block).toBeDefined();
     expect(block?.category).toBe("Personer & Roller");

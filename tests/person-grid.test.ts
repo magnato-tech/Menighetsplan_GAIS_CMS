@@ -52,7 +52,7 @@ describe("Personblokken: grupper", () => {
     person("skjult", { isPublicProfile: false }),
   ];
   const styret = group("styret", {
-    name: "Menighetsråd & Lederskap",
+    name: "Lederskap",
     leaderIds: ["leder"],
     deputyLeaderIds: ["nestleder"],
     memberIds: ["medlem", "skjult"],
@@ -71,7 +71,7 @@ describe("Personblokken: grupper", () => {
   assert(names(selectPersonGrid("lederskap", persons, [group("skjult", { isPublic: false })])) === "no-group", "En skjult gruppe vises ikke");
   const stab = group("stab", { name: "Stab", leaderIds: ["medlem"] });
   assert(
-    names(selectPersonGrid("lederskap", persons, [stab, group("r", { name: "Menighetsråd & Lederskap", leaderIds: ["leder"] })])) === "leder",
+    names(selectPersonGrid("lederskap", persons, [stab, group("r", { name: "Lederskap", leaderIds: ["leder"] })])) === "leder",
     "Stikkordet finner gruppen med ordet i navnet, ikke bare den første ledergruppen"
   );
   assert(
@@ -80,7 +80,7 @@ describe("Personblokken: grupper", () => {
   );
   assert(names(selectPersonGrid("lederskap", persons, [])) === "no-group", "Uten ledergruppe sier blokken fra");
   assert(names(selectPersonGrid("gruppe=finnes-ikke", persons, [styret])) === "no-group", "Ukjent gruppe faller ikke tilbake på en annen");
-  assert(names(selectPersonGrid("gruppe=menighets", persons, [styret])) === "leder,medlem,nestleder", "Gruppe finnes på navn");
+  assert(names(selectPersonGrid("gruppe=leder", persons, [styret])) === "leder,medlem,nestleder", "Gruppe finnes på navn");
   assert(names(selectPersonGrid("gruppe=styret", persons, [styret])) === "leder,medlem,nestleder", "Gruppe finnes på id");
 });
 
