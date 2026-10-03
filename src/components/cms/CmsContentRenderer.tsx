@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useFirebase } from "../../context/FirebaseDataContext";
-import { toPublicProfile, publicProfilesOf, PublicProfile } from "../../utils/publicProfile";
+import { type PersonGridProfile, selectPersonGrid } from "../../utils/personGrid";
 import {
   Info,
   AlertTriangle,
@@ -642,10 +642,11 @@ export const CmsContentRenderer: React.FC<CmsContentRendererProps> = ({
 };
 
 interface PersonCardProps {
-  profile: PublicProfile & { isLeader?: boolean };
+  profile: PersonGridProfile;
 }
 
 const PersonCard: React.FC<PersonCardProps> = ({ profile }) => {
+  const title = profile.title || profile.roleInGroup;
   return (
     <div className="bg-white rounded-2xl border border-stone-200/90 overflow-hidden shadow-xs hover:border-primary-300 hover:shadow-md transition-all flex flex-col justify-between">
       <div>
@@ -666,9 +667,7 @@ const PersonCard: React.FC<PersonCardProps> = ({ profile }) => {
         <div className="p-5 space-y-2">
           <div>
             <h3 className="font-bold text-stone-900 text-lg leading-tight">{profile.name}</h3>
-            <p className="text-xs text-primary-700 font-semibold mt-0.5">
-              {profile.title || (profile.isLeader ? "Leder" : "Medarbeider")}
-            </p>
+            {title && <p className="text-xs text-primary-700 font-semibold mt-0.5">{title}</p>}
           </div>
 
           {profile.bio && (
@@ -709,133 +708,27 @@ interface PersonGridRendererProps {
   filter: string;
 }
 
+const EMPTY_TEXT = {
+  group: "Ingen offentlige profiler med registrert samtykke i gruppen ennå.",
+  ids: "Ingen profiler funnet for de oppgitte personene.",
+  staff: "Ingen stabsmedlemmer med registrert samtykke funnet.",
+} as const;
+
 const PersonGridRenderer: React.FC<PersonGridRendererProps> = ({ filter }) => {
   const { allPersons, groups } = useFirebase();
-  const normalized = filter.toLowerCase().trim();
+  const result = selectPersonGrid(filter, allPersons, groups);
 
-  // Filter 1: Lederskap or Group
-  if (
-    normalized === "lederskap" ||
-    normalized === "menighetsråd" ||
-    normalized === "menighetsrad" ||
-    normalized === "styre" ||
-    normalized.startsWith("gruppe=")
-  ) {
-    const groupNameOrId = normalized.replace(/^gruppe=/, "");
-    const targetGroup =
-      groups.find((g) => g.id === groupNameOrId || g.name.toLowerCase().includes(groupNameOrId)) ||
-      groups.find((g) => g.category === "ledergruppe");
-
-    if (!targetGroup) {
-      return (
-        <div className="p-4 rounded-xl bg-stone-100 text-stone-500 text-xs italic">
-          Ingen lederskapsgruppe funnet.
-        </div>
-      );
-    }
-
-    const leaderIds = new Set(targetGroup.leaderIds || []);
-    const deputyIds = new Set(targetGroup.deputyLeaderIds || []);
-    const allIds = Array.from(new Set([...(targetGroup.leaderIds || []), ...(targetGroup.memberIds || [])]));
-
-    const profiles = publicProfilesOf(allIds, allPersons).map((p) => {
-      let role = p.title || "Medlem";
-      if (leaderIds.has(p.id)) role = p.title || "Leder i menighetsrådet";
-      else if (deputyIds.has(p.id)) role = p.title || "Nestleder";
-      return {
-        ...p,
-        title: role,
-        isLeader: leaderIds.has(p.id),
-      };
-    });
-
-    profiles.sort((a, b) => {
-      if (a.isLeader && !b.isLeader) return -1;
-      if (!a.isLeader && b.isLeader) return 1;
-      return a.name.localeCompare(b.name);
-    });
-
-    if (profiles.length === 0) {
-      return (
-        <div className="p-4 rounded-xl bg-stone-100 text-stone-500 text-xs italic">
-          Ingen offentlige profiler med registrert samtykke i lederskapsgruppen ennå.
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 my-6">
-        {profiles.map((p) => (
-          <PersonCard key={p.id} profile={p} />
-        ))}
-      </div>
-    );
-  }
-
-  // Filter 2: Explicit Person IDs
-  if (normalized.startsWith("ids=") || normalized.includes(",") || allPersons.some((p) => p.id === normalized)) {
-    const rawIds = normalized.replace(/^ids=/, "").split(",").map((s) => s.trim());
-    const profiles = publicProfilesOf(rawIds, allPersons);
-
-    if (profiles.length === 0) {
-      return (
-        <div className="p-4 rounded-xl bg-stone-100 text-stone-500 text-xs italic">
-          Ingen profiler funnet for de oppgitte personene.
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 my-6">
-        {profiles.map((p) => (
-          <PersonCard key={p.id} profile={p} />
-        ))}
-      </div>
-    );
-  }
-
-  // Filter 3: Category or Staff
-  const isCategory =
-    normalized.startsWith("kategori=") ||
-    normalized === "pastor" ||
-    normalized === "barneleder" ||
-    normalized === "diakoni";
-
-  const targetCategory = normalized.replace(/^kategori=/, "");
-
-  let matching = allPersons.filter((p) => {
-    const prof = toPublicProfile(p);
-    if (!prof) return false;
-
-    if (isCategory) {
-      return (
-        p.staffCategory?.toLowerCase() === targetCategory ||
-        p.staffRole?.toLowerCase().includes(targetCategory) ||
-        p.publicTitle?.toLowerCase().includes(targetCategory)
-      );
-    }
-
-    // Default: Stab
-    return Boolean(p.isStaff);
-  });
-
-  if (matching.length === 0 && (normalized === "stab" || normalized === "alle")) {
-    matching = allPersons.filter((p) => toPublicProfile(p) !== null);
-  }
-
-  const profiles = matching.map((p) => toPublicProfile(p)!).filter(Boolean);
-
-  if (profiles.length === 0) {
+  if (result.kind !== "people") {
     return (
       <div className="p-4 rounded-xl bg-stone-100 text-stone-500 text-xs italic">
-        Ingen stabsmedlemmer med registrert samtykke funnet.
+        {result.kind === "no-group" ? "Ingen lederskapsgruppe funnet." : EMPTY_TEXT[result.of]}
       </div>
     );
   }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 my-6">
-      {profiles.map((p) => (
+      {result.profiles.map((p) => (
         <PersonCard key={p.id} profile={p} />
       ))}
     </div>
