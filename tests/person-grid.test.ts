@@ -52,7 +52,7 @@ describe("Personblokken: grupper", () => {
     person("skjult", { isPublicProfile: false }),
   ];
   const styret = group("styret", {
-    name: "Menighetsråd",
+    name: "Menighetsråd & Lederskap",
     leaderIds: ["leder"],
     deputyLeaderIds: ["nestleder"],
     memberIds: ["medlem", "skjult"],
