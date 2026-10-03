@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import { useAdminDashboard } from "../../hooks/useAppHooks";
 import { StudioTab, ShowFeedback, toStudioTab } from "./studio";
+import { useTimedMessage } from "../../hooks/useTimedMessage";
 import { StudioSidebar } from "./StudioSidebar";
 import { DashboardTab } from "./tabs/DashboardTab";
 import { AdminCmsPanel } from "../../components/admin/AdminCmsPanel";
@@ -55,11 +56,8 @@ export const AdminStudio: React.FC = () => {
   const clearCreateRequest = () => setCreateRequest(null);
 
   // Feedback notifications
-  const [feedback, setFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
-  const showFeedback: ShowFeedback = (text, type = "success") => {
-    setFeedback({ text, type });
-    setTimeout(() => setFeedback(null), 3500);
-  };
+  const [feedback, setFeedback] = useTimedMessage<{ text: string; type: "success" | "error" }>();
+  const showFeedback: ShowFeedback = (text, type = "success") => setFeedback({ text, type });
 
   const panel = (tab: StudioTab, content: React.ReactNode) =>
     visitedTabs.includes(tab) ? <div hidden={activeTab !== tab}>{content}</div> : null;

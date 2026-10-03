@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useAdminPersonDetail } from "../hooks/useAppHooks";
 import { AdminAccessRequired } from "../components/AdminAccessRequired";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
+import { useTimedMessage } from "../hooks/useTimedMessage";
 import { toPublicProfile, publicProfileFields } from "../utils/publicProfile";
 import {
   Globe,
@@ -51,7 +52,7 @@ export const AdminPersonDetailPage: React.FC = () => {
   const [publicPhone, setPublicPhone] = useState<string>("");
   const [publicEmail, setPublicEmail] = useState<string>("");
 
-  const [feedback, setFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [feedback, setFeedback] = useTimedMessage<{ text: string; type: "success" | "error" }>();
 
   useEffect(() => {
     if (person) {
@@ -68,10 +69,7 @@ export const AdminPersonDetailPage: React.FC = () => {
     }
   }, [person]);
 
-  const showFeedback = (text: string, type: "success" | "error" = "success") => {
-    setFeedback({ text, type });
-    setTimeout(() => setFeedback(null), 3500);
-  };
+  const showFeedback = (text: string, type: "success" | "error" = "success") => setFeedback({ text, type });
 
   const handleAddUnavailablePeriod = () => {
     if (!newUnavailFrom || !newUnavailTo) {

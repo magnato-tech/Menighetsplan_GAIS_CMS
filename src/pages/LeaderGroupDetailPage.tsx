@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useLeaderGroupDetail } from "../hooks/useAppHooks";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
+import { useTimedMessage } from "../hooks/useTimedMessage";
 import { HusfellesskapView } from "../components/HusfellesskapView";
 import { GroupChat } from "../components/GroupChat";
 import { GroupRoleBar } from "./leaderGroup/GroupRoleBar";
@@ -40,12 +41,7 @@ export const LeaderGroupDetailPage: React.FC = () => {
     }
   }, [urlTab]);
 
-  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
-
-  const showToast = (text: string) => {
-    setActionFeedback(text);
-    setTimeout(() => setActionFeedback(null), 3500);
-  };
+  const [actionFeedback, showToast] = useTimedMessage<string>();
 
   // If group not found or unauthorized
   if (!group || !hasAccess) {

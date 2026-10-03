@@ -7,6 +7,7 @@ import {
 } from "../hooks/useAppHooks";
 import { AdminAccessRequired } from "../components/AdminAccessRequired";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
+import { useTimedMessage } from "../hooks/useTimedMessage";
 import {
   ArrowLeft,
   ListTodo,
@@ -44,7 +45,7 @@ export const AdminTaskDetailPage: React.FC = () => {
 
   const [instruction, setInstruction] = useState<string>("");
   const [neededCountInput, setNeededCountInput] = useState<string>("");
-  const [feedback, setFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [feedback, setFeedback] = useTimedMessage<{ text: string; type: "success" | "error" }>();
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   useEffect(() => {
@@ -54,10 +55,7 @@ export const AdminTaskDetailPage: React.FC = () => {
     }
   }, [task]);
 
-  const showFeedback = (text: string, type: "success" | "error" = "success") => {
-    setFeedback({ text, type });
-    setTimeout(() => setFeedback(null), 3500);
-  };
+  const showFeedback = (text: string, type: "success" | "error" = "success") => setFeedback({ text, type });
 
   const handleSaveInstruction = (e?: React.FormEvent) => {
     if (e) e.preventDefault();

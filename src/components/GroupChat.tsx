@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useGroupRoom, formatChatMessageTime } from "../hooks/useAppHooks";
 import { GroupMessage } from "../types";
+import { useTimedMessage } from "../hooks/useTimedMessage";
 import {
   Send,
   Trash2,
@@ -130,7 +131,7 @@ export const GroupChat: React.FC<{
   const [inputContent, setInputContent] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, showFeedback, clearFeedback] = useTimedMessage<string>();
 
   // Lightbox modal state
   const [lightboxImage, setLightboxImage] = useState<{
@@ -193,8 +194,7 @@ export const GroupChat: React.FC<{
 
     // Check size limit (< 5MB for mock data URL)
     if (file.size > 5 * 1024 * 1024) {
-      setFeedback("Bildet er for stort. Maks størrelse er 5 MB.");
-      setTimeout(() => setFeedback(null), 3500);
+      showFeedback("Bildet er for stort. Maks størrelse er 5 MB.");
       return;
     }
 
@@ -226,8 +226,7 @@ export const GroupChat: React.FC<{
       setInputContent("");
       setSelectedImage(null);
     } else if (res.error) {
-      setFeedback(res.error);
-      setTimeout(() => setFeedback(null), 3500);
+      showFeedback(res.error);
     }
   };
 
@@ -240,11 +239,9 @@ export const GroupChat: React.FC<{
     setMessageToDelete(null);
 
     if (res.success) {
-      setFeedback("Meldingen ble slettet.");
-      setTimeout(() => setFeedback(null), 2500);
+      showFeedback("Meldingen ble slettet.", 2500);
     } else if (res.error) {
-      setFeedback(res.error);
-      setTimeout(() => setFeedback(null), 3500);
+      showFeedback(res.error);
     }
   };
 
@@ -417,7 +414,7 @@ export const GroupChat: React.FC<{
           <span>{feedback}</span>
           <button
             type="button"
-            onClick={() => setFeedback(null)}
+            onClick={clearFeedback}
             className="text-slate-400 hover:text-white"
           >
             <X className="w-3.5 h-3.5" />

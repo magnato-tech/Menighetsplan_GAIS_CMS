@@ -9,6 +9,7 @@ import {
 } from "../hooks/useAppHooks";
 import { GroupCategory } from "../types";
 import { isGroupPublic } from "../utils/visibility";
+import { useTimedMessage } from "../hooks/useTimedMessage";
 import { AdminAccessRequired } from "../components/AdminAccessRequired";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
 import {
@@ -57,7 +58,7 @@ export const AdminGroupDetailPage: React.FC = () => {
   const [frequency, setFrequency] = useState<"hver uke" | "annenhver uke" | "hver måned">("hver uke");
   const [selectedPersonToAdd, setSelectedPersonToAdd] = useState<string>("");
 
-  const [feedback, setFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [feedback, setFeedback] = useTimedMessage<{ text: string; type: "success" | "error" }>();
 
   useEffect(() => {
     if (group) {
@@ -77,10 +78,7 @@ export const AdminGroupDetailPage: React.FC = () => {
     }
   }, [group]);
 
-  const showFeedback = (text: string, type: "success" | "error" = "success") => {
-    setFeedback({ text, type });
-    setTimeout(() => setFeedback(null), 3500);
-  };
+  const showFeedback = (text: string, type: "success" | "error" = "success") => setFeedback({ text, type });
 
   const handleSave = (e?: React.FormEvent) => {
     if (e) e.preventDefault();

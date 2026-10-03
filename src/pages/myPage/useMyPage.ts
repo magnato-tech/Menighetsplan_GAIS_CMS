@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrentUser, useMyTasks } from "../../hooks/memberHooks";
 import { formatNorwegianDateTime } from "../../utils/dates";
@@ -6,6 +6,7 @@ import { countSlots } from "../../utils/staffing";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { Task, GroupMessage, Gathering, Group } from "../../types";
 import { AttentionItem } from "./attention";
+import { useTimedMessage } from "../../hooks/useTimedMessage";
 
 /**
  * Everything Min side shows, worked out from the planning data: what needs the
@@ -32,15 +33,9 @@ export function useMyPage() {
   } = useFirebase();
 
   const navigate = useNavigate();
-  const [feedbackMessage, setFeedbackMessage] = useState<{
-    text: string;
-    type: "success" | "info";
-  } | null>(null);
+  const [feedbackMessage, showFeedbackMessage, clearFeedbackMessage] = useTimedMessage<{ text: string; type: "success" | "info" }>(4000);
 
-  const showToast = (text: string, type: "success" | "info" = "success") => {
-    setFeedbackMessage({ text, type });
-    setTimeout(() => setFeedbackMessage(null), 4000);
-  };
+  const showToast = (text: string, type: "success" | "info" = "success") => showFeedbackMessage({ text, type });
 
   // What counts as upcoming is settled once, when the page opens
   const now = useMemo(() => Date.now(), []);
@@ -300,7 +295,7 @@ export function useMyPage() {
     currentUser,
     myTasks,
     feedbackMessage,
-    setFeedbackMessage,
+    clearFeedbackMessage,
     myGroups,
     attentionItems,
     handleAttentionAnswer,

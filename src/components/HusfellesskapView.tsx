@@ -6,6 +6,7 @@ import { MeetingTab } from "./husfellesskap/MeetingTab";
 import { MembersTab } from "./husfellesskap/MembersTab";
 import { CreateMeetingDialog } from "./husfellesskap/CreateMeetingDialog";
 import { EditMeetingDialog } from "./husfellesskap/EditMeetingDialog";
+import { useTimedMessage } from "../hooks/useTimedMessage";
 import {
   Calendar,
   Users,
@@ -30,16 +31,13 @@ export const HusfellesskapView: React.FC<{
       setActiveTab(urlTab);
     }
   }, [urlTab]);
-  const [feedback, setFeedback] = useState<{ text: string; type: "success" | "info" } | null>(null);
+  const [feedback, setFeedback, clearFeedback] = useTimedMessage<{ text: string; type: "success" | "info" }>(4000);
 
   // Modal / Accordion state for creating and editing meetings
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const showToast = (text: string, type: "success" | "info" = "success") => {
-    setFeedback({ text, type });
-    setTimeout(() => setFeedback(null), 4000);
-  };
+  const showToast = (text: string, type: "success" | "info" = "success") => setFeedback({ text, type });
 
   if (!group) {
     return null;
@@ -149,7 +147,7 @@ export const HusfellesskapView: React.FC<{
           <span className="flex-1">{feedback.text}</span>
           <button
             type="button"
-            onClick={() => setFeedback(null)}
+            onClick={clearFeedback}
             className="text-xs font-bold text-slate-400 hover:text-slate-700 ml-1 cursor-pointer"
           >
             ×

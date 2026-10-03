@@ -17,7 +17,7 @@ import {
 
 export const MyPage: React.FC = () => {
   const page = useMyPage();
-  const { currentUser, myTasks, feedbackMessage, setFeedbackMessage, myGroups, attentionItems } = page;
+  const { currentUser, myTasks, feedbackMessage, clearFeedbackMessage, myGroups, attentionItems } = page;
 
   const [searchParams] = useSearchParams();
 
@@ -51,7 +51,7 @@ export const MyPage: React.FC = () => {
             <div className="flex-1 font-medium">{feedbackMessage.text}</div>
             <button
               type="button"
-              onClick={() => setFeedbackMessage(null)}
+              onClick={clearFeedbackMessage}
               className="text-xs font-bold text-slate-500 hover:text-slate-800 ml-1 cursor-pointer"
             >
               ×

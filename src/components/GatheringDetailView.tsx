@@ -5,6 +5,7 @@ import {
   formatNorwegianDateTime,
 } from "../hooks/useAppHooks";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
+import { useTimedMessage } from "../hooks/useTimedMessage";
 import { studioTabUrl } from "../pages/admin/studio";
 import { buildRunSheet } from "../utils/runSheet";
 import { locationOf } from "../utils/gatherings";
@@ -93,12 +94,7 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
   const [isCreatingTask, setIsCreatingTask] = useState<boolean>(false);
 
   // Toast feedback
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const showToast = (text: string) => {
-    setToastMessage(text);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
+  const [toastMessage, showToast] = useTimedMessage<string>();
 
   // The programme and the tasks on one timeline, built from what is registered and nothing else
   const integratedSchedule = useMemo(
