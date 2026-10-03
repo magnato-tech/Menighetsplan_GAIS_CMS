@@ -22,6 +22,8 @@ import {
   createDocument,
   updateDocument,
   deleteDocument,
+  deleteGatheringWithContent,
+  deleteTaskWithAssignments,
   addGroupMember,
   removeGroupMember,
   setGroupNotifications,
@@ -299,8 +301,6 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       },
       updateGathering: (gatheringId: string, updates: Partial<Gathering>) =>
         save("lagre endringene i samlingen", () => updateDocument(COLLECTIONS.GATHERINGS, gatheringId, updates)),
-      deleteGathering: (gatheringId: string) =>
-        save("slette samlingen", () => deleteDocument(COLLECTIONS.GATHERINGS, gatheringId)),
       sendGatheringInvitation: (gatheringId: string) =>
         save("registrere at invitasjonen er sendt", () =>
           updateDocument(COLLECTIONS.GATHERINGS, gatheringId, {
@@ -313,7 +313,6 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
         const task = buildTask(data);
         return { ...save("lagre oppgaven", () => createDocument(COLLECTIONS.TASKS, task)), task };
       },
-      deleteTask: (taskId: string) => save("slette oppgaven", () => deleteDocument(COLLECTIONS.TASKS, taskId)),
 
       createGroup: (data: NewGroupInput) => {
         const group = buildGroup(data);
@@ -382,6 +381,18 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
     };
 
     return {
+      deleteGathering: (gatheringId: string) => {
+        const taskIds = tasks.filter((t) => t.gatheringId === gatheringId).map((t) => t.id);
+        return save("slette samlingen", () =>
+          deleteGatheringWithContent(gatheringId, {
+            taskIds,
+            assignmentIds: assignments.filter((a) => taskIds.includes(a.taskId)).map((a) => a.id),
+            attendanceIds: attendances.filter((a) => a.gatheringId === gatheringId).map((a) => a.id),
+          })
+        );
+      },
+      deleteTask: (taskId: string) =>
+        save("slette oppgaven", () => deleteTaskWithAssignments(taskId, assignmentsOf(taskId).map((a) => a.id))),
       updateTask: (taskId: string, updates: Partial<Task>) => updateTask(taskId, updates),
       updateTaskInstruction: (taskId: string, instruction: string) =>
         updateTask(taskId, { instruction }, "lagre instruksen"),
@@ -427,7 +438,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
         return changeAssignments(taskId, { update }, "registrere forfallet", isAcuteNow(taskId, now));
       },
     };
-  }, [tasks, assignments, gatherings]);
+  }, [tasks, assignments, attendances, gatherings]);
 
   const { getGroupNotificationsEnabled } = groupLookups;
   const toggleGroupNotifications = useCallback(

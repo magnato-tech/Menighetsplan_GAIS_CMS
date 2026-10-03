@@ -235,11 +235,42 @@ describe("Sletting", () => {
 
     await waitFor(() => {
       expect(data.current.gatherings.map((g) => g.id)).toEqual(["gathering-soon"]);
-      expect(data.current.tasks.map((t) => t.id).sort()).toEqual(["task-2", "task-soon"]);
+      expect(data.current.tasks.map((t) => t.id)).toEqual(["task-soon"]);
       expect(data.current.groupMessages).toEqual([]);
     });
     expect(await storedIds(COLLECTIONS.GATHERINGS)).toEqual(["gathering-soon"]);
-    expect(await storedIds(COLLECTIONS.TASKS)).toEqual(["task-2", "task-soon"]);
+    expect(await storedIds(COLLECTIONS.TASKS)).toEqual(["task-soon"]);
+  });
+});
+
+describe("Sletting rydder det som hører til", () => {
+  test("En samling tar med seg oppgavene, tildelingene og svarene sine, og lar andre samlinger være", async () => {
+    const data = await mountProvider();
+    const onGathering = data.current.tasks.filter((t) => t.gatheringId === "gathering-1").map((t) => t.id);
+    const keptTasks = data.current.tasks.filter((t) => t.gatheringId !== "gathering-1").map((t) => t.id);
+    const keptAssignments = data.current.assignments.filter((a) => keptTasks.includes(a.taskId)).map((a) => a.id);
+    expect(onGathering.length).toBeGreaterThan(0);
+
+    data.current.respondToGathering("gathering-1", "person-2", "attending");
+    await waitFor(() => expect(data.current.attendances).toHaveLength(1));
+    data.current.deleteGathering("gathering-1");
+
+    await waitFor(() => expect(data.current.gatherings.map((g) => g.id)).not.toContain("gathering-1"));
+    expect((await storedIds(COLLECTIONS.TASKS)).sort()).toEqual([...keptTasks].sort());
+    expect((await storedIds(COLLECTIONS.ASSIGNMENTS)).sort()).toEqual([...keptAssignments].sort());
+    expect(await storedIds(COLLECTIONS.GATHERING_ATTENDANCES)).toEqual([]);
+  });
+
+  test("En oppgave tar med seg tildelingene sine", async () => {
+    const data = await mountProvider();
+    const own = data.current.assignments.filter((a) => a.taskId === "task-2").map((a) => a.id);
+    const others = data.current.assignments.filter((a) => a.taskId !== "task-2").map((a) => a.id);
+    expect(own.length).toBeGreaterThan(0);
+
+    data.current.deleteTask("task-2");
+
+    await waitFor(() => expect(data.current.tasks.map((t) => t.id)).not.toContain("task-2"));
+    expect((await storedIds(COLLECTIONS.ASSIGNMENTS)).sort()).toEqual([...others].sort());
   });
 });
 

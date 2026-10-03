@@ -92,6 +92,30 @@ export function setGroupNotifications(groupId: string, personId: string, enabled
 }
 
 /**
+ * Deletes a gathering together with what hangs on it: its tasks, who stands on them,
+ * and who has answered. One write, so nothing is left pointing at a gathering that is gone.
+ */
+export function deleteGatheringWithContent(
+  gatheringId: string,
+  content: { taskIds: string[]; assignmentIds: string[]; attendanceIds: string[] }
+): Promise<void> {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, COLLECTIONS.GATHERINGS, gatheringId));
+  for (const id of content.taskIds) batch.delete(doc(db, COLLECTIONS.TASKS, id));
+  for (const id of content.assignmentIds) batch.delete(doc(db, COLLECTIONS.ASSIGNMENTS, id));
+  for (const id of content.attendanceIds) batch.delete(doc(db, COLLECTIONS.GATHERING_ATTENDANCES, id));
+  return batch.commit();
+}
+
+/** Deletes a task together with the assignments on it, in one write. */
+export function deleteTaskWithAssignments(taskId: string, assignmentIds: string[]): Promise<void> {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, COLLECTIONS.TASKS, taskId));
+  for (const id of assignmentIds) batch.delete(doc(db, COLLECTIONS.ASSIGNMENTS, id));
+  return batch.commit();
+}
+
+/**
  * Stores a change to who is on a task together with the task status that follows from it
  * (see taskStatusFor), so the status can never disagree with the assignments.
  */
