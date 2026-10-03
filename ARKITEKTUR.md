@@ -53,7 +53,9 @@ To små byggeklosser brukes på tvers: `useTimedMessage` (`src/hooks/`) er en me
   - Bare på interne ruter: `tasks`, `assignments`, `groupMessages`, `gatheringAttendances`. En besøkende på den offentlige nettsiden får aldri disse.
 - **`CmsProvider`** (`src/context/CmsContext.tsx`) lytter på `cms_pages`, `cms_news`, `cms_sermons` og `cms_settings`. Det siste som ble mottatt mellomlagres i `localStorage`, slik at nettsiden har innhold å vise før Firestore har svart, og beholder det når den åpnes uten nett. En lagring i CMS-et venter på svar fra serveren (i motsetning til planleggingsdataene), slik at redigeringsskjemaet kan bli stående åpent med teksten hvis lagringen feiler.
 - **Hooks per rolle** (`src/hooks/`: `memberHooks`, `leaderHooks`, `adminHooks`, `useHusfellesskap`) setter sammen rådataene til det hver side trenger.
-- **Rene funksjoner** (`src/utils/`) holder reglene, og testene i `tests/` (Vitest) kjører mot dem: `staffing`, `visibility`, `publicProfile`, `firestoreData`, `menu`, `groups` og `dates`.
+- **Rene funksjoner** (`src/utils/`) holder reglene, og testene i `tests/` (Vitest) kjører mot dem: `staffing`, `visibility`, `publicProfile`, `firestoreData`, `menu`, `groups`, `dates`, `personGrid`, `cmsContent`, `personForm`, `groupForm`, `pageEdit` og `testdataPresets`.
+- **Skjermbilder med skjema** (personkort, gruppekort, sideredigering, databasefanen) er delt i tre lag: de rene reglene i `src/utils/`, én hook som eier tilstanden, og én fil per del av skjermbildet. Siden over kaller hooken én gang og sender resultatet ned. Det gjør at reglene kan testes uten å tegne noe, og at en ny del ikke gjør en side større.
+- **Lasting.** Nettsiden laster bare det besøkende trenger: `App.tsx` henter Admin Studio og Min side (`MinSideApp.tsx`) med `React.lazy` først når en adresse hører til dem. `tests/code-rules.test.ts` holder filene under 400 linjer, og CI kjører typesjekk, tester og bygg.
 - **Sidetreet** (`src/utils/menu.ts`) er felles for den offentlige menyen og sidelisten i admin. Når en hovedfane slettes, flyttes underfanene opp til toppnivå i samme skriving.
 
 ### Skriving

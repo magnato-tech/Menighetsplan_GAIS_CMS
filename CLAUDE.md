@@ -26,7 +26,7 @@ Appen utvikles og kjøres i Google AI Studio (Cloud Run). Det finnes også et eg
 | `npm run lint` | Typesjekk (`tsc --noEmit`) |
 | `npm test` | Kjører testene i `tests/` med Vitest (`npx vitest` følger med mens du jobber) |
 
-Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
+Kjør `npm run lint` og `npm test` før en endring regnes som ferdig. CI (`.github/workflows/ci.yml`) kjører typesjekk, tester og bygg på hver pull request og på `main`.
 
 ---
 
@@ -34,7 +34,7 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 | Sti | Innhold |
 |---|---|
 | `server.ts`, `server/publicApi.ts`, `server/pageMeta.ts` | Express-server, de rene funksjonene bak det offentlige API-et, og tittel og delingskort i HTML-en som sendes |
-| `src/App.tsx` | Ruter og de tre layoutene |
+| `src/App.tsx` | Ruter og layouten for nettsiden. Admin Studio og Min side (`src/MinSideApp.tsx`) lastes først når de åpnes |
 | `src/firebase.ts` | Oppstart av Firebase |
 | `src/services/firestore.ts` | Lesing og skriving mot Firestore, uten React |
 | `src/context/FirebaseDataContext.tsx` | `FirebaseDataProvider` / `useFirebase`: planleggingsdata og handlingene som endrer dem |
@@ -42,11 +42,12 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 | `src/data/collections.ts` | Navn på alle Firestore-samlinger |
 | `src/data/newDocuments.ts` | Bygger nye personer, grupper, samlinger, oppgaver, tildelinger og meldinger |
 | `src/hooks/` | Hooks per rolle: `memberHooks`, `leaderHooks`, `adminHooks`, `useHusfellesskap`. `useAppHooks.ts` eksporterer alle |
-| `src/utils/` | Rene funksjoner: `staffing` (bemanning), `visibility` (hva som er offentlig), `publicProfile` (samtykke), `firestoreData` (klargjøring før skriving), `menu` (sidetreet og menyen), `personGrid` (hvem en personblokk viser), `cmsContent` (leser tekstformatet på en CMS-side til blokker), `gatherings` (kommende samlinger og forsidens utvalg), `groups` (hvem som er med i en gruppe), `runSheet` (kjøreplanen), `dates`. `routes` (hvilken flate en adresse hører til). For CMS-et: `themeUtils` og `colorScale` (design), `siteSeo` og `seoUtils` (søk og deling), `imageUpload` (bilder) |
+| `src/utils/` | Rene funksjoner: `staffing` (bemanning), `visibility` (hva som er offentlig), `publicProfile` (samtykke), `firestoreData` (klargjøring før skriving), `menu` (sidetreet og menyen), `personGrid` (hvem en personblokk viser), `cmsContent` (leser tekstformatet på en CMS-side til blokker), `personForm`, `groupForm` og `pageEdit` (hva personkortet, gruppekortet og sideredigeringen viser og lagrer, og publiseringsreglene), `testdataPresets` (pakkene og glidebryterne for testdata), `gatherings` (kommende samlinger og forsidens utvalg), `groups` (hvem som er med i en gruppe), `runSheet` (kjøreplanen), `dates`. `routes` (hvilken flate en adresse hører til). For CMS-et: `themeUtils` og `colorScale` (design), `siteSeo` og `seoUtils` (søk og deling), `imageUpload` (bilder) |
 | `src/components/cms/CmsContentRenderer.tsx` | Tegner innholdsblokkene på en CMS-side (`src/utils/cmsContent.ts` leser dem) |
 | `src/services/writeErrors.ts` | Melder mislykkede skrivinger til `WriteErrorBanner` |
 | `src/services/databaseAdmin.ts` | Fyll databasen med demodata / slett alt |
-| `src/pages/admin/` | Admin Studio: `AdminStudio.tsx` er skallet, `StudioSidebar.tsx` menyen, og `tabs/` har én fil per fane |
+| `src/pages/admin/` | Admin Studio: `AdminStudio.tsx` er skallet, `StudioSidebar.tsx` menyen, og `tabs/` har én fil per fane. En stor fane har egen mappe med delene sine: `tabs/database/` og `tabs/pages/` |
+| `src/pages/adminPerson/`, `src/pages/adminGroup/` | Delene av personkortet (`AdminPersonDetailPage.tsx`) og gruppekortet (`AdminGroupDetailPage.tsx`), hver med en `use…Form`-hook |
 | `src/pages/myPage/` | Min side: `useMyPage.ts` regner ut alt som vises, resten er én fil per seksjon |
 | `src/pages/leaderGroup/` | Delene av gruppesiden (`LeaderGroupDetailPage.tsx`) |
 | `src/components/gathering/` | Dialogene i samlingsvisningen (`GatheringDetailView.tsx`) |
@@ -76,6 +77,8 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 - **Én fane eller dialog per fil.** En ny fane eller dialog får sin egen fil med egen tilstand. Siden over eier bare hva som vises, og kaller sidens hook én gang og sender resultatet ned.
 - **Oppgavens status følger av tildelingene.** Sett aldri `task.status` for hånd. Alt som endrer hvem som står på en oppgave, eller hvor mange den trenger, går gjennom handlingene i `FirebaseDataContext.tsx`. De lagrer statusen fra `taskStatusFor` i samme skriving. Ledige plasser leses med `countSlots`, ikke fra statusen. Begge ligger i `src/utils/staffing.ts`.
 - **Tidspunkt lagres som eksakte øyeblikk.** Bruk `combineDateAndTimeToIso` fra `src/utils/dates.ts` når et skjema har dato og klokkeslett. En streng uten tidssone (`2026-10-18T11:00:00`) leses ulikt i nettleseren og på serveren.
+- **Skjema: verdier og lagring er rene funksjoner.** Hva et skjema starter med og hva det lagrer ligger i `src/utils/` (`personForm`, `groupForm`, `pageEdit`) og testes derfra. Tilstanden ligger i én hook (`usePersonForm`, `useGroupForm`), og hver del av skjermbildet har egen fil. Ikke legg ett `useState` per felt i en side.
+- **Filer over 400 linjer deles.** `tests/code-rules.test.ts` feiler for en ny fil over grensen og for en av de store som vokser. Deler du en av dem, fjern den fra listen eller sett tallet ned. Samme test sjekker noen av reglene her: ingen tom `catch`, tittel bare i `App.tsx` og `seoUtils.ts`, `useTimedMessage` i stedet for `setTimeout`, ingen React i `src/utils/` og ingen utviklerord i skjermtekst.
 - **Test den ekte koden.** Regler og utregninger legges i `src/utils/` som rene funksjoner og testes derfra. En test skal aldri ha sin egen kopi av logikken.
 - **Interne ruter** må stå i `MIN_SIDE_SECTIONS` i `src/utils/routes.ts`. Det styrer layouten, om planleggingsdata lastes, og om serveren holder adressen utenfor søkeresultatene. Lenker til Min side skal gå til `/minside`; `/` er den offentlige forsiden.
 - **Tittel og delingskort bestemmes ett sted.** En ny offentlig side får tittelen og beskrivelsen sin i `seoForPath` i `src/utils/siteSeo.ts`. Serveren og nettleseren spør begge der. Sett aldri `document.title` i en side.
