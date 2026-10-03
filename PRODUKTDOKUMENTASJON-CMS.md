@@ -73,19 +73,18 @@ Her er spesifikasjonen du skal følge:
 
 ---
 
-## 4. Innebygd CMS-funksjonalitet i Menighetsplan-appen
+## 4. Innebygd CMS i Menighetsplan-appen
 
-I tillegg til API-et, har Menighetsplan nå **egen innebygd CMS-støtte** direkte i webapplikasjonen:
+I tillegg til API-et har Menighetsplan et **eget, innebygd CMS**: adminpanelet på `/admin` styrer nettsiden som ligger på `/` i samme app. Det er dette CMS-et produktet bygger videre på.
 
-1. **Offentlig nettsidevisning:**
-   * Forsiden ligger på `/`, og faste sider på `/side/:slug` (de gamle adressene `/nettside` og `/nettside/:slug` virker fortsatt).
-   * Viser forside med neste gudstjeneste, kommende arrangementer, nyheter og siste tale, samt kalender (`/hva-skjer`), taler (`/taler`), fellesskap (`/fellesskap`) og lederskap (`/lederskap`).
-   * Har faste undersider for blant annet `om-oss` og `kontakt`.
+Det er beskrevet i **[PRODUKTDOKUMENTASJON.md](PRODUKTDOKUMENTASJON.md)**:
 
-2. **CMS-Administrasjon:**
-   * Ligger i Admin Studio på `/admin`, under fanene for sider, nyheter, taler, stab og innstillinger.
-   * **Synlighet:** Hver samling settes til «Kun intern», «Offentlig kalender» eller «Fremhevet på forsiden».
-   * **Faste sider:** Opprett nye sider, rediger tekst, overskrifter og punkter, og ordne dem i menyen.
+* kapittel 2.2 – fanene i adminpanelet
+* kapittel 4 – sidene på nettsiden og hvor innholdet kommer fra
+* kapittel 8 – sider og meny, publisering, innholdsblokker, bilder, design, søk og deling, og kjente begrensninger
+* kapittel 14 – hva som bygges videre
+
+Dette dokumentet gjelder integrasjonen med det eksterne CMS-et (`menighetsplan_ClaudeCMS`), som leser API-et.
 
 ---
 

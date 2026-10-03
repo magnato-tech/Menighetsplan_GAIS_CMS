@@ -1,240 +1,587 @@
-# Produktdokumentasjon: Menighetsplan (Single Source of Truth)
+# Produktdokumentasjon: Menighetsplan
 
-> **Dokumentversjon:** 3.0 (Offisiell produksjonsspesifikasjon)  
-> **Status:** **Single Source of Truth (SSOT)** for hele systemet.  
-> **Gyldighet:** Dette Markdown-dokumentet lever i kildekoden, oppdateres i takt med funksjonaliteten og overstyrer alle eldre forprosjektdokumenter (inkl. tidligere `.odt`-filer).  
-> **Målarkitektur:** Google Cloud Firestore & Firebase (`europe-west3` Frankfurt), React 19, TypeScript, Tailwind CSS, PWA
+> **Dokumentversjon:** 4.0 · **Sist oppdatert:** 2026-10-03
+> **Status:** Single Source of Truth (SSOT) for produktet. Dokumentet lever i kildekoden og oppdateres sammen med funksjonaliteten.
+> **Plattform:** React 19, TypeScript, Tailwind CSS 4, Cloud Firestore (`europe-west3`, Frankfurt), Express, PWA.
+> **Søsterdokumenter:** `ARKITEKTUR.md` (hvordan koden er bygget), `CLAUDE.md` (regler for kodeendringer), `INTEGRASJON-MENIGHETSPLAN.md` (kontrakten for det offentlige API-et).
 
----
+Dokumentet skiller mellom tre ting, og sier alltid hvilken det er snakk om:
 
-## 1. Systemarkitektur & Kjernefilosofi
-
-Menighetsplan er en enhetlig digital plattform som forener to tidligere adskilte verdener i én felles arkitektur:
-1. **Offentlig nettside & profilering:** En varm, moderne og universelt utformet portal for menighetens medlemmer, søkende og lokalmiljøet.
-2. **Operativ bemannings- og fellesskapsmotor:** Et presist sanntidsverktøy for planlegging av arrangementer, oppgavefordeling, vikarhåndtering og internkommunikasjon.
-
-### Kjernebeslutninger for dataflyt:
-* **Én kilde for sannhet:** Ingen parallelle lister eller duplikate databaser.
-* **Strenge TypeScript-grensesnitt:** Data fra databasen skal aldri skjules bak `||`-hacks. Hvis datastrukturen mangler påkrevde felter, kaster systemet en synlig feil i stedet for å vise tomme felter.
-* **Integrert bemanning:** Bemanning hører hjemme inne i det enkelte arrangementet, supplert med en tverrgående **«Trenger oppfølging»**-oversikt over akutte forfall og ubesatte oppgaver.
+| Merke | Betyr |
+|---|---|
+| **Levert** | Finnes i løsningen og virker i dag |
+| **Delvis** | Finnes, men med en begrensning som er beskrevet |
+| **Planlagt** | Besluttet retning, ikke bygget ennå (se kapittel 14) |
 
 ---
 
-## 2. Innholdstyper & Feltspesifikasjoner
+## 1. Produktet i korte trekk
 
-Tabellen nedenfor definerer de formelle datamodellene med påkrevde og valgfrie felter.
+Menighetsplan er **ett adminpanel som styrer to ting i samme format**:
 
-### 2.1 Arrangement (`Gathering`)
-Et arrangement er det felles begrepet for enhver samling (gudstjenester, ungdomsmøter, bønnemøter, dugnader og stabsamlinger).
+1. **Webappen** – interaktiv, dynamisk og responsiv. Her ser frivillige og gruppeledere oppgavene sine, svarer på forespørsler, melder forfall og følger gruppene og husfellesskapet sitt. Planleggingsdelen av adminpanelet styrer den.
+2. **Nettsiden** – menighetens ansikt utad. Et moderne CMS i adminpanelet styrer den: sider og meny, nyheter, taler, stab, design og innstillinger.
 
-| Feltnavn | Type | Påkrevd? | Beskrivelse & Validering |
-| :--- | :--- | :---: | :--- |
-| `id` | `string` | Ja | Unik identifikator (Firestore-dokument-ID). |
-| `title` | `string` | Ja | Arrangementets tittel (f.eks. "Høsttakkefest & Gudstjeneste"). |
-| `startsAt` | `ISO 8601 string` | Ja | Starttidspunkt med dato og klokkeslett. |
-| `endsAt` | `ISO 8601 string` | Nei | Beregnet eller fastsatt sluttidspunkt. |
-| `location` | `string` | Nei | Fysisk eller digital lokasjon (standard: "Misjonskirken"). |
-| `groupId` | `string` | Ja | Primær ansvarlig gruppe. |
-| `type` | `"arrangement" \| "gruppesamling"` | Ja | Overordnet kategori. |
-| `theme` | `string` | Nei | Dagens tema eller prekentittel. |
-| `bibleText` | `string` | Nei | Relevante bibelsteder (f.eks. "Rom 8,28-39"). |
-| `hostPersonId` | `string` | Nei | Vertsfamilie eller ansvarlig vert for samlingen. |
-| `visibility` | `"intern" \| "offentlig" \| "fremhevet"` | Ja | **Ett felles synlighetsfelt** for hele systemet (se kap. 5). |
-| `cancelled` | `boolean` | Nei | Flagg for avlysning med visuelt avlyst-varsel. |
-| `programSchedule`| `ProgramItem[]` | Nei | Kjøreplan med klokkeslett, innslag og ansvarlige. |
-| `updatedBy` | `string` | Nei | UID til brukeren som sist endret arrangementet. |
-| `updatedAt` | `ISO 8601 string` | Nei | Tidsstempel for siste oppdatering. |
+«Samme format» betyr at webappen og nettsiden er én løsning: samme kodebase, samme database, samme designspråk og samme responsive oppførsel på mobil og PC. En samling som opprettes i planleggeren og settes til offentlig, står i kalenderen på nettsiden i samme øyeblikk. Ingenting kopieres mellom systemer.
 
-### 2.2 Oppgave (`Task`)
-En konkret oppgave knyttet til et arrangement.
+```
+              ┌───────────────────────────────────────────────┐
+              │             ADMINPANELET   /admin             │
+              │                                               │
+              │   Planlegging              Nettside & CMS     │
+              │   · Arrangementer          · Sider og meny    │
+              │   · Trenger oppfølging     · Nyheter          │
+              │   · Grupper                · Taler            │
+              │   · Personer               · Stab             │
+              │                            · Design           │
+              │                            · Innstillinger    │
+              └───────────┬───────────────────────┬───────────┘
+                          │ styrer                │ styrer
+                          ▼                       ▼
+              ┌──────────────────────┐ ┌──────────────────────┐
+              │ WEBAPPEN   /minside  │ │ NETTSIDEN   /        │
+              │ frivillige og ledere │ │ besøkende            │
+              └───────────┬──────────┘ └──────────┬───────────┘
+                          └── én database (Firestore) ──┘
+                                        │
+                      offentlig JSON-API for eksterne nettsider
+```
 
-| Feltnavn | Type | Påkrevd? | Beskrivelse & Validering |
-| :--- | :--- | :---: | :--- |
-| `id` | `string` | Ja | Unik identifikator. |
-| `gatheringId` | `string` | Ja | Referanse til arrangementet oppgaven tilhører. |
-| `groupId` | `string` | Ja | Tjenestegruppen oppgaven sorterer under (f.eks. Lyd/bilde). |
-| `title` | `string` | Ja | Oppgavens navn (f.eks. "Lydtekniker", "Møteleder", "Kirkekaffe"). |
-| `neededCount` | `number` | Ja | **Antall personer som trengs** for å dekke oppgaven (standard: 1). |
-| `description` | `string` | Nei | Praktisk instruks eller sjekkliste for den frivillige. |
-| `status` | `"open" \| "assigned" \| "confirmed" \| "vacant" \| "cancelled"` | Ja | Oppgavens overordnede tilstand. |
-| `lastReminded` | `ISO 8601 string` | Nei | Tidsstempel for når purring/påminnelse sist ble utført. |
-| `updatedBy` | `string` | Nei | UID for siste endring. |
+### 1.1 Hvem bruker hva
 
-### 2.3 Tildeling (`Assignment`)
-Relasjonen mellom en person og en oppgave.
+| Rolle | Flate | Gjør |
+|---|---|---|
+| Besøkende | Nettsiden | Finner neste gudstjeneste, kalender, grupper, taler og kontaktinformasjon |
+| Frivillig (medlem) | Webappen, Min side | Ser egne oppgaver, tar ledige oppgaver, svarer på forespørsler, melder forfall, skriver i gruppene sine, svarer på innkalling til husfellesskap |
+| Gruppeleder | Webappen, Gruppeleder | Bemanner oppgavene i sine grupper, holder medlemslisten og møteplanen, sender beskjed til gruppen |
+| Administrator | Adminpanelet | Alt det over, og i tillegg samlinger, personregister med samtykke, og hele nettsiden |
 
-| Feltnavn | Type | Påkrevd? | Beskrivelse & Validering |
-| :--- | :--- | :---: | :--- |
-| `id` | `string` | Ja | Unik identifikator. |
-| `taskId` | `string` | Ja | Referanse til oppgaven. |
-| `personId` | `string` | Ja | Referanse til personen. |
-| `response` | `"pending" \| "confirmed" \| "declined" \| "withdrawn"` | Ja | *Venter på svar*, *Bekreftet*, *Avslått* eller *Forfall*. |
-| `assignedAt` | `ISO 8601 string` | Ja | Når personen ble tildelt eller forespurt. |
-| `respondedAt` | `ISO 8601 string` | Nei | Når personen svarte eller meldte forfall. |
-| `withdrawalReason` | `string` | Nei | Valgfri privat melding ved forfall (kun synlig for leder). |
+En gruppeleder er den som står som leder eller nestleder i en gruppe. Administrator er en rolle på personen.
 
-### 2.4 Person (`Person`)
-Sentralt kontaktregister for alle bidragsytere og medlemmer.
+### 1.2 Kjernebeslutninger
 
-| Feltnavn | Type | Påkrevd? | Beskrivelse & Validering |
-| :--- | :--- | :---: | :--- |
-| `id` | `string` | Ja | Unik identifikator / Firebase Auth UID. |
-| `name` | `string` | Ja | Fullt navn. |
-| `email` | `string` | Nei | E-postadresse (brukes til innlogging og varsler). |
-| `phone` | `string` | Nei | Mobiltelefonnummer. |
-| `globalRole` | `"member" \| "admin"` | Ja | Global systemrolle. |
-| `policeCertificateValidUntil` | `string (YYYY-MM-DD)` | Nei | Utløpsdato for godkjent politiattest. |
-| `unavailablePeriods` | `UnavailablePeriod[]` | Nei | Perioder der personen er bortreist / utilgjengelig. |
-| `isPublicProfile` | `boolean` | Nei | Flagg: Skal personen vises på offentlig stabs- og kontaktside? |
-| `publicTitle` | `string` | Nei | Offisiell tittel utad (f.eks. "Hovedpastor", "Eldsterådsleder"). |
-| `publicPhone` | `string` | Nei | Offisielt kontaktnummer utad (kan avvike fra privat). |
-| `publicEmail` | `string` | Nei | Rolleadresse utad (f.eks. `pastor@lillesandmisjonskirke.no`). |
-| `avatarUrl` | `string` | Nei | URL til profilbilde i WebP/JPEG. |
-| `consentToPublishGivenAt` | `ISO 8601 string` | Nei | **GDPR-samtykkelogg:** Tidsstempel for når samtykke ble registrert. |
-| `consentGivenBy` | `string` | Nei | **GDPR-samtykkelogg:** UID til administratoren som innhentet samtykket. |
-
-### 2.5 Tale & Preken (`CmsSermon`)
-Mediearkiv for prekener og forkynnelse.
-
-| Feltnavn | Type | Påkrevd? | Beskrivelse & Validering |
-| :--- | :--- | :---: | :--- |
-| `id` | `string` | Ja | Unik identifikator. |
-| `title` | `string` | Ja | Prekentittel. |
-| `date` | `string (YYYY-MM-DD)` | Ja | Dato talen ble holdt. |
-| `speakerPersonId` | `string` | Nei | Referanse til registrert person (hvis intern taler). |
-| `guestSpeakerName` | `string` | Nei | Navn på ekstern gjestetaler. |
-| `series` | `string` | Nei | Strukturert serienavn (f.eks. "Romerbrevet: Nåde og Liv"). |
-| `bibleText` | `string` | Nei | Bibeltekst for talen. |
-| `summary` | `string` | Nei | Kort sammendrag av budskapet. |
-| `audioUrl` | `string` | Nei | Ekstern strømmelenke til lydopptak / Spotify / Podcast RSS. |
-| `videoUrl` | `string` | Nei | **Tvinges gjennom YouTube-nocookie parser** for personvern. |
-| `gatheringId` | `string` | Nei | Valgfri kobling til arrangementet talen ble holdt under. |
-
-### 2.6 Side (`CmsPage`)
-Faste sider på nettstedet (Om oss, Kontakt, Barn og unge, Gi).
-
-| Feltnavn | Type | Påkrevd? | Beskrivelse & Validering |
-| :--- | :--- | :---: | :--- |
-| `id` | `string` | Ja | Unik identifikator. |
-| `title` | `string` | Ja | Sidens overskrift. |
-| `slug` | `string` | Ja | URL-sti (f.eks. `/om-oss`, `/gi`). Unik. |
-| `content` | `string` | Ja | Tekstinnhold / Markdown. |
-| `status` | `"draft" \| "published"` | Ja | **Kladdestatus:** Kladder vises kun for innlogget admin. |
-| `navOrder` | `number` | Ja | Sorteringsrekkefølge i hovedmenyen. |
-| `inNavMenu` | `boolean` | Ja | Om siden skal vises i toppmenyen. |
-| `updatedAt` | `ISO 8601 string` | Ja | Tidsstempel for siste redigering. |
-| `updatedBy` | `string` | Ja | Bruker-ID som sist redigerte siden. |
-
-### 2.7 Nyhetsartikkel (`CmsNewsArticle`)
-Frittstående artikler i den hybride Aktuelt-strømmen.
-
-| Feltnavn | Type | Påkrevd? | Beskrivelse & Validering |
-| :--- | :--- | :---: | :--- |
-| `id` | `string` | Ja | Unik identifikator. |
-| `title` | `string` | Ja | Artikkelens overskrift. |
-| `slug` | `string` | Ja | URL-vennlig tittel. |
-| `category` | `string` | Ja | Kategori (f.eks. "Rapport", "Familie", "Ungdom"). |
-| `summary` | `string` | Ja | Ingress på forsiden. |
-| `content` | `string` | Ja | Fulltekst. |
-| `date` | `string (YYYY-MM-DD)` | Ja | Publiseringsdato. |
-| `expiresAt` | `string (YYYY-MM-DD)` | Nei | Valgfri utløpsdato (arkiveres automatisk fra forsiden). |
-| `authorId` | `string` | Nei | Referanse til forfatter i personregisteret. |
-| `gatheringRefId`| `string` | Nei | Valgfri relasjon til et tilknyttet arrangement. |
-| `imageUrl` | `string` | Nei | Banner- eller illustrasjonsbilde. |
+* **Én kilde for sannhet.** Ingen parallelle lister. En samling, en gruppe og en person finnes ett sted, og både webappen, nettsiden og API-et leser derfra.
+* **Skjermen viser det som er lagret.** Løsningen dikter ikke opp innhold når noe mangler, har ingen skjema som ikke lagrer, og sier fra når en lagring feiler.
+* **Reglene ligger ett sted.** Bemanning, synlighet og samtykke er rene funksjoner med tester, og alle skjermbilder bruker de samme.
+* **Personvern først.** Ingen person vises offentlig uten registrert samtykke, og persondata går aldri ut i det offentlige API-et.
+* **Mobil først, og lesbart for alle.** Status formidles alltid med ikon og tekst, aldri med farge alene (WCAG AA).
+* **Bemanning hører hjemme i samlingen**, supplert med oversikten «Trenger oppfølging» over akutte forfall og ubesatte oppgaver.
 
 ---
 
-## 3. Bemanningsmotoren: Den Matematiske Ligningen
+## 2. Adminpanelet (Admin Studio)
 
-For å sikre fullstendig konsistens i bemanningen gjelder den ufravikelige ligningen:
+Adminpanelet ligger på `/admin` og har én meny med to deler. Hver fane har sin egen adresse (`/admin?tab=…`), og et påbegynt utkast overlever et fanebytte.
+
+### 2.1 Planlegging – admin for webappen
+
+| Fane | Hva administratoren gjør | Status |
+|---|---|---|
+| **Oversikt** | Ser nøkkeltall og hva som haster | Levert |
+| **Arrangementer** | Oppretter, endrer og avlyser samlinger. Velger ansvarlig gruppe, synlighet og om det er en gudstjeneste. «Lag neste arrangement» kopierer oppgavene til en ny dato | Levert |
+| **Trenger oppfølging** | Ser ubesatte oppgaver og akutte forfall på tvers av samlinger. Tildeler, forespør og åpner purretekst | Levert |
+| **Grupper & husfellesskap** | Oppretter grupper, setter leder og nestleder, kategori, møteplan og om gruppen vises på nettsiden | Levert |
+| **Personer & roller** | Holder personregisteret: kontaktinfo, rolle, politiattest, perioder personen er borte, og offentlig profil med samtykke | Levert |
+| Detaljsider | Samling med kjøreplan, oppgave, gruppe og person har hver sin side | Levert |
+| **Database & innstillinger** | Slår valgfrie moduler av og på, fyller databasen med demodata, sletter alt, tester API-et | Delvis: modulvalget lagres bare i nettleseren til den som endrer det |
+
+### 2.2 Nettside & CMS – admin for nettsiden
+
+| Fane | Hva administratoren gjør | Status |
+|---|---|---|
+| **Sider & innhold** | Bygger sidetreet i to nivåer med dra og slipp. Skriver innhold med ferdige innholdsblokker, laster opp hovedbilde, setter kladd, publisert eller planlagt, fyller ut søk og deling, og forhåndsviser | Levert, med begrensningene i kapittel 8.7 |
+| **Aktuelt & nyheter** | Skriver og publiserer artikler | Levert |
+| **Taler & prekener** | Legger inn taler med lyd, Spotify og video | Levert |
+| **Lederskap & stab** | Holder listen over stab som vises på «Om oss» | Delvis: en egen liste ved siden av personregisteret, uten samtykke (kapittel 13) |
+| **Tema & designsystem** | Velger ferdig tema eller egne farger, skrift, avrunding og luft | Delvis: valget lagres og vises i forhåndsvisningen, men nettsiden bruker bare overskriftsskriften og avrundingen på CMS-sidene. Farger, bakgrunnstone, brødtekst og luft har ingen virkning ennå |
+| **Nettside-innstillinger** | Menighetens navn, slagord, velkomsttekst, kontaktinfo, Vipps, konto og sosiale medier | Levert |
+| **Forside-overstyring** | Fremhever en samling på forsiden eller skjuler den fra kalenderen | Levert |
+
+### 2.3 Felles for hele panelet
+
+* Panelet er responsivt: fast meny på PC, uttrekksmeny på mobil.
+* En handling bekreftes med en melding som forsvinner av seg selv. En lagring som feiler, vises i et rødt banner og blir ikke stående som om den var lagret.
+* **Planlagt:** innlogging. I dag er `/admin` åpen, og aktiv bruker velges i en testbryter (kapittel 10).
+
+---
+
+## 3. Webappen (Min side)
+
+| Skjerm | Adresse | Innhold | Status |
+|---|---|---|---|
+| **Min side** | `/minside` | «Trenger svar» (forespørsler, innkallinger, ledige oppgaver i mine grupper), «Neste for deg», neste samling i kirken, mine grupper og mine oppgaver | Levert |
+| **Oppgave** | `/oppgave/:id` | Tid, sted, instruks og hvem andre som står på. Ta oppgaven, svar på forespørsel, meld forfall | Delvis: medlemmet kan ikke skrive en grunn for forfallet ennå |
+| **Gruppeleder** | `/leder` | Gruppene jeg leder, med bemanningsstatus | Levert |
+| **Gruppe** | `/gruppe/:id` | Medlemmer, møteplan, aktiviteter og beskjeder til gruppen, med bilde | Levert |
+| **Samling** | `/samling/:id` | Kjøreplan: programmet og oppgavene på én tidslinje, med hvem som står på hva | Delvis: programmet kan ikke redigeres i løsningen ennå |
+| **Husfellesskap** | `/husfellesskap` | Neste møte med vert, tema og bibeltekst. «Kommer» / «Kommer ikke». Medlemsliste | Levert |
+| Meldinger | `/meldinger` | Valgfri modul for meldinger på tvers av grupper | Planlagt: i dag en plassholderside |
+| Kalender | – | Valgfri modul med felles kalender | Planlagt: modulen kan slås på, men har ingen side |
+
+Et medlem ser bare det som gjelder egne grupper. Løsningen kan installeres på mobilen som app (PWA).
+
+---
+
+## 4. Nettsiden
+
+| Side | Adresse | Innholdet kommer fra | Status |
+|---|---|---|---|
+| **Forside** | `/` | Velkomsttekst fra innstillingene. Fremhevet samling eller neste gudstjeneste, og de fire neste samlingene, fra planleggeren. Tre siste nyheter og siste tale fra CMS-et | Delvis: tre infobokser, fellesskapsteksten og gaveteksten står fast i koden |
+| **Hva skjer** | `/hva-skjer` | Kommende offentlige samlinger fra planleggeren | Levert |
+| **Taler** | `/taler` | Talearkivet fra CMS-et, med avspilling | Levert |
+| **Fellesskap** | `/fellesskap` | Gruppene som er satt til å vises, med møtetid og hvem man kan kontakte | Levert |
+| **Lederskap** | `/lederskap` | Personer med offentlig profil og registrert samtykke | Levert |
+| **Faste sider** | `/:slug` | Sidene som er skrevet i CMS-et, for eksempel «Om oss» og «Kontakt» | Levert |
+| **Artikkel** | `/artikkel/:id` | En nyhetsartikkel fra CMS-et | Delvis: det finnes ikke noe arkiv med alle artiklene |
+| **Meny og bunntekst** | alle sider | Menyen bygges av sidetreet. Bunnteksten henter kontaktinfo fra innstillingene | Levert |
+
+---
+
+## 5. Innholdstyper og felt
+
+Tabellene beskriver dataene slik de faktisk lagres. Felt merket *planlagt* finnes i målbildet, men lagres ikke fra noe skjema i dag.
+
+### 5.1 Arrangement (`Gathering`)
+Felles begrep for enhver samling: gudstjeneste, ungdomsmøte, bønnemøte, dugnad, møte i husfellesskap.
+
+| Felt | Type | Påkrevd | Beskrivelse |
+|:---|:---|:---:|:---|
+| `id` | `string` | Ja | Unik identifikator |
+| `title` | `string` | Ja | Tittel, f.eks. «Høsttakkefest & gudstjeneste» |
+| `startsAt` | ISO 8601 | Ja | Start, lagret som et eksakt øyeblikk |
+| `endsAt` | ISO 8601 | Nei | Slutt |
+| `location` | `string` | Nei | Sted. Mangler det, vises «Misjonskirken» overalt |
+| `groupId` | `string` | Ja | Ansvarlig gruppe |
+| `type` | `"arrangement" \| "gruppesamling"` | Nei | En gruppesamling er aldri med i kontrakt v1 av API-et, selv om den er satt til offentlig |
+| `isGudstjeneste` | `boolean` | Nei | Om samlingen er en gudstjeneste. Mangler feltet, leses det av tittelen |
+| `theme`, `bibleText` | `string` | Nei | Tema og bibeltekst |
+| `hostPersonId` | `string` | Nei | Vert, brukt av husfellesskap |
+| `invitationSent`, `invitationSentAt` | `boolean`, ISO 8601 | Nei | Om innkalling til husfellesskapet er sendt |
+| `visibility` | `"intern" \| "offentlig" \| "fremhevet"` | Ja | Den ene bryteren for synlighet (kapittel 7) |
+| `isPublic` | `boolean` | Nei | Speil av `visibility` for eldre dokumenter. Leses aldri alene |
+| `cancelled` | `boolean` | Nei | Avlyst |
+| `programSchedule` | `ProgramItem[]` | Nei | Program: klokkeslett, tittel, beskrivelse og eventuell kobling til en oppgave |
+| `updatedBy`, `updatedAt` | `string`, ISO 8601 | Nei | Hvem som endret sist, og når |
+
+### 5.2 Oppgave (`Task`)
+
+| Felt | Type | Påkrevd | Beskrivelse |
+|:---|:---|:---:|:---|
+| `id`, `gatheringId`, `groupId` | `string` | Ja | Oppgaven, samlingen den hører til, og gruppen den sorterer under |
+| `title` | `string` | Ja | F.eks. «Lydtekniker», «Møteleder», «Kirkekaffe» |
+| `neededCount` | `number` | Nei | Hvor mange som trengs. Mangler tallet, regnes det som 1 |
+| `description`, `instruction` | `string` | Nei | Kort beskrivelse, og instruks for den frivillige. Åpner instruksen med «Møt opp kl. 09:30», brukes det som oppmøtetid |
+| `status` | `"open" \| "assigned" \| "confirmed" \| "vacant" \| "cancelled"` | Ja | **Regnes ut av tildelingene** (kapittel 6). Settes aldri for hånd |
+| `lastReminded` | ISO 8601 | Nei | Når noen sist ble purret |
+| `updatedBy`, `updatedAt` | `string`, ISO 8601 | Nei | Siste endring |
+
+### 5.3 Tildeling (`Assignment`)
+
+| Felt | Type | Påkrevd | Beskrivelse |
+|:---|:---|:---:|:---|
+| `id`, `taskId`, `personId` | `string` | Ja | Hvem som står på hvilken oppgave |
+| `response` | `"pending" \| "confirmed" \| "declined" \| "withdrawn"` | Ja | Forespurt, akseptert, avslått eller forfall |
+| `assignedAt` | ISO 8601 | Nei | Når personen ble tildelt eller forespurt |
+| `respondedAt` | ISO 8601 | Nei | Når personen svarte eller meldte forfall |
+| `withdrawalReason` | `string` | Nei | Valgfri, privat grunn ved forfall, bare for leder og administrator. *Planlagt i skjermbildene:* feltet kan lagres, men medlemmet har ikke noe sted å skrive grunnen, og lederen ser den ikke |
+
+### 5.4 Person (`Person`)
+
+| Felt | Type | Påkrevd | Beskrivelse |
+|:---|:---|:---:|:---|
+| `id` | `string` | Ja | Unik identifikator. *Planlagt:* lik brukerens ID ved innlogging |
+| `name` | `string` | Ja | Fullt navn |
+| `email`, `phone` | `string` | Nei | Privat kontaktinfo. Vises aldri på nettsiden |
+| `globalRole` | `"member" \| "admin"` | Ja | Medlem eller administrator |
+| `policeCertificateValidUntil` | `YYYY-MM-DD` | Nei | Utløpsdato for politiattest |
+| `unavailablePeriods` | `{ from, to, reason? }[]` | Nei | Perioder personen er borte. Vises som advarsel ved tildeling |
+| `isPublicProfile` | `boolean` | Nei | Om personen skal vises på nettsiden |
+| `publicTitle`, `publicPhone`, `publicEmail` | `string` | Nei | Tittel og kontaktinfo utad |
+| `avatarUrl` | `string` | Nei | Profilbilde |
+| `consentToPublishGivenAt`, `consentGivenBy` | ISO 8601, `string` | Nei | **Samtykkelogg:** når samtykket ble registrert, og av hvem |
+| `updatedBy`, `updatedAt` | `string`, ISO 8601 | Nei | Siste endring |
+
+### 5.5 Gruppe (`Group`)
+
+| Felt | Type | Påkrevd | Beskrivelse |
+|:---|:---|:---:|:---|
+| `id`, `name` | `string` | Ja | Gruppen og navnet |
+| `description` | `string` | Nei | Kort omtale, vises på «Fellesskap» |
+| `category` | `"tjenestegruppe" \| "husgruppe" \| "strategigruppe" \| "ledergruppe" \| "interessegruppe"` | Nei | Kategori |
+| `tags` | `string[]` | Nei | Stikkord |
+| `isPublic` | `boolean` | Nei | `false` skjuler gruppen på nettsiden og i API-et. Mangler feltet, vises gruppen |
+| `memberIds`, `leaderIds`, `deputyLeaderIds` | `string[]` | Ja, Ja, Nei | Medlemmer, ledere og nestledere |
+| `meetingSchedule` | `{ weekday, time, frequency }` | Nei | Fast møtetid: hver uke, annenhver uke eller hver måned |
+| `memberJoinedAt` | `{ personId: dato }` | Nei | Når hvert medlem ble med |
+| `notificationPreferences` | `{ personId: boolean }` | Nei | Om medlemmet vil ha varsler fra gruppen |
+
+### 5.6 Gruppemelding og oppmøte
+
+| Type | Felt | Beskrivelse |
+|:---|:---|:---|
+| `GroupMessage` | `id`, `groupId`, `senderPersonId`, `senderName`, `content`, `imageUrl?`, `createdAt` | En beskjed i en gruppe, med valgfritt bilde |
+| `GatheringAttendance` | `id`, `gatheringId`, `personId`, `status` (`attending` / `declined`), `updatedAt?` | Svaret «Kommer» eller «Kommer ikke» på en samling |
+
+### 5.7 Side (`CmsPage`)
+
+| Felt | Type | Påkrevd | Beskrivelse |
+|:---|:---|:---:|:---|
+| `id`, `title` | `string` | Ja | Siden og overskriften |
+| `slug` | `string` | Ja | Adressen, f.eks. `om-oss` |
+| `summary` | `string` | Ja | Ingress under tittelen |
+| `content` | `string` | Ja | Innholdet, skrevet med innholdsblokker (kapittel 8.3) |
+| `isPublished` | `boolean` | Ja | Kladd eller publisert |
+| `publishAt` | ISO 8601 | Nei | Tidspunkt for planlagt publisering |
+| `status` | `"draft" \| "published" \| "scheduled"` | Nei | Regnes ut av de to feltene over når siden lagres |
+| `parentPageId` | `string \| null` | Nei | Hovedfanen siden ligger under. `null` er en hovedfane |
+| `menuOrder` | `number` | Nei | Rekkefølge i menyen |
+| `inNavMenu` | `boolean` | Nei | Om siden står i menyen |
+| `linkUrl` | `string` | Nei | Peker menyvalget til en innebygd side som `/hva-skjer`, eller en ekstern adresse |
+| `heroImage` | `string` | Nei | Hovedbilde |
+| `metaDescription`, `ogImage` | `string` | Nei | Tekst og bilde for søk og deling |
+| `updatedAt` | ISO 8601 | Ja | Sist endret |
+| `updatedBy` | `string` | Nei | *Planlagt:* settes når innlogging finnes |
+
+`parentId`, `navOrder` og `publishedAt` lagres som speil av `parentPageId`, `menuOrder` og `publishAt` for eldre dokumenter. `heroCtaText` og `heroCtaLink` lagres tomme og brukes ikke.
+
+### 5.8 Nyhetsartikkel (`CmsNewsArticle`)
+
+| Felt | Type | Påkrevd | Beskrivelse |
+|:---|:---|:---:|:---|
+| `id`, `title`, `slug` | `string` | Ja | Artikkelen, overskriften og adressen |
+| `category` | `"aktuelt" \| "gudstjeneste" \| "ungdom" \| "misjon" \| "familie"` | Ja | Kategori |
+| `summary`, `content` | `string` | Ja | Ingress og fulltekst |
+| `author` | `string` | Ja | Forfatter, som fritekst |
+| `publishedAt` | ISO 8601 | Ja | Publiseringstidspunkt. Nyeste vises først |
+| `isPublished` | `boolean` | Ja | Kladd eller publisert |
+| `imageUrl` | `string` | Nei | Bilde |
+| `expiresAt` | `YYYY-MM-DD` | Nei | *Planlagt:* artikkelen forsvinner fra forsiden etter datoen |
+| `gatheringRefId` | `string` | Nei | *Planlagt:* kobling til en samling |
+
+### 5.9 Tale (`CmsSermon`)
+
+| Felt | Type | Påkrevd | Beskrivelse |
+|:---|:---|:---:|:---|
+| `id`, `title` | `string` | Ja | Talen og tittelen |
+| `speaker` | `string` | Ja | Taler, som fritekst |
+| `date` | dato | Ja | Når talen ble holdt. Nyeste vises først |
+| `bibleText`, `series`, `summary` | `string` | Nei | Bibeltekst, serie og sammendrag |
+| `audioUrl`, `spotifyUrl` | `string` | Nei | Lydfil og Spotify-lenke |
+| `videoUrl` | `string` | Nei | Video. YouTube-lenker gjøres om til `youtube-nocookie.com` |
+| `speakerPersonId`, `guestSpeakerName`, `gatheringId` | `string` | Nei | *Planlagt:* kobling til person og samling |
+
+### 5.10 Stab, innstillinger og design
+
+| Type | Felt |
+|:---|:---|
+| `CmsStaffMember` | `id`, `name`, `role`, `email`, `phone`, `category` (`pastor`, `stab`, `lederskap`, `barneleder`), `imageUrl?`, `bio?` |
+| `CmsSettings` (ett dokument) | `churchName`, `appName`, `tagline`, `welcomeHeadline`, `welcomeSubtext`, `address`, `phone`, `email`, `officeHours`, `vippsNumber`, `vippsDescription`, `bankAccount`, `orgNumber`, lenker til Facebook, Instagram, YouTube og podkast, og `theme` |
+| `CmsDesignTheme` | `primaryColor`, `accentColor`, `backgroundTone` (`stone`, `slate`, `warm`, `pure-white`), `headingFont` (`sans`, `serif`, `display`), `bodyFont` (`sans`, `serif`), `borderRadius` (`sharp`, `medium`, `smooth`), `spacingDensity` (`compact`, `normal`, `spacious`) |
+
+---
+
+## 6. Bemanningsmotoren
+
+Én ligning gjelder overalt:
 
 $$\text{Ledige plasser} = \text{Behov (neededCount)} - \text{Bekreftet (confirmed)} - \text{Venter (pending)}$$
 
-### 3.1 Handlingsskille: Tildel vs. Forespør
-* **Knapp 1: «Tildel» (Direkte bekreftelse):**  
-  Benyttes når lederen allerede har avtalt vakten muntlig eller på forhånd. Setter umiddelbart `response = "confirmed"`.
-* **Knapp 2: «Forespør» (Invitasjon):**  
-  Sender en forespørsel til personen via varsling og setter `response = "pending"`.
-* **Akutt forfall:**  
-  Dersom en bekreftet person melder forfall **under 48 timer** før arrangementets oppmøtetid, flagges oppgaven som `vacant` (akutt forfall), og oppfølgingslisten aktiverer et fremhevet varsel.
+Den som har avslått eller meldt forfall, holder ingen plass.
 
-### 3.2 Universell Utforming (WCAG AA) i Bemanningsstatus
-Statuser formidles alltid med **SVG-ikon + tekst**, aldri med farge alene:
-* 🟢 **Dekket:** `[CheckCircle2] Dekket (2/2)`
-* 🟡 **Venter:** `[Clock] Venter på svar (1/2 bekreftet, 1 venter)`
-* 🔴 **Mangler:** `[AlertTriangle] Mangler 1 (1/2 bekreftet)`
+### 6.1 Tre måter å komme på en oppgave
 
----
+| Handling | Hvem | Resultat |
+|:---|:---|:---|
+| **Tildel** | Leder eller administrator, når vakten alt er avtalt | Bekreftet med en gang |
+| **Forespør** | Leder eller administrator | Venter på svar til medlemmet svarer ja eller nei på Min side eller oppgavesiden |
+| **Ta oppgaven** | Medlemmet selv, når en plass er ledig i en av medlemmets grupper | Bekreftet med en gang |
 
-## 4. Sikkerhetsregler i Firestore (`firestore.rules`)
+### 6.2 Forfall
 
-1. **Beskyttelse av personvern & GDPR:**
-   * Offentlig profilflagg (`isPublicProfile`), offentlig telefon/e-post og samtykkelogg kan kun redigeres av brukere med `globalRole == 'admin'`.
-   * Vanlige medlemmer har kun tilgang til å oppdatere sine egne personlige varslingspreferanser og svare på egne tildelinger.
-2. **Audit-validering (`updatedBy`):**
-   * Når et dokument oppdateres med feltet `updatedBy`, håndhever sikkerhetsreglene at verdien er lik `request.auth.uid`.
+* Et bekreftet medlem som melder forfall, lagres som **forfall**. Et nei på en forespørsel lagres som **avslått**.
+* *Planlagt:* medlemmet kan oppgi en valgfri, privat grunn som bare leder og administrator ser.
+* Kommer forfallet eller avslaget **mindre enn 48 timer før samlingen starter**, er det **akutt**: oppgaven merkes og løftes fram i «Trenger oppfølging» til plassen er fylt igjen.
+* Hver tildeling får tidspunkt for når den ble opprettet og når den ble besvart.
 
----
+### 6.3 Oppgavens status følger av tildelingene
 
-## 5. Synlighetsmodellen: Én Bryter
+| Status | Når |
+|:---|:---|
+| `confirmed` | Alle plasser er fylt av noen som har sagt ja |
+| `assigned` | Alle plasser er opptatt, men noen har ikke svart |
+| `open` | Minst én plass er ledig |
+| `vacant` | En plass ble ledig ved et akutt forfall, og er ikke fylt igjen |
+| `cancelled` | Oppgaven er avlyst |
 
-Arrangementets synlighet styres av det enhetlige feltet `visibility`:
-* **`intern`:** Kun synlig for innloggede medlemmer, gruppeledere og stab. Skjules helt fra offentlig kalender og API.
-* **`offentlig`:** Vises i den offentlige kalenderen på nettsiden og i ukeprogrammet.
-* **`fremhevet`:** Offentlig, og låst med høy prioritet som "Neste gudstjeneste / arrangement" på forsiden med fremhevet infoboks.
+Statusen lagres i samme skriving som endringen i tildelingene eller behovet. Den kan derfor ikke si noe annet enn tildelingene.
 
-Forside- og kalendermodulene gjør utelukkende en direkte filtrering på dette ene feltet. Det finnes ingen overlappende parallelle brytere.
+### 6.4 Slik vises bemanningen (WCAG AA)
+Alltid ikon og tekst, aldri farge alene:
 
----
+* 🟢 **Dekket:** hele behovet er bekreftet, f.eks. `Dekket (2/2)`
+* 🟡 **Venter på svar:** ingen har bekreftet, men noen er forespurt
+* 🔴 **Mangler X:** det mangler folk. Én bekreftet av to er rødt, også når den andre er forespurt. Et forfall holder oppgaven rød til plassen faktisk er dekket
 
-## 6. Hybrid «Aktuelt»: Arrangementer & Artikler
-
-For å unngå utdaterte nyheter er **Aktuelt** en samlet tidslinje:
-1. **Kommende arrangementer:** Hentes automatisk fra kalenderen der `visibility` er `offentlig` eller `fremhevet`. Når datoen er passert, arkiveres de automatisk fra forsiden.
-2. **Frittstående artikler:** Rapporter fra leir, pastorbrev eller julehilsener skrives som artikler. Disse kan ha en valgfri kobling (`gatheringRefId`) til et konkret arrangement.
+En samling er rød så lenge én oppgave er rød, gul når ingen er røde og minst én er gul, og ellers grønn.
 
 ---
 
-## 7. Planleggingsrutiner & Operative Handlinger
+## 7. Synlighet og personvern
 
-### 7.1 «Lag neste arrangement» (Erstatning for kloning)
-Knappen **«Lag neste arrangement»** åpner en datovelger. Den oppretter en ny hendelse på den valgte datoen og kopierer over alle oppgaver og deres definerte bemanningsbehov (`neededCount`), men etterlater personlisten tom slik at nye personer kan tildeles eller forespørres.
+Tre regler avgjør hva en besøkende ser. Hver av dem ligger ett sted i koden og brukes av både nettsiden og API-et.
 
-### 7.2 Purring uten e-post (Manuell SMS/Messenger-modal)
-Frem til automatisert e-post eller SMS-gateway er koblet til ekstern leverandør:
-* Klikk på **«Purr»** oppdaterer tidsstempelet `lastReminded` på oppgaven.
-* Samtidig åpnes en ferdigformatert dialogboks med ferdigskrevet tekst og oppmøtedetaljer som lederen med ett klikk kopierer til utklippstavlen for sending via SMS eller Messenger.
+### 7.1 Samlinger: én bryter
+Feltet `visibility` er den eneste bryteren:
 
-### 7.3 YouTube-nocookie parser
-Alle YouTube-lenker som legges inn på taler eller undersider konverteres automatisk til `https://www.youtube-nocookie.com/embed/{id}` for å oppfylle personvernkrav og unngå tredjeparts sporingskapsler.
+* **`intern`** – bare for medlemmer, ledere og stab. Skjult i kalenderen og i API-et.
+* **`offentlig`** – vises i kalenderen på nettsiden.
+* **`fremhevet`** – offentlig, og løftet fram øverst på forsiden.
+
+### 7.2 Hva forsiden løfter fram
+1. En fremhevet samling som ikke er avlyst og ikke er passert.
+2. Ellers neste gudstjeneste.
+3. Ellers den neste offentlige samlingen.
+
+En avlyst samling løftes aldri fram. Kalenderen viser bare kommende samlinger.
+
+### 7.3 Grupper
+En gruppe vises på «Fellesskap», «Lederskap» og i API-et til en administrator fjerner krysset «Vis gruppen på nettsiden». En skjult gruppe gir verken fra seg navnet eller møtetiden sin.
+
+### 7.4 Personer
+En person vises bare når «Vis offentlig» er satt **og** et samtykke er registrert, med tidspunkt og hvem som registrerte det. Da vises navn, tittel utad og kontaktinfo utad. Privat telefon og e-post er aldri med. Tas krysset bort, fjernes samtykket.
 
 ---
 
-## 8. Skjermkrav & Akseptansekriterier
+## 8. CMS-et i detalj
 
-### 8.1 Skjermkrav for Admin Studio
+### 8.1 Sider og meny
+* Menyen har to nivåer: hovedfaner og underfaner. Rekkefølgen endres med dra og slipp.
+* Den offentlige menyen og sidelisten i admin bygges av samme sidetre.
+* Slettes en hovedfane, flyttes underfanene opp til toppnivå i samme lagring, slik at ingen side blir uten vei inn.
+* Et menyvalg kan peke på en innebygd side (`/hva-skjer`, `/taler`, `/fellesskap`) i stedet for en egen tekstside.
 
-| Skjerm / Fane | Minimumskrav til hver rad | Mulige handlinger |
-| :--- | :--- | :--- |
-| **Sider & Innhold** | Forside øverst. Tittel, URL-slug, statusmerke (`Draft` / `Published`), menyrekkefølge, sist endret dato og bruker. | Rediger side, forhåndsvis, slett (krever bekreftelse i modal). |
-| **Arrangementer & Bemanning** | Tittel, starttidspunkt, lokasjon, type, synlighet (`intern`/`offentlig`/`fremhevet`), bemanningsbadge (ikon + tekst). | Rediger, opprett oppgaver, åpne kjøreplan, «Lag neste arrangement». |
-| **Trenger oppfølging** | Oppgavetittel, tilhørende arrangement og dato, antall plasser (`1/2`), status (`Mangler 1` / `Akutt forfall`). | Hurtigtildel person, send forespørsel, åpne purretekst. |
-| **Taler & Prekener** | Tittel, dato, taler/gjestetaler, serie, medietype-indikator (🎧 Lyd / 🎬 Video). | Rediger metadata, legg til opptaksstrøm, koble til arrangement. |
-| **Personregister & Stab** | Navn, telefon, e-post, grupperoller, politiattest-indikator, «Vis offentlig»-merke med samtykkestatus. | Rediger person, registrer samtykke til publisering, slett person. |
+### 8.2 Kladd, publisert og planlagt
+* **Kladd:** vises ikke i menyen, og adressen svarer «Siden ble ikke funnet».
+* **Publisert:** vises med en gang.
+* **Planlagt:** publisert med et tidspunkt fram i tid. Siden blir synlig av seg selv når tidspunktet er passert. Til da sier adressen når siden kommer.
 
-### 8.2 Konkrete Testscenarioer (Akseptansekriterier)
+### 8.3 Innholdsblokker
+Innholdet skrives som tekst med ferdige blokker. Blokkvelgeren setter dem inn, og redaktøren fyller ut teksten. Innholdet vises aldri som rå HTML.
 
-* **Scenario A: Tildeling av frivillig:**  
-  1. Gitt en oppgave "Lydtekniker" med `neededCount = 1`.
-  2. Når admin klikker «Tildel» og velger "Kari Nordmann",
-  3. Så opprettes en tildeling med `response: "confirmed"`, og oppgaven viser umiddelbart `[CheckCircle2] Dekket (1/1)`.
+| Blokk | Skrives slik |
+|:---|:---|
+| Overskrift | `# Stor`, `## Mellom`, `### Liten` |
+| Liste | `- punkt` eller `1. punkt` |
+| Uthevet og kursiv | `**fet**`, `*kursiv*` |
+| Lenke | `[tekst](/intern-side)` eller `[tekst](https://…)` |
+| Infoboks | `:::callout[info] Tittel` … `:::` (også `warning`, `success`, `primary`) |
+| Bilde med tekst | `:::media-left[bildeadresse]` eller `:::media-right[bildeadresse]` … `:::` |
+| Kort side ved side | `:::grid`, deretter `:::card Tittel` for hvert kort, avsluttet med `:::` |
+| Sitat | `:::quote[Kilde]` … `:::` |
+| Handlingsknapp | `[Knapp: Tekst](/lenke)` |
 
-* **Scenario B: Forespørsel og forfall:**  
-  1. Gitt en oppgave "Kirkekaffe" med `neededCount = 2`.
-  2. Når admin klikker «Forespør» for person A,
-  3. Så viser oppgaven `[Clock] Venter på svar (0/2 bekreftet, 1 venter) · Mangler 1`.
-  4. Dersom person A svarer «Kan ikke» under 48 timer før samlingen, vises varselet `[AlertTriangle] Akutt forfall`.
+### 8.4 Bilder
+Et hovedbilde lastes opp fra maskinen, limes inn som adresse eller velges blant ferdige bilder. Et opplastet bilde skaleres ned til maks 1400 piksler og komprimeres i nettleseren.
 
-* **Scenario C: Publisering med GDPR-sporbarhet:**  
-  1. Når en administrator aktiverer «Vis offentlig på nettsiden» for en medarbeider,
-  2. Så loggføres `consentToPublishGivenAt` med gjeldende tidsstempel og `consentGivenBy` med administratorens UID.
+**Delvis:** bildet lagres inne i selve sidedokumentet, ikke i en bildelagring. Se 8.7.
+
+### 8.5 Design
+Fanen «Tema & designsystem» har fem ferdige temaer (Klassisk menighetsblå, Nordisk salvie, Varm terracotta, Dyp vinrød, Moderne indigo) og egne valg for farger, skrift, avrunding og luft.
+
+**Delvis:** se 2.2. Målet er at ett valg her endrer hele nettsiden.
+
+### 8.6 Søk og deling
+Hver side kan ha egen beskrivelse og eget delebilde. Mangler de, brukes ingressen og hovedbildet. Redaktøren ser en forhåndsvisning av søkeresultatet og delingskortet.
+
+**Delvis:** opplysningene settes inn i nettleseren etter at siden er lastet. Google leser dem. Delingskort i Facebook, Messenger og Slack leser dem ikke, for de kjører ikke siden. Se 8.7.
+
+### 8.7 Kjente begrensninger i CMS-et
+
+| Område | I dag | Konsekvens |
+|:---|:---|:---|
+| Bilder | Lagres som tekst inne i sidedokumentet | Alle besøkende laster ned alle sidenes bilder ved første besøk. Et dokument kan ikke være større enn 1 MB. Et opplastet bilde kan ikke brukes som delebilde |
+| Design | Bare overskriftsskrift og avrunding på CMS-sidene følger temaet | Fargevalg i admin endrer ikke nettsiden |
+| Deling | Søk- og delefeltene settes inn i nettleseren | Delingskort i sosiale medier viser ikke sidens egen tittel og bilde |
+| Kladder | Skjules i visningen, men leveres til nettleseren | En kladd er ikke hemmelig. Løses sammen med innlogging |
+| Forside | Tre infobokser, fellesskaps- og gaveteksten står i koden | Kan ikke endres uten en utvikler |
+| Menighetens navn | «Lillesand Misjonskirke» står skrevet i koden flere steder | Navnet i innstillingene slår ikke gjennom overalt |
+| Stab | «Lederskap & stab» er en egen liste | To kilder for de samme menneskene, og listen har ingen samtykkelogg |
+| Nyheter | Ingen arkivside, ingen utløpsdato, ingen kobling til samling | Eldre artikler er bare tilgjengelige via direkte lenke |
+
+---
+
+## 9. Offentlig API
+
+Serveren leverer et åpent JSON-API som eksterne nettsider kan lese. Bare hvitelistede felt slipper ut. Personer, oppgaver, tildelinger og meldinger er aldri med.
+
+| Endepunkt | Innhold |
+|:---|:---|
+| `GET /api/offentlig/arrangementer?fra=…&til=…` | Kontrakt v1: offentlige samlinger, tider med norsk tidssone |
+| `GET /api/public/gatherings` | v1.1: samlinger, med feltet `fremhevet` |
+| `GET /api/public/groups` | v1.1: grupper som vises utad |
+| `GET /api/public/recurring` | v1.1: faste møtetider |
+| `GET /api/public/all` | v1.1: alt samlet |
+
+Kontrakten står i `INTEGRASJON-MENIGHETSPLAN.md`. Det eksterne CMS-et (`menighetsplan_ClaudeCMS`) er en egen løsning som leser dette API-et. Koden for det hører ikke hjemme i dette repoet.
+
+---
+
+## 10. Sikkerhet og tilgang
+
+| Område | Mål | I dag |
+|:---|:---|:---|
+| Innlogging | Medlemmer logger inn med Google-konto. Rollen styrer hva man ser og kan gjøre | **Planlagt.** Ingen innlogging. Aktiv bruker velges i en testbryter, og `/admin` er åpen |
+| Regler i databasen | Besøkende leser bare offentlige data. Et medlem endrer bare sitt eget. Bare administrator endrer offentlige profilfelt og samtykke | **Planlagt.** Reglene slipper gjennom lesing av alt, og skriving uten innlogging |
+| Sporbarhet | `updatedBy` er alltid den innloggede brukeren | **Delvis.** Regelen finnes, men gjelder først når noen er logget inn |
+| Personregisteret | Lastes bare for innloggede | **Delvis.** Nettsiden viser bare personer med samtykke, og laster ikke oppgaver, tildelinger eller meldinger. Hele personregisteret lastes likevel til nettleseren |
+| Samtykke | Ingen person vises uten registrert samtykke | **Levert** |
+| API | Ingen persondata ut | **Levert** |
+
+**Databasen inneholder bare demodata.** Ekte persondata skal ikke legges inn før innlogging og regler er på plass.
+
+---
+
+## 11. Planleggingsrutiner
+
+### 11.1 «Lag neste arrangement»
+Oppretter en ny samling på valgt dato med samme klokkeslett, og kopierer oppgavene og behovet. Personlisten er tom, slik at nye kan tildeles eller forespørres.
+
+### 11.2 Kjøreplan
+Samlingssiden viser programmet og oppgavene på én tidslinje. Et programpunkt som er koblet til en oppgave, viser hvem som står på den. Et programpunkt uten oppgave har ingen ansvarlig, og en samling uten program viser bare oppgavene sine. Løsningen viser aldri et program eller et navn som ikke er registrert.
+
+**Planlagt:** skjermbilde for å redigere programmet.
+
+### 11.3 Purring uten e-post
+Til en varslingstjeneste er koblet på: «Purr» lagrer tidspunktet på oppgaven og åpner en ferdig tekst med oppmøtedetaljer, som lederen kopierer og sender på SMS eller Messenger.
+
+### 11.4 YouTube uten sporing
+YouTube-lenker på taler gjøres om til `youtube-nocookie.com`, slik at en besøkende ikke får sporingskapsler før videoen spilles av.
+
+---
+
+## 12. Hva som er levert
+
+### Grunnlaget (Google AI Studio, til 28. september 2026)
+De tre flatene, Firestore-databasen, bemanningsmotoren, husfellesskap, gruppemeldinger, det offentlige API-et (v1 og v1.1) og første utgave av CMS-et.
+
+### Kvalitet og oppretting (1.–3. oktober 2026)
+
+| Område | Levert |
+|:---|:---|
+| **Fundament** | Streng typesjekk. Testløp med Vitest: 406 tester som kjører den ekte koden. Nye dokumenter bygges ett sted. En lagring som feiler, vises for brukeren |
+| **Datalaget** | Skjermen viser bare det databasen har. Det som hører sammen, lagres i én operasjon. To samtidige endringer kan ikke overskrive hverandre. Testene kjører mot den ekte Firestore-klienten uten nett |
+| **Bemanning** | Oppgavens status regnes ut av tildelingene. Et medlem kan ta en ledig oppgave og svare på en forespørsel. Forfall med 48-timersregel og tidsstempler |
+| **Min side** | Bruker dagens dato i stedet for en fast demodato. «Trenger svar» er sortert etter hva som haster |
+| **Nettsiden** | Forsiden følger «fremhevet», ellers neste gudstjeneste. Kalenderen viser kommende samlinger. Grupper kan skjules. Et interesseskjema som ikke lagret noe, er erstattet med hvem man kan kontakte. Personer vises bare med samtykke |
+| **Kjøreplan** | Viser bare det som er registrert. Et oppdiktet standardprogram og oppdiktede navn er fjernet |
+| **CMS** (AI Studio, 2. oktober) | Sidetre med dra og slipp, innholdsblokker, hovedbilde, design-fane, søk og deling, planlagt publisering, forhåndsvisning |
+| **Opprydding** | De største filene er delt i én fil per fane og dialog. Hardkodede demo-ID-er, datoer og steder er ute av logikken. Utviklerord er ute av skjermbildene |
+
+---
+
+## 13. Kjente mangler
+
+Sortert etter hvor mye de betyr for en menighet som skal ta løsningen i bruk.
+
+| # | Mangel | Løses i |
+|:---:|:---|:---|
+| 1 | Ingen innlogging, og databasereglene er åpne | Fase 1 |
+| 2 | Personregisteret og kladder leveres til alle nettlesere | Fase 1 |
+| 3 | Testbryter og testverktøy vises i løsningen | Fase 1 |
+| 4 | Designvalget styrer ikke nettsiden | Fase 2 |
+| 5 | Forsidens tekster og menighetens navn står delvis i koden | Fase 2 |
+| 6 | Bilder lagres inne i sidedokumentene | Fase 2 |
+| 7 | Delingskort i sosiale medier viser ikke sidens innhold | Fase 2 |
+| 8 | To kilder for stab og lederskap, den ene uten samtykke | Fase 2 |
+| 9 | Programmet i kjøreplanen kan ikke redigeres | Fase 3 |
+| 10 | Ingen varsling: forespørsler og forfall når ingen uten at de åpner appen | Fase 3 |
+| 11 | Modulvalg lagres bare i én nettleser | Fase 3 |
+| 12 | En besøkende kan ikke melde interesse for en gruppe i løsningen | Fase 3 |
+| 13 | Et nytt gruppemedlem ser hele meldingshistorikken | Fase 3 |
+| 14 | Medlemmet kan ikke oppgi grunn for et forfall, og lederen ser den ikke | Fase 3 |
+| 15 | Hele løsningen lastes på første besøk (1,6 MB) | Fase 4 |
+
+---
+
+## 14. Veien videre
+
+Rekkefølgen innen hver fase er prioritert. Fase 1 er forutsetningen for ekte data, og er **satt på vent av produkteier**. Arbeidet fortsetter derfor i fase 2–4 til den åpnes.
+
+### Fase 1 – Trygg i drift *(på vent)*
+1. Innlogging med Google-konto. Første administrator er produkteierens konto.
+2. Roller: administrator, gruppeleder (avledet av gruppene) og medlem.
+3. Databaseregler etter rolle: besøkende leser bare offentlige data, og kladder leveres ikke ut.
+4. Testbryteren, testverktøyet på husfellesskapssiden og demodata-knappene fjernes eller legges bak administrator.
+5. Personregisteret lastes ikke på nettsiden.
+
+### Fase 2 – CMS-et styrer hele nettsiden
+1. **Temaet virker:** farger, skrift, bakgrunn og avrunding fra design-fanen gjelder hele nettsiden.
+2. **Forsiden kan redigeres:** forsidebilde, infoboksene, fellesskaps- og gaveseksjonen. Menighetens navn hentes fra innstillingene overalt.
+3. **Bilder i egen lagring**, med bilder også i nyheter, stab og innholdsblokker.
+4. **Delingskort fra serveren:** tittel, beskrivelse og bilde ligger i siden slik den sendes ut.
+5. **Én kilde for stab og lederskap:** personregisteret med samtykke. CMS-fanen bestemmer rekkefølge, bilde og omtale.
+6. **Nyheter:** arkivside, utløpsdato og kobling til samling. **Taler:** kobling til person og samling.
+7. Senere: visuell redigering av blokker, og historikk med angre.
+
+### Fase 3 – Webappen ferdig
+1. **Kjøreplan-editor:** program med klokkeslett, koblet til oppgaver.
+2. **Varsling** ved forespørsel, påminnelse og akutt forfall. Kanal må velges (se under).
+3. Modulvalg lagres for hele menigheten.
+4. «Bli med»: en besøkende melder interesse for en gruppe, og lederen ser henvendelsen.
+5. Et nytt medlem ser meldinger fra innmeldingsdatoen.
+6. Forfall med grunn: medlemmet kan skrive den, og lederen ser den.
+7. Kalender- og meldingsmodul med innhold.
+8. Omsorgsvarsel når samme person settes opp ofte, og varsel før en politiattest går ut.
+
+### Fase 4 – Ytelse og drift
+1. Adminpanelet og CMS-et lastes først når de åpnes.
+2. Avgrenset mellomlagring i den installerte appen.
+3. Én felles dialogkomponent med tastaturstøtte, i stedet for at hver dialog er laget for hånd.
+4. Sikkerhetskopi av databasen, feillogg, og Firebase-prosjektet eid av menighetens egen konto.
+
+### Løpende – kodekvalitet
+Hver endring typesjekkes, testes og bygges før den regnes som ferdig. Regler flyttes til rene funksjoner med tester. Dokumentene oppdateres i samme endring.
+
+### Åpne produktvalg
+| Valg | Alternativer | Anbefaling |
+|:---|:---|:---|
+| Varslingskanal | Bare pushvarsler i appen, eller push pluss SMS ved akutt forfall og påminnelse dagen før | Push pluss SMS. De som trenger varselet mest, har ofte ikke appen åpen |
+| Innloggingsmåter | Bare Google, eller Google pluss Vipps og passord | Start med Google. Legg til Vipps når menigheten ber om det |
+| Bildelagring | Firebase Storage, eller en ekstern bildetjeneste | Firebase Storage. Samme prosjekt, samme regler |
+
+---
+
+## 15. Skjermkrav og akseptansekriterier
+
+### 15.1 Skjermkrav for adminpanelet
+
+| Fane | Hver rad viser minst | Handlinger |
+|:---|:---|:---|
+| **Sider & innhold** | Tittel, adresse, status (kladd, publisert, planlagt med tidspunkt), plass i menyen, sist endret | Rediger, forhåndsvis, flytt, slett med bekreftelse |
+| **Arrangementer** | Tittel, tidspunkt, sted, synlighet, bemanningsstatus med ikon og tekst | Rediger, avlys, opprett oppgaver, åpne kjøreplan, «Lag neste arrangement» |
+| **Trenger oppfølging** | Oppgave, samling og dato, plasser (`1/2`), status (`Mangler 1`, `Akutt forfall`) | Tildel, forespør, åpne purretekst |
+| **Taler** | Tittel, dato, taler, serie, om det er lyd eller video | Rediger, legg til opptak |
+| **Personer & roller** | Navn, kontaktinfo, grupper og roller, politiattest, offentlig profil med samtykkestatus | Rediger, registrer samtykke, slett |
+
+### 15.2 Testscenarioer
+Scenarioene under er dekket av automatiske tester.
+
+* **A. Tildeling.** En oppgave «Lydtekniker» trenger én. Administrator tildeler Kari. Tildelingen er bekreftet, og oppgaven viser `Dekket (1/1)` med en gang.
+* **B. Forespørsel og avslag.** En oppgave «Kirkekaffe» trenger to. Administrator forespør person A. Oppgaven viser `Venter på svar`, og én plass er fortsatt ledig. Svarer A nei mindre enn 48 timer før samlingen, merkes oppgaven som akutt.
+* **C. Samtykke.** Administrator krysser av «Vis offentlig» for en medarbeider. Tidspunktet og hvem som registrerte samtykket lagres. Uten samtykke vises personen ikke.
+* **D. Medlemmet tar en oppgave.** En plass er ledig i en av medlemmets grupper. Medlemmet trykker «Ta oppgaven». Tildelingen er bekreftet, og oppgaven står under «Mine oppgaver».
+* **E. Forfall.** Et bekreftet medlem melder forfall. Plassen blir ledig, tidspunktet lagres, og oppgaven forsvinner fra medlemmets liste. Er det mindre enn 48 timer til samlingen, merkes oppgaven som akutt til noen tar den.
+* **F. Skjult gruppe.** Administrator fjerner krysset «Vis gruppen på nettsiden». Gruppen og møtetiden forsvinner fra «Fellesskap» og fra API-et.
+* **G. Fremhevet samling.** Administrator fremhever en samling. Den står øverst på forsiden til den er passert eller avlyst. Da står neste gudstjeneste der.
+* **H. Planlagt publisering.** En side settes til publisering i morgen kl. 08:00. Den står ikke i menyen i dag, og er der i morgen etter kl. 08:00.
+* **I. Lagring som feiler.** Databasen avviser en endring. Brukeren får beskjed, og skjermen viser det som faktisk er lagret.
+
+---
+
+## 16. Slik jobber vi
+
+* **Produkteier** prioriterer og godkjenner. Kapittel 14 er arbeidslisten.
+* **Google AI Studio** brukes til å bygge nye skjermbilder og kjøre løsningen. AI Studio henter fra og leverer til grenen `main` på GitHub.
+* **Claude** har ansvar for arkitektur, kvalitet og dokumentasjon, og leverer hver verifiserte endring rett til `main`.
+* En endring er **ferdig** når typesjekken, testene og bygget er grønne, endringen er sett i nettleseren, og dokumentene er oppdatert.
+* Nye regler for kodeendringer skrives inn i `CLAUDE.md`, slik at de gjelder uansett hvem eller hva som skriver koden.

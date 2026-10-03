@@ -1,8 +1,8 @@
 # Arkitektur – Menighetsplan med innebygd CMS (Lillesand Misjonskirke)
-*Sist oppdatert: 2026-10-02 – beskriver koden slik den faktisk er i dette repoet.*
+*Sist oppdatert: 2026-10-03 – beskriver koden slik den faktisk er i dette repoet.*
 
 ## Kort fortalt
-Menighetsplan er én webapp som samler den offentlige nettsiden, frivilligportalen og administrasjonen. Alt leser og skriver til samme Firestore-database. En liten Express-server leverer appen og et offentlig JSON-API for eksterne nettsider.
+Menighetsplan er ett adminpanel som styrer to ting i samme kodebase: webappen for frivillige og ledere, og den offentlige nettsiden. Alt leser og skriver til samme Firestore-database. En liten Express-server leverer appen og et offentlig JSON-API for eksterne nettsider. Hva produktet skal være, og hva som er levert og planlagt, står i `PRODUKTDOKUMENTASJON.md`.
 
 ```
  Besøkende ───────▶ Offentlig nettside ─┐
@@ -40,8 +40,11 @@ De andre store sidene følger samme mønster. Siden kaller sin hook én gang, ei
 |---|---|
 | `MyPage.tsx` | `src/pages/myPage/`: `useMyPage.ts` og én fil per seksjon |
 | `LeaderGroupDetailPage.tsx` | `src/pages/leaderGroup/`: rediger-skjema, møteplan, aktiviteter, medlemmer |
-| `GatheringDetailView.tsx` | `src/components/gathering/`: de fem dialogene |
+| `GatheringDetailView.tsx` | `src/components/gathering/`: de fem dialogene og raden i kjøreplanen |
 | `HusfellesskapView.tsx` | `src/components/husfellesskap/`: to faner og to dialoger |
+| `AdminCmsPanel.tsx` (fanen «Sider & innhold») | `src/pages/admin/tabs/pages/`: sidetre, redigering, blokkvelger, hovedbilde, forhåndsvisning, slettedialog |
+
+To små byggeklosser brukes på tvers: `useTimedMessage` (`src/hooks/`) er en melding som forsvinner av seg selv, og `AdminAccessRequired` (`src/components/`) er skjermen et medlem får på en side som bare er for administratorer.
 
 ## Datalag
 - **`src/services/firestore.ts`** inneholder alle lese- og skrivekall mot Firestore, uten React: én lytter per samling (`subscribeCollection`), tre generelle skrivinger (`createDocument`, `updateDocument`, `deleteDocument`) og de få som gjelder flere felt eller dokumenter.
@@ -81,6 +84,15 @@ Det finnes ennå ikke noe skjermbilde for å redigere programmet; bare demodatae
 ### Testing av datalaget
 `tests/data-provider.test.tsx` og `tests/cms-provider.test.tsx` kjører `FirebaseDataProvider` og `CmsProvider` mot den ekte Firestore-klienten, koblet fra nettet (`tests/support/offlineFirestore.ts`). `tests/member-flow.test.tsx` gjør det samme med det et medlem ser og gjør: ta en oppgave, svare på en forespørsel, melde forfall. Testene ser dermed det samme som appen: en skriving når listene gjennom lytterne. Ingenting sendes til en server.
 
+## CMS-et
+Nettsiden bygges av fem samlinger: `cms_pages`, `cms_news`, `cms_sermons`, `cms_staff` og ett innstillingsdokument i `cms_settings`.
+
+- **Sider og meny.** `src/utils/menu.ts` bygger sidetreet (to nivåer), den offentlige menyen og adressen til en side. `isPagePublished` avgjør om en side er synlig: ikke kladd, og ikke planlagt fram i tid. Den brukes av både menyen og `PublicStaticPage.tsx`.
+- **Innhold.** `content` er tekst med blokker (`:::callout`, `:::media-left`, `:::grid`, `:::quote`, `[Knapp: …](…)`). `CmsContentRenderer.tsx` tolker teksten og tegner faste komponenter. Innholdet settes aldri inn som HTML. Syntaksen står i kapittel 8.3 i `PRODUKTDOKUMENTASJON.md`.
+- **Bilder.** `compressImageFile` i `src/utils/imageUpload.ts` skalerer et opplastet bilde ned og gjør det om til tekst, som lagres i sidens `heroImage`.
+- **Design.** `getThemeCssVariables` i `src/utils/themeUtils.ts` gjør temaet om til CSS-variabler (`--cms-primary`, `--cms-accent` …), som settes på den offentlige layouten i `App.tsx`.
+- **Søk og deling.** `injectPageSeo` i `src/utils/seoUtils.ts` setter tittel, beskrivelse og Open Graph-felt i `document.head` når en side vises.
+
 ## Offentlig API
 `server.ts` leser `gatherings` og `groups` og sender dem gjennom rene funksjoner i `server/publicApi.ts`. Bare hvitelistede felt slipper ut. Medlemslister og kontaktinformasjon eksponeres ikke.
 
@@ -99,7 +111,7 @@ Tre regler avgjør hva en besøkende ser, og hver av dem ligger ett sted:
 - **Personer:** en person vises bare når `isPublicProfile` er satt og et samtykke er registrert (`consentToPublishGivenAt`, `consentGivenBy`). `src/utils/publicProfile.ts` gir da navn, tittel utad og kontaktinfo utad. Privat telefon og e-post er aldri med. Samtykket registreres på personkortet i admin, og fjernes når krysset tas bort.
 
 ## Kjente avvik fra målbildet
-`PRODUKTDOKUMENTASJON.md` beskriver hvor løsningen skal. Koden er ikke der ennå på disse punktene:
+`PRODUKTDOKUMENTASJON.md` beskriver hvor løsningen skal, og kapittel 14 der sier i hvilken rekkefølge. Koden er ikke der ennå på disse punktene:
 
 | Område | Mål | I dag |
 |---|---|---|
@@ -107,6 +119,14 @@ Tre regler avgjør hva en besøkende ser, og hver av dem ligger ett sted:
 | Sikkerhetsregler | Bare admin endrer offentlige profilfelt; medlemmer endrer bare sitt eget | Reglene tillater lesing av alt og skriving uten innlogging |
 | Personvern på nettsiden | Besøkende får bare offentlige data | Sidene viser bare personer med samtykke, og laster ikke oppgaver, tildelinger, meldinger eller oppmøte. Hele personregisteret lastes likevel til nettleseren; det kan først stenges med innlogging og strammere regler |
 | Bli med i en gruppe | En besøkende kan melde interesse for en gruppe | `/fellesskap` viser hvem man kan kontakte. Det finnes ikke noe skjema som lagrer en henvendelse; det krever en egen samling, regler og et sted lederen kan lese dem |
-| Filstørrelse | Én komponent per fane/modal | Gjort for alle sidene over 1 000 linjer. Størst nå: `GatheringDetailView.tsx` (ca. 1 000 linjer, selve kjøreplanen) |
+| Design | Temaet i admin styrer hele nettsiden | CSS-variablene settes, men ingen stil leser dem. Bare overskriftsskriften og avrundingen på CMS-sidene følger temaet; resten av nettsiden har faste Tailwind-farger |
+| Bilder | Bilder ligger i en bildelagring | Et opplastet bilde lagres som tekst i sidedokumentet. Alle sider lastes til alle besøkende, og kopien i `localStorage` (ca. 5 MB) rekker bare til et titalls bilder |
+| Delingskort | Tittel, beskrivelse og bilde ligger i HTML-en serveren sender | Feltene settes inn i nettleseren. Tjenester som ikke kjører siden, ser bare standardteksten i `index.html`, som omtaler frivilligportalen og ikke menigheten |
+| Kladder | Bare administratorer får kladder og planlagte sider | Alle sider leveres til nettleseren, og skjules i visningen |
+| Stab | Én kilde for mennesker som vises utad | `/lederskap` bruker personregisteret med samtykke. `/om-oss` viser `cms_staff`, en egen liste uten samtykkelogg |
+| Forsiden | Alt innhold kommer fra CMS-et | Tre infobokser, fellesskapsseksjonen og gaveteksten står i `PublicHomePage.tsx`, og menighetens navn står skrevet flere steder i koden |
+| Forfall med grunn | Medlemmet skriver en grunn, lederen ser den | Datalaget lagrer `withdrawalReason`, men ingen skjerm skriver eller viser den |
+| Filstørrelse | Én komponent per fane/modal | Gjort for alle sidene over 1 000 linjer. Størst nå er redigeringsskjemaet for sider (`PageEditModal.tsx`, ca. 750 linjer) og gruppekortet i admin (`AdminGroupDetailPage.tsx`, ca. 650) |
+| Lasting | Admin og CMS lastes først når de åpnes | Alt ligger i én fil på 1,6 MB |
 | Gruppemeldinger | Testverktøyet på husfellesskapssiden sier at et nytt medlem ikke skal se eldre meldinger | Innmeldingsdato lagres (`memberJoinedAt`), men brukes ikke: et medlem ser alle meldingene i gruppen |
 | Modulbrytere | Kalender og meldinger slås av og på for hele menigheten | Valget lagres bare i nettleseren til den som endrer det |
