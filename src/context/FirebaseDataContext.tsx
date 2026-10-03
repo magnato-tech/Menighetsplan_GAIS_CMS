@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { Person, Group, Gathering, Task, Assignment, GroupMessage, GatheringAttendance } from "../types";
-import { initialPersons } from "../data/mockData";
 import { COLLECTIONS } from "../data/collections";
 import {
   NewPersonInput,
@@ -126,6 +125,9 @@ function save(action: string, write: () => Promise<unknown>): { success: true } 
   return { success: true };
 }
 
+/** Stands in for the signed-in person while the database holds no persons, so the admin pages can be opened to add the first ones. */
+const EMPTY_DATABASE_ADMIN: Person = { id: "ingen-personer", name: "Administrator", globalRole: "admin" };
+
 const byStart = (a: Gathering, b: Gathering) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime();
 
 interface FirebaseDataProviderProps {
@@ -194,10 +196,10 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
     return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
   }, [internal]);
 
-  // Until real sign-in exists, the mock admin stands in when the database has no persons,
+  // Until real sign-in exists, an unnamed administrator stands in when the database has no persons,
   // so the admin pages stay reachable on an empty database.
   const currentUser = useMemo(() => {
-    return persons.find((p) => p.id === currentUserId) || persons[0] || initialPersons[0];
+    return persons.find((p) => p.id === currentUserId) || persons[0] || EMPTY_DATABASE_ADMIN;
   }, [persons, currentUserId]);
 
   const setModuleStatus = useCallback((moduleName: keyof ModuleConfig, status: "on" | "off") => {

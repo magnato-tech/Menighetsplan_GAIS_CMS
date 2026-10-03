@@ -54,11 +54,7 @@ export const PublicLeadershipPage: React.FC = () => {
     (g) => g.name.toLowerCase().includes("stab") || g.tags?.includes("stab")
   );
   const styregrupper = ledergrupper.filter(
-    (g) =>
-      (g.name.toLowerCase().includes("lederskap") ||
-        g.name.toLowerCase().includes("råd") ||
-        g.name.toLowerCase().includes("styre")) &&
-      !stabsgrupper.some((sg) => sg.id === g.id)
+    (g) => g.name.toLowerCase().includes("lederskap") && !stabsgrupper.some((sg) => sg.id === g.id)
   );
   const gruppeledergrupper = ledergrupper.filter(
     (g) =>
