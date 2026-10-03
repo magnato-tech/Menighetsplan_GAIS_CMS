@@ -81,6 +81,18 @@ function setOrCreateLink(rel: string, href: string): () => void {
   };
 }
 
+/**
+ * The image as an address a sharing service can fetch, or undefined when it has none.
+ * An uploaded image is stored as text in the page (a data URL) and cannot be fetched by anyone else.
+ */
+export function shareableImageUrl(image: string | undefined, origin: string): string | undefined {
+  const trimmed = image?.trim();
+  if (!trimmed) return undefined;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return `${origin}${trimmed}`;
+  return undefined;
+}
+
 function injectSchemaJsonLd(schemaData: object): () => void {
   if (typeof document === "undefined") return () => {};
 
@@ -149,10 +161,11 @@ export function injectPageSeo(config: PageSeoConfig): () => void {
   }
 
   // Resolved OG Image: fallback priority: ogImage -> heroImage -> church/app default icon
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
   const resolvedImage =
-    config.ogImage?.trim() ||
-    config.heroImage?.trim() ||
-    (typeof window !== "undefined" ? `${window.location.origin}/icon.svg` : "/icon.svg");
+    shareableImageUrl(config.ogImage, origin) ||
+    shareableImageUrl(config.heroImage, origin) ||
+    `${origin}/icon.svg`;
 
   if (resolvedImage) {
     cleanups.push(setOrCreateMeta("property", "og:image", resolvedImage));

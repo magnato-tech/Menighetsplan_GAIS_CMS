@@ -229,9 +229,9 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
               <div className="space-y-1.5 pt-1">
                 <div className="text-xs text-stone-500 flex items-center gap-1">
                   <div className="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[9px] font-bold">
-                    L
+                    {churchInitials.charAt(0)}
                   </div>
-                  <span className="font-medium text-stone-700">lillesandmisjonskirke.no</span>
+                  <span className="font-medium text-stone-700">{window.location.host}</span>
                   <span>›</span>
                   <span className="font-mono text-stone-500">{page.slug || "side"}</span>
                 </div>
@@ -289,7 +289,7 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
 
                 <div className="p-4 space-y-1.5 bg-white">
                   <span className="text-[10px] uppercase font-mono tracking-wider text-stone-500 font-semibold block">
-                    lillesandmisjonskirke.no
+                    {window.location.host}
                   </span>
                   <h4 className="text-sm font-bold text-stone-900 leading-snug">
                     {page.title ? `${page.title} – ${settings.churchName}` : `Menighetsplan – ${settings.churchName}`}

@@ -206,7 +206,7 @@ export const PublicHomePage: React.FC = () => {
           <div>
             <h2 className="text-xs font-bold uppercase tracking-wider text-primary-700">Kalender</h2>
             <h3 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-1">
-              Hva skjer i Lillesand Misjonskirke
+              Hva skjer i {settings.churchName}
             </h3>
           </div>
           <Link
@@ -320,7 +320,7 @@ export const PublicHomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* 4B. Siste Tale & Forkynnelse (Benchmark: Fløymk / Lillesand) */}
+      {/* 4B. Siste tale */}
       {latestSermon && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-accent-50/70 border border-accent-200/80 rounded-3xl p-6 sm:p-10 shadow-xs space-y-6">
@@ -470,10 +470,10 @@ export const PublicHomePage: React.FC = () => {
           <span>Givertjeneste & Støtte</span>
         </div>
         <h3 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
-          Støtt menighetens arbeid i Lillesand
+          Støtt menighetens arbeid
         </h3>
         <p className="text-sm text-stone-600 max-w-xl mx-auto">
-          Misjonskirkens arbeid drives utelukkende av frivillige gaver fra medlemmer og støttespillere. Din gave gjør barnekirke, ungdomsarbeid og diakonalt arbeid mulig.
+          Arbeidet drives utelukkende av frivillige gaver fra medlemmer og støttespillere. Din gave gjør barnekirke, ungdomsarbeid og diakonalt arbeid mulig.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">

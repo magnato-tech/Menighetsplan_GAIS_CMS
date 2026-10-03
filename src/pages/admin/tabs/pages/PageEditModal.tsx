@@ -26,7 +26,10 @@ import {
 } from "lucide-react";
 import { HeroImageUploader } from "./HeroImageUploader";
 import { ContentBlockPickerModal } from "./ContentBlockPickerModal";
+import { useCms } from "../../../../context/CmsContext";
+import { useTimedMessage } from "../../../../hooks/useTimedMessage";
 import { formatNorwegianDateTime } from "../../../../utils/dates";
+import { shareableImageUrl } from "../../../../utils/seoUtils";
 
 function toDatetimeLocal(iso?: string): string {
   if (!iso) return "";
@@ -80,9 +83,22 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
   onPreview,
   onClose,
 }) => {
+  const { settings } = useCms();
   const [isBlockPickerOpen, setIsBlockPickerOpen] = useState(false);
   const [showSeoDetails, setShowSeoDetails] = useState(false);
-  const [copiedIngress, setCopiedIngress] = useState(false);
+  const [copiedIngress, showCopiedIngress] = useTimedMessage<true>(2000);
+
+  // What the search result and the share card will show
+  const siteHost = window.location.host;
+  const previewTitle = `${editingPage.title || "Sidetittel"} – ${settings.churchName}`;
+  const previewDescription =
+    editingPage.metaDescription?.trim() ||
+    editingPage.summary?.trim() ||
+    `Velkommen til ${editingPage.title || "siden"} i ${settings.churchName}.`;
+  // An uploaded image has no address a sharing service can fetch
+  const shareImage =
+    shareableImageUrl(editingPage.ogImage, window.location.origin) ||
+    shareableImageUrl(editingPage.heroImage, window.location.origin);
 
   const insertComponentSnippet = (snippet: string) => {
     const current = editingPage.content || "";
@@ -409,10 +425,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             </div>
             <div>
               <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
-                <span>Søkemotoroptimalisering (SEO) & Sosiale medier</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-900/60 text-indigo-300 font-mono">
-                  og:tags
-                </span>
+                <span>Søk og deling</span>
               </h3>
               <p className="text-[11px] text-slate-400">
                 Styr hvordan siden vises på Google og ved deling på Facebook, X, Slack og iMessage.
@@ -438,7 +451,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                   <Search className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>Meta-beskrivelse (metaDescription)</span>
+                  <span>Beskrivelse i søkeresultater</span>
                 </label>
                 <div className="flex items-center gap-2">
                   {editingPage.summary && (
@@ -446,8 +459,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
                       type="button"
                       onClick={() => {
                         onUpdate({ ...editingPage, metaDescription: editingPage.summary });
-                        setCopiedIngress(true);
-                        setTimeout(() => setCopiedIngress(false), 2000);
+                        showCopiedIngress(true);
                       }}
                       className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer transition-colors"
                       title="Kopier innholdet fra ingressen over som metabeskrivelse"
@@ -487,9 +499,9 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                   <Share2 className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>OpenGraph delebilde-URL (ogImage)</span>
+                  <span>Delebilde (nettadresse)</span>
                 </label>
-                {editingPage.heroImage && (
+                {shareableImageUrl(editingPage.heroImage, window.location.origin) && (
                   <button
                     type="button"
                     onClick={() => onUpdate({ ...editingPage, ogImage: editingPage.heroImage })}
@@ -521,59 +533,47 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               </div>
               <p className="text-[11px] text-slate-400">
                 Vises som stort bildekort ved deling på sosiale medier. Anbefalt format er 1200 × 630 piksler.
+                Bildet må ha en nettadresse. Et hovedbilde som er lastet opp fra maskinen, kan ikke brukes som delebilde.
               </p>
             </div>
 
             {/* Live Search & Social Preview Box */}
             <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 space-y-3">
               <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                <span>Forhåndsvisning: Google-søkeresultat</span>
-                <span className="text-emerald-400 text-[10px] font-mono">Google SERP</span>
+                <span>Forhåndsvisning: søkeresultat</span>
               </div>
-              
+
               <div className="space-y-1 bg-white p-3 rounded-lg text-left shadow-xs">
                 <div className="text-[11px] text-stone-500 flex items-center gap-1 truncate">
-                  <span>lillesandmisjonskirke.no</span>
+                  <span>{siteHost}</span>
                   <span>›</span>
                   <span className="font-mono text-[10px] text-stone-600">{editingPage.slug || "side"}</span>
                 </div>
                 <div className="text-sm font-semibold text-blue-700 hover:underline cursor-pointer truncate">
-                  {editingPage.title ? `${editingPage.title} – Lillesand Misjonskirke` : "Sidetittel – Lillesand Misjonskirke"}
+                  {previewTitle}
                 </div>
-                <div className="text-xs text-stone-600 leading-snug line-clamp-2">
-                  {editingPage.metaDescription || editingPage.summary || "Velkommen til menighetens fellesskap og arrangementer. Klikk for å lese mer om innhold og aktiviteter."}
-                </div>
+                <div className="text-xs text-stone-600 leading-snug line-clamp-2">{previewDescription}</div>
               </div>
 
               {/* Social share card preview */}
               <div className="space-y-1.5 pt-1">
                 <div className="text-[11px] font-semibold text-slate-400">
-                  Sosialt delingskort (OpenGraph)
+                  Delingskort i sosiale medier
                 </div>
                 <div className="border border-slate-700/80 rounded-xl overflow-hidden bg-slate-900 max-w-sm">
-                  {(editingPage.ogImage || editingPage.heroImage) ? (
+                  {shareImage ? (
                     <div className="w-full h-32 bg-slate-800 overflow-hidden">
-                      <img
-                        src={editingPage.ogImage || editingPage.heroImage}
-                        alt="Delebilde"
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={shareImage} alt="Delebilde" className="w-full h-full object-cover" />
                     </div>
                   ) : (
                     <div className="w-full h-20 bg-slate-800/80 flex items-center justify-center text-slate-500 text-xs italic">
-                      Standard menighetsikon benyttes
+                      Uten delebilde vises menighetens ikon
                     </div>
                   )}
                   <div className="p-3 space-y-1">
-                    <span className="text-[10px] text-slate-400 uppercase font-mono block">
-                      lillesandmisjonskirke.no
-                    </span>
-                    <h4 className="text-xs font-bold text-white truncate">
-                      {editingPage.title ? `${editingPage.title} – Lillesand Misjonskirke` : "Sidetittel"}
-                    </h4>
-                    <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
-                      {editingPage.metaDescription || editingPage.summary || "Velkommen til menighetens nettside."}
-                    </p>
+                    <span className="text-[10px] text-slate-400 uppercase font-mono block">{siteHost}</span>
+                    <h4 className="text-xs font-bold text-white truncate">{previewTitle}</h4>
+                    <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">{previewDescription}</p>
                   </div>
                 </div>
               </div>

@@ -113,6 +113,30 @@ describe("SEO & OpenGraph metadata injection (injectPageSeo)", () => {
     cleanup();
   });
 
+  it("never offers an uploaded image as the share image, since no one else can fetch it", () => {
+    const uploaded = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ";
+
+    const cleanup = injectPageSeo({ title: "Dåp", heroImage: uploaded, churchName: "Lillesand Misjonskirke" });
+    const fallback = document.querySelector('meta[property="og:image"]')?.getAttribute("content");
+    expect(fallback).toBe(`${window.location.origin}/icon.svg`);
+    expect(document.querySelector('meta[name="twitter:image"]')?.getAttribute("content")).toBe(fallback);
+    cleanup();
+
+    // An uploaded share image is passed over, and the hero image with a web address is used instead
+    const second = injectPageSeo({ title: "Dåp", ogImage: uploaded, heroImage: "https://example.com/hero.jpg" });
+    expect(document.querySelector('meta[property="og:image"]')?.getAttribute("content")).toBe(
+      "https://example.com/hero.jpg"
+    );
+    second();
+
+    // An address on the site itself is made complete
+    const third = injectPageSeo({ title: "Dåp", ogImage: "/bilder/daap.jpg" });
+    expect(document.querySelector('meta[property="og:image"]')?.getAttribute("content")).toBe(
+      `${window.location.origin}/bilder/daap.jpg`
+    );
+    third();
+  });
+
   it("handles full lifecycle injection of OpenGraph, Twitter and Schema.org for social media visibility", () => {
     const page: Partial<CmsPage> = {
       title: "Barn & Ungdom",

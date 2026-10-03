@@ -30,14 +30,14 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
   // Injisér SEO-metadata (metaDescription, ogImage, tittel, Schema.org) direkte i dokumentets head
   useEffect(() => {
     if (!page || !isAvailable) {
-      document.title = `Side ikke funnet – ${settings?.churchName || "Lillesand Misjonskirke"}`;
+      document.title = `Side ikke funnet – ${settings.churchName}`;
       return;
     }
 
     // Hent 'metaDescription' og 'ogImage' fra CMS-konteksten (med trygge fallbacks)
     const { metaDescription, ogImage, heroImage, summary, title, slug } = page;
-    const churchName = settings?.churchName || "Lillesand Misjonskirke";
-    const appName = settings?.appName || "Menighetsplan";
+    const churchName = settings.churchName;
+    const appName = settings.appName;
 
     // Manipulerer document.head direkte (metaDescription, ogImage, OpenGraph, Twitter-kort og Schema.org)
     const cleanupSeo = injectPageSeo({
@@ -64,8 +64,8 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
     page?.summary,
     page?.slug,
     isAvailable,
-    settings?.churchName,
-    settings?.appName,
+    settings.churchName,
+    settings.appName,
   ]);
 
   if (!page || !isAvailable) {

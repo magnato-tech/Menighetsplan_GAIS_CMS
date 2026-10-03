@@ -63,7 +63,7 @@ export const PublicNavbar: React.FC = () => {
                   {settings.appName || "Menighetsplan"}
                 </span>
                 <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-primary-50 text-primary-700 border border-primary-200/60">
-                  {settings.churchName || "Lillesand"}
+                  {settings.churchName}
                 </span>
               </div>
               <p className="text-xs text-stone-500 hidden sm:block font-medium">
