@@ -42,7 +42,7 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 | `src/data/collections.ts` | Navn på alle Firestore-samlinger |
 | `src/data/newDocuments.ts` | Bygger nye personer, grupper, samlinger, oppgaver, tildelinger og meldinger |
 | `src/hooks/` | Hooks per rolle: `memberHooks`, `leaderHooks`, `adminHooks`, `useHusfellesskap`. `useAppHooks.ts` eksporterer alle |
-| `src/utils/` | Rene funksjoner: `staffing` (bemanning), `visibility` (hva som er offentlig), `publicProfile` (samtykke), `firestoreData` (klargjøring før skriving), `menu` (sidetreet og menyen), `gatherings` (kommende samlinger og forsidens utvalg), `groups` (hvem som er med i en gruppe), `runSheet` (kjøreplanen), `dates`. `routes` (hvilken flate en adresse hører til). For CMS-et: `themeUtils` og `colorScale` (design), `siteSeo` og `seoUtils` (søk og deling), `imageUpload` (bilder) |
+| `src/utils/` | Rene funksjoner: `staffing` (bemanning), `visibility` (hva som er offentlig), `publicProfile` (samtykke), `firestoreData` (klargjøring før skriving), `menu` (sidetreet og menyen), `personGrid` (hvem en personblokk viser), `gatherings` (kommende samlinger og forsidens utvalg), `groups` (hvem som er med i en gruppe), `runSheet` (kjøreplanen), `dates`. `routes` (hvilken flate en adresse hører til). For CMS-et: `themeUtils` og `colorScale` (design), `siteSeo` og `seoUtils` (søk og deling), `imageUpload` (bilder) |
 | `src/components/cms/CmsContentRenderer.tsx` | Tolker innholdsblokkene på en CMS-side og tegner dem |
 | `src/services/writeErrors.ts` | Melder mislykkede skrivinger til `WriteErrorBanner` |
 | `src/services/databaseAdmin.ts` | Fyll databasen med demodata / slett alt |
@@ -87,7 +87,7 @@ Disse er ikke løst ennå. Rekkefølgen de skal løses i står i kapittel 14 i `
 
 - Opplastede bilder lagres som tekst inne i sidedokumentene, og kan derfor ikke brukes som delebilde.
 - Forsidens faste tekster står i koden.
-- Stab vises fra to kilder: personregisteret med samtykke, og `cms_staff` uten.
+- Stab og lederskap kommer bare fra personregisteret, med samtykke. Den gamle samlingen `cms_staff` leses og skrives ikke lenger, men «slett alt» tømmer den fortsatt.
 - Det finnes ingen innlogging. Aktiv bruker velges i en testbryter.
 - `firestore.rules` slipper gjennom lesing og skriving uten innlogging.
 - De offentlige sidene laster hele personregisteret til nettleseren, selv om de bare viser personer med samtykke.

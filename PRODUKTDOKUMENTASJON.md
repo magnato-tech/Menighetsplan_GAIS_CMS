@@ -92,7 +92,7 @@ Adminpanelet ligger på `/admin` og har én meny med to deler. Hver fane har sin
 | **Sider & innhold** | Bygger sidetreet i to nivåer med dra og slipp. Skriver innhold med ferdige innholdsblokker, laster opp hovedbilde, setter kladd, publisert eller planlagt, fyller ut søk og deling, og forhåndsviser | Levert, med begrensningene i kapittel 8.7 |
 | **Aktuelt & nyheter** | Skriver og publiserer artikler | Levert |
 | **Taler & prekener** | Legger inn taler med lyd, Spotify og video | Levert |
-| **Lederskap & stab** | Holder listen over stab som vises på «Om oss» | Delvis: en egen liste ved siden av personregisteret, uten samtykke (kapittel 13) |
+| **Lederskap & stab** | Holder listen over stab som vises på «Om oss» | Ja: stab og lederskap hentes fra personregisteret med samtykke |
 | **Tema & designsystem** | Velger ferdig tema eller egne farger, bakgrunn, skrift og avrunding. Forhåndsvisningen er tegnet med de samme fargene nettsiden får | Levert |
 | **Nettside-innstillinger** | Menighetens navn, slagord, velkomsttekst, kontaktinfo, Vipps, konto og sosiale medier | Levert |
 | **Forside-overstyring** | Fremhever en samling på forsiden eller skjuler den fra kalenderen | Levert |
@@ -274,7 +274,6 @@ Felles begrep for enhver samling: gudstjeneste, ungdomsmøte, bønnemøte, dugna
 
 | Type | Felt |
 |:---|:---|
-| `CmsStaffMember` | `id`, `name`, `role`, `email`, `phone`, `category` (`pastor`, `stab`, `lederskap`, `barneleder`), `imageUrl?`, `bio?` |
 | `CmsSettings` (ett dokument) | `churchName`, `appName`, `tagline`, `welcomeHeadline`, `welcomeSubtext`, `address`, `phone`, `email`, `officeHours`, `vippsNumber`, `vippsDescription`, `bankAccount`, `orgNumber`, lenker til Facebook, Instagram, YouTube og podkast, og `theme` |
 | `CmsDesignTheme` | `primaryColor`, `accentColor`, `backgroundTone` (`stone`, `slate`, `warm`, `pure-white`), `headingFont` (`sans`, `serif`), `bodyFont` (`sans`, `serif`), `borderRadius` (`sharp`, `medium`, `smooth`). `spacingDensity` lagres med de ferdige temaene, men brukes ikke, og kan ikke velges |
 
@@ -427,7 +426,6 @@ Nettstedets adresse leses av forespørselen. Den kan settes fast med miljøvaria
 | Kladder | Skjules i visningen, men leveres til nettleseren | En kladd er ikke hemmelig. Løses sammen med innlogging |
 | Forside | Tre infobokser, fellesskaps- og gaveteksten står i koden | Kan ikke endres uten en utvikler |
 | Menighetens navn | «Lillesand Misjonskirke» står skrevet i koden flere steder | Navnet i innstillingene slår ikke gjennom overalt |
-| Stab | «Lederskap & stab» er en egen liste | To kilder for de samme menneskene, og listen har ingen samtykkelogg |
 | Nyheter | Ingen arkivside, ingen utløpsdato, ingen kobling til samling | Eldre artikler er bare tilgjengelige via direkte lenke |
 
 ---
@@ -514,7 +512,7 @@ Sortert etter hvor mye de betyr for en menighet som skal ta løsningen i bruk.
 | 3 | Testbryter og testverktøy vises i løsningen | Fase 1 |
 | 4 | Forsidens tekster og menighetens navn står delvis i koden | Fase 2 |
 | 5 | Bilder lagres inne i sidedokumentene, og kan da ikke brukes som delebilde | Fase 2 |
-| 6 | To kilder for stab og lederskap, den ene uten samtykke | Fase 2 |
+| 6 | ~~To kilder for stab og lederskap~~ Løst: bare personregisteret med samtykke | Ferdig |
 | 7 | Programmet i kjøreplanen kan ikke redigeres | Fase 3 |
 | 8 | Ingen varsling: forespørsler og forfall når ingen uten at de åpner appen | Fase 3 |
 | 9 | Modulvalg lagres bare i én nettleser | Fase 3 |

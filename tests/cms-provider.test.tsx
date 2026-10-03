@@ -162,12 +162,10 @@ describe("Nyheter, taler og stab", () => {
     const cms = mountProvider();
     void cms.current.saveNews({ title: "Høstfest" });
     void cms.current.saveSermon({ title: "Nåde", date: "2026-09-27" });
-    void cms.current.saveStaff({ name: "Kari Nordmann" });
 
     await waitFor(() => {
       expect(cms.current.news.map((n) => n.title)).toEqual(["Høstfest", "fra-i-fjor"]);
       expect(cms.current.sermons[0]).toMatchObject({ title: "Nåde", speaker: "Pastor" });
-      expect(cms.current.staff[0]).toMatchObject({ name: "Kari Nordmann", role: "Medarbeider", category: "stab" });
     });
     expect(cms.current.news[0]).toMatchObject({ category: "aktuelt", author: "Menigheten", isPublished: true });
   });
@@ -175,17 +173,14 @@ describe("Nyheter, taler og stab", () => {
   test("Slettet innhold forsvinner", async () => {
     seed(CMS_COLLECTIONS.NEWS, [article("nyhet", "2026-09-01T10:00:00.000Z")]);
     seed(CMS_COLLECTIONS.SERMONS, [sermon("tale", "2026-08-30")]);
-    seed(CMS_COLLECTIONS.STAFF, [{ id: "stab-1", name: "Ola", role: "Pastor", email: "", phone: "", category: "pastor" }]);
     const cms = mountProvider();
-    await waitFor(() => expect(cms.current.staff).toHaveLength(1));
+    await waitFor(() => expect(cms.current.sermons).toHaveLength(1));
 
     void cms.current.deleteNews("nyhet");
     void cms.current.deleteSermon("tale");
-    void cms.current.deleteStaff("stab-1");
     await waitFor(() => {
       expect(cms.current.news).toEqual([]);
       expect(cms.current.sermons).toEqual([]);
-      expect(cms.current.staff).toEqual([]);
     });
   });
 });

@@ -92,7 +92,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
     toggleMeldinger,
   } = useFirebase();
 
-  const { pages, news, sermons, staff } = useCms();
+  const { pages, news, sermons } = useCms();
 
   // Custom counts state
   const [personCount, setPersonCount] = useState<number>(32);
@@ -248,8 +248,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
     assignments.length +
     pages.length +
     news.length +
-    sermons.length +
-    staff.length;
+    sermons.length;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -345,7 +344,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             </div>
             <div>
               <div className="text-lg font-bold text-white font-mono tabular-nums">
-                {pages.length + news.length + sermons.length + staff.length}
+                {pages.length + news.length + sermons.length}
               </div>
               <div className="text-[11px] text-slate-400">CMS & Innhold</div>
             </div>

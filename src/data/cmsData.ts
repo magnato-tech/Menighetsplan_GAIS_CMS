@@ -66,17 +66,6 @@ export function formatYoutubeNoCookieUrl(url: string): string {
   return url;
 }
 
-export interface CmsStaffMember {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  phone: string;
-  category: "pastor" | "stab" | "lederskap" | "barneleder";
-  imageUrl?: string;
-  bio?: string;
-}
-
 export interface CmsDesignTheme {
   presetId?: string;
   primaryColor: string; // e.g. #1e3a8a
@@ -308,45 +297,6 @@ export const initialCmsSettings: CmsSettings = {
   podcastUrl: "https://spotify.com",
   theme: defaultCmsDesignTheme,
 };
-
-export const initialCmsStaff: CmsStaffMember[] = [
-  {
-    id: "staff-1",
-    name: "Kari Nordmann",
-    role: "Hovedpastor",
-    email: "pastor@lillesandmisjonskirke.no",
-    phone: "912 34 567",
-    category: "pastor",
-    bio: "Kari har vært pastor i Lillesand Misjonskirke siden 2021 og brenner for bibelformidling og nære fellesskap.",
-  },
-  {
-    id: "staff-2",
-    name: "Ola Hansen",
-    role: "Daglig leder & Koordinator",
-    email: "post@lillesandmisjonskirke.no",
-    phone: "923 45 678",
-    category: "stab",
-    bio: "Ola holder i den daglige driften, husfellesskap og frivilligkoordinering.",
-  },
-  {
-    id: "staff-3",
-    name: "Ingrid Berg",
-    role: "Barne- og Ungdomsarbeider",
-    email: "ung@lillesandmisjonskirke.no",
-    phone: "934 56 789",
-    category: "barneleder",
-    bio: "Ingrid leder Sprell Levende søndagsskole og fredagsklubben for ungdom.",
-  },
-  {
-    id: "staff-4",
-    name: "Magnus Foss",
-    role: "Menighetsrådsleder",
-    email: "styre@lillesandmisjonskirke.no",
-    phone: "945 67 890",
-    category: "lederskap",
-    bio: "Magnus leder menighetens styre og strategiarbeid.",
-  },
-];
 
 export const initialCmsSermons: CmsSermon[] = [
   {

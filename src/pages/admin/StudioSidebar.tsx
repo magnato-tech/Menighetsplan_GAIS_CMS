@@ -34,7 +34,8 @@ interface StudioSidebarProps {
 
 export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab, onTabChange, sidebarOpen, onToggleSidebar }) => {
   const { currentUser, adminPersons, adminGroups, adminGatherings, adminTasks } = studio;
-  const { pages, news, sermons, staff, settings } = useCms();
+  const { pages, news, sermons, settings } = useCms();
+  const staffCount = adminPersons.filter(({ person }) => person.isStaff).length;
   const urgentTasksCount = countUrgentTasks(adminTasks);
 
   return (
@@ -199,7 +200,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
                 <span>Lederskap & Stab</span>
               </div>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
-                {staff.length}
+                {staffCount}
               </span>
             </button>
 
