@@ -5,7 +5,8 @@ import { MemoryRouter } from "react-router-dom";
 import { initialPersons, initialGroups } from "../src/data/mockData";
 import { initialCmsPages } from "../src/data/cmsData";
 import { CONTENT_BLOCKS } from "../src/pages/admin/tabs/pages/ContentBlockPickerModal";
-import { parseCmsContent, CmsContentRenderer } from "../src/components/cms/CmsContentRenderer";
+import { CmsContentRenderer } from "../src/components/cms/CmsContentRenderer";
+import { parseCmsContent } from "../src/utils/cmsContent";
 import { toPublicProfile } from "../src/utils/publicProfile";
 
 afterEach(() => {
