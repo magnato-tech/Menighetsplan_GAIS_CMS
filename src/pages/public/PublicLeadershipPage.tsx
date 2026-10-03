@@ -178,7 +178,6 @@ export const PublicLeadershipPage: React.FC = () => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-stone-900">Lederskap</h2>
-              <p className="text-xs text-stone-500">Frivillige som leder menigheten</p>
             </div>
           </div>
         </div>

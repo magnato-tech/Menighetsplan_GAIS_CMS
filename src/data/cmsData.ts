@@ -612,7 +612,7 @@ export const initialCmsPages: CmsPage[] = [
     slug: "lederskap",
     title: "Lederskap",
     summary: "Menighetens lederskap.",
-    content: `## Valgt lederskap\nLederskapet er frivillige som leder menigheten.\n\n:::personer[lederskap]`,
+    content: `## Lederskap\n\n:::personer[lederskap]`,
     isPublished: true,
     status: "published",
     parentPageId: "page-om-oss",
