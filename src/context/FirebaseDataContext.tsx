@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { Person, Group, Gathering, Task, Assignment, GroupMessage, GatheringAttendance } from "../types";
-import { initialPersons } from "../data/mockData";
 import { COLLECTIONS } from "../data/collections";
 import {
   NewPersonInput,
@@ -22,6 +21,8 @@ import {
   createDocument,
   updateDocument,
   deleteDocument,
+  deleteGatheringWithContent,
+  deleteTaskWithAssignments,
   addGroupMember,
   removeGroupMember,
   setGroupNotifications,
@@ -124,6 +125,9 @@ function save(action: string, write: () => Promise<unknown>): { success: true } 
   return { success: true };
 }
 
+/** Stands in for the signed-in person while the database holds no persons, so the admin pages can be opened to add the first ones. */
+const EMPTY_DATABASE_ADMIN: Person = { id: "ingen-personer", name: "Administrator", globalRole: "admin" };
+
 const byStart = (a: Gathering, b: Gathering) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime();
 
 interface FirebaseDataProviderProps {
@@ -192,10 +196,10 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
     return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
   }, [internal]);
 
-  // Until real sign-in exists, the mock admin stands in when the database has no persons,
+  // Until real sign-in exists, an unnamed administrator stands in when the database has no persons,
   // so the admin pages stay reachable on an empty database.
   const currentUser = useMemo(() => {
-    return persons.find((p) => p.id === currentUserId) || persons[0] || initialPersons[0];
+    return persons.find((p) => p.id === currentUserId) || persons[0] || EMPTY_DATABASE_ADMIN;
   }, [persons, currentUserId]);
 
   const setModuleStatus = useCallback((moduleName: keyof ModuleConfig, status: "on" | "off") => {
@@ -299,8 +303,6 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       },
       updateGathering: (gatheringId: string, updates: Partial<Gathering>) =>
         save("lagre endringene i samlingen", () => updateDocument(COLLECTIONS.GATHERINGS, gatheringId, updates)),
-      deleteGathering: (gatheringId: string) =>
-        save("slette samlingen", () => deleteDocument(COLLECTIONS.GATHERINGS, gatheringId)),
       sendGatheringInvitation: (gatheringId: string) =>
         save("registrere at invitasjonen er sendt", () =>
           updateDocument(COLLECTIONS.GATHERINGS, gatheringId, {
@@ -313,7 +315,6 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
         const task = buildTask(data);
         return { ...save("lagre oppgaven", () => createDocument(COLLECTIONS.TASKS, task)), task };
       },
-      deleteTask: (taskId: string) => save("slette oppgaven", () => deleteDocument(COLLECTIONS.TASKS, taskId)),
 
       createGroup: (data: NewGroupInput) => {
         const group = buildGroup(data);
@@ -382,6 +383,18 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
     };
 
     return {
+      deleteGathering: (gatheringId: string) => {
+        const taskIds = tasks.filter((t) => t.gatheringId === gatheringId).map((t) => t.id);
+        return save("slette samlingen", () =>
+          deleteGatheringWithContent(gatheringId, {
+            taskIds,
+            assignmentIds: assignments.filter((a) => taskIds.includes(a.taskId)).map((a) => a.id),
+            attendanceIds: attendances.filter((a) => a.gatheringId === gatheringId).map((a) => a.id),
+          })
+        );
+      },
+      deleteTask: (taskId: string) =>
+        save("slette oppgaven", () => deleteTaskWithAssignments(taskId, assignmentsOf(taskId).map((a) => a.id))),
       updateTask: (taskId: string, updates: Partial<Task>) => updateTask(taskId, updates),
       updateTaskInstruction: (taskId: string, instruction: string) =>
         updateTask(taskId, { instruction }, "lagre instruksen"),
@@ -427,7 +440,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
         return changeAssignments(taskId, { update }, "registrere forfallet", isAcuteNow(taskId, now));
       },
     };
-  }, [tasks, assignments, gatherings]);
+  }, [tasks, assignments, attendances, gatherings]);
 
   const { getGroupNotificationsEnabled } = groupLookups;
   const toggleGroupNotifications = useCallback(

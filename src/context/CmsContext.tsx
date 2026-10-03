@@ -4,7 +4,7 @@ import { db } from "../firebase";
 import { CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID } from "../data/collections";
 import {
   createDocument,
-  setDocument,
+  mergeIntoDocument,
   deleteDocument,
   deletePage as deletePageWithSubPages,
   reorderPages as reorderPagesInFirestore,
@@ -15,7 +15,6 @@ import {
   CmsPage,
   CmsNewsArticle,
   CmsSermon,
-  CmsStaffMember,
   CmsSettings,
   initialCmsSettings,
 } from "../data/cmsData";
@@ -24,7 +23,6 @@ interface CmsContextValue {
   pages: CmsPage[];
   news: CmsNewsArticle[];
   sermons: CmsSermon[];
-  staff: CmsStaffMember[];
   settings: CmsSettings;
   // Every write resolves to whether it reached Firestore. A failure is already shown to the user.
   savePage: (page: Partial<CmsPage> & { id?: string }) => Promise<boolean>;
@@ -34,8 +32,6 @@ interface CmsContextValue {
   deleteNews: (newsId: string) => Promise<boolean>;
   saveSermon: (sermonData: Partial<CmsSermon> & { id?: string }) => Promise<boolean>;
   deleteSermon: (sermonId: string) => Promise<boolean>;
-  saveStaff: (staffData: Partial<CmsStaffMember> & { id?: string }) => Promise<boolean>;
-  deleteStaff: (staffId: string) => Promise<boolean>;
   saveSettings: (settingsData: Partial<CmsSettings>) => Promise<boolean>;
   getPageBySlug: (slug: string) => CmsPage | undefined;
   getNewsById: (id: string) => CmsNewsArticle | undefined;
@@ -50,7 +46,6 @@ const STORAGE_KEYS = {
   pages: "menighetsplan_cms_pages_v3",
   news: "menighetsplan_cms_news_v3",
   sermons: "menighetsplan_cms_sermons_v3",
-  staff: "menighetsplan_cms_staff_v3",
   settings: "menighetsplan_cms_settings_v3",
 };
 
@@ -123,7 +118,8 @@ function useCmsSettings(): CmsSettings {
         doc(db, CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID),
         (snapshot) => {
           if (snapshot.exists()) {
-            const data = snapshot.data() as CmsSettings;
+            // A field the document lacks gets its default, since a save writes only what was changed
+            const data = { ...initialCmsSettings, ...(snapshot.data() as Partial<CmsSettings>) };
             setSettings(data);
             writeCache(STORAGE_KEYS.settings, data);
           } else if (!snapshot.metadata.fromCache) {
@@ -240,20 +236,6 @@ const writes = {
   },
   deleteSermon: (sermonId: string) => attempt("slette talen", () => deleteDocument(CMS_COLLECTIONS.SERMONS, sermonId)),
 
-  saveStaff: (staffData: Partial<CmsStaffMember> & { id?: string }) => {
-    const member: CmsStaffMember = {
-      id: staffData.id || newId("staff"),
-      name: staffData.name || "Navn",
-      role: staffData.role || "Medarbeider",
-      email: staffData.email || "",
-      phone: staffData.phone || "",
-      category: staffData.category || "stab",
-      bio: staffData.bio || "",
-      imageUrl: staffData.imageUrl || "",
-    };
-    return attempt("lagre medarbeideren", () => createDocument(CMS_COLLECTIONS.STAFF, member));
-  },
-  deleteStaff: (staffId: string) => attempt("slette medarbeideren", () => deleteDocument(CMS_COLLECTIONS.STAFF, staffId)),
 };
 
 const normalizeSlug = (slug: string) => slug.toLowerCase().replace(/^\//, "").trim();
@@ -262,7 +244,6 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const pages = useCmsCollection<CmsPage>(CMS_COLLECTIONS.PAGES, STORAGE_KEYS.pages);
   const news = useCmsCollection<CmsNewsArticle>(CMS_COLLECTIONS.NEWS, STORAGE_KEYS.news, newestFirst);
   const sermons = useCmsCollection<CmsSermon>(CMS_COLLECTIONS.SERMONS, STORAGE_KEYS.sermons, latestDateFirst);
-  const staff = useCmsCollection<CmsStaffMember>(CMS_COLLECTIONS.STAFF, STORAGE_KEYS.staff);
   const settings = useCmsSettings();
 
   const value: CmsContextValue = useMemo(
@@ -270,7 +251,6 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       pages,
       news,
       sermons,
-      staff,
       settings,
       ...writes,
       deletePage: (pageId: string) => {
@@ -283,13 +263,13 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         attempt("endre rekkefølge på sidene", () => reorderPagesInFirestore(orderedPageIds)),
       saveSettings: (settingsData: Partial<CmsSettings>) =>
         attempt("lagre innstillingene", () =>
-          setDocument(CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID, { ...settings, ...settingsData })
+          mergeIntoDocument(CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID, settingsData)
         ),
       getPageBySlug: (slug: string) => pages.find((p) => normalizeSlug(p.slug) === normalizeSlug(slug)),
       getNewsById: (id: string) => news.find((n) => n.id === id),
       getNewsBySlug: (slug: string) => news.find((n) => n.slug.toLowerCase() === slug.toLowerCase()),
     }),
-    [pages, news, sermons, staff, settings]
+    [pages, news, sermons, settings]
   );
 
   return <CmsContext.Provider value={value}>{children}</CmsContext.Provider>;

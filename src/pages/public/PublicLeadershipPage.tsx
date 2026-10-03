@@ -54,11 +54,7 @@ export const PublicLeadershipPage: React.FC = () => {
     (g) => g.name.toLowerCase().includes("stab") || g.tags?.includes("stab")
   );
   const styregrupper = ledergrupper.filter(
-    (g) =>
-      (g.name.toLowerCase().includes("lederskap") ||
-        g.name.toLowerCase().includes("råd") ||
-        g.name.toLowerCase().includes("styre")) &&
-      !stabsgrupper.some((sg) => sg.id === g.id)
+    (g) => g.name.toLowerCase().includes("lederskap") && !stabsgrupper.some((sg) => sg.id === g.id)
   );
   const gruppeledergrupper = ledergrupper.filter(
     (g) =>
@@ -92,7 +88,7 @@ export const PublicLeadershipPage: React.FC = () => {
           Lederskap og medarbeidere
         </h1>
         <p className="text-base sm:text-lg text-stone-600 max-w-2xl font-medium leading-relaxed">
-          I {settings.churchName} ledes arbeidet av stabsgruppen, det valgte menighetsrådet og et dedikert lag av gruppeledere.
+          I {settings.churchName} ledes arbeidet av staben, lederskapet og gruppelederne.
         </p>
       </div>
 
@@ -105,7 +101,7 @@ export const PublicLeadershipPage: React.FC = () => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-stone-900">Stabsgruppe</h2>
-              <p className="text-xs text-stone-500">Menighetens ansatte og koordinerende medarbeidere</p>
+              <p className="text-xs text-stone-500">Menighetens ansatte</p>
             </div>
           </div>
         </div>
@@ -169,7 +165,7 @@ export const PublicLeadershipPage: React.FC = () => {
         )}
       </section>
 
-      {/* Seksjon 2: Lederskapsgruppe (Menighetsråd & Styre) */}
+      {/* Seksjon 2: Lederskapsgruppe  */}
       <section className="space-y-6 pt-4">
         <div className="border-b border-stone-200 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -177,8 +173,7 @@ export const PublicLeadershipPage: React.FC = () => {
               <Shield className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-stone-900">Lederskapsgruppe (Menighetsråd)</h2>
-              <p className="text-xs text-stone-500">Valgt styre og åndelig lederskap</p>
+              <h2 className="text-xl font-bold text-stone-900">Lederskap</h2>
             </div>
           </div>
         </div>
@@ -209,7 +204,7 @@ export const PublicLeadershipPage: React.FC = () => {
                         )}
                         <div className="space-y-1">
                           <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-accent-50 text-accent-900">
-                            {person.title || (isLeader ? "Menighetsrådsleder" : roleInGroup)}
+                            {person.title || (isLeader ? "Leder" : roleInGroup)}
                           </span>
                           <h4 className="font-bold text-stone-900 text-base">{person.name}</h4>
                         </div>

@@ -1,0 +1,2013 @@
+{
+ "person": {
+  "edit and save": {
+   "before": [
+    "input-edit-person-name=Kari Nordmann",
+    "input-edit-person-phone=911 11 111",
+    "input-edit-person-email=kari@x.no",
+    "select-edit-person-role=admin",
+    "input-edit-person-police=",
+    "Fra dato=",
+    "Til dato=",
+    "Årsak (f.eks. Ferie)=",
+    "input-edit-person-is-staff=false",
+    "input-edit-person-public=false"
+   ],
+   "after": [
+    "input-edit-person-name=  Kari Hansen ",
+    "input-edit-person-phone=",
+    "input-edit-person-email=kari@x.no",
+    "select-edit-person-role=admin",
+    "input-edit-person-police=",
+    "Fra dato=",
+    "Til dato=",
+    "Årsak (f.eks. Ferie)=",
+    "input-edit-person-is-staff=true",
+    "f.eks. Hovedpastor, Daglig leder...=Pastor",
+    "select-one=stab",
+    "Skriv 1-3 setninger om personens ansvarsområde eller bakgrunn...=",
+    "https://... eller bruk kamerasymbolet øverst=",
+    "input-edit-person-public=true",
+    "input-edit-person-public-title=",
+    "input-edit-person-public-phone=",
+    "input-edit-person-public-email="
+   ],
+   "calls": [
+    [
+     "updatePerson",
+     "p1",
+     {
+      "name": "Kari Hansen",
+      "email": "kari@x.no",
+      "globalRole": "admin",
+      "isStaff": true,
+      "staffRole": "Pastor",
+      "staffCategory": "stab",
+      "unavailablePeriods": [],
+      "isPublicProfile": true,
+      "publicTitle": "Pastor",
+      "consentToPublishGivenAt": "2026-10-07T12:00:00.000Z",
+      "consentGivenBy": "admin-1"
+     }
+    ]
+   ],
+   "toast": "Personopplysninger og tilganger ble lagret!",
+   "groups": [
+    "Leder",
+    "Nestleder",
+    "Medlem"
+   ],
+   "tasks": 5
+  },
+  "staff with consent, new absence": {
+   "before": [
+    "input-edit-person-name=Kari Nordmann",
+    "input-edit-person-phone=911 11 111",
+    "input-edit-person-email=kari@x.no",
+    "select-edit-person-role=admin",
+    "input-edit-person-police=2027-01-01",
+    "Fra dato=",
+    "Til dato=",
+    "Årsak (f.eks. Ferie)=",
+    "input-edit-person-is-staff=true",
+    "f.eks. Hovedpastor, Daglig leder...=Hovedpastor",
+    "select-one=pastor",
+    "Skriv 1-3 setninger om personens ansvarsområde eller bakgrunn...=Bio",
+    "https://... eller bruk kamerasymbolet øverst=x.png",
+    "input-edit-person-public=true",
+    "input-edit-person-public-title=T",
+    "input-edit-person-public-phone=1",
+    "input-edit-person-public-email=e@x.no"
+   ],
+   "after": [
+    "input-edit-person-name=Kari Nordmann",
+    "input-edit-person-phone=911 11 111",
+    "input-edit-person-email=kari@x.no",
+    "select-edit-person-role=admin",
+    "input-edit-person-police=2027-01-01",
+    "Fra dato=",
+    "Til dato=",
+    "Årsak (f.eks. Ferie)=",
+    "input-edit-person-is-staff=true",
+    "f.eks. Hovedpastor, Daglig leder...=Hovedpastor",
+    "select-one=pastor",
+    "Skriv 1-3 setninger om personens ansvarsområde eller bakgrunn...=Bio",
+    "https://... eller bruk kamerasymbolet øverst=x.png",
+    "input-edit-person-public=true",
+    "input-edit-person-public-title=T",
+    "input-edit-person-public-phone=1",
+    "input-edit-person-public-email=e@x.no"
+   ],
+   "calls": [],
+   "toast": "Fraværsperiode lagt til!",
+   "groups": [
+    "Leder",
+    "Nestleder",
+    "Medlem"
+   ],
+   "tasks": 5
+  },
+  "absence without dates": {
+   "before": [
+    "input-edit-person-name=Ola Hansen",
+    "input-edit-person-phone=",
+    "input-edit-person-email=",
+    "select-edit-person-role=member",
+    "input-edit-person-police=",
+    "Fra dato=",
+    "Til dato=",
+    "Årsak (f.eks. Ferie)=",
+    "input-edit-person-is-staff=false",
+    "input-edit-person-public=false"
+   ],
+   "after": [
+    "input-edit-person-name=Ola Hansen",
+    "input-edit-person-phone=",
+    "input-edit-person-email=",
+    "select-edit-person-role=member",
+    "input-edit-person-police=",
+    "Fra dato=",
+    "Til dato=",
+    "Årsak (f.eks. Ferie)=",
+    "input-edit-person-is-staff=false",
+    "input-edit-person-public=false"
+   ],
+   "calls": [],
+   "toast": "Både fra- og til-dato må oppgis for fravær.",
+   "groups": [
+    "Medlem",
+    "Medlem",
+    "Medlem"
+   ],
+   "tasks": 5
+  },
+  "remove absence": {
+   "before": [
+    "input-edit-person-name=Ola Hansen",
+    "input-edit-person-phone=",
+    "input-edit-person-email=",
+    "select-edit-person-role=member",
+    "input-edit-person-police=",
+    "Fra dato=",
+    "Til dato=",
+    "Årsak (f.eks. Ferie)=",
+    "input-edit-person-is-staff=false",
+    "input-edit-person-public=false"
+   ],
+   "after": [
+    "input-edit-person-name=Ola Hansen",
+    "input-edit-person-phone=",
+    "input-edit-person-email=",
+    "select-edit-person-role=member",
+    "input-edit-person-police=",
+    "Fra dato=",
+    "Til dato=",
+    "Årsak (f.eks. Ferie)=",
+    "input-edit-person-is-staff=false",
+    "input-edit-person-public=false"
+   ],
+   "calls": [
+    [
+     "updatePerson",
+     "p2",
+     {
+      "name": "Ola Hansen",
+      "globalRole": "member",
+      "isStaff": false,
+      "staffCategory": "stab",
+      "unavailablePeriods": [],
+      "isPublicProfile": false
+     }
+    ]
+   ],
+   "toast": "Personopplysninger og tilganger ble lagret!",
+   "groups": [
+    "Medlem",
+    "Medlem",
+    "Medlem"
+   ],
+   "tasks": 5
+  },
+  "empty name": {
+   "before": [
+    "input-edit-person-name=Ola Hansen",
+    "input-edit-person-phone=",
+    "input-edit-person-email=",
+    "select-edit-person-role=member",
+    "input-edit-person-police=",
+    "Fra dato=",
+    "Til dato=",
+    "Årsak (f.eks. Ferie)=",
+    "input-edit-person-is-staff=false",
+    "input-edit-person-public=false"
+   ],
+   "after": [
+    "input-edit-person-name= ",
+    "input-edit-person-phone=",
+    "input-edit-person-email=",
+    "select-edit-person-role=member",
+    "input-edit-person-police=",
+    "Fra dato=",
+    "Til dato=",
+    "Årsak (f.eks. Ferie)=",
+    "input-edit-person-is-staff=false",
+    "input-edit-person-public=false"
+   ],
+   "calls": [],
+   "toast": "Navn kan ikke være tomt.",
+   "groups": [
+    "Medlem",
+    "Medlem",
+    "Medlem"
+   ],
+   "tasks": 5
+  },
+  "withdraw consent": {
+   "before": [
+    "input-edit-person-name=Kari Nordmann",
+    "input-edit-person-phone=911 11 111",
+    "input-edit-person-email=kari@x.no",
+    "select-edit-person-role=admin",
+    "input-edit-person-police=",
+    "Fra dato=",
+    "Til dato=",
+    "Årsak (f.eks. Ferie)=",
+    "input-edit-person-is-staff=false",
+    "input-edit-person-public=true",
+    "input-edit-person-public-title=",
+    "input-edit-person-public-phone=",
+    "input-edit-person-public-email="
+   ],
+   "after": [
+    "input-edit-person-name=Kari Nordmann",
+    "input-edit-person-phone=911 11 111",
+    "input-edit-person-email=kari@x.no",
+    "select-edit-person-role=admin",
+    "input-edit-person-police=",
+    "Fra dato=",
+    "Til dato=",
+    "Årsak (f.eks. Ferie)=",
+    "input-edit-person-is-staff=false",
+    "input-edit-person-public=false"
+   ],
+   "calls": [
+    [
+     "updatePerson",
+     "p1",
+     {
+      "name": "Kari Nordmann",
+      "phone": "911 11 111",
+      "email": "kari@x.no",
+      "globalRole": "admin",
+      "isStaff": false,
+      "staffCategory": "stab",
+      "unavailablePeriods": [],
+      "isPublicProfile": false
+     }
+    ]
+   ],
+   "toast": "Personopplysninger og tilganger ble lagret!",
+   "groups": [
+    "Leder",
+    "Nestleder",
+    "Medlem"
+   ],
+   "tasks": 5
+  },
+  "person not found": {
+   "before": [],
+   "after": [],
+   "calls": [],
+   "toast": null,
+   "groups": [],
+   "tasks": 0,
+   "page": "Fant ikke personenTilbake til Admin-oversikt"
+  },
+  "no access": {
+   "before": [],
+   "after": [],
+   "calls": [],
+   "toast": null,
+   "groups": [],
+   "tasks": 0,
+   "page": "Admin-tilgang kreves"
+  }
+ },
+ "group": {
+  "edit everything and save": {
+   "before": [
+    "input-edit-group-name=Lyd",
+    "select-edit-group-category=husgruppe",
+    "input-edit-group-tags=a",
+    "input-edit-group-description=Beskrivelse",
+    "input-edit-group-public=true",
+    "select-edit-group-leader=p1",
+    "select-edit-group-deputy=p2",
+    "input-edit-group-has-schedule=false",
+    "select-add-group-member="
+   ],
+   "after": [
+    "input-edit-group-name= Teknikk ",
+    "select-edit-group-category=husgruppe",
+    "input-edit-group-tags=Lyd, BILDE ,,",
+    "input-edit-group-description=Beskrivelse",
+    "input-edit-group-public=false",
+    "select-edit-group-leader=p2",
+    "select-edit-group-deputy=p2",
+    "input-edit-group-has-schedule=true",
+    "select-schedule-weekday=Søndag",
+    "input-schedule-time=19:00",
+    "select-schedule-frequency=hver måned",
+    "select-add-group-member="
+   ],
+   "calls": [
+    [
+     "updateGroup",
+     "g1",
+     {
+      "name": "Teknikk",
+      "description": "Beskrivelse",
+      "tags": [
+       "lyd",
+       "bilde"
+      ],
+      "category": "husgruppe",
+      "isPublic": false,
+      "leaderIds": [
+       "p2"
+      ],
+      "deputyLeaderIds": [
+       "p2"
+      ],
+      "meetingSchedule": {
+       "weekday": "Søndag",
+       "time": "19:00",
+       "frequency": "hver måned"
+      }
+     }
+    ]
+   ],
+   "toast": "Gruppeinformasjon og møteplan ble lagret!",
+   "removeButtons": 1
+  },
+  "existing schedule is kept": {
+   "before": [
+    "input-edit-group-name=Lyd",
+    "select-edit-group-category=husgruppe",
+    "input-edit-group-tags=a",
+    "input-edit-group-description=Beskrivelse",
+    "input-edit-group-public=true",
+    "select-edit-group-leader=p1",
+    "select-edit-group-deputy=p2",
+    "input-edit-group-has-schedule=true",
+    "select-schedule-weekday=Onsdag",
+    "input-schedule-time=19:30",
+    "select-schedule-frequency=annenhver uke",
+    "select-add-group-member="
+   ],
+   "after": [
+    "input-edit-group-name=Lyd",
+    "select-edit-group-category=husgruppe",
+    "input-edit-group-tags=a",
+    "input-edit-group-description=Beskrivelse",
+    "input-edit-group-public=true",
+    "select-edit-group-leader=p1",
+    "select-edit-group-deputy=p2",
+    "input-edit-group-has-schedule=true",
+    "select-schedule-weekday=Onsdag",
+    "input-schedule-time=19:30",
+    "select-schedule-frequency=annenhver uke",
+    "select-add-group-member="
+   ],
+   "calls": [
+    [
+     "updateGroup",
+     "g1",
+     {
+      "name": "Lyd",
+      "description": "Beskrivelse",
+      "tags": [
+       "a"
+      ],
+      "category": "husgruppe",
+      "isPublic": true,
+      "leaderIds": [
+       "p1"
+      ],
+      "deputyLeaderIds": [
+       "p2"
+      ],
+      "meetingSchedule": {
+       "weekday": "Onsdag",
+       "time": "19:30",
+       "frequency": "annenhver uke"
+      }
+     }
+    ]
+   ],
+   "toast": "Gruppeinformasjon og møteplan ble lagret!",
+   "removeButtons": 1
+  },
+  "no schedule stays none": {
+   "before": [
+    "input-edit-group-name=Lyd",
+    "select-edit-group-category=husgruppe",
+    "input-edit-group-tags=a",
+    "input-edit-group-description=Beskrivelse",
+    "input-edit-group-public=true",
+    "select-edit-group-leader=p1",
+    "select-edit-group-deputy=p2",
+    "input-edit-group-has-schedule=false",
+    "select-add-group-member="
+   ],
+   "after": [
+    "input-edit-group-name=Lyd",
+    "select-edit-group-category=husgruppe",
+    "input-edit-group-tags=a",
+    "input-edit-group-description=Beskrivelse",
+    "input-edit-group-public=true",
+    "select-edit-group-leader=p1",
+    "select-edit-group-deputy=p2",
+    "input-edit-group-has-schedule=false",
+    "select-add-group-member="
+   ],
+   "calls": [
+    [
+     "updateGroup",
+     "g1",
+     {
+      "name": "Lyd",
+      "description": "Beskrivelse",
+      "tags": [
+       "a"
+      ],
+      "category": "husgruppe",
+      "isPublic": true,
+      "leaderIds": [
+       "p1"
+      ],
+      "deputyLeaderIds": [
+       "p2"
+      ]
+     }
+    ]
+   ],
+   "toast": "Gruppeinformasjon og møteplan ble lagret!",
+   "removeButtons": 1
+  },
+  "empty name": {
+   "before": [
+    "input-edit-group-name=Lyd",
+    "select-edit-group-category=husgruppe",
+    "input-edit-group-tags=a",
+    "input-edit-group-description=Beskrivelse",
+    "input-edit-group-public=true",
+    "select-edit-group-leader=p1",
+    "select-edit-group-deputy=p2",
+    "input-edit-group-has-schedule=false",
+    "select-add-group-member="
+   ],
+   "after": [
+    "input-edit-group-name= ",
+    "select-edit-group-category=husgruppe",
+    "input-edit-group-tags=a",
+    "input-edit-group-description=Beskrivelse",
+    "input-edit-group-public=true",
+    "select-edit-group-leader=p1",
+    "select-edit-group-deputy=p2",
+    "input-edit-group-has-schedule=false",
+    "select-add-group-member="
+   ],
+   "calls": [],
+   "toast": "Gruppenavn kan ikke være tomt.",
+   "removeButtons": 1
+  },
+  "hidden group": {
+   "before": [
+    "input-edit-group-name=Lyd",
+    "select-edit-group-category=husgruppe",
+    "input-edit-group-tags=a",
+    "input-edit-group-description=Beskrivelse",
+    "input-edit-group-public=false",
+    "select-edit-group-leader=p1",
+    "select-edit-group-deputy=p2",
+    "input-edit-group-has-schedule=false",
+    "select-add-group-member="
+   ],
+   "after": [
+    "input-edit-group-name=Lyd",
+    "select-edit-group-category=husgruppe",
+    "input-edit-group-tags=a",
+    "input-edit-group-description=Beskrivelse",
+    "input-edit-group-public=false",
+    "select-edit-group-leader=p1",
+    "select-edit-group-deputy=p2",
+    "input-edit-group-has-schedule=false",
+    "select-add-group-member="
+   ],
+   "calls": [],
+   "toast": null,
+   "removeButtons": 1
+  },
+  "add and remove member": {
+   "before": [
+    "input-edit-group-name=Lyd",
+    "select-edit-group-category=husgruppe",
+    "input-edit-group-tags=a",
+    "input-edit-group-description=Beskrivelse",
+    "input-edit-group-public=true",
+    "select-edit-group-leader=p1",
+    "select-edit-group-deputy=p2",
+    "input-edit-group-has-schedule=false",
+    "select-add-group-member="
+   ],
+   "after": [
+    "input-edit-group-name=Lyd",
+    "select-edit-group-category=husgruppe",
+    "input-edit-group-tags=a",
+    "input-edit-group-description=Beskrivelse",
+    "input-edit-group-public=true",
+    "select-edit-group-leader=p1",
+    "select-edit-group-deputy=p2",
+    "input-edit-group-has-schedule=false",
+    "select-add-group-member="
+   ],
+   "calls": [
+    [
+     "addGroupMember",
+     "g1",
+     "p3"
+    ],
+    [
+     "removeGroupMember",
+     "g1",
+     "p2"
+    ]
+   ],
+   "toast": "Ola Hansen ble fjernet fra gruppen.",
+   "removeButtons": 1
+  },
+  "group not found": {
+   "before": [],
+   "after": [],
+   "calls": [],
+   "toast": null,
+   "page": "Fant ikke gruppenTilbake til Admin-oversikt",
+   "removeButtons": 0
+  },
+  "no access": {
+   "before": [],
+   "after": [],
+   "calls": [],
+   "toast": null,
+   "page": "Admin-tilgang kreves",
+   "removeButtons": 0
+  }
+ },
+ "pageEditor": {
+  "empty": {
+   "before": [
+    "f.eks. Om oss, Barn & Unge, Kontakt=",
+    "om-oss (eller genereres automatisk fra tittel)=",
+    "f.eks. /hva-skjer eller https://...=",
+    "select-one=",
+    "number=1",
+    "Kort beskrivelse som vises under tittelen på siden...=",
+    "Skriv tekst eller bruk komponentknappene ovenfor...=",
+    "checkbox=true",
+    "checkbox=true",
+    "datetime-local="
+   ],
+   "heading": "Rediger side: Uten tittel",
+   "updates": [
+    {
+     "title": "Ny tittel"
+    },
+    {
+     "parentPageId": "grupper",
+     "parentId": "grupper"
+    },
+    {
+     "menuOrder": 7,
+     "navOrder": 7
+    },
+    {
+     "content": ":::callout[info] Informasjon\nDette er en fremhevet infoboks for kunngjøringer eller nyttig informasjon for menigheten.\n:::"
+    },
+    {
+     "content": ":::callout[warning] Viktig merknad\nVennligst merk at arrangementet krever forhåndspåmelding eller spesiell oppfølging.\n:::"
+    },
+    {
+     "content": ":::grid\n:::card Fellesskap & Grupper\nBli med i en av våre livsnære cellegrupper eller temakvelder.\n:::\n:::card Bønn & Omsorg\nVi ber for hverandre og tilbyr samtaler og forbønn ved behov.\n:::\n:::"
+    },
+    {
+     "content": ":::quote[Pastorens hilsen]\nVelkommen hjem til et varmt og inkluderende fellesskap for alle generasjoner.\n:::"
+    },
+    {
+     "content": "[Knapp: Meld deg på samlingen](/kontakt)"
+    },
+    {
+     "content": ":::personer[stab]"
+    },
+    {
+     "content": ":::personer[pastor]"
+    },
+    {
+     "publishAt": "2026-10-08T09:00:00.000Z",
+     "publishedAt": "2026-10-08T09:00:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "publishAt": "2026-10-11T08:00:00.000Z",
+     "publishedAt": "2026-10-11T08:00:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "publishAt": "2026-10-12T09:00:00.000Z",
+     "publishedAt": "2026-10-12T09:00:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "publishAt": "2026-12-24T18:30:00.000Z",
+     "publishedAt": "2026-12-24T18:30:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "isPublished": false
+    },
+    {
+     "inNavMenu": false
+    },
+    {
+     "content": "Meta"
+    },
+    {
+     "content": "[blokk]"
+    }
+   ],
+   "badges": [
+    "Publisert (aktiv)"
+   ],
+   "counter": null
+  },
+  "empty (new page)": {
+   "before": [
+    "f.eks. Om oss, Barn & Unge, Kontakt=",
+    "om-oss (eller genereres automatisk fra tittel)=",
+    "f.eks. /hva-skjer eller https://...=",
+    "select-one=",
+    "number=1",
+    "Kort beskrivelse som vises under tittelen på siden...=",
+    "Skriv tekst eller bruk komponentknappene ovenfor...=",
+    "checkbox=true",
+    "checkbox=true",
+    "datetime-local="
+   ],
+   "heading": "Opprett ny hovedfane",
+   "updates": [
+    {
+     "title": "Ny tittel"
+    },
+    {
+     "parentPageId": "grupper",
+     "parentId": "grupper"
+    },
+    {
+     "menuOrder": 7,
+     "navOrder": 7
+    },
+    {
+     "content": ":::callout[info] Informasjon\nDette er en fremhevet infoboks for kunngjøringer eller nyttig informasjon for menigheten.\n:::"
+    },
+    {
+     "content": ":::callout[warning] Viktig merknad\nVennligst merk at arrangementet krever forhåndspåmelding eller spesiell oppfølging.\n:::"
+    },
+    {
+     "content": ":::grid\n:::card Fellesskap & Grupper\nBli med i en av våre livsnære cellegrupper eller temakvelder.\n:::\n:::card Bønn & Omsorg\nVi ber for hverandre og tilbyr samtaler og forbønn ved behov.\n:::\n:::"
+    },
+    {
+     "content": ":::quote[Pastorens hilsen]\nVelkommen hjem til et varmt og inkluderende fellesskap for alle generasjoner.\n:::"
+    },
+    {
+     "content": "[Knapp: Meld deg på samlingen](/kontakt)"
+    },
+    {
+     "content": ":::personer[stab]"
+    },
+    {
+     "content": ":::personer[pastor]"
+    },
+    {
+     "publishAt": "2026-10-08T09:00:00.000Z",
+     "publishedAt": "2026-10-08T09:00:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "publishAt": "2026-10-11T08:00:00.000Z",
+     "publishedAt": "2026-10-11T08:00:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "publishAt": "2026-10-12T09:00:00.000Z",
+     "publishedAt": "2026-10-12T09:00:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "publishAt": "2026-12-24T18:30:00.000Z",
+     "publishedAt": "2026-12-24T18:30:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "isPublished": false
+    },
+    {
+     "inNavMenu": false
+    },
+    {
+     "content": "Meta"
+    },
+    {
+     "content": "[blokk]"
+    }
+   ],
+   "badges": [
+    "Publisert (aktiv)"
+   ],
+   "counter": null
+  },
+  "draft": {
+   "before": [
+    "f.eks. Om oss, Barn & Unge, Kontakt=Om oss",
+    "om-oss (eller genereres automatisk fra tittel)=om-oss",
+    "f.eks. /hva-skjer eller https://...=",
+    "select-one=",
+    "number=1",
+    "Kort beskrivelse som vises under tittelen på siden...=Ingress",
+    "Skriv tekst eller bruk komponentknappene ovenfor...=Tekst",
+    "checkbox=false",
+    "checkbox=true",
+    "datetime-local="
+   ],
+   "heading": "Rediger side: Om oss",
+   "updates": [
+    {
+     "title": "Ny tittel",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": false,
+     "parentPageId": "grupper",
+     "parentId": "grupper"
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": false,
+     "menuOrder": 7,
+     "navOrder": 7
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n:::callout[info] Informasjon\nDette er en fremhevet infoboks for kunngjøringer eller nyttig informasjon for menigheten.\n:::",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n:::callout[warning] Viktig merknad\nVennligst merk at arrangementet krever forhåndspåmelding eller spesiell oppfølging.\n:::",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n:::grid\n:::card Fellesskap & Grupper\nBli med i en av våre livsnære cellegrupper eller temakvelder.\n:::\n:::card Bønn & Omsorg\nVi ber for hverandre og tilbyr samtaler og forbønn ved behov.\n:::\n:::",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n:::quote[Pastorens hilsen]\nVelkommen hjem til et varmt og inkluderende fellesskap for alle generasjoner.\n:::",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n[Knapp: Meld deg på samlingen](/kontakt)",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n:::personer[stab]",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n:::personer[pastor]",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": true,
+     "publishAt": "2026-10-08T09:00:00.000Z",
+     "publishedAt": "2026-10-08T09:00:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": true,
+     "publishAt": "2026-10-11T08:00:00.000Z",
+     "publishedAt": "2026-10-11T08:00:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": true,
+     "publishAt": "2026-10-12T09:00:00.000Z",
+     "publishedAt": "2026-10-12T09:00:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": true,
+     "publishAt": "2026-12-24T18:30:00.000Z",
+     "publishedAt": "2026-12-24T18:30:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": true
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": false,
+     "inNavMenu": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Meta",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n[blokk]",
+     "isPublished": false
+    }
+   ],
+   "badges": [
+    "Kladd (upublisert)"
+   ],
+   "counter": null
+  },
+  "draft (new page)": {
+   "before": [
+    "f.eks. Om oss, Barn & Unge, Kontakt=Om oss",
+    "om-oss (eller genereres automatisk fra tittel)=om-oss",
+    "f.eks. /hva-skjer eller https://...=",
+    "select-one=",
+    "number=1",
+    "Kort beskrivelse som vises under tittelen på siden...=Ingress",
+    "Skriv tekst eller bruk komponentknappene ovenfor...=Tekst",
+    "checkbox=false",
+    "checkbox=true",
+    "datetime-local="
+   ],
+   "heading": "Opprett ny hovedfane",
+   "updates": [
+    {
+     "title": "Ny tittel",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": false,
+     "parentPageId": "grupper",
+     "parentId": "grupper"
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": false,
+     "menuOrder": 7,
+     "navOrder": 7
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n:::callout[info] Informasjon\nDette er en fremhevet infoboks for kunngjøringer eller nyttig informasjon for menigheten.\n:::",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n:::callout[warning] Viktig merknad\nVennligst merk at arrangementet krever forhåndspåmelding eller spesiell oppfølging.\n:::",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n:::grid\n:::card Fellesskap & Grupper\nBli med i en av våre livsnære cellegrupper eller temakvelder.\n:::\n:::card Bønn & Omsorg\nVi ber for hverandre og tilbyr samtaler og forbønn ved behov.\n:::\n:::",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n:::quote[Pastorens hilsen]\nVelkommen hjem til et varmt og inkluderende fellesskap for alle generasjoner.\n:::",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n[Knapp: Meld deg på samlingen](/kontakt)",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n:::personer[stab]",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n:::personer[pastor]",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": true,
+     "publishAt": "2026-10-08T09:00:00.000Z",
+     "publishedAt": "2026-10-08T09:00:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": true,
+     "publishAt": "2026-10-11T08:00:00.000Z",
+     "publishedAt": "2026-10-11T08:00:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": true,
+     "publishAt": "2026-10-12T09:00:00.000Z",
+     "publishedAt": "2026-10-12T09:00:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": true,
+     "publishAt": "2026-12-24T18:30:00.000Z",
+     "publishedAt": "2026-12-24T18:30:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": true
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst",
+     "isPublished": false,
+     "inNavMenu": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Meta",
+     "isPublished": false
+    },
+    {
+     "title": "Om oss",
+     "slug": "om-oss",
+     "summary": "Ingress",
+     "content": "Tekst\n\n[blokk]",
+     "isPublished": false
+    }
+   ],
+   "badges": [
+    "Kladd (upublisert)"
+   ],
+   "counter": null
+  },
+  "scheduled": {
+   "before": [
+    "f.eks. Om oss, Barn & Unge, Kontakt=X",
+    "om-oss (eller genereres automatisk fra tittel)=",
+    "f.eks. /hva-skjer eller https://...=/taler",
+    "select-one=grupper",
+    "number=3",
+    "Kort beskrivelse som vises under tittelen på siden...=",
+    "Skriv tekst eller bruk komponentknappene ovenfor...=",
+    "Kort, innbydende oppsummering av sidens innhold for søkeresultater (anbefalt 120–160 tegn)...=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "https://... (adressen til delebildet, helst 1200 × 630 piksler)=https://x/y.png",
+    "checkbox=true",
+    "checkbox=false",
+    "datetime-local=2099-01-01T09:00"
+   ],
+   "heading": "Rediger side: X",
+   "updates": [
+    {
+     "title": "Ny tittel",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "parentId": "grupper"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 7,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "navOrder": 7
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": ":::callout[info] Informasjon\nDette er en fremhevet infoboks for kunngjøringer eller nyttig informasjon for menigheten.\n:::"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": ":::callout[warning] Viktig merknad\nVennligst merk at arrangementet krever forhåndspåmelding eller spesiell oppfølging.\n:::"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": ":::grid\n:::card Fellesskap & Grupper\nBli med i en av våre livsnære cellegrupper eller temakvelder.\n:::\n:::card Bønn & Omsorg\nVi ber for hverandre og tilbyr samtaler og forbønn ved behov.\n:::\n:::"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": ":::quote[Pastorens hilsen]\nVelkommen hjem til et varmt og inkluderende fellesskap for alle generasjoner.\n:::"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": "[Knapp: Meld deg på samlingen](/kontakt)"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": ":::personer[stab]"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": ":::personer[pastor]"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2026-10-08T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "publishedAt": "2026-10-08T09:00:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2026-10-11T08:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "publishedAt": "2026-10-11T08:00:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2026-10-12T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "publishedAt": "2026-10-12T09:00:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2026-12-24T18:30:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "publishedAt": "2026-12-24T18:30:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler"
+    },
+    {
+     "title": "X",
+     "isPublished": false,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": true,
+     "linkUrl": "/taler"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "Meta",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": "[blokk]"
+    }
+   ],
+   "badges": [
+    "Planlagt publisering"
+   ],
+   "counter": "130/160 tegn"
+  },
+  "scheduled (new page)": {
+   "before": [
+    "f.eks. Om oss, Barn & Unge, Kontakt=X",
+    "om-oss (eller genereres automatisk fra tittel)=",
+    "f.eks. /hva-skjer eller https://...=/taler",
+    "select-one=grupper",
+    "number=3",
+    "Kort beskrivelse som vises under tittelen på siden...=",
+    "Skriv tekst eller bruk komponentknappene ovenfor...=",
+    "Kort, innbydende oppsummering av sidens innhold for søkeresultater (anbefalt 120–160 tegn)...=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "https://... (adressen til delebildet, helst 1200 × 630 piksler)=https://x/y.png",
+    "checkbox=true",
+    "checkbox=false",
+    "datetime-local=2099-01-01T09:00"
+   ],
+   "heading": "Opprett ny underfane",
+   "updates": [
+    {
+     "title": "Ny tittel",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "parentId": "grupper"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 7,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "navOrder": 7
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": ":::callout[info] Informasjon\nDette er en fremhevet infoboks for kunngjøringer eller nyttig informasjon for menigheten.\n:::"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": ":::callout[warning] Viktig merknad\nVennligst merk at arrangementet krever forhåndspåmelding eller spesiell oppfølging.\n:::"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": ":::grid\n:::card Fellesskap & Grupper\nBli med i en av våre livsnære cellegrupper eller temakvelder.\n:::\n:::card Bønn & Omsorg\nVi ber for hverandre og tilbyr samtaler og forbønn ved behov.\n:::\n:::"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": ":::quote[Pastorens hilsen]\nVelkommen hjem til et varmt og inkluderende fellesskap for alle generasjoner.\n:::"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": "[Knapp: Meld deg på samlingen](/kontakt)"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": ":::personer[stab]"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": ":::personer[pastor]"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2026-10-08T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "publishedAt": "2026-10-08T09:00:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2026-10-11T08:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "publishedAt": "2026-10-11T08:00:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2026-10-12T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "publishedAt": "2026-10-12T09:00:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2026-12-24T18:30:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "publishedAt": "2026-12-24T18:30:00.000Z",
+     "status": "scheduled"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler"
+    },
+    {
+     "title": "X",
+     "isPublished": false,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": true,
+     "linkUrl": "/taler"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "Meta",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler"
+    },
+    {
+     "title": "X",
+     "isPublished": true,
+     "publishAt": "2099-01-01T09:00:00.000Z",
+     "metaDescription": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "ogImage": "https://x/y.png",
+     "heroImage": "https://x/h.png",
+     "parentPageId": "grupper",
+     "menuOrder": 3,
+     "inNavMenu": false,
+     "linkUrl": "/taler",
+     "content": "[blokk]"
+    }
+   ],
+   "badges": [
+    "Planlagt publisering"
+   ],
+   "counter": "130/160 tegn"
+  },
+  "legacyFields": {
+   "before": [
+    "f.eks. Om oss, Barn & Unge, Kontakt=Gammel",
+    "om-oss (eller genereres automatisk fra tittel)=",
+    "f.eks. /hva-skjer eller https://...=",
+    "select-one=grupper",
+    "number=5",
+    "Kort beskrivelse som vises under tittelen på siden...=",
+    "Skriv tekst eller bruk komponentknappene ovenfor...=",
+    "checkbox=true",
+    "checkbox=true",
+    "datetime-local=2020-01-01T09:00"
+   ],
+   "heading": "Rediger side: Gammel",
+   "updates": [
+    {
+     "title": "Ny tittel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "parentPageId": "grupper"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 7,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "menuOrder": 7
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": ":::callout[info] Informasjon\nDette er en fremhevet infoboks for kunngjøringer eller nyttig informasjon for menigheten.\n:::"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": ":::callout[warning] Viktig merknad\nVennligst merk at arrangementet krever forhåndspåmelding eller spesiell oppfølging.\n:::"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": ":::grid\n:::card Fellesskap & Grupper\nBli med i en av våre livsnære cellegrupper eller temakvelder.\n:::\n:::card Bønn & Omsorg\nVi ber for hverandre og tilbyr samtaler og forbønn ved behov.\n:::\n:::"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": ":::quote[Pastorens hilsen]\nVelkommen hjem til et varmt og inkluderende fellesskap for alle generasjoner.\n:::"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": "[Knapp: Meld deg på samlingen](/kontakt)"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": ":::personer[stab]"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": ":::personer[pastor]"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2026-10-08T09:00:00.000Z",
+     "publishedAt": "2026-10-08T09:00:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2026-10-11T08:00:00.000Z",
+     "publishedAt": "2026-10-11T08:00:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2026-10-12T09:00:00.000Z",
+     "publishedAt": "2026-10-12T09:00:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2026-12-24T18:30:00.000Z",
+     "publishedAt": "2026-12-24T18:30:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "isPublished": false
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "inNavMenu": false
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": "Meta"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": "[blokk]"
+    }
+   ],
+   "badges": [
+    "Publisert (aktiv)"
+   ],
+   "counter": null
+  },
+  "legacyFields (new page)": {
+   "before": [
+    "f.eks. Om oss, Barn & Unge, Kontakt=Gammel",
+    "om-oss (eller genereres automatisk fra tittel)=",
+    "f.eks. /hva-skjer eller https://...=",
+    "select-one=grupper",
+    "number=5",
+    "Kort beskrivelse som vises under tittelen på siden...=",
+    "Skriv tekst eller bruk komponentknappene ovenfor...=",
+    "checkbox=true",
+    "checkbox=true",
+    "datetime-local=2020-01-01T09:00"
+   ],
+   "heading": "Opprett ny underfane",
+   "updates": [
+    {
+     "title": "Ny tittel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "parentPageId": "grupper"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 7,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "menuOrder": 7
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": ":::callout[info] Informasjon\nDette er en fremhevet infoboks for kunngjøringer eller nyttig informasjon for menigheten.\n:::"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": ":::callout[warning] Viktig merknad\nVennligst merk at arrangementet krever forhåndspåmelding eller spesiell oppfølging.\n:::"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": ":::grid\n:::card Fellesskap & Grupper\nBli med i en av våre livsnære cellegrupper eller temakvelder.\n:::\n:::card Bønn & Omsorg\nVi ber for hverandre og tilbyr samtaler og forbønn ved behov.\n:::\n:::"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": ":::quote[Pastorens hilsen]\nVelkommen hjem til et varmt og inkluderende fellesskap for alle generasjoner.\n:::"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": "[Knapp: Meld deg på samlingen](/kontakt)"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": ":::personer[stab]"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": ":::personer[pastor]"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2026-10-08T09:00:00.000Z",
+     "publishedAt": "2026-10-08T09:00:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2026-10-11T08:00:00.000Z",
+     "publishedAt": "2026-10-11T08:00:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2026-10-12T09:00:00.000Z",
+     "publishedAt": "2026-10-12T09:00:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2026-12-24T18:30:00.000Z",
+     "publishedAt": "2026-12-24T18:30:00.000Z",
+     "isPublished": true,
+     "status": "scheduled"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "isPublished": false
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "inNavMenu": false
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": "Meta"
+    },
+    {
+     "title": "Gammel",
+     "parentId": "grupper",
+     "navOrder": 5,
+     "publishAt": "2020-01-01T09:00:00.000Z",
+     "content": "[blokk]"
+    }
+   ],
+   "badges": [
+    "Publisert (aktiv)"
+   ],
+   "counter": null
+  }
+ },
+ "database": {
+  "calls": [
+   [
+    "populate",
+    {
+     "personCount": 32,
+     "groupCount": 12,
+     "gatheringCount": 19,
+     "taskCount": 21
+    },
+    {
+     "clearPlannerFirst": true
+    }
+   ],
+   [
+    "populate",
+    {
+     "personCount": 8,
+     "groupCount": 3,
+     "gatheringCount": 4,
+     "taskCount": 6
+    },
+    {
+     "clearPlannerFirst": true
+    }
+   ],
+   [
+    "populate",
+    {
+     "personCount": 24,
+     "groupCount": 9,
+     "gatheringCount": 15,
+     "taskCount": 17
+    },
+    {
+     "clearPlannerFirst": false
+    }
+   ],
+   [
+    "clearPlanner"
+   ],
+   [
+    "deleteAll"
+   ],
+   [
+    "toggleKalender"
+   ],
+   [
+    "toggleMeldinger"
+   ]
+  ],
+  "feedback": [
+   [
+    "Tidligere testdata ble ryddet. Databasen er nå fylt med 32 personer, 12 grupper, 19 samlinger og 21 oppgaver!"
+   ],
+   [
+    "Tidligere testdata ble ryddet. Databasen er nå fylt med 8 personer, 3 grupper, 4 samlinger og 6 oppgaver!"
+   ],
+   [
+    "Databasen er nå fylt med 24 personer, 9 grupper, 15 samlinger og 17 oppgaver!"
+   ],
+   [
+    "Testpersoner, grupper og planlegger-data er nå tømt. CMS-sider og nyheter ble bevart."
+   ],
+   [
+    "Alle data i databasen er nå slettet."
+   ]
+  ],
+  "sliders": [
+   "32",
+   "12",
+   "19",
+   "21"
+  ],
+  "total": "11",
+  "tiles": [
+   "2",
+   "1",
+   "3",
+   "1",
+   "1",
+   "3"
+  ]
+ }
+}

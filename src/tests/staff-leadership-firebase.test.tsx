@@ -3,7 +3,8 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { Person, Group } from "../types";
-import { CmsContentRenderer, parseCmsContent } from "../components/cms/CmsContentRenderer";
+import { CmsContentRenderer } from "../components/cms/CmsContentRenderer";
+import { parseCmsContent } from "../utils/cmsContent";
 
 // State variable to simulate dynamic Firebase Firestore responses
 let currentFirebasePersons: Person[] = [];

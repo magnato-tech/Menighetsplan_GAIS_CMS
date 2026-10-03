@@ -23,8 +23,9 @@ interface DashboardTabProps {
 }
 
 export const DashboardTab: React.FC<DashboardTabProps> = ({ studio, onTabChange, onCreateIn }) => {
-  const { adminGatherings, adminTasks } = studio;
-  const { pages, news, sermons, staff, settings } = useCms();
+  const { adminGatherings, adminTasks, adminPersons } = studio;
+  const { pages, news, sermons, settings } = useCms();
+  const staffCount = adminPersons.filter(({ person }) => person.isStaff).length;
   const publicGatheringsCount = countPublicGatherings(adminGatherings);
   const urgentTasksCount = countUrgentTasks(adminTasks);
 
@@ -135,7 +136,7 @@ export const DashboardTab: React.FC<DashboardTabProps> = ({ studio, onTabChange,
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Lederskap & Stab</span>
             <Users className="w-4 h-4 text-indigo-400" />
           </div>
-          <div className="text-3xl font-black text-white">{staff.length}</div>
+          <div className="text-3xl font-black text-white">{staffCount}</div>
           <p className="text-[11px] text-slate-400">Registrerte ledere og ansatte</p>
         </div>
       </div>

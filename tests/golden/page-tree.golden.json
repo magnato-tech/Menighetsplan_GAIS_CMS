@@ -1,0 +1,327 @@
+{
+ "main": {
+  "steps": [
+   {
+    "step": "initial",
+    "html": "86582704d268512e",
+    "calls": 0
+   },
+   {
+    "step": "disabled arrows",
+    "html": "[true,false,false,true]",
+    "calls": 0
+   },
+   {
+    "step": "disabled arrows do nothing",
+    "html": "86582704d268512e",
+    "calls": 0
+   },
+   {
+    "step": "move first top down",
+    "html": "86582704d268512e",
+    "calls": 1
+   },
+   {
+    "step": "move second top up",
+    "html": "86582704d268512e",
+    "calls": 2
+   },
+   {
+    "step": "move sub up and down",
+    "html": "86582704d268512e",
+    "calls": 4
+   },
+   {
+    "step": "first sub up, last sub down: nothing",
+    "html": "86582704d268512e",
+    "calls": 4
+   },
+   {
+    "step": "dragging top",
+    "html": "24ea48fa0a4028f1",
+    "calls": 4
+   },
+   {
+    "step": "over top, upper half",
+    "html": "411e07bd5c12aa2b",
+    "calls": 4
+   },
+   {
+    "step": "over top, lower half",
+    "html": "411e07bd5c12aa2b",
+    "calls": 4
+   },
+   {
+    "step": "over itself",
+    "html": "411e07bd5c12aa2b",
+    "calls": 4
+   },
+   {
+    "step": "dropped on third",
+    "html": "86582704d268512e",
+    "calls": 5
+   },
+   {
+    "step": "dropped before first",
+    "html": "86582704d268512e",
+    "calls": 6
+   },
+   {
+    "step": "drop without hovering first: cancelled",
+    "html": "86582704d268512e",
+    "calls": 6
+   },
+   {
+    "step": "drag ended without drop",
+    "html": "86582704d268512e",
+    "calls": 6
+   },
+   {
+    "step": "sub over sub, lower half",
+    "html": "e4fbad94b9e6fb5d",
+    "calls": 6
+   },
+   {
+    "step": "sub dropped after third",
+    "html": "86582704d268512e",
+    "calls": 7
+   },
+   {
+    "step": "sub across parents: ignored",
+    "html": "86582704d268512e",
+    "calls": 7
+   },
+   {
+    "step": "top onto sub: ignored",
+    "html": "86582704d268512e",
+    "calls": 7
+   },
+   {
+    "step": "status labels",
+    "html": "[[\"Publisert side. Klikk for å sette til kladd.\",\"Status: Publisert (synlig for alle). Klikk for å endre til kladd.\",\"Publisert\"],[\"Publisert side. Klikk for å sette til kladd.\",\"Status: Publisert (synlig for alle). Klikk for å endre til kladd.\",\"Publisert\"],[\"Publisert side. Klikk for å sette til kladd.\",\"Status: Publisert (synlig for alle). Klikk for å endre til kladd.\",\"Publisert\"],[\"Publisert side. Klikk for å sette til kladd.\",\"Status: Publisert (synlig for alle). Klikk for å endre til kladd.\",\"Publisert\"],[\"Kladd. Klikk for å publisere.\",\"Status: Kladd (upublisert og skjult). Klikk for å publisere.\",\"Kladd\"],[\"Planlagt publisert 2026-12-24T09:00:00.000Z. Klikk for å sette til kladd.\",\"Status: Planlagt publisert Torsdag 24. des. kl. 09:00. Klikk for å endre til kladd.\",\"Planlagt\"],[\"Publisert side. Klikk for å sette til kladd.\",\"Status: Publisert (synlig for alle). Klikk for å endre til kladd.\",\"Publisert\"],[\"Kladd. Klikk for å publisere.\",\"Status: Kladd (upublisert og skjult). Klikk for å publisere.\",\"Kladd\"]]",
+    "calls": 7
+   },
+   {
+    "step": "status toggles",
+    "html": "86582704d268512e",
+    "calls": 15
+   },
+   {
+    "step": "edit, delete, new and preview on every row",
+    "html": "86582704d268512e",
+    "calls": 41
+   },
+   {
+    "step": "text",
+    "html": "#1Om oss/aPublisertI toppmeny3 underfanerHovedbildeKort om menigheten+ UnderfaneRediger#1Historie/a1PublisertI menyRediger#2Tro/a2PublisertSkjultRediger#3Staben/a3PublisertI menyBildeRediger#2Grupper/bKladdI toppmeny1 underfane+ UnderfaneRediger#1Husfellesskap/b1PlanlagtI menyRediger#3Hva skjer/hva-skjerPublisertSkjult fra meny+ UnderfaneRedigerFrittstående sider uten tilordnet overordnet faneUten forelder/oKladdTilordne overordnet fane",
+    "calls": 41
+   },
+   {
+    "step": "links",
+    "html": "[[\"/a\",\"_blank\"],[\"/a1\",\"_blank\"],[\"/a2\",\"_blank\"],[\"/a3\",\"_blank\"],[\"/b\",\"_blank\"],[\"/b1\",\"_blank\"],[\"/hva-skjer\",\"_blank\"]]",
+    "calls": 41
+   }
+  ],
+  "calls": [
+   [
+    "reorder",
+    [
+     "b",
+     "a",
+     "c"
+    ]
+   ],
+   [
+    "reorder",
+    [
+     "b",
+     "a",
+     "c"
+    ]
+   ],
+   [
+    "reorder",
+    [
+     "a2",
+     "a1",
+     "a3"
+    ]
+   ],
+   [
+    "reorder",
+    [
+     "a1",
+     "a3",
+     "a2"
+    ]
+   ],
+   [
+    "reorder",
+    [
+     "b",
+     "c",
+     "a"
+    ]
+   ],
+   [
+    "reorder",
+    [
+     "a",
+     "b",
+     "c"
+    ]
+   ],
+   [
+    "reorder",
+    [
+     "a2",
+     "a3",
+     "a1"
+    ]
+   ],
+   [
+    "toggle",
+    "a"
+   ],
+   [
+    "toggle",
+    "a1"
+   ],
+   [
+    "toggle",
+    "a2"
+   ],
+   [
+    "toggle",
+    "a3"
+   ],
+   [
+    "toggle",
+    "b"
+   ],
+   [
+    "toggle",
+    "b1"
+   ],
+   [
+    "toggle",
+    "c"
+   ],
+   [
+    "toggle",
+    "o"
+   ],
+   [
+    "new",
+    "a"
+   ],
+   [
+    "new",
+    "b"
+   ],
+   [
+    "new",
+    "c"
+   ],
+   [
+    "edit",
+    "a"
+   ],
+   [
+    "edit",
+    "a1"
+   ],
+   [
+    "edit",
+    "a2"
+   ],
+   [
+    "edit",
+    "a3"
+   ],
+   [
+    "edit",
+    "b"
+   ],
+   [
+    "edit",
+    "b1"
+   ],
+   [
+    "edit",
+    "c"
+   ],
+   [
+    "edit",
+    "o"
+   ],
+   [
+    "delete",
+    "a"
+   ],
+   [
+    "delete",
+    "a1"
+   ],
+   [
+    "delete",
+    "a2"
+   ],
+   [
+    "delete",
+    "a3"
+   ],
+   [
+    "delete",
+    "b"
+   ],
+   [
+    "delete",
+    "b1"
+   ],
+   [
+    "delete",
+    "c"
+   ],
+   [
+    "preview",
+    "a"
+   ],
+   [
+    "preview",
+    "a1"
+   ],
+   [
+    "preview",
+    "a2"
+   ],
+   [
+    "preview",
+    "a3"
+   ],
+   [
+    "preview",
+    "b"
+   ],
+   [
+    "preview",
+    "b1"
+   ],
+   [
+    "preview",
+    "c"
+   ],
+   [
+    "preview",
+    "o"
+   ]
+  ]
+ },
+ "withoutCallbacks": {
+  "hadPreview": false,
+  "calls": [
+   "a"
+  ],
+  "html": "699fcbb95a05294f"
+ }
+}

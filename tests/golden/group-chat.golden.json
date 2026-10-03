@@ -1,0 +1,186 @@
+{
+ "steps": [
+  {
+   "step": "no group",
+   "html": "bf3d85a1a2083977"
+  },
+  {
+   "step": "not a member",
+   "html": "7d0a1c5b7633c9ac"
+  },
+  {
+   "step": "no messages",
+   "html": "ccdd768eb88f35b4",
+   "extra": "0 meldingerVarsler"
+  },
+  {
+   "step": "one message",
+   "html": "9d26332744d2dcdb",
+   "extra": "1 meldingVarsler"
+  },
+  {
+   "step": "with messages",
+   "html": "3f4677608d69faa1",
+   "extra": {
+    "scrollTop": 4321,
+    "counter": "6 meldinger"
+   }
+  },
+  {
+   "step": "links",
+   "html": "[[\"https://example.com/side\",\"_blank\",\"noopener noreferrer\",\"https://example.com/side\"],[\"https://example.com/to,\",\"_blank\",\"noopener noreferrer\",\"https://example.com/to,\"],[\"https://www.youtube.com/watch?v=abc123\",\"_blank\",\"noopener noreferrer\",\"https://www.youtube.com/watch?v=abc123\"],[\"https://youtu.be/xyz789\",\"_blank\",\"noopener noreferrer\",\"https://youtu.be/xyz789\"],[\"https://www.youtube.com/watch?v=abc123\",\"_blank\",\"noopener noreferrer\",\"https://www.youtube.com/watch?v=abc123\"],[\"https://www.youtube.com/watch?v=abc123\",\"_blank\",\"noopener noreferrer\",\"YouTubehttps://www.youtube.com/watch?v=abc123\"],[\"https://youtu.be/xyz789\",\"_blank\",\"noopener noreferrer\",\"YouTubehttps://youtu.be/xyz789\"],[\"https://www.youtube.com/feed\",\"_blank\",\"noopener noreferrer\",\"https://www.youtube.com/feed\"],[\"https://youtube.com/watch\",\"_blank\",\"noopener noreferrer\",\"https://youtube.com/watch\"]]"
+  },
+  {
+   "step": "own messages have a delete button, others do not",
+   "html": "[[\"chat-msg-m1\",false],[\"chat-msg-m2\",true],[\"chat-msg-m3\",false],[\"chat-msg-m4\",true],[\"chat-msg-m5\",false],[\"chat-msg-m6\",false]]"
+  },
+  {
+   "step": "notifications toggle on",
+   "html": "3f4677608d69faa1",
+   "extra": {
+    "title": "Varsler er på for Husfellesskap. Klikk for å slå av.",
+    "calls": 1
+   }
+  },
+  {
+   "step": "notifications off",
+   "html": "7f4933a8dc0e6f97",
+   "extra": "Varsler er av for Husfellesskap. Klikk for å slå på."
+  },
+  {
+   "step": "send disabled when empty",
+   "html": "3f4677608d69faa1",
+   "extra": true
+  },
+  {
+   "step": "send still disabled for blanks",
+   "html": "4d603df1d300cf86",
+   "extra": true
+  },
+  {
+   "step": "send enabled",
+   "html": "2dde93a7670a5e27",
+   "extra": false
+  },
+  {
+   "step": "shift+enter does not send",
+   "html": "2dde93a7670a5e27",
+   "extra": 0
+  },
+  {
+   "step": "enter sends and clears",
+   "html": "30763c12b67421c6",
+   "extra": [
+    1,
+    ""
+   ]
+  },
+  {
+   "step": "button sends",
+   "html": "30763c12b67421c6"
+  },
+  {
+   "step": "failed send keeps the text and tells why",
+   "html": "e6b566a8e0519088",
+   "extra": "Feiler"
+  },
+  {
+   "step": "failed send without a reason says nothing",
+   "html": "e6b566a8e0519088"
+  },
+  {
+   "step": "sends",
+   "html": "[[\"send\",\"Hei på deg\",null],[\"send\",\"Neste\",null],[\"send\",\"Feiler\",null],[\"send\",\"Feiler\",null]]"
+  },
+  {
+   "step": "picture over 5 MB is refused",
+   "html": "69e06d3fa21d5d5a"
+  },
+  {
+   "step": "picture chosen shows a preview",
+   "html": "ff0bcf57e3a65864",
+   "extra": [
+    true,
+    ""
+   ]
+  },
+  {
+   "step": "a picture can be sent alone",
+   "html": "[[\"send\",\"Feiler\",\"data-url\"]]"
+  },
+  {
+   "step": "after sending the picture the preview is gone",
+   "html": "89b6a0a7672f7294"
+  },
+  {
+   "step": "quick picture chosen",
+   "html": "157e9309f28d8bd5"
+  },
+  {
+   "step": "picture removed",
+   "html": "89b6a0a7672f7294"
+  },
+  {
+   "step": "text and quick picture together",
+   "html": "[[\"send\",\"Med bilde\",\"https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=800&q=80\"]]"
+  },
+  {
+   "step": "attach button clicks the hidden input",
+   "html": "ok"
+  },
+  {
+   "step": "picture opened in lightbox",
+   "html": "0500835283b64a15",
+   "extra": "KariI går kl. 08:15"
+  },
+  {
+   "step": "click on the picture keeps the lightbox open",
+   "html": "0500835283b64a15"
+  },
+  {
+   "step": "lightbox closed by the button",
+   "html": "3f4677608d69faa1"
+  },
+  {
+   "step": "lightbox closed by the backdrop",
+   "html": "3f4677608d69faa1"
+  },
+  {
+   "step": "delete asks first",
+   "html": "b27836ef5119c825"
+  },
+  {
+   "step": "delete cancelled",
+   "html": "3f4677608d69faa1",
+   "extra": 0
+  },
+  {
+   "step": "delete confirmed tells it was deleted",
+   "html": "3528b9a8af7b1bb4",
+   "extra": [
+    [
+     "delete",
+     "m2"
+    ]
+   ]
+  },
+  {
+   "step": "failed delete tells why",
+   "html": "c6dd0fcf54c9c1e2",
+   "extra": [
+    [
+     "delete",
+     "m2"
+    ],
+    [
+     "delete",
+     "m4"
+    ]
+   ]
+  },
+  {
+   "step": "message closed by its X",
+   "html": "3f4677608d69faa1"
+  }
+ ]
+}

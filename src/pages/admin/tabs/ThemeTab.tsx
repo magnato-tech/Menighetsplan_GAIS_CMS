@@ -17,6 +17,7 @@ import {
   Layers,
 } from "lucide-react";
 import { SITE_THEME_CLASS, getThemeCssVariables } from "../../../utils/themeUtils";
+import { useTimedMessage } from "../../../hooks/useTimedMessage";
 
 interface ThemeTabProps {
   showFeedback?: (text: string, type?: "success" | "error") => void;
@@ -47,7 +48,8 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
   const { settings, saveSettings } = useCms();
   const [theme, setTheme] = useState<CmsDesignTheme>(() => settings.theme || defaultCmsDesignTheme);
   const [isSaving, setIsSaving] = useState(false);
-  const [isSavedRecently, setIsSavedRecently] = useState(false);
+  const [savedRecently, markSaved] = useTimedMessage<true>(3000);
+  const isSavedRecently = savedRecently !== null;
 
   useEffect(() => {
     if (settings.theme) {
@@ -69,8 +71,7 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
     setIsSaving(false);
 
     if (success) {
-      setIsSavedRecently(true);
-      setTimeout(() => setIsSavedRecently(false), 3000);
+      markSaved(true);
       showFeedback?.("Designet er lagret og gjelder nettsiden nå.");
     } else {
       showFeedback?.("Kunne ikke lagre designtema", "error");

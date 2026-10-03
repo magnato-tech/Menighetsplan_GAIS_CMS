@@ -12,7 +12,6 @@ import {
   initialCmsPages,
   initialCmsNews,
   initialCmsSermons,
-  initialCmsStaff,
   initialCmsSettings,
 } from "./cmsData";
 import { Person, Group } from "../types";
@@ -176,7 +175,6 @@ export function getCustomMockDocuments(counts?: CustomMockCounts): MockDocument[
     [CMS_COLLECTIONS.PAGES, initialCmsPages],
     [CMS_COLLECTIONS.NEWS, initialCmsNews],
     [CMS_COLLECTIONS.SERMONS, initialCmsSermons],
-    [CMS_COLLECTIONS.STAFF, initialCmsStaff],
   ];
 
   const documents: MockDocument[] = sets.flatMap(([collection, items]) =>

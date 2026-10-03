@@ -5,7 +5,8 @@ import { MemoryRouter } from "react-router-dom";
 import { initialPersons, initialGroups } from "../src/data/mockData";
 import { initialCmsPages } from "../src/data/cmsData";
 import { CONTENT_BLOCKS } from "../src/pages/admin/tabs/pages/ContentBlockPickerModal";
-import { parseCmsContent, CmsContentRenderer } from "../src/components/cms/CmsContentRenderer";
+import { CmsContentRenderer } from "../src/components/cms/CmsContentRenderer";
+import { parseCmsContent } from "../src/utils/cmsContent";
 import { toPublicProfile } from "../src/utils/publicProfile";
 
 afterEach(() => {
@@ -151,7 +152,7 @@ describe("Innholdsblokk-velger: CONTENT_BLOCKS", () => {
     expect(block?.template).toBe(":::personer[stab]");
   });
 
-  test("inneholder definisjon for Menighetsråd & Lederskap", () => {
+  test("inneholder definisjon for Lederskap", () => {
     const block = CONTENT_BLOCKS.find((b) => b.id === "personer-lederskap");
     expect(block).toBeDefined();
     expect(block?.category).toBe("Personer & Roller");

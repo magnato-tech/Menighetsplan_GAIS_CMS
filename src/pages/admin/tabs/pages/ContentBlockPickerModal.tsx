@@ -181,7 +181,7 @@ Husk å ta med egen kopp til kirkekaffen om du har lyst! Det er gratis parkering
   },
   {
     id: "personer-lederskap",
-    title: "Menighetsråd & Lederskap",
+    title: "Lederskap",
     category: "Personer & Roller",
     description: "Viser menighetens valgte lederskap (styreleder, nestleder og medlemmer) direkte fra lederskapsgruppen.",
     icon: <Shield className="w-5 h-5 text-amber-400" />,
@@ -191,7 +191,7 @@ Husk å ta med egen kopp til kirkekaffen om du har lyst! Det er gratis parkering
         <div className="p-2 rounded bg-white border border-stone-200 space-y-1">
           <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-[9px]">J</div>
           <div className="font-bold text-stone-900 truncate">Jonas Lie</div>
-          <div className="text-[8px] text-amber-700 font-semibold">Leder i menighetsrådet</div>
+          <div className="text-[8px] text-amber-700 font-semibold">Leder</div>
         </div>
         <div className="p-2 rounded bg-white border border-stone-200 space-y-1">
           <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-[9px]">K</div>

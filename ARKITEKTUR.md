@@ -51,9 +51,11 @@ To små byggeklosser brukes på tvers: `useTimedMessage` (`src/hooks/`) er en me
 - **`FirebaseDataProvider`** (`src/context/FirebaseDataContext.tsx`) holder det lytterne leverer, og tilbyr oppslag og handlinger. Komponenter henter den med `useFirebase()`.
   - Alltid: `persons`, `groups`, `gatherings`.
   - Bare på interne ruter: `tasks`, `assignments`, `groupMessages`, `gatheringAttendances`. En besøkende på den offentlige nettsiden får aldri disse.
-- **`CmsProvider`** (`src/context/CmsContext.tsx`) lytter på `cms_pages`, `cms_news`, `cms_sermons`, `cms_staff` og `cms_settings`. Det siste som ble mottatt mellomlagres i `localStorage`, slik at nettsiden har innhold å vise før Firestore har svart, og beholder det når den åpnes uten nett. En lagring i CMS-et venter på svar fra serveren (i motsetning til planleggingsdataene), slik at redigeringsskjemaet kan bli stående åpent med teksten hvis lagringen feiler.
+- **`CmsProvider`** (`src/context/CmsContext.tsx`) lytter på `cms_pages`, `cms_news`, `cms_sermons` og `cms_settings`. Det siste som ble mottatt mellomlagres i `localStorage`, slik at nettsiden har innhold å vise før Firestore har svart, og beholder det når den åpnes uten nett. En lagring i CMS-et venter på svar fra serveren (i motsetning til planleggingsdataene), slik at redigeringsskjemaet kan bli stående åpent med teksten hvis lagringen feiler.
 - **Hooks per rolle** (`src/hooks/`: `memberHooks`, `leaderHooks`, `adminHooks`, `useHusfellesskap`) setter sammen rådataene til det hver side trenger.
-- **Rene funksjoner** (`src/utils/`) holder reglene, og testene i `tests/` (Vitest) kjører mot dem: `staffing`, `visibility`, `publicProfile`, `firestoreData`, `menu`, `groups` og `dates`.
+- **Rene funksjoner** (`src/utils/`) holder reglene, og testene i `tests/` (Vitest) kjører mot dem: `staffing`, `visibility`, `publicProfile`, `firestoreData`, `menu`, `groups`, `dates`, `personGrid`, `cmsContent`, `personForm`, `groupForm`, `pageEdit` og `testdataPresets`.
+- **Skjermbilder med skjema** (personkort, gruppekort, sideredigering, databasefanen) er delt i tre lag: de rene reglene i `src/utils/`, én hook som eier tilstanden, og én fil per del av skjermbildet. Siden over kaller hooken én gang og sender resultatet ned. Det gjør at reglene kan testes uten å tegne noe, og at en ny del ikke gjør en side større.
+- **Lasting.** Nettsiden laster bare det besøkende trenger: `App.tsx` henter Admin Studio og Min side (`MinSideApp.tsx`) med `React.lazy` først når en adresse hører til dem. `tests/code-rules.test.ts` holder filene under 400 linjer, og CI kjører typesjekk, tester og bygg.
 - **Sidetreet** (`src/utils/menu.ts`) er felles for den offentlige menyen og sidelisten i admin. Når en hovedfane slettes, flyttes underfanene opp til toppnivå i samme skriving.
 
 ### Skriving
@@ -85,7 +87,7 @@ Det finnes ennå ikke noe skjermbilde for å redigere programmet; bare demodatae
 `tests/data-provider.test.tsx` og `tests/cms-provider.test.tsx` kjører `FirebaseDataProvider` og `CmsProvider` mot den ekte Firestore-klienten, koblet fra nettet (`tests/support/offlineFirestore.ts`). `tests/member-flow.test.tsx` gjør det samme med det et medlem ser og gjør: ta en oppgave, svare på en forespørsel, melde forfall. Testene ser dermed det samme som appen: en skriving når listene gjennom lytterne. Ingenting sendes til en server.
 
 ## CMS-et
-Nettsiden bygges av fem samlinger: `cms_pages`, `cms_news`, `cms_sermons`, `cms_staff` og ett innstillingsdokument i `cms_settings`.
+Nettsiden bygges av fire samlinger: `cms_pages`, `cms_news`, `cms_sermons` og ett innstillingsdokument i `cms_settings`. Den eldre `cms_staff` brukes ikke lenger; stab og lederskap kommer fra personregisteret.
 
 - **Sider og meny.** `src/utils/menu.ts` bygger sidetreet (to nivåer), den offentlige menyen og adressen til en side. `isPagePublished` avgjør om en side er synlig: ikke kladd, og ikke planlagt fram i tid. Den brukes av både menyen og `PublicStaticPage.tsx`.
 - **Innhold.** `content` er tekst med blokker (`:::callout`, `:::media-left`, `:::grid`, `:::quote`, `[Knapp: …](…)`). `CmsContentRenderer.tsx` tolker teksten og tegner faste komponenter. Innholdet settes aldri inn som HTML. Syntaksen står i kapittel 8.3 i `PRODUKTDOKUMENTASJON.md`.
@@ -121,7 +123,7 @@ Tre regler avgjør hva en besøkende ser, og hver av dem ligger ett sted:
 | Bli med i en gruppe | En besøkende kan melde interesse for en gruppe | `/fellesskap` viser hvem man kan kontakte. Det finnes ikke noe skjema som lagrer en henvendelse; det krever en egen samling, regler og et sted lederen kan lese dem |
 | Bilder | Bilder ligger i en bildelagring | Et opplastet bilde lagres som tekst i sidedokumentet. Alle sider lastes til alle besøkende, og kopien i `localStorage` (ca. 5 MB) rekker bare til et titalls bilder |
 | Kladder | Bare administratorer får kladder og planlagte sider | Alle sider leveres til nettleseren, og skjules i visningen |
-| Stab | Én kilde for mennesker som vises utad | `/lederskap` bruker personregisteret med samtykke. `/om-oss` viser `cms_staff`, en egen liste uten samtykkelogg |
+| Stab | Én kilde for mennesker som vises utad | Løst: `/stab`, `/lederskap` og personblokker på CMS-sider bruker personregisteret med samtykke (`selectPersonGrid`) |
 | Forsiden | Alt innhold kommer fra CMS-et | Tre infobokser, fellesskapsseksjonen og gaveteksten står i `PublicHomePage.tsx`, og menighetens navn står skrevet flere steder i koden |
 | Forfall med grunn | Medlemmet skriver en grunn, lederen ser den | Datalaget lagrer `withdrawalReason`, men ingen skjerm skriver eller viser den |
 | Filstørrelse | Én komponent per fane/modal | Gjort for alle sidene over 1 000 linjer. Størst nå er redigeringsskjemaet for sider (`PageEditModal.tsx`, ca. 750 linjer) og gruppekortet i admin (`AdminGroupDetailPage.tsx`, ca. 650) |

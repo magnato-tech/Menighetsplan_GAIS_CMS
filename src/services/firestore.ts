@@ -55,6 +55,14 @@ export function setDocument(name: CollectionName, id: string, document: object):
   return setDoc(doc(db, name, id), sanitizeForFirestore(document));
 }
 
+/**
+ * Stores only the given fields and leaves the rest of the document as it is, creating it when missing.
+ * Two people changing different fields at the same time therefore cannot overwrite each other.
+ */
+export function mergeIntoDocument(name: CollectionName, id: string, fields: object): Promise<void> {
+  return setDoc(doc(db, name, id), sanitizeForFirestore(fields), { merge: true });
+}
+
 /** A field given as `undefined` is removed from the stored document. */
 export function updateDocument(name: CollectionName, id: string, updates: object): Promise<void> {
   return updateDoc(doc(db, name, id), forUpdate(updates));
@@ -89,6 +97,30 @@ export function removeGroupMember(groupId: string, personId: string): Promise<vo
 
 export function setGroupNotifications(groupId: string, personId: string, enabled: boolean): Promise<void> {
   return updateDoc(doc(db, COLLECTIONS.GROUPS, groupId), new FieldPath("notificationPreferences", personId), enabled);
+}
+
+/**
+ * Deletes a gathering together with what hangs on it: its tasks, who stands on them,
+ * and who has answered. One write, so nothing is left pointing at a gathering that is gone.
+ */
+export function deleteGatheringWithContent(
+  gatheringId: string,
+  content: { taskIds: string[]; assignmentIds: string[]; attendanceIds: string[] }
+): Promise<void> {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, COLLECTIONS.GATHERINGS, gatheringId));
+  for (const id of content.taskIds) batch.delete(doc(db, COLLECTIONS.TASKS, id));
+  for (const id of content.assignmentIds) batch.delete(doc(db, COLLECTIONS.ASSIGNMENTS, id));
+  for (const id of content.attendanceIds) batch.delete(doc(db, COLLECTIONS.GATHERING_ATTENDANCES, id));
+  return batch.commit();
+}
+
+/** Deletes a task together with the assignments on it, in one write. */
+export function deleteTaskWithAssignments(taskId: string, assignmentIds: string[]): Promise<void> {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, COLLECTIONS.TASKS, taskId));
+  for (const id of assignmentIds) batch.delete(doc(db, COLLECTIONS.ASSIGNMENTS, id));
+  return batch.commit();
 }
 
 /**
