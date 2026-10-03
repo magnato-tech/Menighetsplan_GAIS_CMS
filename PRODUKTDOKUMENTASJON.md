@@ -401,9 +401,22 @@ Administratoren velger én farge. Løsningen lager elleve toner av den, fra nest
 Fargene som har en fast betydning, følger ikke temaet: rødt for avlyst, gult for varsel, grønt for bekreftet, og fargen som skiller gruppekategoriene fra hverandre. Adminpanelet og Min side har sitt eget, faste utseende.
 
 ### 8.6 Søk og deling
-Hver side kan ha egen beskrivelse og eget delebilde. Mangler de, brukes ingressen og hovedbildet. Redaktøren ser en forhåndsvisning av søkeresultatet og delingskortet.
+Hver adresse på nettsiden har sin egen tittel, beskrivelse og sitt eget delingskort. De står i siden slik serveren sender den, så både søkemotorer og tjenester som viser en lenke (Facebook, Messenger, Slack) ser dem.
 
-**Delvis:** opplysningene settes inn i nettleseren etter at siden er lastet. Google leser dem. Delingskort i Facebook, Messenger og Slack leser dem ikke, for de kjører ikke siden. Se 8.7.
+| Adresse | Tittel | Beskrivelse | Bilde |
+|:---|:---|:---|:---|
+| Forsiden | Menighetens navn og slagord | Velkomstteksten | Forsidens delebilde |
+| En CMS-side | Sidens tittel og menighetens navn | Feltet «Beskrivelse i søkeresultater», ellers ingressen | Delebildet, ellers hovedbildet |
+| En nyhetsartikkel | Artikkelens tittel og menighetens navn | Ingressen | Artikkelens bilde |
+| Kalender, taler, fellesskap, lederskap | Sidens navn og menighetens navn | En fast setning, eller CMS-siden som peker dit | – |
+
+* Mangler et bilde, vises menighetens ikon.
+* Et bilde må ha en nettadresse for å kunne deles. Et hovedbilde som er lastet opp fra maskinen, brukes derfor ikke som delebilde.
+* En adresse uten publisert side svarer «ikke funnet» (404) og holdes utenfor søkeresultatene. Det gjelder også kladder og sider som er planlagt publisert senere.
+* Min side og adminpanelet holdes utenfor søkeresultatene.
+* Redaktøren ser en forhåndsvisning av søkeresultatet og delingskortet, bygget av de samme reglene.
+
+Nettstedets adresse leses av forespørselen. Den kan settes fast med miljøvariabelen `SITE_URL` (for eksempel `https://lillesandmisjonskirke.no`).
 
 ### 8.7 Kjente begrensninger i CMS-et
 
@@ -411,7 +424,6 @@ Hver side kan ha egen beskrivelse og eget delebilde. Mangler de, brukes ingresse
 |:---|:---|:---|
 | Bilder | Lagres som tekst inne i sidedokumentet | Alle besøkende laster ned alle sidenes bilder ved første besøk. Et dokument kan ikke være større enn 1 MB. Et opplastet bilde kan ikke brukes som delebilde |
 | Design | Skriftvalget står mellom skriftene maskinen alt har | Menigheten kan ikke velge en egen skrift eller laste opp logo |
-| Deling | Søk- og delefeltene settes inn i nettleseren | Delingskort i sosiale medier viser ikke sidens egen tittel og bilde |
 | Kladder | Skjules i visningen, men leveres til nettleseren | En kladd er ikke hemmelig. Løses sammen med innlogging |
 | Forside | Tre infobokser, fellesskaps- og gaveteksten står i koden | Kan ikke endres uten en utvikler |
 | Menighetens navn | «Lillesand Misjonskirke» står skrevet i koden flere steder | Navnet i innstillingene slår ikke gjennom overalt |
@@ -486,6 +498,7 @@ De tre flatene, Firestore-databasen, bemanningsmotoren, husfellesskap, gruppemel
 | **Kjøreplan** | Viser bare det som er registrert. Et oppdiktet standardprogram og oppdiktede navn er fjernet |
 | **CMS** (AI Studio, 2. oktober) | Sidetre med dra og slipp, innholdsblokker, hovedbilde, design-fane, søk og deling, planlagt publisering, forhåndsvisning |
 | **Design** (3. oktober) | Temaet som velges i admin, styrer hele nettsiden: farger, bakgrunn, skrift og avrunding. Lesbarheten er sikret for alle fargevalg |
+| **Søk og deling** (3. oktober) | Hver adresse har egen tittel, beskrivelse og delingskort i siden slik serveren sender den. Ukjente adresser og kladder svarer «ikke funnet» |
 | **Opprydding** | De største filene er delt i én fil per fane og dialog. Hardkodede demo-ID-er, datoer og steder er ute av logikken. Utviklerord er ute av skjermbildene |
 
 ---
@@ -500,16 +513,15 @@ Sortert etter hvor mye de betyr for en menighet som skal ta løsningen i bruk.
 | 2 | Personregisteret og kladder leveres til alle nettlesere | Fase 1 |
 | 3 | Testbryter og testverktøy vises i løsningen | Fase 1 |
 | 4 | Forsidens tekster og menighetens navn står delvis i koden | Fase 2 |
-| 5 | Bilder lagres inne i sidedokumentene | Fase 2 |
-| 6 | Delingskort i sosiale medier viser ikke sidens innhold | Fase 2 |
-| 7 | To kilder for stab og lederskap, den ene uten samtykke | Fase 2 |
-| 8 | Programmet i kjøreplanen kan ikke redigeres | Fase 3 |
-| 9 | Ingen varsling: forespørsler og forfall når ingen uten at de åpner appen | Fase 3 |
-| 10 | Modulvalg lagres bare i én nettleser | Fase 3 |
-| 11 | En besøkende kan ikke melde interesse for en gruppe i løsningen | Fase 3 |
-| 12 | Et nytt gruppemedlem ser hele meldingshistorikken | Fase 3 |
-| 13 | Medlemmet kan ikke oppgi grunn for et forfall, og lederen ser den ikke | Fase 3 |
-| 14 | Hele løsningen lastes på første besøk (1,6 MB) | Fase 4 |
+| 5 | Bilder lagres inne i sidedokumentene, og kan da ikke brukes som delebilde | Fase 2 |
+| 6 | To kilder for stab og lederskap, den ene uten samtykke | Fase 2 |
+| 7 | Programmet i kjøreplanen kan ikke redigeres | Fase 3 |
+| 8 | Ingen varsling: forespørsler og forfall når ingen uten at de åpner appen | Fase 3 |
+| 9 | Modulvalg lagres bare i én nettleser | Fase 3 |
+| 10 | En besøkende kan ikke melde interesse for en gruppe i løsningen | Fase 3 |
+| 11 | Et nytt gruppemedlem ser hele meldingshistorikken | Fase 3 |
+| 12 | Medlemmet kan ikke oppgi grunn for et forfall, og lederen ser den ikke | Fase 3 |
+| 13 | Hele løsningen lastes på første besøk (1,6 MB) | Fase 4 |
 
 ---
 
@@ -526,9 +538,9 @@ Rekkefølgen innen hver fase er prioritert. Fase 1 er forutsetningen for ekte da
 
 ### Fase 2 – CMS-et styrer hele nettsiden
 1. ~~**Temaet virker:** farger, skrift, bakgrunn og avrunding fra design-fanen gjelder hele nettsiden.~~ **Levert 3. oktober.**
-2. **Forsiden kan redigeres:** forsidebilde, infoboksene, fellesskaps- og gaveseksjonen. Menighetens navn hentes fra innstillingene overalt.
+2. **Forsiden kan redigeres:** forsidebilde, infoboksene, fellesskaps- og gaveseksjonen. *Delvis levert 3. oktober:* menighetens navn hentes nå fra innstillingene.
 3. **Bilder i egen lagring**, med bilder også i nyheter, stab og innholdsblokker.
-4. **Delingskort fra serveren:** tittel, beskrivelse og bilde ligger i siden slik den sendes ut.
+4. ~~**Delingskort fra serveren:** tittel, beskrivelse og bilde ligger i siden slik den sendes ut.~~ **Levert 3. oktober.**
 5. **Én kilde for stab og lederskap:** personregisteret med samtykke. CMS-fanen bestemmer rekkefølge, bilde og omtale.
 6. **Nyheter:** arkivside, utløpsdato og kobling til samling. **Taler:** kobling til person og samling.
 7. **Menighetens egen profil:** logo og egen skrift.

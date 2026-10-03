@@ -1,8 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { FirebaseDataProvider } from "./context/FirebaseDataContext";
 import { CmsProvider, useCms } from "./context/CmsContext";
 import { SITE_THEME_CLASS, getThemeCssVariables } from "./utils/themeUtils";
+import { isAdminStudioPath, isMinSidePath } from "./utils/routes";
+import { injectPageSeo } from "./utils/seoUtils";
+import { seoForPath } from "./utils/siteSeo";
 import { Header } from "./components/Header";
 import { WriteErrorBanner } from "./components/WriteErrorBanner";
 import { PublicNavbar } from "./components/public/PublicNavbar";
@@ -34,16 +37,20 @@ import { AdminGatheringDetailPage } from "./pages/AdminGatheringDetailPage";
 import { AdminTaskDetailPage } from "./pages/AdminTaskDetailPage";
 import { AdminSettingsPage } from "./pages/AdminSettingsPage";
 
-const MIN_SIDE_SECTIONS = ["/minside", "/leder", "/oppgave", "/gruppe", "/samling", "/husfellesskap", "/meldinger"];
+/**
+ * Keeps the tab title, the description and the share card in step with the page being shown.
+ * The server writes the same into the HTML it sends (server.ts), from the same rules.
+ */
+function useSiteSeo(pathname: string) {
+  const { pages, news, settings } = useCms();
 
-// Whole path segments only: "/leder" must not claim the public page "/lederskap"
-const isUnder = (pathname: string, section: string) => pathname === section || pathname.startsWith(`${section}/`);
-
-const isAdminStudioPath = (pathname: string) => pathname === "/admin";
-
-function isMinSidePath(pathname: string): boolean {
-  const isAdminSubpage = pathname.startsWith("/admin/") && !pathname.startsWith("/admin/cms");
-  return isAdminSubpage || MIN_SIDE_SECTIONS.some((section) => isUnder(pathname, section));
+  useEffect(() => {
+    const config = seoForPath(pathname, { pages, news, settings });
+    if (config) return injectPageSeo(config);
+    // Min side and admin carry the app's own name
+    document.title = settings.appName;
+    return undefined;
+  }, [pathname, pages, news, settings]);
 }
 
 function AppContent() {
@@ -51,6 +58,7 @@ function AppContent() {
   const { settings } = useCms();
   // The design chosen in admin, as the CSS variables the public pages read
   const themeVariables = useMemo(() => getThemeCssVariables(settings?.theme), [settings?.theme]);
+  useSiteSeo(location.pathname);
 
   // Route type checks
   const isAdminStudio = isAdminStudioPath(location.pathname);

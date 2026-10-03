@@ -1,7 +1,9 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import express, { Request, Response } from 'express';
 import { createServer as createViteServer } from 'vite';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import firebaseConfig from './firebase-applet-config.json' with { type: 'json' };
 import {
   type GatheringDoc,
@@ -12,6 +14,11 @@ import {
   toPublicGroups,
   toRecurringEvents,
 } from './server/publicApi';
+import { markAsPrivate, renderSeoIntoHtml } from './server/pageMeta';
+import { CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID } from './src/data/collections';
+import { type CmsNewsArticle, type CmsPage, type CmsSettings, initialCmsSettings } from './src/data/cmsData';
+import { isPublicPath } from './src/utils/routes';
+import { type SiteContent, resolvePageSeo, seoForPath } from './src/utils/siteSeo';
 
 const app = express();
 const port = 3000;
@@ -172,12 +179,112 @@ app.get('/api/public/all', async (_req: Request, res: Response) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// Page titles and share cards
+// ---------------------------------------------------------------------------
+// A service that previews a shared link reads the HTML as it is sent and never runs the
+// app. The server therefore writes each page's title, description and image into
+// index.html. What they are is decided in src/utils/siteSeo.ts, which the browser uses too.
+
+const SITE_CONTENT_MAX_AGE_MS = 60_000;
+const FIRST_READ_WAIT_MS = 1_500;
+
+let siteContent: SiteContent | null = null;
+let siteContentReadAt = 0;
+let siteContentRead: Promise<void> | null = null;
+
+async function readSiteContent(): Promise<SiteContent> {
+  const [pages, news, settings] = await Promise.all([
+    getDocs(collection(db, CMS_COLLECTIONS.PAGES)),
+    getDocs(collection(db, CMS_COLLECTIONS.NEWS)),
+    // The settings may be missing or unreadable; the app then shows its defaults, and so do we
+    getDoc(doc(db, CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID)).catch(() => null),
+  ]);
+  return {
+    pages: pages.docs.map((d) => d.data() as CmsPage),
+    news: news.docs.map((d) => d.data() as CmsNewsArticle),
+    settings: settings?.exists() ? (settings.data() as CmsSettings) : initialCmsSettings,
+  };
+}
+
+function refreshSiteContent(): Promise<void> {
+  siteContentRead ??= readSiteContent()
+    .then((content) => {
+      siteContent = content;
+    })
+    .catch((err) => {
+      // What was read last, if anything, keeps being used
+      console.error('Could not read the site content for page titles:', err);
+    })
+    .finally(() => {
+      siteContentReadAt = Date.now();
+      siteContentRead = null;
+    });
+  return siteContentRead;
+}
+
+/**
+ * The pages, articles and settings as last read, refreshed in the background once a minute.
+ * A page is never held back by the database: only the very first read is waited for, briefly.
+ */
+async function currentSiteContent(): Promise<SiteContent | null> {
+  if (Date.now() - siteContentReadAt > SITE_CONTENT_MAX_AGE_MS) {
+    const reading = refreshSiteContent();
+    if (!siteContent) {
+      await Promise.race([reading, new Promise((resolve) => setTimeout(resolve, FIRST_READ_WAIT_MS))]);
+    }
+  }
+  return siteContent;
+}
+
+/** The address the site is reached at, for canonical links and share images. */
+function originOf(req: Request): string {
+  if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/+$/, '');
+  const protocol = String(req.headers['x-forwarded-proto'] ?? req.protocol).split(',')[0].trim();
+  return `${protocol}://${req.get('host') ?? `localhost:${port}`}`;
+}
+
+async function sendApp(req: Request, res: Response) {
+  // A file that does not exist is a missing file, not the app
+  if (path.extname(req.path)) {
+    res.status(404).end();
+    return;
+  }
+
+  const html = await readFile(path.join('dist', 'index.html'), 'utf8');
+  // The page itself is small and names the current script files, so it is always fetched anew
+  res.set('Cache-Control', 'no-cache');
+
+  if (!isPublicPath(req.path)) {
+    res.type('html').send(markAsPrivate(html));
+    return;
+  }
+
+  const site = await currentSiteContent();
+  const config = site ? seoForPath(req.path, site) : null;
+  if (!config) {
+    res.type('html').send(html);
+    return;
+  }
+
+  const seo = resolvePageSeo(config, originOf(req), req.path);
+  res
+    .status(seo.notFound ? 404 : 200)
+    .type('html')
+    .send(renderSeoIntoHtml(html, seo));
+}
+
 async function startServer() {
   if (process.env.NODE_ENV === 'production') {
-    app.use(express.static('dist'));
-    app.get('*', (_req: Request, res: Response) => {
-      res.sendFile('dist/index.html', { root: '.' });
+    // index.html goes through sendApp, also for the front page
+    app.use(express.static('dist', { index: false }));
+    app.get('*', (req: Request, res: Response) => {
+      sendApp(req, res).catch((err) => {
+        console.error('Could not send the app:', err);
+        res.status(500).send('Noe gikk galt. Prøv igjen om litt.');
+      });
     });
+    void refreshSiteContent();
   } else {
     const vite = await createViteServer({
       server: { middlewareMode: true },

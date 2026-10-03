@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useParams, Link } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
 import {
@@ -10,7 +10,6 @@ import {
   Users,
 } from "lucide-react";
 import { CmsContentRenderer } from "../../components/cms/CmsContentRenderer";
-import { injectPageSeo } from "../../utils/seoUtils";
 import { isPagePublished } from "../../utils/menu";
 import { formatNorwegianDateTime } from "../../utils/dates";
 
@@ -25,48 +24,8 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug }
   const currentSlug = forcedSlug || paramSlug || "om-oss";
   const page = getPageBySlug(currentSlug);
 
+  // The tab title and the share card for the page are set for the whole site in App.tsx
   const isAvailable = page ? isPagePublished(page) : false;
-
-  // Injisér SEO-metadata (metaDescription, ogImage, tittel, Schema.org) direkte i dokumentets head
-  useEffect(() => {
-    if (!page || !isAvailable) {
-      document.title = `Side ikke funnet – ${settings.churchName}`;
-      return;
-    }
-
-    // Hent 'metaDescription' og 'ogImage' fra CMS-konteksten (med trygge fallbacks)
-    const { metaDescription, ogImage, heroImage, summary, title, slug } = page;
-    const churchName = settings.churchName;
-    const appName = settings.appName;
-
-    // Manipulerer document.head direkte (metaDescription, ogImage, OpenGraph, Twitter-kort og Schema.org)
-    const cleanupSeo = injectPageSeo({
-      title,
-      metaDescription,
-      ogImage,
-      heroImage,
-      summary,
-      slug,
-      churchName,
-      siteName: appName,
-      type: "website",
-    });
-
-    return () => {
-      cleanupSeo();
-    };
-  }, [
-    page?.id,
-    page?.title,
-    page?.metaDescription,
-    page?.ogImage,
-    page?.heroImage,
-    page?.summary,
-    page?.slug,
-    isAvailable,
-    settings.churchName,
-    settings.appName,
-  ]);
 
   if (!page || !isAvailable) {
     const isFutureScheduled =

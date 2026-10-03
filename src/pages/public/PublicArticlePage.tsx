@@ -10,7 +10,9 @@ export const PublicArticlePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { getNewsById, getNewsBySlug, settings } = useCms();
 
-  const article = id ? (getNewsById(id) || getNewsBySlug(id)) : undefined;
+  // A draft is not there for a visitor, also when they have the address
+  const found = id ? (getNewsById(id) || getNewsBySlug(id)) : undefined;
+  const article = found && found.isPublished !== false ? found : undefined;
 
   const formatDate = (dateStr: string) => {
     try {

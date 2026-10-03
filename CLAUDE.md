@@ -33,7 +33,7 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 ## 3. Hvor ting ligger
 | Sti | Innhold |
 |---|---|
-| `server.ts`, `server/publicApi.ts` | Express-server og de rene funksjonene bak det offentlige API-et |
+| `server.ts`, `server/publicApi.ts`, `server/pageMeta.ts` | Express-server, de rene funksjonene bak det offentlige API-et, og tittel og delingskort i HTML-en som sendes |
 | `src/App.tsx` | Ruter og de tre layoutene |
 | `src/firebase.ts` | Oppstart av Firebase |
 | `src/services/firestore.ts` | Lesing og skriving mot Firestore, uten React |
@@ -42,7 +42,7 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 | `src/data/collections.ts` | Navn på alle Firestore-samlinger |
 | `src/data/newDocuments.ts` | Bygger nye personer, grupper, samlinger, oppgaver, tildelinger og meldinger |
 | `src/hooks/` | Hooks per rolle: `memberHooks`, `leaderHooks`, `adminHooks`, `useHusfellesskap`. `useAppHooks.ts` eksporterer alle |
-| `src/utils/` | Rene funksjoner: `staffing` (bemanning), `visibility` (hva som er offentlig), `publicProfile` (samtykke), `firestoreData` (klargjøring før skriving), `menu` (sidetreet og menyen), `gatherings` (kommende samlinger og forsidens utvalg), `groups` (hvem som er med i en gruppe), `runSheet` (kjøreplanen), `dates`. For CMS-et: `themeUtils` og `colorScale` (design), `seoUtils` (søk og deling), `imageUpload` (bilder) |
+| `src/utils/` | Rene funksjoner: `staffing` (bemanning), `visibility` (hva som er offentlig), `publicProfile` (samtykke), `firestoreData` (klargjøring før skriving), `menu` (sidetreet og menyen), `gatherings` (kommende samlinger og forsidens utvalg), `groups` (hvem som er med i en gruppe), `runSheet` (kjøreplanen), `dates`. `routes` (hvilken flate en adresse hører til). For CMS-et: `themeUtils` og `colorScale` (design), `siteSeo` og `seoUtils` (søk og deling), `imageUpload` (bilder) |
 | `src/components/cms/CmsContentRenderer.tsx` | Tolker innholdsblokkene på en CMS-side og tegner dem |
 | `src/services/writeErrors.ts` | Melder mislykkede skrivinger til `WriteErrorBanner` |
 | `src/services/databaseAdmin.ts` | Fyll databasen med demodata / slett alt |
@@ -77,16 +77,16 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 - **Oppgavens status følger av tildelingene.** Sett aldri `task.status` for hånd. Alt som endrer hvem som står på en oppgave, eller hvor mange den trenger, går gjennom handlingene i `FirebaseDataContext.tsx`. De lagrer statusen fra `taskStatusFor` i samme skriving. Ledige plasser leses med `countSlots`, ikke fra statusen. Begge ligger i `src/utils/staffing.ts`.
 - **Tidspunkt lagres som eksakte øyeblikk.** Bruk `combineDateAndTimeToIso` fra `src/utils/dates.ts` når et skjema har dato og klokkeslett. En streng uten tidssone (`2026-10-18T11:00:00`) leses ulikt i nettleseren og på serveren.
 - **Test den ekte koden.** Regler og utregninger legges i `src/utils/` som rene funksjoner og testes derfra. En test skal aldri ha sin egen kopi av logikken.
-- **Interne ruter** må stå i `MIN_SIDE_SECTIONS` i `src/App.tsx`. Det styrer både layouten og om planleggingsdata lastes. Lenker til Min side skal gå til `/minside`; `/` er den offentlige forsiden.
+- **Interne ruter** må stå i `MIN_SIDE_SECTIONS` i `src/utils/routes.ts`. Det styrer layouten, om planleggingsdata lastes, og om serveren holder adressen utenfor søkeresultatene. Lenker til Min side skal gå til `/minside`; `/` er den offentlige forsiden.
+- **Tittel og delingskort bestemmes ett sted.** En ny offentlig side får tittelen og beskrivelsen sin i `seoForPath` i `src/utils/siteSeo.ts`. Serveren og nettleseren spør begge der. Sett aldri `document.title` i en side.
 
 ---
 
 ## 5. Kjente mangler
 Disse er ikke løst ennå. Rekkefølgen de skal løses i står i kapittel 14 i `PRODUKTDOKUMENTASJON.md`, og detaljene i `ARKITEKTUR.md`.
 
-- Opplastede bilder lagres som tekst inne i sidedokumentene.
-- Søk- og delefeltene settes inn i nettleseren, så delingskort i sosiale medier ser dem ikke.
-- Forsidens faste tekster og menighetens navn står flere steder i koden.
+- Opplastede bilder lagres som tekst inne i sidedokumentene, og kan derfor ikke brukes som delebilde.
+- Forsidens faste tekster står i koden.
 - Stab vises fra to kilder: personregisteret med samtykke, og `cms_staff` uten.
 - Det finnes ingen innlogging. Aktiv bruker velges i en testbryter.
 - `firestore.rules` slipper gjennom lesing og skriving uten innlogging.

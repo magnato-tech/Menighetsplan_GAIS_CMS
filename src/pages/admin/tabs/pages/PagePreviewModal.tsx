@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { CmsContentRenderer } from "../../../../components/cms/CmsContentRenderer";
 import { SITE_THEME_CLASS, getThemeCssVariables } from "../../../../utils/themeUtils";
+import { pageUrl } from "../../../../utils/menu";
+import { resolvePageSeo, shareableImageUrl } from "../../../../utils/siteSeo";
 import { formatNorwegianDateTime } from "../../../../utils/dates";
 
 export interface PagePreviewModalProps {
@@ -37,6 +39,25 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
   const [viewport, setViewport] = useState<ViewportType>("desktop");
   const { settings } = useCms();
   const themeCssVars = getThemeCssVariables(settings?.theme);
+
+  // The same details the server writes into the page, so this is what a search or a shared link will show
+  const seo = resolvePageSeo(
+    {
+      title: page.title,
+      metaDescription: page.metaDescription,
+      summary: page.summary,
+      ogImage: page.ogImage,
+      heroImage: page.heroImage,
+      churchName: settings.churchName,
+      siteName: settings.appName,
+    },
+    window.location.origin,
+    pageUrl({ slug: page.slug ?? "", linkUrl: page.linkUrl })
+  );
+  // An uploaded image has no address a sharing service can fetch
+  const shareImage =
+    shareableImageUrl(page.ogImage, window.location.origin) || shareableImageUrl(page.heroImage, window.location.origin);
+
   const churchInitials = settings.churchName
     .split(/\s+/)
     .map((word) => word.charAt(0))
@@ -169,10 +190,10 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
                 ? "bg-indigo-600 text-white shadow-xs"
                 : "text-slate-400 hover:text-white hover:bg-slate-900"
             }`}
-            title="Forhåndsvisning av søkeresultat og sosiale delingskort (OpenGraph)"
+            title="Forhåndsvisning av søkeresultat og delingskort"
           >
             <Globe className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">SEO & Deling</span>
+            <span className="hidden sm:inline">Søk og deling</span>
           </button>
         </div>
 
@@ -210,19 +231,16 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
                 <h3 className="font-bold text-base">Søkemotor- og deleforhåndsvisning</h3>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Her ser du hvordan siden blir indeksert av Google og hvordan lenken presenteres med tittel, bilde og beskrivelse når den deles på Facebook, X, Slack eller iMessage.
+                Slik ser siden ut i et søkeresultat, og slik vises lenken med tittel, bilde og beskrivelse når noen deler den.
               </p>
             </div>
 
-            {/* Google SERP Preview */}
+            {/* Search result */}
             <div className="bg-white rounded-2xl p-6 border border-stone-200/90 shadow-sm space-y-3">
               <div className="flex items-center justify-between border-b border-stone-100 pb-2">
                 <span className="text-xs font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
                   <Search className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Google-søkeresultat</span>
-                </span>
-                <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-semibold">
-                  Google Snippet
+                  <span>Søkeresultat</span>
                 </span>
               </div>
 
@@ -236,54 +254,50 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
                   <span className="font-mono text-stone-500">{page.slug || "side"}</span>
                 </div>
                 <h4 className="text-lg font-medium text-blue-800 hover:underline cursor-pointer tracking-tight">
-                  {page.title ? `${page.title} – ${settings.churchName}` : `Menighetsplan – ${settings.churchName}`}
+                  {seo.title}
                 </h4>
-                <p className="text-xs text-stone-600 leading-relaxed max-w-xl">
-                  {page.metaDescription?.trim() ||
-                    page.summary?.trim() ||
-                    `Velkommen til ${page.title || "siden"} i ${settings.churchName}.`}
-                </p>
+                <p className="text-xs text-stone-600 leading-relaxed max-w-xl">{seo.description}</p>
               </div>
 
               <div className="text-[11px] text-stone-400 pt-2 border-t border-stone-100 flex items-center justify-between">
                 <span>
-                  Meta-beskrivelse kilde:{" "}
+                  Beskrivelsen kommer fra:{" "}
                   <strong className="text-stone-700">
-                    {page.metaDescription ? "Egendefinert metaDescription" : "Reserve fra sammendrag/ingress"}
+                    {page.metaDescription?.trim()
+                      ? "feltet «Beskrivelse i søkeresultater»"
+                      : page.summary?.trim()
+                      ? "ingressen"
+                      : "en standardtekst"}
                   </strong>
                 </span>
-                <span>{(page.metaDescription || page.summary || "").length} tegn</span>
+                <span>{seo.description.length} tegn</span>
               </div>
             </div>
 
-            {/* Social Share Card (OpenGraph) */}
+            {/* Share card */}
             <div className="bg-white rounded-2xl p-6 border border-stone-200/90 shadow-sm space-y-4">
               <div className="flex items-center justify-between border-b border-stone-100 pb-2">
                 <span className="text-xs font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1.5">
                   <Share2 className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Sosialt delingskort (OpenGraph & Twitter Card)</span>
+                  <span>Delingskort i sosiale medier</span>
                 </span>
-                <span className="text-[11px] font-mono text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded font-semibold">
-                  og:image 1200×630
+                <span className="text-[11px] text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded font-semibold">
+                  Bilde: 1200 × 630 piksler
                 </span>
               </div>
 
               <div className="border border-stone-200 rounded-2xl overflow-hidden bg-stone-50 max-w-md shadow-xs">
-                {(page.ogImage || page.heroImage) ? (
+                {shareImage ? (
                   <div className="w-full h-48 bg-stone-200 relative overflow-hidden">
-                    <img
-                      src={page.ogImage || page.heroImage}
-                      alt={page.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/60 text-white text-[10px] font-mono font-medium backdrop-blur-xs">
-                      {page.ogImage ? "Egendefinert ogImage" : "Hero-bilde som og:image"}
+                    <img src={shareImage} alt={page.title} className="w-full h-full object-cover" />
+                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/60 text-white text-[10px] font-medium backdrop-blur-xs">
+                      {shareableImageUrl(page.ogImage, window.location.origin) ? "Eget delebilde" : "Hovedbildet"}
                     </div>
                   </div>
                 ) : (
                   <div className="w-full h-36 bg-gradient-to-br from-indigo-900 to-slate-900 flex flex-col items-center justify-center text-white p-4 text-center">
                     <span className="font-bold text-sm">{settings.churchName}</span>
-                    <span className="text-xs text-indigo-200 mt-1">Standard menighetsprofil</span>
+                    <span className="text-xs text-indigo-200 mt-1">Uten delebilde vises menighetens ikon</span>
                   </div>
                 )}
 
@@ -291,42 +305,17 @@ export const PagePreviewModal: React.FC<PagePreviewModalProps> = ({
                   <span className="text-[10px] uppercase font-mono tracking-wider text-stone-500 font-semibold block">
                     {window.location.host}
                   </span>
-                  <h4 className="text-sm font-bold text-stone-900 leading-snug">
-                    {page.title ? `${page.title} – ${settings.churchName}` : `Menighetsplan – ${settings.churchName}`}
-                  </h4>
-                  <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed">
-                    {page.metaDescription?.trim() ||
-                      page.summary?.trim() ||
-                      `Velkommen til ${page.title || "siden"} i ${settings.churchName}.`}
-                  </p>
+                  <h4 className="text-sm font-bold text-stone-900 leading-snug">{seo.title}</h4>
+                  <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed">{seo.description}</p>
                 </div>
               </div>
-            </div>
 
-            {/* Injected Head Metadata Code Inspector */}
-            <div className="bg-slate-900 rounded-2xl p-5 border border-slate-800 text-slate-300 space-y-3 font-mono text-xs shadow-lg">
-              <div className="flex items-center justify-between text-slate-400 border-b border-slate-800 pb-2">
-                <span className="font-bold text-white text-xs">Injisert i &lt;head&gt; av PublicStaticPage</span>
-                <span className="text-[10px] text-indigo-400">SEO / OpenGraph / Schema.org</span>
-              </div>
-              <pre className="overflow-x-auto text-[11px] leading-relaxed text-indigo-200 bg-slate-950 p-4 rounded-xl border border-slate-800">
-{`<title>${page.title ? `${page.title} – ${settings.churchName}` : settings.appName}</title>
-<meta name="description" content="${(page.metaDescription || page.summary || `Velkommen til ${settings.churchName}`).replace(/"/g, '&quot;')}" />
-<meta property="og:title" content="${page.title ? `${page.title} – ${settings.churchName}` : settings.appName}" />
-<meta property="og:description" content="${(page.metaDescription || page.summary || `Velkommen til ${settings.churchName}`).replace(/"/g, '&quot;')}" />
-<meta property="og:image" content="${page.ogImage || page.heroImage || "/icon.svg"}" />
-<meta property="og:type" content="website" />
-<meta name="twitter:card" content="summary_large_image" />
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebPage",
-  "name": "${page.title || ""}",
-  "description": "${(page.metaDescription || page.summary || "").replace(/"/g, '\\"')}",
-  "publisher": { "@type": "Church", "name": "${settings.churchName}" }
-}
-</script>`}
-              </pre>
+              {!shareImage && page.heroImage && (
+                <p className="text-xs text-stone-500">
+                  Hovedbildet er lastet opp fra maskinen og kan ikke brukes som delebilde. Legg inn en nettadresse til et
+                  bilde under «Søk og deling» i redigeringen.
+                </p>
+              )}
             </div>
           </div>
         ) : (

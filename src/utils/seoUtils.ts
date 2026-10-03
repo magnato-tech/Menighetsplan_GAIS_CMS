@@ -1,30 +1,18 @@
 /**
- * SEO & Social Metadata Utilities
- * Conforms to applet-seo skill guidelines for dynamic injection into document head:
+ * Puts a page's search and sharing details into the document head while the page is shown:
  * - <title> and <meta name="description">
  * - OpenGraph tags (og:title, og:description, og:image, og:url, og:type, og:site_name)
  * - Twitter / X Cards (twitter:card, twitter:title, twitter:description, twitter:image)
  * - Canonical link (<link rel="canonical">)
  * - Schema.org JSON-LD structured data (<script type="application/ld+json">)
+ *
+ * What the details are is decided in siteSeo.ts, which the server uses too.
  */
+import { PageSeoConfig, resolvePageSeo } from "./siteSeo";
 
-export interface PageSeoConfig {
-  title?: string;
-  metaDescription?: string;
-  ogImage?: string;
-  heroImage?: string;
-  summary?: string;
-  slug?: string;
-  canonicalUrl?: string;
-  churchName?: string;
-  siteName?: string;
-  type?: "website" | "article";
-}
+export { shareableImageUrl } from "./siteSeo";
+export type { PageSeoConfig } from "./siteSeo";
 
-const DEFAULT_CHURCH_NAME = "Lillesand Misjonskirke";
-const DEFAULT_SITE_TITLE = "Menighetsplan";
-const DEFAULT_DESCRIPTION =
-  "Enkel og varm handlingsportal for frivillige i menigheten til å se, ta og håndtere oppgaver.";
 const SCHEMA_SCRIPT_ID = "cms-page-seo-schema";
 
 function setOrCreateMeta(
@@ -81,18 +69,6 @@ function setOrCreateLink(rel: string, href: string): () => void {
   };
 }
 
-/**
- * The image as an address a sharing service can fetch, or undefined when it has none.
- * An uploaded image is stored as text in the page (a data URL) and cannot be fetched by anyone else.
- */
-export function shareableImageUrl(image: string | undefined, origin: string): string | undefined {
-  const trimmed = image?.trim();
-  if (!trimmed) return undefined;
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return `${origin}${trimmed}`;
-  return undefined;
-}
-
 function injectSchemaJsonLd(schemaData: object): () => void {
   if (typeof document === "undefined") return () => {};
 
@@ -120,81 +96,48 @@ function injectSchemaJsonLd(schemaData: object): () => void {
 export function injectPageSeo(config: PageSeoConfig): () => void {
   if (typeof document === "undefined") return () => {};
 
+  const seo = resolvePageSeo(config, window.location.origin, window.location.pathname);
   const cleanups: Array<() => void> = [];
-  const churchName = config.churchName || DEFAULT_CHURCH_NAME;
-  const siteName = config.siteName || DEFAULT_SITE_TITLE;
 
-  // 1. Title: specific, branded, avoid placeholders
-  const pageTitle = config.title
-    ? `${config.title} – ${churchName}`
-    : `${siteName} – ${churchName}`;
   const previousDocumentTitle = document.title;
-  document.title = pageTitle;
+  document.title = seo.title;
   cleanups.push(() => {
-    document.title = previousDocumentTitle || `${siteName} – ${churchName}`;
+    document.title = previousDocumentTitle || seo.title;
   });
 
-  // 2. Meta description (fallback priority: metaDescription -> summary -> default)
-  const description =
-    config.metaDescription?.trim() ||
-    config.summary?.trim() ||
-    (config.title
-      ? `Velkommen til ${config.title} i ${churchName}.`
-      : DEFAULT_DESCRIPTION);
+  cleanups.push(setOrCreateMeta("name", "description", seo.description));
+  // An address without a page is left out of search results
+  cleanups.push(setOrCreateMeta("name", "robots", seo.notFound ? "noindex" : "index, follow"));
 
-  cleanups.push(setOrCreateMeta("name", "description", description));
+  cleanups.push(setOrCreateMeta("property", "og:title", seo.title));
+  cleanups.push(setOrCreateMeta("property", "og:description", seo.description));
+  cleanups.push(setOrCreateMeta("property", "og:type", seo.type));
+  cleanups.push(setOrCreateMeta("property", "og:site_name", seo.siteName));
+  cleanups.push(setOrCreateMeta("property", "og:url", seo.url));
+  cleanups.push(setOrCreateLink("canonical", seo.url));
+  cleanups.push(setOrCreateMeta("property", "og:image", seo.image));
 
-  // 3. OpenGraph tags
-  cleanups.push(setOrCreateMeta("property", "og:title", pageTitle));
-  cleanups.push(setOrCreateMeta("property", "og:description", description));
-  cleanups.push(setOrCreateMeta("property", "og:type", config.type || "website"));
-  cleanups.push(setOrCreateMeta("property", "og:site_name", churchName));
-
-  const pageUrl =
-    config.canonicalUrl ||
-    (typeof window !== "undefined"
-      ? window.location.origin + window.location.pathname
-      : "");
-  if (pageUrl) {
-    cleanups.push(setOrCreateMeta("property", "og:url", pageUrl));
-    cleanups.push(setOrCreateLink("canonical", pageUrl));
-  }
-
-  // Resolved OG Image: fallback priority: ogImage -> heroImage -> church/app default icon
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const resolvedImage =
-    shareableImageUrl(config.ogImage, origin) ||
-    shareableImageUrl(config.heroImage, origin) ||
-    `${origin}/icon.svg`;
-
-  if (resolvedImage) {
-    cleanups.push(setOrCreateMeta("property", "og:image", resolvedImage));
-  }
-
-  // 4. Twitter / X Cards
   cleanups.push(setOrCreateMeta("name", "twitter:card", "summary_large_image"));
-  cleanups.push(setOrCreateMeta("name", "twitter:title", pageTitle));
-  cleanups.push(setOrCreateMeta("name", "twitter:description", description));
-  if (resolvedImage) {
-    cleanups.push(setOrCreateMeta("name", "twitter:image", resolvedImage));
-  }
+  cleanups.push(setOrCreateMeta("name", "twitter:title", seo.title));
+  cleanups.push(setOrCreateMeta("name", "twitter:description", seo.description));
+  cleanups.push(setOrCreateMeta("name", "twitter:image", seo.image));
 
-  // 5. Schema.org JSON-LD
-  const schemaPayload = {
-    "@context": "https://schema.org",
-    "@type": config.type === "article" ? "Article" : "WebPage",
-    name: config.title || siteName,
-    headline: config.title || siteName,
-    description: description,
-    url: pageUrl,
-    ...(resolvedImage ? { image: resolvedImage } : {}),
-    publisher: {
-      "@type": "Church",
-      name: churchName,
-      url: typeof window !== "undefined" ? window.location.origin : "",
-    },
-  };
-  cleanups.push(injectSchemaJsonLd(schemaPayload));
+  cleanups.push(
+    injectSchemaJsonLd({
+      "@context": "https://schema.org",
+      "@type": seo.type === "article" ? "Article" : "WebPage",
+      name: config.title || seo.title,
+      headline: config.title || seo.title,
+      description: seo.description,
+      url: seo.url,
+      image: seo.image,
+      publisher: {
+        "@type": "Church",
+        name: seo.siteName,
+        url: window.location.origin,
+      },
+    })
+  );
 
   return () => {
     // Run cleanup functions in reverse order
