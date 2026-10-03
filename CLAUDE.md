@@ -53,7 +53,7 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig. CI (`.gith
 | `src/components/gathering/` | Dialogene i samlingsvisningen (`GatheringDetailView.tsx`) |
 | `src/components/husfellesskap/` | Fanene og dialogene i husfellesskapsvisningen (`HusfellesskapView.tsx`) |
 | `src/pages/`, `src/components/` | Øvrige sider og komponenter |
-| `tests/` | Tester (Vitest). `assert(betingelse, navn)` fra `tests/assert.ts` registrerer én navngitt sjekk. `tests/support/offlineFirestore.ts` gir en ekte Firestore-klient uten nett til tester av datalaget |
+| `tests/` | Tester (Vitest). `tests/golden/` er fasiter tatt opp fra koden slik den var før oppryddingen: skjermene (`screens.golden.json`), teksttolkeren (`cms-content.golden.json`) og alt koden tilbød (`api-surface.golden.json`). `screens-golden.test.tsx`, `cms-content-golden.test.ts` og `api-surface.test.ts` kjører dagens kode mot dem. `assert(betingelse, navn)` fra `tests/assert.ts` registrerer én navngitt sjekk. `tests/support/offlineFirestore.ts` gir en ekte Firestore-klient uten nett til tester av datalaget |
 | `firestore.rules` | Sikkerhetsregler |
 
 ---
@@ -79,6 +79,7 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig. CI (`.gith
 - **Tidspunkt lagres som eksakte øyeblikk.** Bruk `combineDateAndTimeToIso` fra `src/utils/dates.ts` når et skjema har dato og klokkeslett. En streng uten tidssone (`2026-10-18T11:00:00`) leses ulikt i nettleseren og på serveren.
 - **Skjema: verdier og lagring er rene funksjoner.** Hva et skjema starter med og hva det lagrer ligger i `src/utils/` (`personForm`, `groupForm`, `pageEdit`) og testes derfra. Tilstanden ligger i én hook (`usePersonForm`, `useGroupForm`), og hver del av skjermbildet har egen fil. Ikke legg ett `useState` per felt i en side.
 - **Filer over 400 linjer deles.** `tests/code-rules.test.ts` feiler for en ny fil over grensen og for en av de store som vokser. Deler du en av dem, fjern den fra listen eller sett tallet ned. Samme test sjekker noen av reglene her: ingen tom `catch`, tittel bare i `App.tsx` og `seoUtils.ts`, `useTimedMessage` i stedet for `setTimeout`, ingen React i `src/utils/` og ingen utviklerord i skjermtekst.
+- **Fasitene i `tests/golden/` endres ikke for å få en test grønn.** Endrer du en skjerm eller tolkeren med vilje, ta opp fasiten på nytt og si hvorfor i commit. Fjerner du noe de siste årene har tilbudt, må det stå i listene øverst i `tests/api-surface.test.ts` med en grunn.
 - **Test den ekte koden.** Regler og utregninger legges i `src/utils/` som rene funksjoner og testes derfra. En test skal aldri ha sin egen kopi av logikken.
 - **Interne ruter** må stå i `MIN_SIDE_SECTIONS` i `src/utils/routes.ts`. Det styrer layouten, om planleggingsdata lastes, og om serveren holder adressen utenfor søkeresultatene. Lenker til Min side skal gå til `/minside`; `/` er den offentlige forsiden.
 - **Tittel og delingskort bestemmes ett sted.** En ny offentlig side får tittelen og beskrivelsen sin i `seoForPath` i `src/utils/siteSeo.ts`. Serveren og nettleseren spør begge der. Sett aldri `document.title` i en side.

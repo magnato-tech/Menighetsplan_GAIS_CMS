@@ -11,6 +11,7 @@ export interface PersonGridProfile extends PublicProfile {
 export type PersonGridResult =
   | { kind: "people"; profiles: PersonGridProfile[] }
   | { kind: "no-group" }
+  | { kind: "unknown-filter" }
   | { kind: "empty"; of: "group" | "ids" | "staff" };
 
 const GROUP_KEYWORDS = new Set(["lederskap"]);
@@ -41,7 +42,7 @@ function groupGrid(filter: string, persons: Person[], groups: Group[]): PersonGr
  * ever included, and nothing is filled in when the filter matches nobody.
  *
  * Filters: `stab`, `alle`, a category (`pastor`, `kategori=diakoni`), a group
- * (`lederskap`, `gruppe=<id or name>`), or person ids (`ids=a,b`).
+ * (`lederskap`, `gruppe=<id or name>`), or person ids (`ids=a,b`). Any other filter gives `unknown-filter`.
  */
 export function selectPersonGrid(filter: string, persons: Person[], groups: Group[]): PersonGridResult {
   const raw = filter.trim();
@@ -55,8 +56,11 @@ export function selectPersonGrid(filter: string, persons: Person[], groups: Grou
     return profiles.length ? { kind: "people", profiles } : { kind: "empty", of: "ids" };
   }
 
-  const category = key.replace(/^kategori=/, "");
   const byCategory = key.startsWith("kategori=") || CATEGORY_KEYWORDS.has(key);
+  // Anything else is a typo or a word from an older version; showing staff for it would be a guess
+  if (!byCategory && key !== "stab" && key !== "alle") return { kind: "unknown-filter" };
+
+  const category = key.replace(/^kategori=/, "");
   const profiles = persons
     .filter((p) => {
       if (key === "alle") return true;
@@ -72,4 +76,19 @@ export function selectPersonGrid(filter: string, persons: Person[], groups: Grou
     .map(toPublicProfile)
     .filter((p): p is PublicProfile => p !== null);
   return profiles.length ? { kind: "people", profiles } : { kind: "empty", of: "staff" };
+}
+
+const EMPTY_TEXT = {
+  group: "Ingen offentlige profiler med registrert samtykke i gruppen ennå.",
+  ids: "Ingen profiler funnet for de oppgitte personene.",
+  staff: "Ingen stabsmedlemmer med registrert samtykke funnet.",
+} as const;
+
+/** What the page says in place of the grid when there is nobody to show. */
+export function personGridMessage(result: Exclude<PersonGridResult, { kind: "people" }>, filter: string): string {
+  if (result.kind === "no-group") return "Ingen lederskapsgruppe funnet.";
+  if (result.kind === "unknown-filter") {
+    return `Ukjent valg i personblokken: «${filter}». Bruk stab, lederskap, pastor, kategori=…, gruppe=… eller ids=….`;
+  }
+  return EMPTY_TEXT[result.of];
 }

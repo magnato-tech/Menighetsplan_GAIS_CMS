@@ -1,6 +1,6 @@
 import { describe } from "vitest";
 import { assert } from "./assert";
-import { selectPersonGrid, type PersonGridResult } from "../src/utils/personGrid";
+import { personGridMessage, selectPersonGrid, type PersonGridResult } from "../src/utils/personGrid";
 import type { Group, Person } from "../src/types";
 
 const person = (id: string, extra: Partial<Person> = {}): Person =>
@@ -82,6 +82,26 @@ describe("Personblokken: grupper", () => {
   assert(names(selectPersonGrid("gruppe=finnes-ikke", persons, [styret])) === "no-group", "Ukjent gruppe faller ikke tilbake på en annen");
   assert(names(selectPersonGrid("gruppe=leder", persons, [styret])) === "leder,medlem,nestleder", "Gruppe finnes på navn");
   assert(names(selectPersonGrid("gruppe=styret", persons, [styret])) === "leder,medlem,nestleder", "Gruppe finnes på id");
+});
+
+describe("Personblokken: ukjente valg", () => {
+  const persons = [person("a", { isStaff: true })];
+  assert(names(selectPersonGrid("styre", persons, [])) === "unknown-filter", "Et ord koden ikke kjenner gir beskjed i stedet for å vise ansatte");
+  assert(names(selectPersonGrid("menighetsråd", persons, [])) === "unknown-filter", "Det gjelder også «menighetsråd», som ikke lenger er et stikkord");
+  assert(names(selectPersonGrid("pastr", persons, [])) === "unknown-filter", "Skrivefeil i et kategoriord gir beskjed");
+  assert(names(selectPersonGrid("STAB", persons, [])) === "a", "Store bokstaver spiller ingen rolle");
+});
+
+describe("Personblokken: hva siden sier når ingen vises", () => {
+  const say = (filter: string, persons: Person[] = [], groups: Group[] = []) => {
+    const r = selectPersonGrid(filter, persons, groups);
+    return r.kind === "people" ? "" : personGridMessage(r, filter);
+  };
+  assert(say("stab") === "Ingen stabsmedlemmer med registrert samtykke funnet.", "Ingen ansatte");
+  assert(say("lederskap") === "Ingen lederskapsgruppe funnet.", "Ingen lederskapsgruppe");
+  assert(say("ids=x") === "Ingen profiler funnet for de oppgitte personene.", "Ingen av personene har samtykket");
+  assert(say("gruppe=lyd", [], [group("lyd", { category: "tjenestegruppe" })]) === "Ingen offentlige profiler med registrert samtykke i gruppen ennå.", "Gruppen har ingen med samtykke");
+  assert(say("styre").startsWith("Ukjent valg i personblokken: «styre»."), "Ukjent valg nevner hva som ble skrevet");
 });
 
 describe("Personblokken: utvalgte personer", () => {

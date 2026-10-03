@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import { parseCmsContent } from "../../utils/cmsContent";
-import { type PersonGridProfile, selectPersonGrid } from "../../utils/personGrid";
+import { type PersonGridProfile, personGridMessage, selectPersonGrid } from "../../utils/personGrid";
 import {
   Info,
   AlertTriangle,
@@ -417,12 +417,6 @@ interface PersonGridRendererProps {
   filter: string;
 }
 
-const EMPTY_TEXT = {
-  group: "Ingen offentlige profiler med registrert samtykke i gruppen ennå.",
-  ids: "Ingen profiler funnet for de oppgitte personene.",
-  staff: "Ingen stabsmedlemmer med registrert samtykke funnet.",
-} as const;
-
 const PersonGridRenderer: React.FC<PersonGridRendererProps> = ({ filter }) => {
   const { allPersons, groups } = useFirebase();
   const result = selectPersonGrid(filter, allPersons, groups);
@@ -430,7 +424,8 @@ const PersonGridRenderer: React.FC<PersonGridRendererProps> = ({ filter }) => {
   if (result.kind !== "people") {
     return (
       <div className="p-4 rounded-xl bg-stone-100 text-stone-500 text-xs italic">
-        {result.kind === "no-group" ? "Ingen lederskapsgruppe funnet." : EMPTY_TEXT[result.of]}
+        {personGridMessage(result, filter)}
+      
       </div>
     );
   }

@@ -40,7 +40,7 @@ describe("Filstørrelse: en fil som får mer enn 400 linjer bør deles", () => {
     "src/pages/admin/tabs/TasksTab.tsx": 494,
     "src/pages/admin/tabs/pages/PagePreviewModal.tsx": 470,
     "src/pages/admin/tabs/StaffTab.tsx": 467,
-    "src/components/cms/CmsContentRenderer.tsx": 445,
+    "src/components/cms/CmsContentRenderer.tsx": 440,
     "src/pages/AdminTaskDetailPage.tsx": 436,
     "src/components/husfellesskap/MeetingTab.tsx": 435,
     "src/hooks/leaderHooks.ts": 425,

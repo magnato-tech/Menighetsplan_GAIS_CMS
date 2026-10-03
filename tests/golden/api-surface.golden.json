@@ -1,0 +1,715 @@
+{
+ "exports": {
+  "src/App.tsx": [
+   "default"
+  ],
+  "src/components/AdminAccessRequired.tsx": [
+   "AdminAccessRequired"
+  ],
+  "src/components/ConfirmDialog.tsx": [
+   "ConfirmDialog"
+  ],
+  "src/components/GatheringDetailView.tsx": [
+   "GatheringDetailView"
+  ],
+  "src/components/GroupChat.tsx": [
+   "GroupChat"
+  ],
+  "src/components/Header.tsx": [
+   "Header"
+  ],
+  "src/components/HusfellesskapChat.tsx": [
+   "GroupChat",
+   "HusfellesskapChat"
+  ],
+  "src/components/HusfellesskapView.tsx": [
+   "HusfellesskapView"
+  ],
+  "src/components/StaffingBadge.tsx": [
+   "StaffingBadge"
+  ],
+  "src/components/UserSwitcher.tsx": [
+   "UserQuickSwitcherBar",
+   "UserSwitcher"
+  ],
+  "src/components/WriteErrorBanner.tsx": [
+   "WriteErrorBanner"
+  ],
+  "src/components/admin/AdminCmsPanel.tsx": [
+   "AdminCmsPanel",
+   "AdminCmsPanelProps"
+  ],
+  "src/components/admin/DatabaseTestdataTab.tsx": [
+   "DatabaseTestdataTab",
+   "DatabaseTestdataTabProps"
+  ],
+  "src/components/cms/CmsContentRenderer.tsx": [
+   "CmsContentRenderer",
+   "ParsedBlock",
+   "parseCmsContent"
+  ],
+  "src/components/gathering/AssignPersonDialog.tsx": [
+   "AssignPersonDialog"
+  ],
+  "src/components/gathering/CreateTaskDialog.tsx": [
+   "CreateTaskDialog"
+  ],
+  "src/components/gathering/EditGatheringDialog.tsx": [
+   "EditGatheringDialog"
+  ],
+  "src/components/gathering/EditTaskDialog.tsx": [
+   "EditTaskDialog"
+  ],
+  "src/components/gathering/InstructionDialog.tsx": [
+   "InstructionDialog"
+  ],
+  "src/components/gathering/RunSheetRowCard.tsx": [
+   "RunSheetRowCard"
+  ],
+  "src/components/gathering/gatheringDetail.ts": [
+   "EditableTask",
+   "GatheringDetail",
+   "InstructionTarget"
+  ],
+  "src/components/husfellesskap/CreateMeetingDialog.tsx": [
+   "CreateMeetingDialog"
+  ],
+  "src/components/husfellesskap/EditMeetingDialog.tsx": [
+   "EditMeetingDialog"
+  ],
+  "src/components/husfellesskap/MeetingTab.tsx": [
+   "MeetingTab"
+  ],
+  "src/components/husfellesskap/MembersTab.tsx": [
+   "MembersTab"
+  ],
+  "src/components/husfellesskap/husfellesskapModel.ts": [
+   "HusfellesskapModel"
+  ],
+  "src/components/public/PublicFooter.tsx": [
+   "PublicFooter"
+  ],
+  "src/components/public/PublicNavbar.tsx": [
+   "PublicNavbar"
+  ],
+  "src/context/CmsContext.tsx": [
+   "CmsProvider",
+   "useCms"
+  ],
+  "src/context/FirebaseDataContext.tsx": [
+   "ActionResult",
+   "FirebaseDataContext",
+   "FirebaseDataContextType",
+   "FirebaseDataProvider",
+   "ModuleConfig",
+   "useFirebase"
+  ],
+  "src/data/cmsData.ts": [
+   "CmsDesignTheme",
+   "CmsNewsArticle",
+   "CmsPage",
+   "CmsSermon",
+   "CmsSettings",
+   "CmsStaffMember",
+   "THEME_PRESETS",
+   "ThemePreset",
+   "defaultCmsDesignTheme",
+   "formatYoutubeNoCookieUrl",
+   "initialCmsNews",
+   "initialCmsPages",
+   "initialCmsSermons",
+   "initialCmsSettings",
+   "initialCmsStaff",
+   "initialLeadershipDecisions"
+  ],
+  "src/data/collections.ts": [
+   "ALL_COLLECTIONS",
+   "CMS_COLLECTIONS",
+   "CMS_SETTINGS_DOC_ID",
+   "COLLECTIONS"
+  ],
+  "src/data/groupOptions.ts": [
+   "GROUP_CATEGORIES",
+   "MEETING_FREQUENCIES",
+   "WEEKDAYS"
+  ],
+  "src/data/mockData.ts": [
+   "initialAssignments",
+   "initialGatheringAttendances",
+   "initialGatherings",
+   "initialGroupMessages",
+   "initialGroups",
+   "initialPersons",
+   "initialTasks"
+  ],
+  "src/data/mockDocuments.ts": [
+   "CustomMockCounts",
+   "MockDocument",
+   "getCustomMockDocuments",
+   "getMockDocuments"
+  ],
+  "src/data/newDocuments.ts": [
+   "NewGatheringInput",
+   "NewGroupInput",
+   "NewPersonInput",
+   "NewTaskInput",
+   "buildAssignment",
+   "buildAttendance",
+   "buildGathering",
+   "buildGroup",
+   "buildGroupMessage",
+   "buildPerson",
+   "buildTask"
+  ],
+  "src/firebase.ts": [
+   "FirestoreErrorInfo",
+   "OperationType",
+   "auth",
+   "db",
+   "handleFirestoreError",
+   "testConnection"
+  ],
+  "src/hooks/adminHooks.ts": [
+   "AdminGatheringItem",
+   "AdminTaskItem",
+   "useAdminDashboard",
+   "useAdminGroupDetail",
+   "useAdminPersonDetail",
+   "useAdminTaskDetail"
+  ],
+  "src/hooks/leaderHooks.ts": [
+   "LeaderGatheringItem",
+   "LeaderGroupData",
+   "useLeaderDashboard",
+   "useLeaderGatheringDetail",
+   "useLeaderGroupDetail"
+  ],
+  "src/hooks/memberHooks.ts": [
+   "useCurrentUser",
+   "useModuleConfig",
+   "useMyTasks",
+   "useTaskDetail"
+  ],
+  "src/hooks/useAppHooks.ts": [],
+  "src/hooks/useHusfellesskap.ts": [
+   "useGroupRoom",
+   "useHusfellesskap"
+  ],
+  "src/hooks/useTimedMessage.ts": [
+   "useTimedMessage"
+  ],
+  "src/main.tsx": [],
+  "src/pages/AdminGatheringDetailPage.tsx": [
+   "AdminGatheringDetailPage"
+  ],
+  "src/pages/AdminGroupDetailPage.tsx": [
+   "AdminGroupDetailPage"
+  ],
+  "src/pages/AdminPersonDetailPage.tsx": [
+   "AdminPersonDetailPage"
+  ],
+  "src/pages/AdminSettingsPage.tsx": [
+   "AdminSettingsPage"
+  ],
+  "src/pages/AdminTaskDetailPage.tsx": [
+   "AdminTaskDetailPage"
+  ],
+  "src/pages/HusfellesskapPage.tsx": [
+   "HusfellesskapPage"
+  ],
+  "src/pages/LeaderGatheringDetailPage.tsx": [
+   "LeaderGatheringDetailPage"
+  ],
+  "src/pages/LeaderGroupDetailPage.tsx": [
+   "LeaderGroupDetailPage"
+  ],
+  "src/pages/LeaderPage.tsx": [
+   "LeaderPage"
+  ],
+  "src/pages/ModulePlaceholderPage.tsx": [
+   "ModulePlaceholderPage"
+  ],
+  "src/pages/MyPage.tsx": [
+   "MyPage"
+  ],
+  "src/pages/TaskDetailPage.tsx": [
+   "TaskDetailPage"
+  ],
+  "src/pages/admin/AdminCmsPanel.tsx": [
+   "AdminCmsPanel",
+   "AdminCmsPanelProps"
+  ],
+  "src/pages/admin/AdminStudio.tsx": [
+   "AdminStudio"
+  ],
+  "src/pages/admin/StudioSidebar.tsx": [
+   "StudioSidebar"
+  ],
+  "src/pages/admin/studio.ts": [
+   "STUDIO_TABS",
+   "ShowFeedback",
+   "StudioData",
+   "StudioTab",
+   "countPublicGatherings",
+   "countUrgentTasks",
+   "studioTabUrl",
+   "toStudioTab"
+  ],
+  "src/pages/admin/tabs/DashboardTab.tsx": [
+   "DashboardTab"
+  ],
+  "src/pages/admin/tabs/DatabaseTab.tsx": [
+   "DatabaseTab"
+  ],
+  "src/pages/admin/tabs/GatheringsTab.tsx": [
+   "GatheringsTab"
+  ],
+  "src/pages/admin/tabs/GroupsTab.tsx": [
+   "GroupsTab"
+  ],
+  "src/pages/admin/tabs/NewsTab.tsx": [
+   "NewsTab"
+  ],
+  "src/pages/admin/tabs/PagesTab.tsx": [
+   "AdminCmsPanel",
+   "PagesTab",
+   "PagesTabProps"
+  ],
+  "src/pages/admin/tabs/PersonsTab.tsx": [
+   "PersonsTab"
+  ],
+  "src/pages/admin/tabs/SermonsTab.tsx": [
+   "SermonsTab"
+  ],
+  "src/pages/admin/tabs/SiteSettingsTab.tsx": [
+   "SiteSettingsTab"
+  ],
+  "src/pages/admin/tabs/StaffTab.tsx": [
+   "StaffTab"
+  ],
+  "src/pages/admin/tabs/TasksTab.tsx": [
+   "TasksTab"
+  ],
+  "src/pages/admin/tabs/ThemeTab.tsx": [
+   "ThemeTab"
+  ],
+  "src/pages/admin/tabs/VisibilityTab.tsx": [
+   "VisibilityTab"
+  ],
+  "src/pages/admin/tabs/pages/ContentBlockPickerModal.tsx": [
+   "CONTENT_BLOCKS",
+   "ContentBlockDefinition",
+   "ContentBlockPickerModal"
+  ],
+  "src/pages/admin/tabs/pages/HeroImageUploader.tsx": [
+   "HeroImageUploader"
+  ],
+  "src/pages/admin/tabs/pages/PageDeleteDialog.tsx": [
+   "PageDeleteDialog"
+  ],
+  "src/pages/admin/tabs/pages/PageEditModal.tsx": [
+   "PageEditModal"
+  ],
+  "src/pages/admin/tabs/pages/PagePreviewModal.tsx": [
+   "PagePreviewModal",
+   "PagePreviewModalProps"
+  ],
+  "src/pages/admin/tabs/pages/PageTreeList.tsx": [
+   "PageTreeList"
+  ],
+  "src/pages/leaderGroup/GroupActivities.tsx": [
+   "GroupActivities"
+  ],
+  "src/pages/leaderGroup/GroupMembers.tsx": [
+   "GroupMembers"
+  ],
+  "src/pages/leaderGroup/GroupMetaForm.tsx": [
+   "GroupMetaForm"
+  ],
+  "src/pages/leaderGroup/GroupRoleBar.tsx": [
+   "GroupRoleBar"
+  ],
+  "src/pages/leaderGroup/GroupScheduleCard.tsx": [
+   "GroupScheduleCard"
+  ],
+  "src/pages/leaderGroup/leaderGroupDetail.ts": [
+   "LeaderGroupDetail"
+  ],
+  "src/pages/myPage/AttentionModal.tsx": [
+   "AttentionModal"
+  ],
+  "src/pages/myPage/AttentionSection.tsx": [
+   "AttentionSection"
+  ],
+  "src/pages/myPage/MobileBottomNav.tsx": [
+   "MobileBottomNav"
+  ],
+  "src/pages/myPage/MyGroupsSection.tsx": [
+   "MyGroupsSection"
+  ],
+  "src/pages/myPage/MyTasksModal.tsx": [
+   "MyTasksModal"
+  ],
+  "src/pages/myPage/NextChurchEventSection.tsx": [
+   "NextChurchEventSection"
+  ],
+  "src/pages/myPage/NextForYouSection.tsx": [
+   "NextForYouSection"
+  ],
+  "src/pages/myPage/attention.ts": [
+   "AttentionItem",
+   "AttentionText",
+   "attentionText"
+  ],
+  "src/pages/myPage/useMyPage.ts": [
+   "MyPageModel",
+   "useMyPage"
+  ],
+  "src/pages/public/PublicArticlePage.tsx": [
+   "PublicArticlePage"
+  ],
+  "src/pages/public/PublicCalendarPage.tsx": [
+   "PublicCalendarPage"
+  ],
+  "src/pages/public/PublicGroupsPage.tsx": [
+   "PublicGroupsPage"
+  ],
+  "src/pages/public/PublicHomePage.tsx": [
+   "PublicHomePage"
+  ],
+  "src/pages/public/PublicLeadershipPage.tsx": [
+   "PublicLeadershipPage"
+  ],
+  "src/pages/public/PublicSermonsPage.tsx": [
+   "PublicSermonsPage"
+  ],
+  "src/pages/public/PublicStaticPage.tsx": [
+   "PublicStaticPage"
+  ],
+  "src/services/databaseAdmin.ts": [
+   "ClearTestdataOptions",
+   "DatabaseAdminResult",
+   "GenerateTestdataOptions",
+   "TestdataCounts",
+   "TestdataServiceResult",
+   "clearPlannerTestData",
+   "clearTestdata",
+   "deleteAllData",
+   "deleteGroupsTestdata",
+   "deletePersonsTestdata",
+   "deleteRolesTestdata",
+   "generate32TestPersons",
+   "generateTestdata",
+   "populateCustomMockData",
+   "populateWithMockData"
+  ],
+  "src/services/firestore.ts": [
+   "addGroupMember",
+   "createDocument",
+   "deleteDocument",
+   "deletePage",
+   "removeGroupMember",
+   "reorderPages",
+   "saveAssignmentChange",
+   "setDocument",
+   "setGroupNotifications",
+   "subscribeCollection",
+   "updateDocument"
+  ],
+  "src/services/testdataService.ts": [
+   "ClearTestdataOptions",
+   "GenerateTestdataOptions",
+   "TestdataCounts",
+   "TestdataServiceResult",
+   "clearPlannerTestData",
+   "clearTestdata",
+   "deleteGroupsTestdata",
+   "deletePersonsTestdata",
+   "deleteRolesTestdata",
+   "generate32TestPersons",
+   "generateTestdata",
+   "populateCustomMockData"
+  ],
+  "src/services/writeErrors.ts": [
+   "WriteError",
+   "clearWriteError",
+   "getWriteError",
+   "reportWriteError",
+   "subscribeToWriteError"
+  ],
+  "src/types.ts": [
+   "Assignment",
+   "Event",
+   "Gathering",
+   "GatheringAttendance",
+   "GatheringVisibility",
+   "Group",
+   "GroupCategory",
+   "GroupMessage",
+   "MeetingSchedule",
+   "Person",
+   "ProgramItem",
+   "Task",
+   "UnavailablePeriod"
+  ],
+  "src/utils/chunk.ts": [
+   "chunk"
+  ],
+  "src/utils/colorScale.ts": [
+   "ACCENT_LADDER",
+   "ColorScale",
+   "PRIMARY_LADDER",
+   "SCALE_STEPS",
+   "ScaleStep",
+   "ShadeLadder",
+   "buildColorScale",
+   "contrastRatio",
+   "hexToOklch",
+   "isHexColor",
+   "oklchToHex",
+   "parseHex"
+  ],
+  "src/utils/dates.ts": [
+   "combineDateAndTimeToIso",
+   "formatChatMessageTime",
+   "formatCompactGatheringSubtitle",
+   "formatNorwegianDateTime",
+   "monthKeyOf",
+   "monthOptionsOf",
+   "parseIsoToDateAndTime"
+  ],
+  "src/utils/firestoreData.ts": [
+   "forUpdate",
+   "sanitizeForFirestore"
+  ],
+  "src/utils/gatherings.ts": [
+   "DEFAULT_LOCATION",
+   "Highlight",
+   "isWorshipService",
+   "locationOf",
+   "pickHighlight",
+   "upcomingPublicGatherings"
+  ],
+  "src/utils/groups.ts": [
+   "allGroupPersonIds",
+   "isInGroup"
+  ],
+  "src/utils/id.ts": [
+   "newId"
+  ],
+  "src/utils/imageUpload.ts": [
+   "CHURCH_HERO_PRESETS",
+   "CompressionOptions",
+   "compressImageFile"
+  ],
+  "src/utils/menu.ts": [
+   "PageNode",
+   "buildPageTree",
+   "buildPublicMenu",
+   "byMenuOrder",
+   "findOrphanPages",
+   "getMenuOrder",
+   "getParentId",
+   "isPagePublished",
+   "pageUrl",
+   "withoutPage"
+  ],
+  "src/utils/publicProfile.ts": [
+   "PublicProfile",
+   "PublicProfileInput",
+   "publicProfileFields",
+   "publicProfilesOf",
+   "toPublicProfile"
+  ],
+  "src/utils/routes.ts": [
+   "MIN_SIDE_SECTIONS",
+   "isAdminStudioPath",
+   "isMinSidePath",
+   "isPublicPath"
+  ],
+  "src/utils/runSheet.ts": [
+   "RunSheetRow",
+   "RunSheetTask",
+   "buildRunSheet",
+   "meetingTimeOf"
+  ],
+  "src/utils/seoUtils.ts": [
+   "PageSeoConfig",
+   "injectPageSeo",
+   "shareableImageUrl"
+  ],
+  "src/utils/siteSeo.ts": [
+   "PageSeoConfig",
+   "ResolvedSeo",
+   "SiteContent",
+   "resolvePageSeo",
+   "seoForPath",
+   "shareableImageUrl"
+  ],
+  "src/utils/staffing.ts": [
+   "AssignedPerson",
+   "AssignmentChange",
+   "RESPONSE_LABELS",
+   "StaffingColor",
+   "StaffingStatusResult",
+   "TaskSlots",
+   "TaskStaffingStatus",
+   "applyAssignmentChange",
+   "calculateTaskStaffingStatus",
+   "countSlots",
+   "describeAssignments",
+   "getStaffingStatus",
+   "holdsSlot",
+   "isAcuteForfall",
+   "taskStatusFor"
+  ],
+  "src/utils/themeUtils.ts": [
+   "SITE_THEME_CLASS",
+   "ThemeCssVariables",
+   "getThemeCssVariables"
+  ],
+  "src/utils/validation.ts": [
+   "ValidationError",
+   "validateEvent",
+   "validateGathering"
+  ],
+  "src/utils/visibility.ts": [
+   "isGroupPublic",
+   "isPubliclyVisible",
+   "visibilityAfterToggle",
+   "visibilityFields",
+   "visibilityOf"
+  ],
+  "server/pageMeta.ts": [
+   "markAsPrivate",
+   "renderSeoIntoHtml"
+  ],
+  "server/publicApi.ts": [
+   "DEFAULT_LOCATION",
+   "GatheringDoc",
+   "GroupDoc",
+   "PublicGathering",
+   "PublicGatheringOptions",
+   "RecurringEvent",
+   "keywordTags",
+   "toContractV1",
+   "toOsloIso",
+   "toPublicGatherings",
+   "toPublicGroups",
+   "toRecurringEvents",
+   "toV11"
+  ],
+  "server.ts": []
+ },
+ "contexts": {
+  "useFirebase": [
+   "addGroupMember",
+   "addPerson",
+   "allPersons",
+   "assignTaskToPerson",
+   "assignments",
+   "attendances",
+   "createGathering",
+   "createGroup",
+   "createTask",
+   "currentUser",
+   "currentUserId",
+   "deleteGathering",
+   "deleteGroupMessage",
+   "deleteTask",
+   "gatherings",
+   "getAllAssignmentsForTask",
+   "getGatheringAttendances",
+   "getGatheringById",
+   "getGatheringsForGroup",
+   "getGroupById",
+   "getGroupMessages",
+   "getGroupNotificationsEnabled",
+   "getPersonAttendance",
+   "getPersonById",
+   "getTaskById",
+   "getTasksForPerson",
+   "getUpcomingGatheringForGroup",
+   "getUserGroups",
+   "groupMessages",
+   "groups",
+   "isFirestoreConnected",
+   "isPersonInGroup",
+   "moduleConfig",
+   "removeAssignment",
+   "removeGroupMember",
+   "reportAbsence",
+   "respondToGathering",
+   "sendGatheringInvitation",
+   "sendGroupMessage",
+   "setCurrentUserId",
+   "setModuleStatus",
+   "tasks",
+   "toggleGroupNotifications",
+   "toggleKalender",
+   "toggleMeldinger",
+   "updateAssignmentStatus",
+   "updateGathering",
+   "updateGroup",
+   "updateGroupName",
+   "updatePerson",
+   "updateTask",
+   "updateTaskInstruction",
+   "updateTaskNeededCount"
+  ],
+  "useCms": [
+   "deleteNews",
+   "deletePage",
+   "deleteSermon",
+   "deleteStaff",
+   "getNewsById",
+   "getNewsBySlug",
+   "getPageBySlug",
+   "news",
+   "pages",
+   "reorderPages",
+   "saveNews",
+   "savePage",
+   "saveSermon",
+   "saveSettings",
+   "saveStaff",
+   "sermons",
+   "settings",
+   "staff"
+  ]
+ },
+ "routes": [
+  "*",
+  "*",
+  "/",
+  "/:slug",
+  "/admin/gruppe/:groupId",
+  "/admin/oppgave/:taskId",
+  "/admin/person/:personId",
+  "/admin/samling/:gatheringId",
+  "/admin/settings",
+  "/artikkel/:id",
+  "/fellesskap",
+  "/gruppe/:groupId",
+  "/grupper",
+  "/husfellesskap",
+  "/husfellesskap/:groupId",
+  "/hva-skjer",
+  "/kalender",
+  "/kontakt",
+  "/leder",
+  "/leder/gruppe/:groupId",
+  "/leder/samling/:gatheringId",
+  "/lederskap",
+  "/meldinger",
+  "/minside",
+  "/nettside",
+  "/nettside/:slug",
+  "/om-oss",
+  "/oppgave/:taskId",
+  "/samling/:gatheringId",
+  "/side/:slug",
+  "/stab",
+  "/taler"
+ ]
+}
