@@ -1,0 +1,157 @@
+{
+ "steps": [
+  {
+   "step": "initial cards",
+   "html": "83bb3ce60532fc9c",
+   "extra": "3 av 3 aktiviteter"
+  },
+  {
+   "step": "month: november",
+   "html": "2c8d0dcdd2a7efaf"
+  },
+  {
+   "step": "november and green: nothing",
+   "html": "46e7076695806b61"
+  },
+  {
+   "step": "all months, green",
+   "html": "e3bb8c9244b030e0"
+  },
+  {
+   "step": "yellow",
+   "html": "f5a8ea4da984c63e"
+  },
+  {
+   "step": "month options",
+   "html": "[[\"all\",\"Alle måneder\"],[\"2026-10\",\"Okt 2026\"],[\"2026-11\",\"Nov 2026\"]]"
+  },
+  {
+   "step": "urgent shortcut resets month and filters red",
+   "html": "2c8d0dcdd2a7efaf",
+   "extra": [
+    "all",
+    "red"
+   ]
+  },
+  {
+   "step": "expand g1",
+   "html": "a9c8d9fdd78c30d5"
+  },
+  {
+   "step": "collapse g1",
+   "html": "83bb3ce60532fc9c"
+  },
+  {
+   "step": "expand g3",
+   "html": "376364dad22e15c1"
+  },
+  {
+   "step": "expand g2 closes g3",
+   "html": "4717877177ac3776"
+  },
+  {
+   "step": "quick assign open on t4",
+   "html": "b6a6613f20c82dbc"
+  },
+  {
+   "step": "quick assign moves to t5",
+   "html": "55a4c386b4fab5f5"
+  },
+  {
+   "step": "quick assign closed again",
+   "html": "376364dad22e15c1"
+  },
+  {
+   "step": "assigned directly closes the drawer",
+   "html": "376364dad22e15c1"
+  },
+  {
+   "step": "failed assignment keeps the drawer",
+   "html": "b6a6613f20c82dbc"
+  },
+  {
+   "step": "open detail from card",
+   "html": "/leder/samling/g3"
+  },
+  {
+   "step": "table",
+   "html": "8a7a88011c848527",
+   "extra": 6
+  },
+  {
+   "step": "table rows",
+   "html": "[\"Søndag 18. okt. kl. 09:00GudstjenesteKirkenLydKariBekreftetÅpne\",\"Søndag 25. okt. kl. 17:00BønnemøteKaffeUbesattUbesattTildel vikarÅpne\",\"Søndag 25. okt. kl. 17:00BønnemøteBildeOlaForespurtÅpne\",\"Søndag 29. nov. kl. 12:00JulemarkedTorgetVertKariForfallTildel vikarÅpne\",\"Søndag 29. nov. kl. 12:00JulemarkedTorgetVertOlaAvslåttTildel vikarÅpne\",\"Søndag 29. nov. kl. 12:00JulemarkedTorgetBarnekirkeUbesattUbesattTildel vikarÅpne\"]"
+  },
+  {
+   "step": "table, red",
+   "html": "6dc077ea8e8ccbb2",
+   "extra": 3
+  },
+  {
+   "step": "table, red in october: empty",
+   "html": "f7866987d7e38087"
+  },
+  {
+   "step": "table: assign substitute goes to cards with the drawer open",
+   "html": "59bf404a0598de1d"
+  },
+  {
+   "step": "open detail from table",
+   "html": "/leder/samling/g2"
+  },
+  {
+   "step": "no access: cards have no quick assign",
+   "html": "bc9411f5fed03868",
+   "extra": false
+  },
+  {
+   "step": "no access: table has no assign button",
+   "html": "99bfa96dc1a29234",
+   "extra": 0
+  },
+  {
+   "step": "no activities at all",
+   "html": "c2b9808c0c4dfff1"
+  },
+  {
+   "step": "no activities, table",
+   "html": "a674e34fc9295826"
+  },
+  {
+   "step": "all covered banner",
+   "html": "72e19b3c1217d975"
+  }
+ ],
+ "calls": [
+  [
+   "assign",
+   "t4",
+   "p3",
+   "confirmed"
+  ],
+  [
+   "toast",
+   "Oppgaven ble direkte tildelt Per!"
+  ],
+  [
+   "assign",
+   "t4",
+   "p2",
+   "confirmed"
+  ],
+  [
+   "toast",
+   "Personen er opptatt."
+  ],
+  [
+   "assign",
+   "t4",
+   "p1",
+   "confirmed"
+  ],
+  [
+   "toast",
+   "Kunne ikke tildele oppgaven."
+  ]
+ ]
+}
