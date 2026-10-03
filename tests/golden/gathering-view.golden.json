@@ -1,0 +1,391 @@
+{
+ "steps": [
+  {
+   "step": "leader: initial",
+   "html": "e07f27928dcc434d",
+   "extra": {
+    "rows": [
+     "task-t1",
+     "program-0",
+     "program-1",
+     "program-2",
+     "task-t3",
+     "task-t4",
+     "task-t5"
+    ],
+    "barometer": "2 oppgaver krever oppfølgingTotal dekning: 2 av 5 oppgaver dekket • Min gruppe (Lyd og bilde): 1/22/5",
+    "back": [
+     "/leder?tab=samlinger",
+     "Tilbake til samlingsoversikt"
+    ]
+   }
+  },
+  {
+   "step": "leader: needs action",
+   "html": "4f841a035e1afc1e",
+   "extra": [
+    "program-1",
+    "task-t3",
+    "task-t4",
+    "task-t5"
+   ]
+  },
+  {
+   "step": "leader: my group",
+   "html": "4389fb7c966a70c9",
+   "extra": [
+    "task-t1",
+    "task-t3"
+   ]
+  },
+  {
+   "step": "group pill: coffee",
+   "html": "acacf8d0ca48ae91",
+   "extra": [
+    "program-1",
+    "task-t4",
+    "task-t5"
+   ]
+  },
+  {
+   "step": "my group within coffee group: empty",
+   "html": "3b2ebdda5ffd41de",
+   "extra": []
+  },
+  {
+   "step": "reset filters",
+   "html": "e07f27928dcc434d",
+   "extra": [
+    "task-t1",
+    "program-0",
+    "program-1",
+    "program-2",
+    "task-t3",
+    "task-t4",
+    "task-t5"
+   ]
+  },
+  {
+   "step": "group pill: all",
+   "html": "e07f27928dcc434d"
+  },
+  {
+   "step": "print",
+   "html": "1"
+  },
+  {
+   "step": "person menu opens",
+   "html": "412b11ba97fb5810"
+  },
+  {
+   "step": "person menu closes on second click",
+   "html": "e07f27928dcc434d"
+  },
+  {
+   "step": "status changed: withdrawn",
+   "html": "00b29ef5e6055faa",
+   "extra": {
+    "calls": [
+     [
+      "status",
+      "as1",
+      "withdrawn"
+     ]
+    ],
+    "toast": "Status for Kari ble endret til Forfall."
+   }
+  },
+  {
+   "step": "status changed: confirmed",
+   "html": "9595d9001c3db162",
+   "extra": {
+    "calls": [
+     [
+      "status",
+      "as1",
+      "withdrawn"
+     ],
+     [
+      "status",
+      "as3",
+      "confirmed"
+     ]
+    ],
+    "toast": "Status for Per ble endret til Akseptert."
+   }
+  },
+  {
+   "step": "status changed: pending",
+   "html": "4b9323460d1fd1ca",
+   "extra": {
+    "toast": "Status for Per ble endret til Forespurt."
+   }
+  },
+  {
+   "step": "status change fails and tells why, menu stays",
+   "html": "b93f83406f470181",
+   "extra": {
+    "toast": "Ikke lov."
+   }
+  },
+  {
+   "step": "status change fails without a reason",
+   "html": "d7f012a59a5bd5e7",
+   "extra": {
+    "toast": "Kunne ikke oppdatere status."
+   }
+  },
+  {
+   "step": "person removed",
+   "html": "5e2cdad83156bf66",
+   "extra": {
+    "calls": [
+     [
+      "status",
+      "as1",
+      "withdrawn"
+     ],
+     [
+      "status",
+      "as3",
+      "confirmed"
+     ],
+     [
+      "status",
+      "as3",
+      "pending"
+     ],
+     [
+      "status",
+      "as3",
+      "pending"
+     ],
+     [
+      "status",
+      "as3",
+      "pending"
+     ],
+     [
+      "remove",
+      "as3"
+     ]
+    ],
+    "toast": "Per ble fjernet fra oppgaven."
+   }
+  },
+  {
+   "step": "removal fails",
+   "html": "c183977cb5406015",
+   "extra": {
+    "toast": "Finnes ikke."
+   }
+  },
+  {
+   "step": "removal fails without a reason",
+   "html": "cf9add3b4bed72a6",
+   "extra": {
+    "toast": "Kunne ikke fjerne tildeling."
+   }
+  },
+  {
+   "step": "leader buttons",
+   "html": "{\"assign\":[\"btn-intervene-assign-t1\",\"btn-intervene-assign-t3\"],\"edit\":0,\"instruction\":[\"btn-instruction-task-t1\",\"btn-instruction-program-1\"],\"adminButtons\":[false,false]}"
+  },
+  {
+   "step": "instruction dialog for a task",
+   "html": "556833792a18e0d2",
+   "extra": "{\"task\":{\"taskId\":\"t1\",\"title\":\"Lyd\",\"instruction\":\"Møt opp kl. 9:30 for rigging\",\"time\":\"09:30\",\"groupName\":\"Lyd og bilde\"},\"canAdminister\":false}"
+  },
+  {
+   "step": "dialog toast reaches the banner",
+   "html": "8b281811cd5621b6",
+   "extra": "Hei fra InstructionDialog"
+  },
+  {
+   "step": "instruction dialog closed",
+   "html": "904705c20b3e7f7a"
+  },
+  {
+   "step": "instruction dialog for a programme item with a task",
+   "html": "277bfe42e4e9dc16",
+   "extra": "{\"task\":{\"taskId\":\"t2\",\"title\":\"Lovsang – Kaffe\",\"instruction\":\"Brygg kaffe\",\"time\":\"10:15\",\"groupName\":\"Kaffe og vertskap\"},\"canAdminister\":false}"
+  },
+  {
+   "step": "assign dialog",
+   "html": "63523528e5a99dc0",
+   "extra": "{\"taskId\":\"t3\",\"canAdminister\":false}"
+  },
+  {
+   "step": "assign dialog closed",
+   "html": "904705c20b3e7f7a"
+  },
+  {
+   "step": "admin: initial",
+   "html": "dcc25be00f725be8",
+   "extra": {
+    "rows": [
+     "task-t1",
+     "program-0",
+     "program-1",
+     "program-2",
+     "task-t3",
+     "task-t4",
+     "task-t5"
+    ],
+    "barometer": "2 oppgaver krever oppfølgingTotal dekning: 2 av 5 oppgaver dekket2/5",
+    "back": [
+     "/admin?tab=planlegger-samlinger",
+     "Tilbake til arrangementer"
+    ],
+    "tabs": [
+     false
+    ]
+   }
+  },
+  {
+   "step": "admin buttons",
+   "html": "{\"edit\":5,\"assign\":5}"
+  },
+  {
+   "step": "edit gathering dialog",
+   "html": "dbced27f4ffbcb31",
+   "extra": "{\"gatheringId\":\"s1\"}"
+  },
+  {
+   "step": "edit gathering dialog closed",
+   "html": "dcc25be00f725be8"
+  },
+  {
+   "step": "create task dialog starts closed",
+   "html": "{\"gatheringId\":\"s1\",\"open\":false}"
+  },
+  {
+   "step": "create task dialog open",
+   "html": "4baa16becf0a1835",
+   "extra": "{\"gatheringId\":\"s1\",\"open\":true}"
+  },
+  {
+   "step": "create task dialog closed",
+   "html": "dcc25be00f725be8",
+   "extra": "{\"gatheringId\":\"s1\",\"open\":false}"
+  },
+  {
+   "step": "edit task dialog (needed count 2)",
+   "html": "85d8ca993bb42ecb",
+   "extra": "{\"task\":{\"id\":\"t2\",\"title\":\"Kaffe\",\"groupId\":\"g2\",\"neededCount\":2,\"description\":\"Brygg kaffe\",\"instruction\":\"\"}}"
+  },
+  {
+   "step": "edit task dialog (defaults: need 1, empty texts)",
+   "html": "3ced9f1e523b96e7",
+   "extra": "{\"task\":{\"id\":\"t4\",\"title\":\"Lys\",\"groupId\":\"g2\",\"neededCount\":1,\"description\":\"\",\"instruction\":\"\"}}"
+  },
+  {
+   "step": "admin assign dialog",
+   "html": "bef6e13c0c09cd10",
+   "extra": "{\"taskId\":\"t4\",\"canAdminister\":true}"
+  },
+  {
+   "step": "admin opening in leader mode keeps leader look but can administer",
+   "html": "cf2dbb1a5cdbf1ab",
+   "extra": {
+    "back": "/leder?tab=samlinger",
+    "buttons": [
+     true,
+     true
+    ]
+   }
+  },
+  {
+   "step": "no mode given means leader",
+   "html": "cf2dbb1a5cdbf1ab",
+   "extra": {
+    "back": "/leder?tab=samlinger"
+   }
+  },
+  {
+   "step": "deputy",
+   "html": "6f1090f73297081b",
+   "extra": {
+    "buttons": [
+     true
+    ]
+   }
+  },
+  {
+   "step": "neither leader nor deputy: no buttons on rows",
+   "html": "eafca4ad6a7d4522",
+   "extra": {
+    "assign": 0
+   }
+  },
+  {
+   "step": "leader without a group: no my-group tab",
+   "html": "4f52b61997a4dc14",
+   "extra": false
+  },
+  {
+   "step": "banner: fully staffed",
+   "html": "f505c868c6a2e063",
+   "extra": "Fullt bemannet arrangementTotal dekning: 1 av 1 oppgaver dekket • Min gruppe (Lyd og bilde): 1/11/1"
+  },
+  {
+   "step": "banner: missing people, nobody withdrawn",
+   "html": "52db1fc40e86baca",
+   "extra": "Mangler bemanning på noen oppgaverTotal dekning: 0 av 2 oppgaver dekket • Min gruppe (Lyd og bilde): 0/00/2"
+  },
+  {
+   "step": "banner: one task needs follow-up",
+   "html": "bffba01e61230f77",
+   "extra": "1 oppgave krever oppfølging (forfall/vikar)Total dekning: 0 av 1 oppgaver dekket • Min gruppe (Lyd og bilde): 0/10/1"
+  },
+  {
+   "step": "banner: two tasks need follow-up",
+   "html": "a2c1bc37f57a1d95",
+   "extra": "2 oppgaver krever oppfølgingTotal dekning: 0 av 2 oppgaver dekket • Min gruppe (Lyd og bilde): 0/10/2"
+  },
+  {
+   "step": "no tasks and no programme",
+   "html": "20d775b0f562d56d",
+   "extra": "Mangler bemanning på noen oppgaverTotal dekning: 0 av 0 oppgaver dekket • Min gruppe (Lyd og bilde): 0/00/0"
+  },
+  {
+   "step": "empty schedule with a filter",
+   "html": "658d60da38e46870"
+  },
+  {
+   "step": "one group involved: no group pills, singular",
+   "html": "7716bc3cd62f578f",
+   "extra": "1 tjenestegruppe involvert"
+  },
+  {
+   "step": "group meeting without a place",
+   "html": "2a59fb733c959598",
+   "extra": "Samling"
+  },
+  {
+   "step": "gathering not found",
+   "html": "11f0a2e5dc2f10a6",
+   "extra": {
+    "text": "Arrangementet krever leder- eller admin-tilgang | Arrangementet ble ikke funnet.",
+    "link": "/leder?tab=samlinger"
+   }
+  },
+  {
+   "step": "no access as leader",
+   "html": "71ea7c902132747a",
+   "extra": {
+    "text": "Du har ikke tilgang til dette arrangementet med din nåværende rolle.",
+    "link": "/leder?tab=samlinger",
+    "label": "Tilbake til Samlingsoversikt"
+   }
+  },
+  {
+   "step": "no access as admin",
+   "html": "250f2bb6b1dcc145",
+   "extra": {
+    "link": "/admin?tab=planlegger-samlinger",
+    "label": "Tilbake til Samlinger"
+   }
+  }
+ ]
+}

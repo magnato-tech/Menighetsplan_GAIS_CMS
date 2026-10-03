@@ -29,7 +29,6 @@ describe("Filstørrelse: en fil som får mer enn 400 linjer bør deles", () => {
    * The cap only goes down: split a file, then remove it from here or lower its number.
    */
   const KNOWN_LARGE: Record<string, number> = {
-    "src/components/GatheringDetailView.tsx": 584,
     "src/context/FirebaseDataContext.tsx": 520,
     "src/pages/LeaderPage.tsx": 513,
     "src/pages/admin/tabs/ThemeTab.tsx": 501,
