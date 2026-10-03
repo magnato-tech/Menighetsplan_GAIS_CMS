@@ -9,9 +9,9 @@ import {
 } from "../hooks/useAppHooks";
 import { GroupCategory } from "../types";
 import { isGroupPublic } from "../utils/visibility";
+import { AdminAccessRequired } from "../components/AdminAccessRequired";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
 import {
-  Shield,
   ArrowLeft,
   Users,
   UserCheck,
@@ -32,7 +32,6 @@ export const AdminGroupDetailPage: React.FC = () => {
 
   const {
     isAdmin,
-    currentUser,
     group,
     members,
     availablePersonsToAdd,
@@ -139,29 +138,7 @@ export const AdminGroupDetailPage: React.FC = () => {
 
   // Friendly access denied screen if user is not admin
   if (!isAdmin) {
-    return (
-      <div className="w-full max-w-md mx-auto bg-slate-50 min-h-screen shadow-md sm:my-4 sm:rounded-3xl sm:border sm:border-slate-200/80 overflow-hidden">
-        <UserQuickSwitcherBar />
-        <div className="p-6 text-center space-y-4">
-          <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
-            <Shield className="w-6 h-6" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-base font-bold text-slate-800">Admin-tilgang kreves</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              {currentUser.name} har rollen <span className="font-semibold text-slate-700">«{currentUser.globalRole}»</span> og har ikke tilgang til denne admin-siden.
-            </p>
-          </div>
-          <Link
-            to="/minside"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Tilbake til Min side
-          </Link>
-        </div>
-      </div>
-    );
+    return <AdminAccessRequired target="denne admin-siden" />;
   }
 
   // Not found
@@ -236,10 +213,7 @@ export const AdminGroupDetailPage: React.FC = () => {
             {/* Header info */}
             <div className="flex items-start justify-between border-b border-slate-100 pb-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Gruppe ID: {group.id}
-                </span>
-                <h3 className="text-base font-bold text-slate-800 mt-0.5">{group.name}</h3>
+                <h3 className="text-base font-bold text-slate-800">{group.name}</h3>
               </div>
               <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
                 {currentCategoryLabel}
@@ -355,7 +329,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                   className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
                 >
                   <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  Leder (Group.leaderIds):
+                  Leder:
                 </label>
                 <select
                   id="select-edit-group-leader"
@@ -385,7 +359,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                   className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
                 >
                   <UserCog className="w-3.5 h-3.5 text-blue-600" />
-                  Nestleder (Group.deputyLeaderIds):
+                  Nestleder:
                 </label>
                 <select
                   id="select-edit-group-deputy"
@@ -533,7 +507,6 @@ export const AdminGroupDetailPage: React.FC = () => {
               <Users className="w-4 h-4 text-slate-500" />
               Medlemmer i gruppen ({members.length})
             </span>
-            <span className="text-[10px] text-slate-400 font-medium">Group.memberIds</span>
           </div>
 
           <div className="space-y-2">
@@ -554,7 +527,6 @@ export const AdminGroupDetailPage: React.FC = () => {
                     >
                       {member.name}
                     </Link>
-                    <span className="text-[10px] text-slate-400 block font-mono">ID: {member.id}</span>
                   </div>
 
                   <div className="flex items-center gap-1.5">

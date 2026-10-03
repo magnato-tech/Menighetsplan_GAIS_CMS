@@ -164,7 +164,7 @@ export const EditGatheringDialog: React.FC<EditGatheringDialogProps> = ({ detail
                 className="w-4 h-4 border border-slate-300 rounded-md cursor-pointer"
               />
               <span className="text-[11px] font-semibold text-slate-700">
-                Vis offentlig på nettside (isPublic)
+                Vis offentlig på nettsiden
               </span>
             </label>
 
@@ -190,7 +190,7 @@ export const EditGatheringDialog: React.FC<EditGatheringDialogProps> = ({ detail
                 className="w-4 h-4 border border-slate-300 rounded-md cursor-pointer"
               />
               <span className="text-[11px] font-semibold text-slate-700">
-                Avlyst (cancelled)
+                Avlyst
               </span>
             </label>
           </div>

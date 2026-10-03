@@ -16,8 +16,8 @@ export const ModulePlaceholderPage: React.FC<Props> = ({ module }) => {
   const title = isKalender ? "Kalender" : "Meldinger";
   const stubMessage = isKalender ? "Kalender kommer snart" : "Meldinger kommer snart";
   const description = isKalender
-    ? "Denne modulen er aktivert i mock-konfigurasjonen. Full kalendervisning er planlagt for en senere utvidelse."
-    : "Denne modulen er aktivert i mock-konfigurasjonen. Meldings- og kommunikasjonsflyt er planlagt for en senere utvidelse.";
+    ? "Denne modulen er slått på. Full kalendervisning kommer i en senere versjon."
+    : "Denne modulen er slått på. Meldinger på tvers av grupper kommer i en senere versjon.";
 
   return (
     <div className="w-full max-w-md mx-auto bg-slate-50 min-h-screen shadow-md sm:my-4 sm:rounded-3xl sm:border sm:border-slate-200/80 overflow-hidden">
@@ -36,7 +36,7 @@ export const ModulePlaceholderPage: React.FC<Props> = ({ module }) => {
             <div>
               <h2 className="text-sm font-bold text-slate-800">{title}</h2>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Valgfri modul (Prototype)
+                Valgfri modul
               </span>
             </div>
           </div>

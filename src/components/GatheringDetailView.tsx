@@ -299,9 +299,6 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
             <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
               {gathering.type === "arrangement" ? "Gudstjeneste / Arrangement" : "Samling"}
             </span>
-            <span className="text-[11px] text-slate-400 font-mono">
-              ID: {gathering.id}
-            </span>
           </div>
           <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 mt-1 leading-tight">
             {gathering.title}

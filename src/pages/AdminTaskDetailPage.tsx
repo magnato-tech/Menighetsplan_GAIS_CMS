@@ -5,9 +5,9 @@ import {
   formatNorwegianDateTime,
   GROUP_CATEGORIES,
 } from "../hooks/useAppHooks";
+import { AdminAccessRequired } from "../components/AdminAccessRequired";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
 import {
-  Shield,
   ArrowLeft,
   ListTodo,
   Calendar,
@@ -31,7 +31,6 @@ export const AdminTaskDetailPage: React.FC = () => {
 
   const {
     isAdmin,
-    currentUser,
     task,
     gathering,
     group,
@@ -103,29 +102,7 @@ export const AdminTaskDetailPage: React.FC = () => {
 
   // Access denied screen if user is not admin
   if (!isAdmin) {
-    return (
-      <div className="w-full max-w-md mx-auto bg-slate-50 min-h-screen shadow-md sm:my-4 sm:rounded-3xl sm:border sm:border-slate-200/80 overflow-hidden">
-        <UserQuickSwitcherBar />
-        <div className="p-6 text-center space-y-4">
-          <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
-            <Shield className="w-6 h-6" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-base font-bold text-slate-800">Admin-tilgang kreves</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              {currentUser.name} har rollen <span className="font-semibold text-slate-700">«{currentUser.globalRole}»</span> og har ikke tilgang til oppgavekortet i admin-flaten.
-            </p>
-          </div>
-          <Link
-            to="/minside"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Tilbake til Min side
-          </Link>
-        </div>
-      </div>
-    );
+    return <AdminAccessRequired target="oppgavekortet i admin-flaten" />;
   }
 
   // Not found
@@ -202,7 +179,6 @@ export const AdminTaskDetailPage: React.FC = () => {
           {/* Header & Status */}
           <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
             <div>
-              <span className="text-[10px] font-mono text-slate-400">ID: {task.id}</span>
               <h1 className="text-base font-bold text-slate-800 leading-snug">{task.title}</h1>
             </div>
 
@@ -277,7 +253,6 @@ export const AdminTaskDetailPage: React.FC = () => {
                 ) : (
                   <span className="font-bold text-slate-800">Ukjent gruppe</span>
                 )}
-                <span className="text-[10px] text-slate-400 font-mono">ID: {task.groupId}</span>
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
                 {categoryLabel}
@@ -400,7 +375,6 @@ export const AdminTaskDetailPage: React.FC = () => {
                 <FileText className="w-4 h-4 text-indigo-600" />
                 Instruks for rollen
               </span>
-              <span className="text-[10px] text-slate-400 font-medium font-mono">Task.instruction</span>
             </div>
 
             {/* Explanatory banner */}

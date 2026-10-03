@@ -3,13 +3,13 @@ import { Link } from "react-router-dom";
 import { useModuleConfig, useAdminDashboard } from "../hooks/useAppHooks";
 import { useFirebase } from "../context/FirebaseDataContext";
 import { useCms } from "../context/CmsContext";
+import { AdminAccessRequired } from "../components/AdminAccessRequired";
 import { UserQuickSwitcherBar } from "../components/UserSwitcher";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { populateWithMockData, deleteAllData, type DatabaseAdminResult } from "../services/databaseAdmin";
 import {
   Trash2,
   AlertTriangle,
-  Shield,
   ArrowLeft,
   Settings,
   Calendar,
@@ -43,7 +43,7 @@ function describeResult(result: DatabaseAdminResult, successText: string): Datab
 }
 
 export const AdminSettingsPage: React.FC = () => {
-  const { isAdmin, currentUser } = useAdminDashboard();
+  const { isAdmin } = useAdminDashboard();
   const { kalender, meldinger, toggleKalender, toggleMeldinger } = useModuleConfig();
   const {
     isFirestoreConnected,
@@ -93,7 +93,7 @@ export const AdminSettingsPage: React.FC = () => {
     }
   };
 
-  const handlePopulate = () => runDatabaseAction(populateWithMockData, "Databasen er fylt med mockdata");
+  const handlePopulate = () => runDatabaseAction(populateWithMockData, "Databasen er fylt med demodata");
   const handleDeleteAll = () => runDatabaseAction(deleteAllData, "Alle data er slettet");
 
   const databaseContents: [string, number][] = [
@@ -113,29 +113,7 @@ export const AdminSettingsPage: React.FC = () => {
 
   // Friendly access denied screen if user is not admin
   if (!isAdmin) {
-    return (
-      <div className="w-full max-w-md mx-auto bg-slate-50 min-h-screen shadow-md sm:my-4 sm:rounded-3xl sm:border sm:border-slate-200/80 overflow-hidden">
-        <UserQuickSwitcherBar />
-        <div className="p-6 text-center space-y-4">
-          <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
-            <Shield className="w-6 h-6" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-base font-bold text-slate-800">Admin-tilgang kreves</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              {currentUser.name} har rollen <span className="font-semibold text-slate-700">«{currentUser.globalRole}»</span> og har ikke tilgang til innstillingsflaten.
-            </p>
-          </div>
-          <Link
-            to="/minside"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Tilbake til Min side
-          </Link>
-        </div>
-      </div>
-    );
+    return <AdminAccessRequired target="innstillingsflaten" />;
   }
 
   return (
@@ -175,9 +153,9 @@ export const AdminSettingsPage: React.FC = () => {
         <div className="p-3 bg-blue-50/70 rounded-2xl border border-blue-100 text-xs text-blue-900 flex items-start gap-2.5 leading-relaxed">
           <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-blue-950">Modulstatus i prototypen</p>
+            <p className="font-semibold text-blue-950">Modulstatus</p>
             <p className="text-[11px] text-blue-800/90 mt-0.5">
-              Valgfrie moduler er som standard satt til <strong>«off»</strong>. Når de slås på, vises modulens fane i toppmenyen og åpner en plassholderside.
+              Valgfrie moduler er <strong>slått av</strong> til du slår dem på. Da vises modulens fane i toppmenyen og åpner en plassholderside.
             </p>
           </div>
         </div>
@@ -190,9 +168,8 @@ export const AdminSettingsPage: React.FC = () => {
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
               <Settings className="w-4 h-4 text-slate-500" />
-              Tilleggsmoduler (useModuleConfig)
+              Tilleggsmoduler
             </span>
-            <span className="text-[10px] text-slate-400 font-medium">Session mock-state</span>
           </div>
 
           <div className="space-y-3">
@@ -226,7 +203,7 @@ export const AdminSettingsPage: React.FC = () => {
                             : "bg-slate-200 text-slate-600"
                         }`}
                       >
-                        {kalender.toUpperCase()}
+                        {kalender === "on" ? "PÅ" : "AV"}
                       </span>
                     </h3>
                     <p className="text-[11px] text-slate-500 mt-0.5">
@@ -248,12 +225,12 @@ export const AdminSettingsPage: React.FC = () => {
                   {kalender === "on" ? (
                     <>
                       <ToggleRight className="w-4 h-4" />
-                      På (on)
+                      På
                     </>
                   ) : (
                     <>
                       <ToggleLeft className="w-4 h-4" />
-                      Av (off)
+                      Av
                     </>
                   )}
                 </button>
@@ -290,7 +267,7 @@ export const AdminSettingsPage: React.FC = () => {
                             : "bg-slate-200 text-slate-600"
                         }`}
                       >
-                        {meldinger.toUpperCase()}
+                        {meldinger === "on" ? "PÅ" : "AV"}
                       </span>
                     </h3>
                     <p className="text-[11px] text-slate-500 mt-0.5">
@@ -312,12 +289,12 @@ export const AdminSettingsPage: React.FC = () => {
                   {meldinger === "on" ? (
                     <>
                       <ToggleRight className="w-4 h-4" />
-                      På (on)
+                      På
                     </>
                   ) : (
                     <>
                       <ToggleLeft className="w-4 h-4" />
-                      Av (off)
+                      Av
                     </>
                   )}
                 </button>
@@ -326,7 +303,7 @@ export const AdminSettingsPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Firestore Database & Mockdata Section */}
+        {/* Firestore Database & Demodata Section */}
         <section
           id="admin-firestore-section"
           className="p-4 bg-white rounded-2xl border border-slate-200/80 space-y-4 shadow-xs"
@@ -334,7 +311,7 @@ export const AdminSettingsPage: React.FC = () => {
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
               <Database className="w-4 h-4 text-amber-500" />
-              Firestore-database & Mockdata
+              Firestore-database & Demodata
             </span>
             <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
@@ -377,7 +354,7 @@ export const AdminSettingsPage: React.FC = () => {
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
               >
                 <RefreshCw className={`w-4 h-4 ${isWorking && dialog === "populate" ? "animate-spin" : ""}`} />
-                Fyll databasen med mockdata
+                Fyll databasen med demodata
               </button>
               <button
                 type="button"
@@ -419,14 +396,14 @@ export const AdminSettingsPage: React.FC = () => {
         {dialog === "populate" && (
           <ConfirmDialog
             key="populate"
-            title="Fylle databasen med mockdata?"
-            confirmLabel={isWorking ? "Fyller..." : "Fyll med mockdata"}
+            title="Fylle databasen med demodata?"
+            confirmLabel={isWorking ? "Fyller..." : "Fyll med demodata"}
             busy={isWorking}
             onConfirm={handlePopulate}
             onCancel={() => setDialog(null)}
           >
             <p>
-              Mockdata skrives til Firestore. Dokumenter med samme ID blir overskrevet, så endringer du har gjort i
+              Demodata skrives til Firestore. Dokumenter med samme ID blir overskrevet, så endringer du har gjort i
               testdataene går tapt. Andre dokumenter blir stående.
             </p>
           </ConfirmDialog>

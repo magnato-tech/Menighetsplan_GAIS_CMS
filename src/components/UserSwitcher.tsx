@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useCurrentUser } from "../hooks/useAppHooks";
+import { useFirebase } from "../context/FirebaseDataContext";
 import { UserCheck } from "lucide-react";
 
 export const UserSwitcher: React.FC = () => {
   const { currentUser, allPersons, setCurrentUserId, userGroups } = useCurrentUser();
+  const { groups } = useFirebase();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +44,7 @@ export const UserSwitcher: React.FC = () => {
         >
           <div className="px-3 py-2 border-b border-slate-100 mb-1">
             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
-              Bytt testbruker (Mock)
+              Bytt testbruker
             </p>
             <p className="text-xs text-slate-500 mt-0.5">
               Se hvordan oppgavene tilpasses brukerens grupper.
@@ -52,10 +54,9 @@ export const UserSwitcher: React.FC = () => {
           <div className="space-y-1">
             {allPersons.map((person) => {
               const isSelected = person.id === currentUser.id;
-              let groupHint = "";
-              if (person.id === "person-1") groupHint = "Global Admin • Leder: Kirkekaffe";
-              if (person.id === "person-2") groupHint = "Medlem • Leder: Lyd og bilde";
-              if (person.id === "person-3") groupHint = "Medlem • Leder: Søndagsskole";
+              const role = person.globalRole === "admin" ? "Administrator" : "Medlem";
+              const ledGroups = groups.filter((g) => g.leaderIds.includes(person.id)).map((g) => g.name);
+              const groupHint = ledGroups.length > 0 ? `${role} • Leder: ${ledGroups.join(", ")}` : role;
 
               return (
                 <button
@@ -112,7 +113,7 @@ export const UserQuickSwitcherBar: React.FC = () => {
   return (
     <div className="bg-slate-50 px-5 py-2.5 border-b border-slate-200/80 flex items-center justify-between">
       <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
-        Bytt bruker (Mock)
+        Bytt testbruker
       </span>
       <div className="flex gap-1.5">
         {allPersons.map((person) => {
