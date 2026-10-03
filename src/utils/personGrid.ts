@@ -17,14 +17,12 @@ const GROUP_KEYWORDS = new Set(["lederskap", "menighetsråd", "menighetsrad", "s
 const CATEGORY_KEYWORDS = new Set(["pastor", "barneleder", "diakoni"]);
 
 function groupGrid(filter: string, persons: Person[], groups: Group[]): PersonGridResult {
-  const wanted = filter.replace(/^gruppe=/i, "").trim();
+  const wanted = filter.replace(/^gruppe=/i, "").trim().replace(/^menighetsrad$/i, "menighetsråd");
   const publicGroups = groups.filter(isGroupPublic);
-  const byName = (name: string) => publicGroups.find((g) => g.id === wanted || g.name.toLowerCase().includes(name));
-  const leaderGroups = publicGroups.filter((g) => g.category === "ledergruppe");
-  // A keyword finds the group with that word in its name; with no such group, the only leadership group will do
-  const group = GROUP_KEYWORDS.has(wanted.toLowerCase())
-    ? byName(wanted.toLowerCase()) ?? (leaderGroups.length === 1 ? leaderGroups[0] : undefined)
-    : byName(wanted.toLowerCase());
+  // Leadership is volunteers and staff is employees, so a group is never found by its category: only by name or id
+  const group = publicGroups.find(
+    (g) => g.id === wanted || g.name.toLowerCase().includes(wanted.toLowerCase())
+  );
   if (!group) return { kind: "no-group" };
 
   const leaders = new Set(group.leaderIds);

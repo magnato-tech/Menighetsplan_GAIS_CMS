@@ -74,7 +74,10 @@ describe("Personblokken: grupper", () => {
     names(selectPersonGrid("lederskap", persons, [stab, group("r", { name: "Menighetsråd & Lederskap", leaderIds: ["leder"] })])) === "leder",
     "Stikkordet finner gruppen med ordet i navnet, ikke bare den første ledergruppen"
   );
-  assert(names(selectPersonGrid("lederskap", persons, [stab, styret])) === "no-group", "Med to ledergrupper og ingen treff på navn gjettes det ikke");
+  assert(
+    names(selectPersonGrid("lederskap", persons, [stab])) === "no-group",
+    "En stabsgruppe tas ikke for lederskap bare fordi den heter ledergruppe"
+  );
   assert(names(selectPersonGrid("lederskap", persons, [])) === "no-group", "Uten ledergruppe sier blokken fra");
   assert(names(selectPersonGrid("gruppe=finnes-ikke", persons, [styret])) === "no-group", "Ukjent gruppe faller ikke tilbake på en annen");
   assert(names(selectPersonGrid("gruppe=menighets", persons, [styret])) === "leder,medlem,nestleder", "Gruppe finnes på navn");
