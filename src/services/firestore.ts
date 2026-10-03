@@ -55,6 +55,14 @@ export function setDocument(name: CollectionName, id: string, document: object):
   return setDoc(doc(db, name, id), sanitizeForFirestore(document));
 }
 
+/**
+ * Stores only the given fields and leaves the rest of the document as it is, creating it when missing.
+ * Two people changing different fields at the same time therefore cannot overwrite each other.
+ */
+export function mergeIntoDocument(name: CollectionName, id: string, fields: object): Promise<void> {
+  return setDoc(doc(db, name, id), sanitizeForFirestore(fields), { merge: true });
+}
+
 /** A field given as `undefined` is removed from the stored document. */
 export function updateDocument(name: CollectionName, id: string, updates: object): Promise<void> {
   return updateDoc(doc(db, name, id), forUpdate(updates));

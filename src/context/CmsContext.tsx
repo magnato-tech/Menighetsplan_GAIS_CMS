@@ -4,7 +4,7 @@ import { db } from "../firebase";
 import { CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID } from "../data/collections";
 import {
   createDocument,
-  setDocument,
+  mergeIntoDocument,
   deleteDocument,
   deletePage as deletePageWithSubPages,
   reorderPages as reorderPagesInFirestore,
@@ -118,7 +118,8 @@ function useCmsSettings(): CmsSettings {
         doc(db, CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID),
         (snapshot) => {
           if (snapshot.exists()) {
-            const data = snapshot.data() as CmsSettings;
+            // A field the document lacks gets its default, since a save writes only what was changed
+            const data = { ...initialCmsSettings, ...(snapshot.data() as Partial<CmsSettings>) };
             setSettings(data);
             writeCache(STORAGE_KEYS.settings, data);
           } else if (!snapshot.metadata.fromCache) {
@@ -262,7 +263,7 @@ export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         attempt("endre rekkefølge på sidene", () => reorderPagesInFirestore(orderedPageIds)),
       saveSettings: (settingsData: Partial<CmsSettings>) =>
         attempt("lagre innstillingene", () =>
-          setDocument(CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID, { ...settings, ...settingsData })
+          mergeIntoDocument(CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID, settingsData)
         ),
       getPageBySlug: (slug: string) => pages.find((p) => normalizeSlug(p.slug) === normalizeSlug(slug)),
       getNewsById: (id: string) => news.find((n) => n.id === id),

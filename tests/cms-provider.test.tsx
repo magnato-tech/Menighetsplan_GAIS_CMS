@@ -199,6 +199,27 @@ describe("Innstillinger", () => {
       tagline: "Ny undertittel",
     });
   });
+
+  test("En lagring skriver bare det som ble endret, så en annens endring ikke overskrives", async () => {
+    seed(CMS_COLLECTIONS.SETTINGS, [{ id: CMS_SETTINGS_DOC_ID, ...initialCmsSettings, churchName: "Testkirken" }]);
+    const cms = mountProvider();
+    await waitFor(() => expect(cms.current.settings.churchName).toBe("Testkirken"));
+
+    // Another editor changes the phone number after this one has loaded the settings
+    seed(CMS_COLLECTIONS.SETTINGS, [{ id: CMS_SETTINGS_DOC_ID, ...initialCmsSettings, churchName: "Testkirken", phone: "999 99 999" }]);
+    await waitFor(() => expect(cms.current.settings.phone).toBe("999 99 999"));
+    void cms.current.saveSettings({ tagline: "Ny undertittel" });
+
+    await waitFor(() => expect(cms.current.settings.tagline).toBe("Ny undertittel"));
+    expect(await stored(CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID)).toMatchObject({ phone: "999 99 999" });
+  });
+
+  test("Innstillinger som mangler felt får standardverdi i visningen", async () => {
+    seed(CMS_COLLECTIONS.SETTINGS, [{ id: CMS_SETTINGS_DOC_ID, churchName: "Testkirken" }]);
+    const cms = mountProvider();
+    await waitFor(() => expect(cms.current.settings.churchName).toBe("Testkirken"));
+    expect(cms.current.settings.appName).toBe(initialCmsSettings.appName);
+  });
 });
 
 describe("Feil", () => {

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { ShowFeedback } from "../studio";
 import { populateWithMockData } from "../../../services/databaseAdmin";
+import { useTimedMessage } from "../../../hooks/useTimedMessage";
 
 interface StaffTabProps {
   showFeedback: ShowFeedback;
@@ -29,7 +30,7 @@ interface StaffTabProps {
 export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
   const { allPersons, groups, updatePerson } = useFirebase();
 
-  const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
+  const [copiedSnippet, showCopied] = useTimedMessage<string>(2500);
   const [showAddStaffModal, setShowAddStaffModal] = useState<boolean>(false);
   const [selectedPersonIdToAdd, setSelectedPersonIdToAdd] = useState<string>("");
   const [isPopulating, setIsPopulating] = useState<boolean>(false);
@@ -80,9 +81,8 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
-    setCopiedSnippet(text);
+    showCopied(text);
     showFeedback(`Kopierte «${text}» til utklippstavlen!`);
-    setTimeout(() => setCopiedSnippet(null), 2500);
   };
 
   const handleAddPersonAsStaff = () => {
