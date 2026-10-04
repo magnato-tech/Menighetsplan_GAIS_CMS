@@ -117,8 +117,20 @@ Adminpanelet ligger på `/admin` og har én meny med to deler. Hver fane har sin
 | **Husfellesskap** | `/husfellesskap` | Neste møte med vert, tema og bibeltekst. «Kommer» / «Kommer ikke». Medlemsliste | Levert |
 | Meldinger | `/meldinger` | Valgfri modul for meldinger på tvers av grupper | Planlagt: i dag en plassholderside |
 | Kalender | – | Valgfri modul med felles kalender | Planlagt: modulen kan slås på, men har ingen side |
+| **Min kalender** | – | Personlig oversikt på Min side | Mulig funksjon, ikke prioritert. Se under |
 
 Et medlem ser bare det som gjelder egne grupper. Løsningen kan installeres på mobilen som app (PWA).
+
+### Mulig funksjon: Min kalender
+
+Ikke bygget. Avtalt innhold, hvis den tas inn senere:
+
+* Kildebasert, ikke bare det medlemmet har bekreftet. Den viser offentlige arrangementer i menigheten, pluss kommende samlinger i gruppene medlemmet er med i.
+* Hver kilde (menigheten og hver gruppe) kan slås av og på med et øyeikon. Standard er at alle kilder er på.
+* «Kommer ikke» skjuler den ene samlingen. En bekreftet oppgave legges på samlingen den hører til, og lager ikke en egen hendelse.
+* Husfellesskap vises bare når innkalling er sendt, eller medlemmet allerede har svart. Andre grupper viser alle kommende gruppesamlinger så lenge kilden er på.
+* Den erstatter «Neste for deg» og «Neste i menigheten» på Min side. «Trenger svar», gruppene og oppgavene blir stående.
+* Personlig kalenderabonnement (iCal) venter til innlogging finnes. Abonnement på menighetens offentlige kalender hører hjemme på nettsiden, ikke her.
 
 ---
 
@@ -553,7 +565,7 @@ Rekkefølgen innen hver fase er prioritert. Fase 1 er forutsetningen for ekte da
 4. «Bli med»: en besøkende melder interesse for en gruppe, og lederen ser henvendelsen.
 5. Et nytt medlem ser meldinger fra innmeldingsdatoen.
 6. Forfall med grunn: medlemmet kan skrive den, og lederen ser den.
-7. Kalender- og meldingsmodul med innhold.
+7. Kalender- og meldingsmodul med innhold. *Min kalender* på Min side er en mulig funksjon med avtalt innhold (kapittel 3), men er ikke prioritert.
 8. Omsorgsvarsel når samme person settes opp ofte, og varsel før en politiattest går ut.
 
 ### Fase 4 – Ytelse og drift
