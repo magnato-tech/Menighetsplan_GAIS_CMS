@@ -19,6 +19,7 @@ import { HeroButtons } from "../../components/cms/HeroButtons";
 import { isPagePublished } from "../../utils/menu";
 import { formatNorwegianDateTime } from "../../utils/dates";
 import { usePreviewPageDraft } from "../../hooks/usePreviewPageDraft";
+import { useResolvedMediaUrl } from "../../hooks/useMediaMap";
 import { useLocation } from "react-router-dom";
 
 interface PublicStaticPageProps {
@@ -59,6 +60,9 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({
     : draftPage
     ? ({ ...savedPage, ...draftPage } as CmsPage)
     : savedPage;
+
+  const heroImageSrc = useResolvedMediaUrl(page?.heroImage);
+  const heroImageAlt = page?.heroImageAlt?.trim() || "";
 
   const isAvailable = page
     ? Boolean(pageOverride) || isLiveDraft || isPagePublished(page)
@@ -156,11 +160,11 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({
       </div>
 
       {/* Hovedbilde (Hero Image) */}
-      {page.heroImage && (
+      {heroImageSrc && (
         <div className="w-full h-56 sm:h-72 md:h-96 rounded-2xl overflow-hidden border border-stone-200/80 shadow-xs relative bg-stone-100">
           <img
-            src={page.heroImage}
-            alt={page.title}
+            src={heroImageSrc}
+            alt={heroImageAlt}
             className="w-full h-full object-cover"
           />
         </div>

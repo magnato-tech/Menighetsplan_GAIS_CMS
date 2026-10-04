@@ -6,6 +6,7 @@ import {
   MODULE_PRESENTATION_DEFAULTS,
   ModulePresentationConfig,
 } from "../../../utils/modulePresentation";
+import { useResolvedMediaUrl } from "../../../hooks/useMediaMap";
 import { GroupsModuleFields } from "../../../utils/cmsBlocks";
 
 export interface GroupsModuleProps {
@@ -22,7 +23,8 @@ function BannerBackground({
   fields: GroupsModuleFields;
   children: React.ReactNode;
 }) {
-  const image = fields.backgroundImage.trim();
+  const image = useResolvedMediaUrl(fields.backgroundImage);
+  const imageAlt = fields.backgroundImageAlt?.trim() || "";
   const color = fields.backgroundColor.trim();
   const useThemeGradient = !image && !color;
 
@@ -32,8 +34,9 @@ function BannerBackground({
         <>
           <img
             src={image}
-            alt=""
+            alt={imageAlt}
             className="absolute inset-0 w-full h-full object-cover"
+            aria-hidden={!imageAlt}
           />
           <div
             className="absolute inset-0"

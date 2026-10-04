@@ -17,7 +17,7 @@ import {
   readModulePresentation,
 } from "../../../../utils/modulePresentation";
 import { ModulePresentationEditor } from "../../../../components/admin/ModulePresentationEditor";
-import { CmsImagePicker } from "../../../../components/admin/CmsImagePicker";
+import { CmsMediaPicker } from "../../../../components/admin/CmsMediaPicker";
 import { CmsLinkPicker } from "../../../../components/admin/CmsLinkPicker";
 import {
   ChevronUp,
@@ -587,11 +587,24 @@ function StaticBlockEditor({
       ) : (
         <div className="space-y-2">
           {(block.type === "media-left" || block.type === "media-right") && (
-            <CmsImagePicker
-              label="Bilde"
-              value={fields.imageUrl}
-              onChange={(url) => set({ imageUrl: url })}
-            />
+            <>
+              <CmsMediaPicker
+                label="Bilde"
+                value={fields.imageUrl}
+                onChange={(url) => set({ imageUrl: url })}
+              />
+              <label className="space-y-1 block">
+                <span className="text-[10px] font-semibold text-slate-400">
+                  Alt-tekst (valgfri overstyring)
+                </span>
+                <input
+                  className={fieldClass}
+                  value={fields.imageAlt}
+                  onChange={(e) => set({ imageAlt: e.target.value })}
+                  placeholder="Tom = standardtekst fra biblioteket"
+                />
+              </label>
+            </>
           )}
           {block.type === "callout" && (
             <label className="space-y-1 block">

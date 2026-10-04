@@ -23,6 +23,7 @@ import {
 } from "../../utils/cmsLinks";
 
 import { usePreviewPageDraft } from "../../hooks/usePreviewPageDraft";
+import { useResolvedMediaUrl } from "../../hooks/useMediaMap";
 
 import { Sparkles } from "lucide-react";
 
@@ -112,7 +113,8 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
 
 
 
-  const heroImage = activePage?.heroImage;
+  const heroImage = useResolvedMediaUrl(activePage?.heroImage);
+  const heroImageAlt = activePage?.heroImageAlt?.trim() || "";
 
   const showPrimaryCta = activePage?.showHeroPrimaryCta !== false;
 
@@ -218,7 +220,7 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
 
                 src={heroImage}
 
-                alt={heroHeadline}
+                alt={heroImageAlt}
 
                 className="w-full h-full object-cover"
 

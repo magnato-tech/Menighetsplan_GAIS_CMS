@@ -16,6 +16,7 @@ vi.mock("../src/context/CmsContext", () => ({
       welcomeSubtext: "Ingress",
     },
     pages: [],
+    media: [],
     news: [],
     sermons: [],
     staff: [],

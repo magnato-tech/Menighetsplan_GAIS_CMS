@@ -4,6 +4,7 @@ import {
   readModulePresentation,
 } from "./modulePresentation";
 import { stripSectionAnchorComment } from "./cmsLinks";
+import { formatMediaAltComment, parseMediaAltComment } from "./media";
 
 export type DynamicModuleType =
   | "module-worship"
@@ -41,6 +42,7 @@ export interface StaticBlockFields {
   title: string;
   body: string;
   imageUrl: string;
+  imageAlt: string;
   author: string;
   tone: string;
   ctaLabel: string;
@@ -55,6 +57,7 @@ export interface GroupsModuleFields {
   body: string;
   highlights: [string, string, string];
   backgroundImage: string;
+  backgroundImageAlt: string;
   backgroundColor: string;
 }
 
@@ -65,6 +68,7 @@ export const DEFAULT_GROUPS_BANNER_FIELDS: GroupsModuleFields = {
     "Tro og liv deles best sammen med andre. I husfellesskapene våre samles vi i hjemmene til et enkelt måltid, bønn og gode samtaler om hverdagen.",
   highlights: ["Grupper for alle aldre", "Annenhver uke", "Uforpliktende å prøve"],
   backgroundImage: "",
+  backgroundImageAlt: "",
   backgroundColor: "",
 };
 
@@ -372,6 +376,7 @@ const emptyFields = (): StaticBlockFields => ({
   title: "",
   body: "",
   imageUrl: "",
+  imageAlt: "",
   author: "",
   tone: "info",
   ctaLabel: "",
@@ -394,6 +399,7 @@ export function applyGroupsModuleFields(block: VisualBlock, fields: GroupsModule
     highlight2: fields.highlights[1],
     highlight3: fields.highlights[2],
     backgroundImage: fields.backgroundImage,
+    backgroundImageAlt: fields.backgroundImageAlt,
     backgroundColor: fields.backgroundColor,
   });
 }
@@ -430,7 +436,12 @@ export function readStaticFields(block: VisualBlock): StaticBlockFields {
   if (block.type === "media-left" || block.type === "media-right") {
     const match = raw.match(/^:::media-(?:left|right)(?:\[(.*?)\])?\n([\s\S]*?)\n:::$/);
     fields.imageUrl = match?.[1]?.trim() || "";
-    const innerLines = (match?.[2] || "").trim().split("\n");
+    let innerLines = (match?.[2] || "").trim().split("\n");
+    const altFromComment = innerLines[0] ? parseMediaAltComment(innerLines[0]) : null;
+    if (altFromComment) {
+      fields.imageAlt = altFromComment;
+      innerLines = innerLines.slice(1);
+    }
     if (innerLines[0]?.startsWith("### ") || innerLines[0]?.startsWith("## ")) {
       fields.title = innerLines[0].replace(/^#{2,3}\s*/, "");
       fields.body = innerLines.slice(1).join("\n").trim();
@@ -483,7 +494,8 @@ export function applyStaticFields(block: VisualBlock, fields: StaticBlockFields)
   } else if (block.type === "media-left" || block.type === "media-right") {
     const image = fields.imageUrl.trim();
     const heading = fields.title.trim();
-    rawContent = `:::${block.type}${image ? `[${image}]` : ""}\n${heading ? `### ${heading}\n` : ""}${fields.body.trim()}\n:::`;
+    const altLine = formatMediaAltComment(fields.imageAlt);
+    rawContent = `:::${block.type}${image ? `[${image}]` : ""}\n${altLine ? `${altLine}\n` : ""}${heading ? `### ${heading}\n` : ""}${fields.body.trim()}\n:::`;
     title = block.type === "media-left" ? "Bilde med tekst (Venstre)" : "Bilde med tekst (Høyre)";
   } else if (block.type === "grid") {
     const cards = fields.cards.filter((card) => card.title.trim() || card.body.trim());

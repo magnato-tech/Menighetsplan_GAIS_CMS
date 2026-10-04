@@ -11,6 +11,7 @@ import {
   MeetingSchedule,
   VolunteerRole,
 } from "../types";
+import type { CmsMedia, CmsMediaVariants } from "./cmsData";
 import { newId } from "../utils/id";
 import { visibilityFields } from "../utils/visibility";
 import { isWorshipService } from "../utils/gatherings";
@@ -172,6 +173,39 @@ export function buildVolunteerRole(data: NewVolunteerRoleInput): VolunteerRole {
     instruction: data.instruction?.trim() || "",
     groupId: data.groupId,
     sortOrder: data.sortOrder ?? 0,
+  };
+}
+
+export interface NewCmsMediaInput {
+  id?: string;
+  title: string;
+  altText: string;
+  tags?: string[];
+  source: CmsMedia["source"];
+  sourcePath: string;
+  variants: CmsMediaVariants;
+  width: number;
+  height: number;
+  byteSize: number;
+  approvedForAi?: boolean;
+  status?: CmsMedia["status"];
+}
+
+export function buildCmsMedia(data: NewCmsMediaInput): CmsMedia {
+  return {
+    id: data.id || newId("media"),
+    title: data.title.trim() || "Uten tittel",
+    altText: data.altText.trim(),
+    tags: (data.tags || []).map((tag) => tag.trim()).filter(Boolean),
+    status: data.status || "ready",
+    approvedForAi: data.approvedForAi === true,
+    source: data.source,
+    sourcePath: data.sourcePath,
+    variants: data.variants,
+    width: data.width,
+    height: data.height,
+    byteSize: data.byteSize,
+    updatedAt: new Date().toISOString(),
   };
 }
 

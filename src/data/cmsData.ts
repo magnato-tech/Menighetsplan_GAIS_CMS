@@ -1,5 +1,29 @@
 import { VisualBlock } from "../utils/cmsBlocks";
 
+export type CmsMediaStatus = "ready" | "archived";
+
+export interface CmsMediaVariants {
+  web: string;
+  thumb: string;
+  og: string;
+}
+
+export interface CmsMedia {
+  id: string;
+  title: string;
+  altText: string;
+  tags: string[];
+  status: CmsMediaStatus;
+  approvedForAi: boolean;
+  source: "upload" | "url-import" | "preset";
+  sourcePath: string;
+  variants: CmsMediaVariants;
+  width: number;
+  height: number;
+  byteSize: number;
+  updatedAt: string;
+}
+
 export interface CmsPage {
   id: string;
   slug: string;
@@ -19,6 +43,8 @@ export interface CmsPage {
   updatedAt: string;
   updatedBy?: string;
   heroImage?: string;
+  /** Optional screen-reader description for decorative hero; empty means alt="". */
+  heroImageAlt?: string;
   heroTitle?: string;
   heroCtaText?: string;
   heroCtaLink?: string;

@@ -52,11 +52,12 @@ const site: SiteContent = {
     article({ id: "news-1", title: "Høstfest", slug: "hostfest", summary: "Velkommen til høstfest.", imageUrl: "https://bilder.example/fest.jpg" }),
     article({ id: "news-2", title: "Ikke klar", isPublished: false }),
   ],
+  media: [],
 };
 
 const seoAt = (path: string) => {
   const config = seoForPath(path, site, NOW);
-  return config && resolvePageSeo(config, ORIGIN, path);
+  return config && resolvePageSeo(config, ORIGIN, path, site.media);
 };
 
 describe("Hvilke adresser som hører til nettsiden", () => {

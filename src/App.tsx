@@ -45,11 +45,11 @@ import { AdminTaskDetailPage } from "./pages/AdminTaskDetailPage";
  * The server writes the same into the HTML it sends (server.ts), from the same rules.
  */
 function useSiteSeo(pathname: string) {
-  const { pages, news, settings } = useCms();
+  const { pages, news, media, settings } = useCms();
 
   useEffect(() => {
-    const config = seoForPath(pathname, { pages, news, settings });
-    if (config) return injectPageSeo(config);
+    const config = seoForPath(pathname, { pages, news, media, settings });
+    if (config) return injectPageSeo(config, media);
     // Min side and admin carry the app's own name
     document.title = settings.appName;
     return undefined;

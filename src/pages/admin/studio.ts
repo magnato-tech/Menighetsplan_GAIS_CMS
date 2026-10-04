@@ -4,6 +4,7 @@ import { isPubliclyVisible } from "../../utils/visibility";
 export const STUDIO_TABS = [
   "dashboard",
   "cms-sider",
+  "cms-medier",
   "cms-nyheter",
   "cms-taler",
   "cms-stab",

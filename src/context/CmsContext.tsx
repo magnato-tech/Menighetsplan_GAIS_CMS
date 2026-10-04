@@ -5,6 +5,7 @@ import { CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID } from "../data/collections";
 import {
   createDocument,
   setDocument,
+  updateDocument,
   deleteDocument,
   deletePage as deletePageWithSubPages,
   reorderPages as reorderPagesInFirestore,
@@ -17,14 +18,20 @@ import {
   CmsSermon,
   CmsStaffMember,
   CmsSettings,
+  CmsMedia,
   initialCmsSettings,
 } from "../data/cmsData";
+import { buildCmsMedia } from "../data/newDocuments";
+import { buildMediaVariantBlobs } from "../utils/imageVariants";
+import { uploadMediaVariants, deleteMediaStorageFiles } from "../services/mediaStorage";
+import { findMediaUsages } from "../utils/media";
 
 interface CmsContextValue {
   pages: CmsPage[];
   news: CmsNewsArticle[];
   sermons: CmsSermon[];
   staff: CmsStaffMember[];
+  media: CmsMedia[];
   settings: CmsSettings;
   // Every write resolves to whether it reached Firestore. A failure is already shown to the user.
   savePage: (page: Partial<CmsPage> & { id?: string }) => Promise<boolean>;
@@ -37,6 +44,14 @@ interface CmsContextValue {
   saveStaff: (staffData: Partial<CmsStaffMember> & { id?: string }) => Promise<boolean>;
   deleteStaff: (staffId: string) => Promise<boolean>;
   saveSettings: (settingsData: Partial<CmsSettings>) => Promise<boolean>;
+  uploadMedia: (
+    file: File,
+    meta: { title: string; altText: string; tags?: string[]; approvedForAi?: boolean }
+  ) => Promise<CmsMedia | null>;
+  updateMedia: (mediaId: string, updates: Partial<CmsMedia>) => Promise<boolean>;
+  archiveMedia: (mediaId: string) => Promise<boolean>;
+  deleteMedia: (mediaId: string) => Promise<{ ok: boolean; blockedByUsages?: boolean }>;
+  getMediaUsages: (mediaId: string) => ReturnType<typeof findMediaUsages>;
   getPageBySlug: (slug: string) => CmsPage | undefined;
   getNewsById: (id: string) => CmsNewsArticle | undefined;
   getNewsBySlug: (slug: string) => CmsNewsArticle | undefined;
@@ -52,6 +67,7 @@ const STORAGE_KEYS = {
   news: "menighetsplan_cms_news_v3",
   sermons: "menighetsplan_cms_sermons_v3",
   staff: "menighetsplan_cms_staff_v3",
+  media: "menighetsplan_cms_media_v1",
   settings: "menighetsplan_cms_settings_v3",
 };
 
@@ -204,6 +220,7 @@ const writes = {
       linkUrl: pageData.linkUrl || undefined,
       updatedAt: new Date().toISOString(),
       heroImage: pageData.heroImage || "",
+      heroImageAlt: pageData.heroImageAlt?.trim() || undefined,
       heroTitle: pageData.heroTitle || "",
       heroCtaText: pageData.heroCtaText || "",
       heroCtaLink: pageData.heroCtaLink || "",
@@ -286,6 +303,11 @@ export const CmsProvider: React.FC<{ children: React.ReactNode; publicPagesOnly?
   const news = useCmsCollection<CmsNewsArticle>(CMS_COLLECTIONS.NEWS, STORAGE_KEYS.news, newestFirst);
   const sermons = useCmsCollection<CmsSermon>(CMS_COLLECTIONS.SERMONS, STORAGE_KEYS.sermons, latestDateFirst);
   const staff = useCmsCollection<CmsStaffMember>(CMS_COLLECTIONS.STAFF, STORAGE_KEYS.staff);
+  const media = useCmsCollection<CmsMedia>(
+    CMS_COLLECTIONS.MEDIA,
+    STORAGE_KEYS.media,
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
   const settings = useCmsSettings();
 
   const value: CmsContextValue = useMemo(
@@ -294,8 +316,73 @@ export const CmsProvider: React.FC<{ children: React.ReactNode; publicPagesOnly?
       news,
       sermons,
       staff,
+      media,
       settings,
       ...writes,
+      uploadMedia: async (file, meta) => {
+        try {
+          const draft = buildCmsMedia({
+            title: meta.title,
+            altText: meta.altText,
+            tags: meta.tags,
+            approvedForAi: meta.approvedForAi,
+            source: "upload",
+            sourcePath: "",
+            variants: { web: "", thumb: "", og: "" },
+            width: 0,
+            height: 0,
+            byteSize: 0,
+          });
+          const blobs = await buildMediaVariantBlobs(file);
+          const uploaded = await uploadMediaVariants(draft.id, blobs);
+          const document = buildCmsMedia({
+            ...draft,
+            id: draft.id,
+            sourcePath: uploaded.sourcePath,
+            variants: uploaded.variants,
+            width: blobs.width,
+            height: blobs.height,
+            byteSize: uploaded.byteSize,
+          });
+          const ok = await attempt("laste opp bildet", () =>
+            createDocument(CMS_COLLECTIONS.MEDIA, document)
+          );
+          return ok ? document : null;
+        } catch (err) {
+          reportWriteError("laste opp bildet", err);
+          return null;
+        }
+      },
+      updateMedia: (mediaId, updates) =>
+        attempt("oppdatere bildet", () =>
+          setDocument(CMS_COLLECTIONS.MEDIA, mediaId, {
+            ...media.find((m) => m.id === mediaId),
+            ...updates,
+            updatedAt: new Date().toISOString(),
+          })
+        ),
+      archiveMedia: (mediaId) =>
+        attempt("arkivere bildet", () =>
+          updateDocument(CMS_COLLECTIONS.MEDIA, mediaId, {
+            status: "archived",
+            updatedAt: new Date().toISOString(),
+          })
+        ),
+      deleteMedia: async (mediaId) => {
+        const usages = findMediaUsages(mediaId, pages, news, staff);
+        if (usages.length > 0) return { ok: false, blockedByUsages: true };
+        try {
+          await deleteMediaStorageFiles(mediaId);
+          const ok = await attempt("slette bildet", () =>
+            deleteDocument(CMS_COLLECTIONS.MEDIA, mediaId)
+          );
+          return { ok };
+        } catch (err) {
+          reportWriteError("slette bildet", err);
+          return { ok: false };
+        }
+      },
+      getMediaUsages: (mediaId) => findMediaUsages(mediaId, pages, news, staff),
       deletePage: (pageId: string) => {
         const subPageIds = pages
           .filter((p) => (p.parentPageId !== undefined ? p.parentPageId === pageId : p.parentId === pageId))
@@ -312,7 +399,7 @@ export const CmsProvider: React.FC<{ children: React.ReactNode; publicPagesOnly?
       getNewsById: (id: string) => news.find((n) => n.id === id),
       getNewsBySlug: (slug: string) => news.find((n) => n.slug.toLowerCase() === slug.toLowerCase()),
     }),
-    [pages, news, sermons, staff, settings]
+    [pages, news, sermons, staff, media, settings]
   );
 
   return <CmsContext.Provider value={value}>{children}</CmsContext.Provider>;

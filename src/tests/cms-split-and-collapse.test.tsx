@@ -20,6 +20,7 @@ vi.mock("../context/CmsContext", () => ({
       theme: "warm-stone",
     },
     pages: [],
+    media: [],
     news: [],
     sermons: [],
     savePage: vi.fn(),

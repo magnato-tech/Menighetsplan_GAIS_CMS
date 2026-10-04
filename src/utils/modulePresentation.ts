@@ -208,6 +208,7 @@ export function groupsFieldsFromPresentation(
       presentationText(config, "highlight3", GROUPS_DEFAULTS.highlight3),
     ],
     backgroundImage: config.backgroundImage || "",
+    backgroundImageAlt: config.backgroundImageAlt || "",
     backgroundColor: config.backgroundColor || "",
   };
 }

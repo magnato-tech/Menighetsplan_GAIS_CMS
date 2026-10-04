@@ -6,7 +6,7 @@ import { PagePreviewModal } from "../src/pages/admin/tabs/pages/PagePreviewModal
 import { PageTreeList } from "../src/pages/admin/tabs/pages/PageTreeList";
 import { initialCmsPages } from "../src/data/cmsData";
 
-import { HeroImageUploader } from "../src/pages/admin/tabs/pages/HeroImageUploader";
+import { CmsMediaPicker } from "../src/components/admin/CmsMediaPicker";
 import { CHURCH_HERO_PRESETS } from "../src/utils/imageUpload";
 import { ThemeTab } from "../src/pages/admin/tabs/ThemeTab";
 import { THEME_PRESETS, defaultCmsDesignTheme } from "../src/data/cmsData";
@@ -28,7 +28,7 @@ describe("Admin Studio", () => {
   assert(typeof AdminCmsPanel === "function", "AdminCmsPanel-komponenten er eksportert og tilgjengelig");
   assert(typeof PagePreviewModal === "function", "PagePreviewModal-komponenten er eksportert og tilgjengelig for forhåndsvisning");
   assert(typeof PageTreeList === "function", "PageTreeList-komponenten er eksportert og tilgjengelig");
-  assert(typeof HeroImageUploader === "function", "HeroImageUploader-komponenten er eksportert og tilgjengelig");
+  assert(typeof CmsMediaPicker === "function", "CmsMediaPicker-komponenten er eksportert og tilgjengelig");
   assert(typeof ThemeTab === "function", "ThemeTab-komponenten for designsystemet er tilgjengelig");
   assert(typeof CmsContentRenderer === "function", "CmsContentRenderer-komponenten er tilgjengelig");
   assert(typeof ContentBlockPickerModal === "function", "ContentBlockPickerModal-komponenten er tilgjengelig");

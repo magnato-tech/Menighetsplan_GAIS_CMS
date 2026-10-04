@@ -93,10 +93,13 @@ function injectSchemaJsonLd(schemaData: object): () => void {
  * Injects SEO and OpenGraph metadata into the document <head>.
  * Returns a teardown function that restores previous head state when component unmounts.
  */
-export function injectPageSeo(config: PageSeoConfig): () => void {
+export function injectPageSeo(
+  config: PageSeoConfig,
+  media: import("../data/cmsData").CmsMedia[] = []
+): () => void {
   if (typeof document === "undefined") return () => {};
 
-  const seo = resolvePageSeo(config, window.location.origin, window.location.pathname);
+  const seo = resolvePageSeo(config, window.location.origin, window.location.pathname, media);
   const cleanups: Array<() => void> = [];
 
   const previousDocumentTitle = document.title;

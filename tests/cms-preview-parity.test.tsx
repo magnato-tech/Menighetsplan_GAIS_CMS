@@ -47,6 +47,7 @@ vi.mock("../src/context/CmsContext", () => ({
       welcomeSubtext: "Et åpent hjem for alle generasjoner.",
     },
     pages: [home, omOss],
+    media: [],
     news: [],
     sermons: [],
     staff: [],

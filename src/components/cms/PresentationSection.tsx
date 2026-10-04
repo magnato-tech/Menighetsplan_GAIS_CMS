@@ -1,4 +1,5 @@
 import React from "react";
+import { useResolvedMediaUrl } from "../../hooks/useMediaMap";
 import { ModulePresentationConfig } from "../../utils/modulePresentation";
 
 interface PresentationSectionProps {
@@ -13,7 +14,8 @@ export const PresentationSection: React.FC<PresentationSectionProps> = ({
   className,
   children,
 }) => {
-  const image = config.backgroundImage?.trim();
+  const image = useResolvedMediaUrl(config.backgroundImage);
+  const imageAlt = config.backgroundImageAlt?.trim() || "";
   const color = config.backgroundColor?.trim();
 
   if (!image && !color) {
@@ -24,7 +26,12 @@ export const PresentationSection: React.FC<PresentationSectionProps> = ({
     <section className={`${className} relative overflow-hidden`}>
       {image && (
         <>
-          <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover" aria-hidden />
+          <img
+            src={image}
+            alt={imageAlt}
+            className="absolute inset-0 w-full h-full object-cover"
+            aria-hidden={!imageAlt}
+          />
           <div
             className="absolute inset-0"
             style={{

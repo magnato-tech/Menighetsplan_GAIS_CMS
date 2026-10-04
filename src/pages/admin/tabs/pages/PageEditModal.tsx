@@ -20,7 +20,9 @@ import {
   Tablet,
   Smartphone,
 } from "lucide-react";
-import { HeroImageUploader } from "./HeroImageUploader";
+import { CmsMediaPicker } from "../../../../components/admin/CmsMediaPicker";
+import { useMediaMap } from "../../../../hooks/useMediaMap";
+import { resolveShareableMediaUrl } from "../../../../utils/media";
 import { ContentBlockPickerModal } from "./ContentBlockPickerModal";
 import { useCms } from "../../../../context/CmsContext";
 import { useTimedMessage } from "../../../../hooks/useTimedMessage";
@@ -130,6 +132,8 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
   onClose,
 }) => {
   const { settings } = useCms();
+  const mediaById = useMediaMap();
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
   const [isBlockPickerOpen, setIsBlockPickerOpen] = useState(false);
   const [showSeoDetails, setShowSeoDetails] = useState(false);
   const [copiedIngress, showCopiedIngress] = useTimedMessage<true>(2000);
@@ -160,8 +164,10 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
     editingPage.summary?.trim() ||
     `Velkommen til ${editingPage.title || "siden"} i ${settings.churchName}.`;
   const shareImage =
-    shareableImageUrl(editingPage.ogImage, typeof window !== "undefined" ? window.location.origin : "") ||
-    shareableImageUrl(editingPage.heroImage, typeof window !== "undefined" ? window.location.origin : "");
+    resolveShareableMediaUrl(editingPage.ogImage, mediaById) ||
+    shareableImageUrl(editingPage.ogImage, origin) ||
+    resolveShareableMediaUrl(editingPage.heroImage, mediaById) ||
+    shareableImageUrl(editingPage.heroImage, origin);
 
   const insertComponentSnippet = (snippet: string) => {
     const parsedNew = parseContentToVisualBlocks(snippet);
@@ -631,10 +637,15 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
           <label className="text-xs font-semibold text-slate-300 block">
             Bakgrunnsbilde
           </label>
-          <HeroImageUploader
-            currentImageUrl={editingPage.heroImage}
-            onImageChange={(url: string) => onUpdate({ heroImage: url })}
-            pageTitle={editingPage.heroTitle || editingPage.title}
+          <CmsMediaPicker
+            label="Hovedbilde"
+            value={editingPage.heroImage || ""}
+            onChange={(url) => onUpdate({ heroImage: url })}
+            decorative
+            altValue={editingPage.heroImageAlt || ""}
+            onAltChange={(heroImageAlt) => onUpdate({ heroImageAlt })}
+            helpText="Dekorativt bakgrunnsbilde. Beskrivelse for skjermleser er valgfritt."
+            compact={false}
           />
         </div>
 
@@ -767,15 +778,12 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300 block">
-                  Delingsbilde URL (OpenGraph / Facebook / Twitter)
-                </label>
-                <input
-                  type="text"
+                <CmsMediaPicker
+                  label="Delingsbilde (OpenGraph / Facebook / Twitter)"
                   value={editingPage.ogImage || ""}
-                  onChange={(e) => onUpdate({ ...editingPage, ogImage: e.target.value })}
-                  placeholder="La stå tom for å bruke toppbanneret automatisk"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-hidden focus:border-indigo-500"
+                  onChange={(ogImage) => onUpdate({ ...editingPage, ogImage })}
+                  helpText="La stå tom for å bruke hovedbildet automatisk når det har en delbar adresse."
+                  compact
                 />
               </div>
             </div>

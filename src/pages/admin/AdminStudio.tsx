@@ -19,6 +19,7 @@ import { GroupsTab } from "./tabs/GroupsTab";
 import { PersonsTab } from "./tabs/PersonsTab";
 import { RolesTab } from "./tabs/RolesTab";
 import { DatabaseTab } from "./tabs/DatabaseTab";
+import { MediaTab } from "./tabs/MediaTab";
 
 export const AdminStudio: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -98,6 +99,7 @@ export const AdminStudio: React.FC = () => {
             onCreateHandled={clearCreateRequest}
           />
         )}
+        {panel("cms-medier", <MediaTab showFeedback={showFeedback} />)}
         {panel(
           "cms-nyheter",
           <NewsTab

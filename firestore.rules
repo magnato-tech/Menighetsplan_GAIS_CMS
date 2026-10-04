@@ -108,5 +108,12 @@ service cloud.firestore {
     match /cms_settings/{docId} {
       allow read: if true;
       allow write: if isValidAuditUpdate();
-    }  }
+    }
+
+    // CMS Media library metadata (files live in Firebase Storage)
+    match /cms_media/{mediaId} {
+      allow read: if true;
+      allow write: if isValidAuditUpdate();
+    }
+  }
 }

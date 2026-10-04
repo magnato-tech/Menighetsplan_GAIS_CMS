@@ -17,6 +17,7 @@ export const CMS_COLLECTIONS = {
   SERMONS: "cms_sermons",
   STAFF: "cms_staff",
   SETTINGS: "cms_settings",
+  MEDIA: "cms_media",
 } as const;
 
 // cms_settings holds a single document

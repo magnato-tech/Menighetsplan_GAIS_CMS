@@ -31,9 +31,12 @@ describe("Fylling og sletting av databasen", () => {
     populated.every((name) => ALL_COLLECTIONS.includes(name)),
     "Alle samlinger som fylles med mockdata er også med i slettingen"
   );
+  const collectionsWithoutMockSeed = new Set<string>([CMS_COLLECTIONS.MEDIA]);
   assert(
-    [...Object.values(COLLECTIONS), ...Object.values(CMS_COLLECTIONS)].every((name) => populated.includes(name)),
-    "Mockdata dekker alle samlingene appen bruker"
+    [...Object.values(COLLECTIONS), ...Object.values(CMS_COLLECTIONS)].every(
+      (name) => populated.includes(name) || collectionsWithoutMockSeed.has(name)
+    ),
+    "Mockdata dekker alle samlingene appen bruker (mediebibliotek fylles ved opplasting)"
   );
   assert(new Set(ALL_COLLECTIONS).size === ALL_COLLECTIONS.length, "Ingen samling er oppført to ganger");
 

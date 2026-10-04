@@ -1,4 +1,5 @@
-import type { CmsNewsArticle, CmsPage, CmsSettings } from "../data/cmsData";
+import type { CmsMedia, CmsNewsArticle, CmsPage, CmsSettings } from "../data/cmsData";
+import { mediaMapFromList, resolveShareableMediaUrl } from "./media";
 import { isPagePublished, pageUrl } from "./menu";
 import { isPublicPath } from "./routes";
 
@@ -53,9 +54,15 @@ export function shareableImageUrl(image: string | undefined, origin: string): st
 }
 
 /** Fills in what the page has not said itself: the summary for a missing description, the hero image for a missing share image. */
-export function resolvePageSeo(config: PageSeoConfig, origin: string, pathname: string): ResolvedSeo {
+export function resolvePageSeo(
+  config: PageSeoConfig,
+  origin: string,
+  pathname: string,
+  media: CmsMedia[] = []
+): ResolvedSeo {
   const churchName = config.churchName || DEFAULT_CHURCH_NAME;
   const siteName = config.siteName || DEFAULT_SITE_TITLE;
+  const mediaById = mediaMapFromList(media);
 
   const title = config.fullTitle || `${config.title || siteName} – ${churchName}`;
   const description =
@@ -63,13 +70,16 @@ export function resolvePageSeo(config: PageSeoConfig, origin: string, pathname: 
     config.summary?.trim() ||
     (config.title ? `Velkommen til ${config.title} i ${churchName}.` : DEFAULT_DESCRIPTION);
 
+  const shareImage =
+    resolveShareableMediaUrl(config.ogImage, mediaById) ||
+    shareableImageUrl(config.ogImage, origin) ||
+    resolveShareableMediaUrl(config.heroImage, mediaById) ||
+    shareableImageUrl(config.heroImage, origin);
+
   return {
     title,
     description,
-    image:
-      shareableImageUrl(config.ogImage, origin) ||
-      shareableImageUrl(config.heroImage, origin) ||
-      `${origin}/icon.svg`,
+    image: shareImage || `${origin}/icon.svg`,
     url: config.canonicalUrl || `${origin}${pathname}`,
     siteName: churchName,
     type: config.type || "website",
@@ -81,6 +91,7 @@ export function resolvePageSeo(config: PageSeoConfig, origin: string, pathname: 
 export interface SiteContent {
   pages: CmsPage[];
   news: CmsNewsArticle[];
+  media: CmsMedia[];
   settings: Pick<CmsSettings, "churchName" | "appName" | "tagline" | "welcomeSubtext">;
 }
 

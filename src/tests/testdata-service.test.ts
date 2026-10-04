@@ -18,14 +18,22 @@ vi.mock("firebase/firestore", async () => {
     collection: vi.fn((_db, name) => ({ id: name, path: name })),
     doc: vi.fn((_db, coll, id) => ({ id, path: `${coll}/${id}` })),
     getDocs: vi.fn(async (collRef) => {
-      // Returner 2 mock-dokumenter per samling
+      const makeDoc = (suffix: string, data: Record<string, unknown> = {}) => ({
+        id: `${collRef.id}-${suffix}`,
+        ref: { path: `${collRef.id}/${collRef.id}-${suffix}` },
+        data: () => data,
+      });
+      const docs =
+        collRef.id === "cms_settings"
+          ? [
+              makeDoc("1", { recordType: "volunteerRole", name: "Lydtekniker" }),
+              makeDoc("2", { recordType: "volunteerRole", name: "Kjøkken" }),
+            ]
+          : [makeDoc("1"), makeDoc("2")];
       return {
         empty: false,
-        size: 2,
-        docs: [
-          { id: `${collRef.id}-1`, ref: { path: `${collRef.id}/${collRef.id}-1` } },
-          { id: `${collRef.id}-2`, ref: { path: `${collRef.id}/${collRef.id}-2` } },
-        ],
+        size: docs.length,
+        docs,
       };
     }),
     writeBatch: vi.fn(() => ({

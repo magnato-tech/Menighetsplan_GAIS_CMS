@@ -16,7 +16,7 @@ import {
 } from './server/publicApi';
 import { markAsPrivate, renderSeoIntoHtml } from './server/pageMeta';
 import { CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID } from './src/data/collections';
-import { type CmsNewsArticle, type CmsPage, type CmsSettings, initialCmsSettings } from './src/data/cmsData';
+import { type CmsMedia, type CmsNewsArticle, type CmsPage, type CmsSettings, initialCmsSettings } from './src/data/cmsData';
 import { isPublicPath } from './src/utils/routes';
 import { type SiteContent, resolvePageSeo, seoForPath } from './src/utils/siteSeo';
 import { toIcalendar } from './src/utils/calendarFeed';
@@ -241,15 +241,17 @@ let siteContentReadAt = 0;
 let siteContentRead: Promise<void> | null = null;
 
 async function readSiteContent(): Promise<SiteContent> {
-  const [pages, news, settings] = await Promise.all([
+  const [pages, news, media, settings] = await Promise.all([
     getDocs(collection(db, CMS_COLLECTIONS.PAGES)),
     getDocs(collection(db, CMS_COLLECTIONS.NEWS)),
+    getDocs(collection(db, CMS_COLLECTIONS.MEDIA)).catch(() => null),
     // The settings may be missing or unreadable; the app then shows its defaults, and so do we
     getDoc(doc(db, CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID)).catch(() => null),
   ]);
   return {
     pages: pages.docs.map((d) => d.data() as CmsPage),
     news: news.docs.map((d) => d.data() as CmsNewsArticle),
+    media: media?.docs.map((d) => d.data() as CmsMedia) ?? [],
     settings: settings?.exists() ? (settings.data() as CmsSettings) : initialCmsSettings,
   };
 }
@@ -314,7 +316,7 @@ async function sendApp(req: Request, res: Response) {
     return;
   }
 
-  const seo = resolvePageSeo(config, originOf(req), req.path);
+  const seo = resolvePageSeo(config, originOf(req), req.path, site?.media ?? []);
   res
     .status(seo.notFound ? 404 : 200)
     .type('html')

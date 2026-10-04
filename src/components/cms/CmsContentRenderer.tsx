@@ -28,6 +28,8 @@ import {
 } from "../../utils/cmsBlocks";
 import { readModulePresentation } from "../../utils/modulePresentation";
 import { CmsResolvedLink } from "./CmsResolvedLink";
+import { useMediaMap, useResolvedMediaUrl } from "../../hooks/useMediaMap";
+import { parseMediaAltComment, parseMediaId } from "../../utils/media";
 
 interface CmsContentRendererProps {
   content?: string;
@@ -37,7 +39,14 @@ interface CmsContentRendererProps {
 export type ParsedBlock =
   | { type: "heading"; level: 1 | 2 | 3; text: string }
   | { type: "callout"; variant: "info" | "warning" | "success" | "primary"; title?: string; body: string }
-  | { type: "media"; alignment: "left" | "right"; imageUrl: string; title?: string; body: string }
+  | {
+      type: "media";
+      alignment: "left" | "right";
+      imageUrl: string;
+      imageAlt?: string;
+      title?: string;
+      body: string;
+    }
   | { type: "grid"; cards: { title?: string; body: string }[] }
   | { type: "quote"; text: string; author?: string }
   | { type: "cta"; label: string; url: string; primary?: boolean }
@@ -150,9 +159,17 @@ export function parseCmsContent(rawContent: string): ParsedBlock[] {
         i++;
       }
 
+      let imageAlt: string | undefined;
+      let bodyLines = mediaBodyLines;
+      const altFromComment = mediaBodyLines[0] ? parseMediaAltComment(mediaBodyLines[0]) : null;
+      if (altFromComment) {
+        imageAlt = altFromComment;
+        bodyLines = mediaBodyLines.slice(1);
+      }
+
       // If first line in body is a heading (### Tittel), extract it for cleaner display
       let title = inlineTitle;
-      let bodyContent = mediaBodyLines;
+      let bodyContent = bodyLines;
       if (!title && mediaBodyLines.length > 0 && mediaBodyLines[0].trim().startsWith("### ")) {
         title = mediaBodyLines[0].trim().replace("### ", "");
         bodyContent = mediaBodyLines.slice(1);
@@ -165,6 +182,7 @@ export function parseCmsContent(rawContent: string): ParsedBlock[] {
         type: "media",
         alignment,
         imageUrl,
+        imageAlt,
         title,
         body: bodyContent.join("\n").trim(),
       });
@@ -492,6 +510,44 @@ function renderSimpleStyles(str: string): React.ReactNode {
   });
 }
 
+function MediaContentBlock({
+  block,
+  isLeft,
+}: {
+  block: Extract<ParsedBlock, { type: "media" }>;
+  isLeft: boolean;
+}) {
+  const mediaById = useMediaMap();
+  const imageSrc = useResolvedMediaUrl(block.imageUrl);
+  const mediaId = parseMediaId(block.imageUrl);
+  const libraryAlt = mediaId ? mediaById[mediaId]?.altText : "";
+  const alt = block.imageAlt?.trim() || libraryAlt || "";
+
+  return (
+    <div
+      className={`my-6 flex flex-col md:flex-row items-center gap-6 p-5 sm:p-6 bg-stone-50 border border-stone-200/80 rounded-2xl shadow-xs ${
+        isLeft ? "" : "md:flex-row-reverse"
+      }`}
+    >
+      {imageSrc && (
+        <div className="w-full md:w-5/12 h-48 sm:h-56 md:h-64 rounded-xl overflow-hidden shrink-0 bg-stone-200 border border-stone-300/80 shadow-2xs">
+          <img src={imageSrc} alt={alt} className="w-full h-full object-cover" />
+        </div>
+      )}
+      <div className="flex-1 space-y-2.5 text-stone-700">
+        {block.title && (
+          <h3 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight">
+            {renderInlineFormatting(block.title)}
+          </h3>
+        )}
+        <div className="text-sm sm:text-base leading-relaxed whitespace-pre-line text-stone-600">
+          {renderInlineFormatting(block.body)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const CmsContentRenderer: React.FC<CmsContentRendererProps> = ({
   content = "",
   className = "",
@@ -616,34 +672,7 @@ export const CmsContentRenderer: React.FC<CmsContentRendererProps> = ({
 
           case "media": {
             const isLeft = block.alignment === "left";
-            return (
-              <div
-                key={idx}
-                className={`my-6 flex flex-col md:flex-row items-center gap-6 p-5 sm:p-6 bg-stone-50 border border-stone-200/80 rounded-2xl shadow-xs ${
-                  isLeft ? "" : "md:flex-row-reverse"
-                }`}
-              >
-                {block.imageUrl && (
-                  <div className="w-full md:w-5/12 h-48 sm:h-56 md:h-64 rounded-xl overflow-hidden shrink-0 bg-stone-200 border border-stone-300/80 shadow-2xs">
-                    <img
-                      src={block.imageUrl}
-                      alt={block.title || "Illustrasjonsbilde"}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                <div className="flex-1 space-y-2.5 text-stone-700">
-                  {block.title && (
-                    <h3 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight">
-                      {renderInlineFormatting(block.title)}
-                    </h3>
-                  )}
-                  <div className="text-sm sm:text-base leading-relaxed whitespace-pre-line text-stone-600">
-                    {renderInlineFormatting(block.body)}
-                  </div>
-                </div>
-              </div>
-            );
+            return <MediaContentBlock key={idx} block={block} isLeft={isLeft} />;
           }
 
           case "grid":

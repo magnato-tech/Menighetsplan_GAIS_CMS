@@ -4,7 +4,7 @@ import {
   MODULE_PRESENTATION_FIELDS,
   ModulePresentationConfig,
 } from "../../utils/modulePresentation";
-import { CmsImagePicker } from "./CmsImagePicker";
+import { CmsMediaPicker } from "./CmsMediaPicker";
 import { CmsLinkPicker } from "./CmsLinkPicker";
 
 const fieldClass =
@@ -48,14 +48,19 @@ export const ModulePresentationEditor: React.FC<ModulePresentationEditorProps> =
 
       {fields.map((field) => {
         if (field.type === "image") {
+          const altKey = `${field.key}Alt`;
           return (
-            <CmsImagePicker
-              key={field.key}
-              label={field.label}
-              value={config[field.key] || ""}
-              onChange={(url) => set(field.key, url)}
-              helpText={field.help}
-            />
+            <div key={field.key} className="space-y-2">
+              <CmsMediaPicker
+                label={field.label}
+                value={config[field.key] || ""}
+                onChange={(url) => set(field.key, url)}
+                helpText={field.help}
+                decorative
+                altValue={config[altKey] || ""}
+                onAltChange={(alt) => set(altKey, alt)}
+              />
+            </div>
           );
         }
 
