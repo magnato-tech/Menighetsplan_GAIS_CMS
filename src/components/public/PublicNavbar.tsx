@@ -20,7 +20,7 @@ export const PublicNavbar: React.FC = () => {
   const { settings, pages } = useCms();
   const { currentUser } = useFirebase();
 
-  const isAdmin = currentUser.globalRole === "admin";
+  const isAdmin = currentUser?.globalRole === "admin";
 
   const toggleMobileSubmenu = (pageId: string) => {
     setOpenMobileSubmenus((prev) => ({

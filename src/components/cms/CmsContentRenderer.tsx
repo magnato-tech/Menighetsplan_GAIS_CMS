@@ -13,6 +13,12 @@ import {
   Phone,
   Mail,
 } from "lucide-react";
+import { WorshipModule } from "./modules/WorshipModule";
+import { CalendarModule } from "./modules/CalendarModule";
+import { NewsModule } from "./modules/NewsModule";
+import { SermonModule } from "./modules/SermonModule";
+import { GroupsModule } from "./modules/GroupsModule";
+import { GivingModule } from "./modules/GivingModule";
 
 interface CmsContentRendererProps {
   content?: string;
@@ -29,6 +35,12 @@ export type ParsedBlock =
   | { type: "list"; items: string[]; ordered?: boolean }
   | { type: "paragraph"; text: string }
   | { type: "person-grid"; filter: string }
+  | { type: "module-worship"; variant?: "highlight" | "compact" }
+  | { type: "module-calendar"; variant?: "grid" | "list" }
+  | { type: "module-news"; variant?: "grid" | "compact" }
+  | { type: "module-sermon"; variant?: "player" | "minimal" }
+  | { type: "module-groups"; variant?: "banner" | "cards" }
+  | { type: "module-giving"; variant?: "card" | "vipps" }
   | { type: "spacer" };
 
 /**
@@ -263,6 +275,39 @@ export function parseCmsContent(rawContent: string): ParsedBlock[] {
         filter,
       });
       continue;
+    }
+
+    // Dynamic modules: :::module-worship, :::module-calendar, :::module-news, :::module-sermon, :::module-groups, :::module-giving
+    if (trimmed.startsWith(":::module-")) {
+      const match = trimmed.match(/^:::module-([a-zA-Z0-9_-]+)(?:\[(.*?)\])?/);
+      const modType = match ? `module-${match[1]}` : "";
+      const variant = match && match[2] ? match[2].trim() : undefined;
+      i++;
+      while (i < lines.length && !lines[i].trim().startsWith(":::")) {
+        i++;
+      }
+      if (i < lines.length && lines[i].trim().startsWith(":::")) {
+        i++;
+      }
+      if (modType === "module-worship") {
+        blocks.push({ type: "module-worship", variant: variant as "highlight" | "compact" });
+        continue;
+      } else if (modType === "module-calendar") {
+        blocks.push({ type: "module-calendar", variant: variant as "grid" | "list" });
+        continue;
+      } else if (modType === "module-news") {
+        blocks.push({ type: "module-news", variant: variant as "grid" | "compact" });
+        continue;
+      } else if (modType === "module-sermon") {
+        blocks.push({ type: "module-sermon", variant: variant as "player" | "minimal" });
+        continue;
+      } else if (modType === "module-groups") {
+        blocks.push({ type: "module-groups", variant: variant as "banner" | "cards" });
+        continue;
+      } else if (modType === "module-giving") {
+        blocks.push({ type: "module-giving", variant: variant as "card" | "vipps" });
+        continue;
+      }
     }
 
     // Headings
@@ -632,6 +677,24 @@ export const CmsContentRenderer: React.FC<CmsContentRendererProps> = ({
 
           case "person-grid":
             return <PersonGridRenderer key={idx} filter={block.filter} />;
+
+          case "module-worship":
+            return <WorshipModule key={idx} variant={block.variant} />;
+
+          case "module-calendar":
+            return <CalendarModule key={idx} variant={block.variant} />;
+
+          case "module-news":
+            return <NewsModule key={idx} variant={block.variant} />;
+
+          case "module-sermon":
+            return <SermonModule key={idx} variant={block.variant} />;
+
+          case "module-groups":
+            return <GroupsModule key={idx} variant={block.variant} />;
+
+          case "module-giving":
+            return <GivingModule key={idx} variant={block.variant} />;
 
           default:
             return null;

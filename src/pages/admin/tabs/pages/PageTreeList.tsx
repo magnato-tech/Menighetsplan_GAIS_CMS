@@ -14,6 +14,10 @@ import {
   GripVertical,
   ChevronUp,
   ChevronDown,
+  ChevronRight,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  FolderOpen,
   Eye,
   Image as ImageIcon,
   Clock,
@@ -47,6 +51,50 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
   const [draggingParentId, setDraggingParentId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [dropPosition, setDropPosition] = useState<"before" | "after" | null>(null);
+
+  // Tilstand for kollapsede foreldrenoder (huskes i localStorage for redaktøren)
+  const [collapsedParentIds, setCollapsedParentIds] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem("menighetsplan_collapsed_pages");
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const toggleCollapse = (parentId: string) => {
+    setCollapsedParentIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(parentId)) {
+        next.delete(parentId);
+      } else {
+        next.add(parentId);
+      }
+      try {
+        localStorage.setItem("menighetsplan_collapsed_pages", JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
+  };
+
+  const handleCollapseAll = () => {
+    const allWithChildren = hierarchicalPages
+      .filter((n) => n.children.length > 0)
+      .map((n) => n.page.id);
+    const next = new Set(allWithChildren);
+    setCollapsedParentIds(next);
+    try {
+      localStorage.setItem("menighetsplan_collapsed_pages", JSON.stringify([...next]));
+    } catch {}
+  };
+
+  const handleExpandAll = () => {
+    const next = new Set<string>();
+    setCollapsedParentIds(next);
+    try {
+      localStorage.setItem("menighetsplan_collapsed_pages", JSON.stringify([]));
+    } catch {}
+  };
 
   // Helper to reorder an array of items by moving one item before or after a target
   const moveInArray = (list: string[], sourceId: string, targetId: string, position: "before" | "after") => {
@@ -223,9 +271,41 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* Hierarchy toolbar with Collapse/Expand All controls */}
+      {hierarchicalPages.some((n) => n.children.length > 0) && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 py-1 text-xs border-b border-slate-800 pb-2">
+          <div className="flex items-center gap-2 text-slate-400">
+            <span className="text-[11px] font-medium text-slate-400">
+              Fold inn underfaner med vinkelpilen foran mappen eller ved dobbeltklikk på boksen. Dra eller bruk piler for å sortere.
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleCollapseAll}
+              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Kollaps alle underfaner"
+            >
+              <ChevronsDownUp className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Kollaps alle</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleExpandAll}
+              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Utvid alle underfaner"
+            >
+              <ChevronsUpDown className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Utvid alle</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {hierarchicalPages.map((item, topIdx) => {
         const parent = item.page;
         const hasChildren = item.children.length > 0;
+        const isCollapsed = collapsedParentIds.has(parent.id);
         const targetUrl = pageUrl(parent);
         const parentOrder = getMenuOrder(parent);
 
@@ -237,7 +317,14 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
             key={parent.id}
             onDragOver={(e) => handleDragOverTop(e, parent.id)}
             onDrop={(e) => handleDropTop(e, parent.id)}
+            onDoubleClick={() => {
+              if (hasChildren) {
+                toggleCollapse(parent.id);
+              }
+            }}
             className={`p-4 sm:p-5 rounded-2xl border transition-all space-y-3 relative ${
+              hasChildren ? "cursor-default select-none" : ""
+            } ${
               isBeingDragged
                 ? "opacity-40 border-dashed border-indigo-400 bg-slate-850 shadow-inner"
                 : isDragOver
@@ -257,6 +344,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                   draggable
                   onDragStart={(e) => handleDragStartTop(e, parent.id)}
                   onDragEnd={handleDragEnd}
+                  onDoubleClick={(e) => e.stopPropagation()}
                   className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-slate-700/60 transition-colors shrink-0"
                   title="Dra og slipp for å endre rekkefølge på toppmenyen"
                 >
@@ -264,11 +352,17 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                 </div>
 
                 {/* Step Up / Down arrows for keyboard & touch accessibility */}
-                <div className="flex flex-col gap-0.5 shrink-0">
+                <div
+                  className="flex flex-col gap-0.5 shrink-0"
+                  onDoubleClick={(e) => e.stopPropagation()}
+                >
                   <button
                     type="button"
                     disabled={topIdx === 0}
-                    onClick={() => handleMoveStep(topLevelPages, parent.id, "up")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMoveStep(topLevelPages, parent.id, "up");
+                    }}
                     className={`p-0.5 rounded transition-colors ${
                       topIdx === 0
                         ? "text-slate-600 cursor-not-allowed"
@@ -282,7 +376,10 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                   <button
                     type="button"
                     disabled={topIdx === topLevelPages.length - 1}
-                    onClick={() => handleMoveStep(topLevelPages, parent.id, "down")}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMoveStep(topLevelPages, parent.id, "down");
+                    }}
                     className={`p-0.5 rounded transition-colors ${
                       topIdx === topLevelPages.length - 1
                         ? "text-slate-600 cursor-not-allowed"
@@ -300,17 +397,71 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                     <span
                       className="w-6 h-6 rounded-lg bg-indigo-950 border border-indigo-700/60 text-indigo-300 text-[11px] font-mono font-bold flex items-center justify-center shrink-0"
                       title="Menyrekkefølge"
+                      onDoubleClick={(e) => e.stopPropagation()}
                     >
                       #{parentOrder}
                     </span>
-                    <Folder className="w-4 h-4 text-amber-400 shrink-0" />
-                    <h3 className="font-bold text-white text-base truncate">{parent.title}</h3>
+
+                    {/* Vinkelpil (< / >) og Mappeikon foran sidetittelen */}
+                    {hasChildren ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleCollapse(parent.id);
+                        }}
+                        onDoubleClick={(e) => {
+                          e.stopPropagation();
+                          toggleCollapse(parent.id);
+                        }}
+                        className="px-1.5 py-1 -ml-1 rounded-lg text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-700/80 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs group"
+                        title={
+                          isCollapsed
+                            ? "Vis underfaner (klikk eller dobbeltklikk på boksen)"
+                            : "Kollaps underfaner (klikk eller dobbeltklikk på boksen)"
+                        }
+                        aria-label={isCollapsed ? "Vis underfaner" : "Kollaps underfaner"}
+                        aria-expanded={!isCollapsed}
+                      >
+                        {isCollapsed ? (
+                          <ChevronRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-indigo-400 group-hover:translate-y-0.5 transition-transform shrink-0" />
+                        )}
+                        {isCollapsed ? (
+                          <Folder className="w-4 h-4 text-amber-400 shrink-0" />
+                        ) : (
+                          <FolderOpen className="w-4 h-4 text-amber-400 shrink-0" />
+                        )}
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-1 pl-1">
+                        <Folder className="w-4 h-4 text-amber-400/80 shrink-0" />
+                      </div>
+                    )}
+
+                    <h3
+                      className={`font-bold text-white text-base truncate ${
+                        hasChildren ? "hover:text-indigo-200 transition-colors cursor-pointer" : ""
+                      }`}
+                      title={
+                        hasChildren
+                          ? isCollapsed
+                            ? "Dobbeltklikk for å utvide underfaner"
+                            : "Dobbeltklikk for å kollapse underfaner"
+                          : undefined
+                      }
+                    >
+                      {parent.title}
+                    </h3>
                     <span className="text-xs font-mono text-indigo-400 bg-slate-900 px-2 py-0.5 rounded">
                       {targetUrl}
                     </span>
 
                     {/* Draft/Published Status Indicator */}
-                    {renderStatusIndicator(parent)}
+                    <div onDoubleClick={(e) => e.stopPropagation()}>
+                      {renderStatusIndicator(parent)}
+                    </div>
 
                     {parent.inNavMenu !== false ? (
                       <span className="text-[10px] font-bold text-indigo-300 bg-indigo-950/60 border border-indigo-800/60 px-2 py-0.5 rounded">
@@ -323,9 +474,34 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                     )}
 
                     {hasChildren && (
-                      <span className="text-[10px] font-semibold text-sky-300 bg-sky-950/60 border border-sky-800/60 px-2 py-0.5 rounded">
-                        {item.children.length} underfane{item.children.length > 1 ? "r" : ""}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleCollapse(parent.id);
+                        }}
+                        onDoubleClick={(e) => {
+                          e.stopPropagation();
+                          toggleCollapse(parent.id);
+                        }}
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                          isCollapsed
+                            ? "text-sky-300 bg-sky-950/90 border-sky-700 hover:bg-sky-900"
+                            : "text-sky-300 bg-sky-950/60 border-sky-800/60 hover:bg-sky-900/60"
+                        }`}
+                        title={
+                          isCollapsed
+                            ? "Klikk eller dobbeltklikk på boksen for å utvide underfaner"
+                            : "Klikk eller dobbeltklikk på boksen for å kollapse underfaner"
+                        }
+                      >
+                        <span>
+                          {item.children.length} underfane{item.children.length > 1 ? "r" : ""}
+                        </span>
+                        <span className="text-[9px] text-sky-400/80 font-mono">
+                          {isCollapsed ? "(skjult)" : ""}
+                        </span>
+                      </button>
                     )}
 
                     {parent.heroImage && (
@@ -346,7 +522,10 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
               </div>
 
               {/* Main Tab Actions */}
-              <div className="flex items-center gap-1.5 text-xs shrink-0 self-end sm:self-auto">
+              <div
+                className="flex items-center gap-1.5 text-xs shrink-0 self-end sm:self-auto"
+                onDoubleClick={(e) => e.stopPropagation()}
+              >
                 <button
                   type="button"
                   onClick={() => onOpenNewPage(parent.id)}
@@ -356,17 +535,19 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                   <Plus className="w-3.5 h-3.5" />
                   <span>+ Underfane</span>
                 </button>
-                {onPreviewPage && (
-                  <button
-                    type="button"
-                    onClick={() => onPreviewPage(parent)}
-                    className="p-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-800/60 transition-colors cursor-pointer"
-                    title="Forhåndsvis side i modal med offentlig styling og responsiv sjekk"
-                    aria-label="Forhåndsvis side"
-                  >
-                    <Eye className="w-4 h-4 text-indigo-400" />
-                  </button>
-                )}
+                <a
+                  href={`${targetUrl}${targetUrl.includes("?") ? "&" : "?"}preview=true`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    if (onPreviewPage) onPreviewPage(parent);
+                  }}
+                  className="p-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-800/60 transition-colors"
+                  title="Forhåndsvis side i ny fane med ekte offentlig styling"
+                  aria-label="Forhåndsvis side"
+                >
+                  <Eye className="w-4 h-4 text-indigo-400" />
+                </a>
                 <Link
                   to={targetUrl}
                   target="_blank"
@@ -395,8 +576,11 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
             </div>
 
             {/* Sub-tabs Tree (Rendered hierarchically underneath with drag & drop) */}
-            {hasChildren && (
-              <div className="ml-3 sm:ml-6 pl-3 sm:pl-6 border-l-2 border-indigo-500/30 space-y-2 pt-1 pb-1">
+            {hasChildren && !isCollapsed && (
+              <div
+                className="ml-3 sm:ml-6 pl-3 sm:pl-6 border-l-2 border-indigo-500/30 space-y-2 pt-1 pb-1"
+                onDoubleClick={(e) => e.stopPropagation()}
+              >
                 {item.children.map((child, cIdx) => {
                   const childOrder = getMenuOrder(child);
                   const childUrl = pageUrl(child);
@@ -507,17 +691,19 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                       </div>
 
                       <div className="flex items-center gap-1.5 text-xs shrink-0 self-end sm:self-auto">
-                        {onPreviewPage && (
-                          <button
-                            type="button"
-                            onClick={() => onPreviewPage(child)}
-                            className="p-1.5 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-800/40 transition-colors cursor-pointer"
-                            title="Forhåndsvis underside i modal med offentlig styling"
-                            aria-label="Forhåndsvis underside"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                          </button>
-                        )}
+                        <a
+                          href={`${childUrl}${childUrl.includes("?") ? "&" : "?"}preview=true`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => {
+                            if (onPreviewPage) onPreviewPage(child);
+                          }}
+                          className="p-1.5 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-800/40 transition-colors"
+                          title="Forhåndsvis underside i ny fane med ekte offentlig styling"
+                          aria-label="Forhåndsvis underside"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-indigo-400" />
+                        </a>
                         <Link
                           to={childUrl}
                           target="_blank"
@@ -548,6 +734,22 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                 })}
               </div>
             )}
+
+            {hasChildren && isCollapsed && (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleCollapse(parent.id);
+                }}
+                className="ml-3 sm:ml-6 pl-3 sm:pl-6 py-2 text-xs text-slate-400 hover:text-indigo-300 cursor-pointer flex items-center gap-2 transition-colors border-l-2 border-indigo-500/20 group"
+                title="Klikk eller dobbeltklikk for å vise underfaner"
+              >
+                <ChevronRight className="w-3.5 h-3.5 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
+                <span className="font-medium">
+                  {item.children.length} underfane{item.children.length > 1 ? "r" : ""} er skjult – klikk eller dobbeltklikk for å utvide
+                </span>
+              </div>
+            )}
           </div>
         );
       })}
@@ -576,17 +778,16 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                   {renderStatusIndicator(op, true)}
                 </div>
                 <div className="flex items-center gap-1.5">
-                  {onPreviewPage && (
-                    <button
-                      type="button"
-                      onClick={() => onPreviewPage(op)}
-                      className="p-1.5 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-800/40 transition-colors cursor-pointer"
-                      title="Forhåndsvis side"
-                      aria-label="Forhåndsvis side"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+                  <a
+                    href={`/${op.slug}?preview=true`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-800/40 transition-colors"
+                    title="Forhåndsvis side i ny fane"
+                    aria-label="Forhåndsvis side"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-indigo-400" />
+                  </a>
                   <button
                     type="button"
                     onClick={() => onOpenEditPage(op)}

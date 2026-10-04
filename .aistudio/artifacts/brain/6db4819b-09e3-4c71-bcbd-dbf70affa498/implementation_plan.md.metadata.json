@@ -1,6 +1,6 @@
 {
-  "summary":  "Plan for ny 'Database & Testdata'-fane i Admin Studio med glidebrytere, ferdige pakker, standard avkryssing for tømming av testpersoner/grupper (bevaring av CMS) og ett-klikks populering av 32 medlemmer.",
-  "updatedAt":  "2026-10-03T09:29:06.310466730Z",
+  "summary":  "Revidert implementeringsplan for visuell blokkbygger i CMS: Fast låst Hero-ramme øverst med inline-redigering, og en visuell kortliste for alle øvrige blokker og moduler i stedet for rå kode. Tydelig skille mellom 'Endre blokk' (flytte opp/ned, skjule, velge layout) og 'Rediger innhold' (tekst/bilder), med 100 % låst forretningslogikk for dynamiske moduler.",
+  "updatedAt":  "2026-10-04T09:46:09.962421418Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

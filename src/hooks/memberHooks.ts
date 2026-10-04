@@ -6,7 +6,10 @@ import { countSlots, holdsSlot } from "../utils/staffing";
 // 1. Hook: useCurrentUser
 export function useCurrentUser() {
   const { currentUser, allPersons, currentUserId, setCurrentUserId, getUserGroups } = useFirebase();
-  const userGroups = useMemo(() => getUserGroups(currentUser.id), [getUserGroups, currentUser.id]);
+  const userGroups = useMemo(
+    () => (currentUser?.id && getUserGroups ? getUserGroups(currentUser.id) : []),
+    [getUserGroups, currentUser?.id]
+  );
 
   return {
     currentUser,
@@ -20,7 +23,10 @@ export function useCurrentUser() {
 // 2. Hook: useMyTasks — the tasks the current user has said yes to
 export function useMyTasks() {
   const { currentUser, getTasksForPerson } = useFirebase();
-  return useMemo(() => getTasksForPerson(currentUser.id), [getTasksForPerson, currentUser.id]);
+  return useMemo(
+    () => (currentUser?.id && getTasksForPerson ? getTasksForPerson(currentUser.id) : []),
+    [getTasksForPerson, currentUser?.id]
+  );
 }
 
 // 3. Hook: useTaskDetail — a task as one member sees it, and what they can do with it

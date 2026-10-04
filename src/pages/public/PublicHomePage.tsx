@@ -1,497 +1,186 @@
-import React, { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { useFirebase } from "../../context/FirebaseDataContext";
+import React from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
-import { locationOf, pickHighlight, upcomingPublicGatherings } from "../../utils/gatherings";
-import {
-  Calendar,
-  Clock,
-  MapPin,
-  ChevronRight,
-  ArrowRight,
-  Heart,
-  Users,
-  Sparkles,
-  BookOpen,
-  Coffee,
-  CheckCircle2,
-  Headphones,
-  Play,
-  Volume2,
-  Music2,
-  ExternalLink,
-} from "lucide-react";
+import { CmsPage } from "../../data/cmsData";
+import { CmsContentRenderer } from "../../components/cms/CmsContentRenderer";
+import { WorshipModule } from "../../components/cms/modules/WorshipModule";
+import { CalendarModule } from "../../components/cms/modules/CalendarModule";
+import { NewsModule } from "../../components/cms/modules/NewsModule";
+import { SermonModule } from "../../components/cms/modules/SermonModule";
+import { GroupsModule } from "../../components/cms/modules/GroupsModule";
+import { GivingModule } from "../../components/cms/modules/GivingModule";
+import { ArrowRight, Sparkles } from "lucide-react";
 
-function getSpotifyEmbedUrl(url: string | undefined): string | null {
-  if (!url) return null;
-  if (url.includes("/embed/")) return url;
-  const match = url.match(/open\.spotify\.com\/(episode|show|track)\/([a-zA-Z0-9]+)/);
-  if (match) {
-    return `https://open.spotify.com/embed/${match[1]}/${match[2]}`;
-  }
-  return null;
+interface PublicHomePageProps {
+  pageOverride?: Partial<CmsPage>;
+  hidePreviewBanner?: boolean;
 }
 
-export const PublicHomePage: React.FC = () => {
-  const { gatherings } = useFirebase();
-  const { settings, news, sermons } = useCms();
-  const [isPlayingSermon, setIsPlayingSermon] = useState(false);
+export const PublicHomePage: React.FC<PublicHomePageProps> = ({
+  pageOverride,
+  hidePreviewBanner,
+}) => {
+  const [searchParams] = useSearchParams();
+  const isPreviewMode = searchParams.get("preview") === "true";
+  const { pages, settings } = useCms();
 
-  // The gathering lifted up at the top: one an admin has featured, otherwise the next worship service
-  const highlight = useMemo(() => pickHighlight(gatherings, Date.now()), [gatherings]);
-  const nextWorship = highlight?.gathering;
-  const highlightLabel =
-    highlight?.kind === "featured" ? "Fremhevet" : highlight?.kind === "next" ? "Neste arrangement" : "Neste Gudstjeneste";
-
-  // Upcoming public gatherings for "Hva skjer" preview
-  const upcomingEvents = useMemo(() => upcomingPublicGatherings(gatherings, Date.now()).slice(0, 4), [gatherings]);
-
-  // Published news articles
-  const publishedNews = useMemo(() => {
-    return news.filter((n) => n.isPublished !== false).slice(0, 3);
-  }, [news]);
-
-  // Latest sermon
-  const latestSermon = useMemo(() => {
-    return sermons.length > 0 ? sermons[0] : null;
-  }, [sermons]);
-
-  // Format date helper
-  const formatDate = (dateStr: string) => {
+  // Find stored preview in sessionStorage if in preview mode without pageOverride
+  const storedDraft = React.useMemo(() => {
+    if (!isPreviewMode || pageOverride) return null;
     try {
-      const d = new Date(dateStr);
-      return new Intl.DateTimeFormat("no-NO", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-      }).format(d);
-    } catch {
-      return dateStr;
+      const activeRaw = sessionStorage.getItem("cms_preview_active");
+      if (activeRaw) {
+        const parsed = JSON.parse(activeRaw);
+        if (parsed.slug === "" || parsed.slug === "forside" || parsed.linkUrl === "/") {
+          return parsed as Partial<CmsPage>;
+        }
+      }
+    } catch {}
+    return null;
+  }, [isPreviewMode, pageOverride]);
+
+  const activePage =
+    pageOverride ||
+    storedDraft ||
+    pages.find((p) => p.slug === "forside" || p.slug === "" || p.linkUrl === "/") ||
+    null;
+
+  const showHero = activePage?.showHero !== false;
+
+  const heroHeadline =
+    (activePage?.title && activePage.title !== "Forside" ? activePage.title : settings.welcomeHeadline) ||
+    "Velkommen til menighetens fellesskap";
+
+  const heroSubtext =
+    activePage?.summary ||
+    settings.welcomeSubtext ||
+    "Et åpent hjem for alle generasjoner. Vi samles til gudstjeneste, bønn og nære fellesskap der tro og hverdag møtes.";
+
+  const heroImage = activePage?.heroImage;
+
+  // Render a single visual block
+  const renderVisualBlock = (block: any, idx: number) => {
+    if (block.hidden) return null;
+
+    switch (block.type) {
+      case "module-worship":
+        return <WorshipModule key={block.id || idx} variant={block.variant} />;
+      case "module-calendar":
+        return <CalendarModule key={block.id || idx} variant={block.variant} />;
+      case "module-news":
+        return <NewsModule key={block.id || idx} variant={block.variant} />;
+      case "module-sermon":
+        return <SermonModule key={block.id || idx} variant={block.variant} />;
+      case "module-groups":
+        return <GroupsModule key={block.id || idx} variant={block.variant} />;
+      case "module-giving":
+        return <GivingModule key={block.id || idx} variant={block.variant} />;
+      default:
+        // Static content block
+        return (
+          <div key={block.id || idx} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6">
+            <CmsContentRenderer content={block.rawContent} />
+          </div>
+        );
     }
   };
 
-  const formatTime = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr);
-      return new Intl.DateTimeFormat("no-NO", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(d);
-    } catch {
-      return "";
-    }
-  };
+  const hasStructuredBlocks = activePage?.blocks && activePage.blocks.length > 0;
+  const content = activePage?.content || "";
+  const hasModuleDirectives = content.includes(":::module-");
 
   return (
-    <div className="space-y-16 lg:space-y-24 pb-16">
-      {/* 1. Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-stone-900 via-primary-950 to-stone-900 text-white py-16 sm:py-24 lg:py-28 px-4 sm:px-6 lg:px-8">
-        {/* Subtle decorative glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-primary-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative max-w-5xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-semibold text-accent-300">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{settings.churchName}</span>
-          </div>
-
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
-            {settings.welcomeHeadline || "Velkommen til menighetens fellesskap"}
-          </h1>
-
-          <p className="max-w-2xl mx-auto text-base sm:text-lg text-stone-300 leading-relaxed font-normal">
-            {settings.welcomeSubtext ||
-              "Et åpent hjem for alle generasjoner. Vi samles til gudstjeneste, bønn og nære fellesskap der tro og hverdag møtes."}
-          </p>
-
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              to="/hva-skjer"
-              className="px-6 py-3.5 rounded-xl bg-accent-400 hover:bg-accent-300 text-stone-950 font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2"
-            >
-              <span>Se hva som skjer</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              to="/om-oss"
-              className="px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-sm backdrop-blur-sm border border-white/20 transition-all"
-            >
-              Bli kjent med oss
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. Neste Gudstjeneste (Live Highlight Card) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 sm:-mt-14 relative z-10">
-        <div className="bg-white rounded-2xl shadow-xl border border-stone-200/80 p-6 sm:p-8 lg:p-10">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-stone-100">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-primary-50 text-primary-800 text-xs font-bold uppercase tracking-wider">
-                <Calendar className="w-3.5 h-3.5 text-primary-600" />
-                <span>{highlightLabel}</span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
-                {nextWorship ? nextWorship.title : "Ingen samlinger er lagt ut ennå"}
-              </h2>
-              {nextWorship?.theme && (
-                <p className="text-sm font-medium text-stone-600">
-                  <span className="font-semibold text-stone-800">Tema:</span> {nextWorship.theme}
-                  {nextWorship.bibleText && ` (${nextWorship.bibleText})`}
-                </p>
-              )}
-            </div>
-
-            {nextWorship && (
-              <div className="flex flex-wrap items-center gap-4 text-sm text-stone-700 bg-stone-50 p-4 rounded-xl border border-stone-200/60">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-primary-600" />
-                  <span className="font-semibold capitalize">{formatDate(nextWorship.startsAt)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-primary-600" />
-                  <span>Kl. {formatTime(nextWorship.startsAt)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-primary-600" />
-                  <span>{locationOf(nextWorship)}</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-stone-600">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-accent-50 text-accent-700 flex items-center justify-center shrink-0">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="font-bold text-stone-900 text-sm">Sprell Levende Søndagsskole</h4>
-                <p className="mt-0.5 text-stone-500">
-                  Eget tilrettelagt opplegg for småbarn, barn og tweens under gudstjenesten.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary-50 text-primary-700 flex items-center justify-center shrink-0">
-                <Coffee className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="font-bold text-stone-900 text-sm">Kirkekaffe & Drøs</h4>
-                <p className="mt-0.5 text-stone-500">
-                  Vi samles i kafeen etter gudstjenesten til kaffe, te, saft og en hyggelig prat.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-                <BookOpen className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="font-bold text-stone-900 text-sm">Rom for alle</h4>
-                <p className="mt-0.5 text-stone-500">
-                  Uansett bakgrunn er du hjertelig velkommen. Ingen forkunnskaper kreves.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Kommende Arrangementer (Kommende uker) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-wider text-primary-700">Kalender</h2>
-            <h3 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-1">
-              Hva skjer i {settings.churchName}
-            </h3>
+    <div className="space-y-8 sm:space-y-12 pb-16">
+      {/* Top Banner when previewing Forside in separate tab */}
+      {isPreviewMode && !hidePreviewBanner && (
+        <div className="bg-stone-900 text-stone-200 border-b border-stone-700 px-4 py-2.5 text-xs flex flex-wrap items-center justify-between gap-3 shadow-md sticky top-0 z-50 backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-accent-400 animate-pulse" />
+            <span className="font-bold text-stone-100">Forhåndsvisning: Forside</span>
+            <span className="text-stone-300 hidden sm:inline">· Ekte offentlig forside med modularkitektur</span>
           </div>
           <Link
-            to="/hva-skjer"
-            className="inline-flex items-center gap-1.5 text-sm font-bold text-primary-700 hover:text-primary-900 group"
+            to="/admin?tab=pages"
+            className="text-[11px] font-semibold text-white bg-stone-800 hover:bg-stone-700 px-2.5 py-1 rounded-lg transition-colors border border-stone-600"
           >
-            <span>Se hele kalenderen</span>
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            Tilbake til CMS
           </Link>
         </div>
+      )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {upcomingEvents.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-xl border border-stone-200/80 p-5 hover:border-primary-300 hover:shadow-md transition-all flex flex-col justify-between"
-            >
-              <div className="space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-primary-700">
-                  {formatDate(item.startsAt)}
-                </div>
-                {item.cancelled && (
-                  <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">
-                    Avlyst
-                  </span>
-                )}
-                <h4 className="font-bold text-stone-900 text-base leading-snug">
-                  {item.title}
-                </h4>
-                {item.theme && (
-                  <p className="text-xs text-stone-500 line-clamp-2">
-                    {item.theme}
-                  </p>
-                )}
-              </div>
-
-              <div className="pt-4 mt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-600">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-stone-400" />
-                  <span>Kl. {formatTime(item.startsAt)}</span>
-                </div>
-                <div className="flex items-center gap-1.5 truncate max-w-[120px]">
-                  <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0" />
-                  <span className="truncate">{locationOf(item)}</span>
-                </div>
-              </div>
+      {/* 1. Hero-ramme (Valgfri / kontrollerbar per side) */}
+      {showHero && (
+        <section className="relative overflow-hidden bg-gradient-to-b from-stone-900 via-primary-950 to-stone-900 text-white py-16 sm:py-24 lg:py-28 px-4 sm:px-6 lg:px-8">
+          {heroImage && (
+            <div className="absolute inset-0 z-0">
+              <img
+                src={heroImage}
+                alt={heroHeadline}
+                className="w-full h-full object-cover opacity-25 filter blur-xs scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/80 to-transparent" />
             </div>
-          ))}
-        </div>
-      </section>
+          )}
 
-      {/* 4. Aktuelt & Nyheter */}
-      <section className="bg-stone-100/70 py-16 px-4 sm:px-6 lg:px-8 border-y border-stone-200/60">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-primary-700">Aktuelt</h2>
-              <h3 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-1">
-                Nyheter og artikler
-              </h3>
+          {/* Decorative subtle glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-primary-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 max-w-5xl mx-auto text-center space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-semibold text-accent-300">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{settings.churchName}</span>
             </div>
-            <Link
-              to="/om-oss"
-              className="inline-flex items-center gap-1.5 text-sm font-bold text-primary-700 hover:text-primary-900 group"
-            >
-              <span>Les mer om arbeidet vårt</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {publishedNews.map((article) => (
-              <article
-                key={article.id}
-                className="bg-white rounded-2xl border border-stone-200/80 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
+              {heroHeadline}
+            </h1>
+
+            <p className="max-w-2xl mx-auto text-base sm:text-lg text-stone-300 leading-relaxed font-normal">
+              {heroSubtext}
+            </p>
+
+            <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                to="/hva-skjer"
+                className="px-6 py-3.5 rounded-xl bg-accent-400 hover:bg-accent-300 text-stone-950 font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2"
               >
-                <div className="p-6 space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="px-2 py-0.5 rounded font-semibold bg-stone-100 text-stone-700 uppercase tracking-wide text-[10px]">
-                      {article.category}
-                    </span>
-                    <span className="text-stone-400">
-                      {formatDate(article.publishedAt)}
-                    </span>
-                  </div>
-
-                  <h4 className="font-bold text-stone-900 text-lg leading-snug">
-                    {article.title}
-                  </h4>
-
-                  <p className="text-xs text-stone-600 line-clamp-3 leading-relaxed">
-                    {article.summary}
-                  </p>
-                </div>
-
-                <div className="p-6 pt-0 border-t border-stone-50 mt-2 flex items-center justify-between">
-                  <span className="text-xs text-stone-400 font-medium">
-                    Av {article.author}
-                  </span>
-                  <Link
-                    to={`/artikkel/${article.id}`}
-                    className="text-xs font-bold text-primary-700 hover:text-primary-900 flex items-center gap-1"
-                  >
-                    <span>Les saken</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 4B. Siste tale */}
-      {latestSermon && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-accent-50/70 border border-accent-200/80 rounded-3xl p-6 sm:p-10 shadow-xs space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="space-y-3 max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-100 text-accent-900 text-xs font-semibold">
-                  <Headphones className="w-3.5 h-3.5 text-accent-800" />
-                  <span>Siste tale fra søndagen</span>
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
-                  {latestSermon.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-stone-600">
-                  Taler: <strong className="text-stone-800">{latestSermon.speaker}</strong>
-                  {latestSermon.bibleText && ` · Bibel: ${latestSermon.bibleText}`}
-                  {latestSermon.series && ` · Serie: ${latestSermon.series}`}
-                </p>
-                {latestSermon.summary && (
-                  <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
-                    {latestSermon.summary}
-                  </p>
-                )}
-              </div>
-
-              <div className="shrink-0 flex flex-wrap sm:flex-nowrap md:flex-col gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsPlayingSermon(!isPlayingSermon)}
-                  className="px-5 py-3 rounded-xl bg-accent-400 hover:bg-accent-300 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-                >
-                  <Play className="w-4 h-4 fill-slate-950" />
-                  <span>{isPlayingSermon ? "Pause / Lukk avspiller" : "Spill av tale direkte"}</span>
-                </button>
-
-                {latestSermon.spotifyUrl && (
-                  <a
-                    href={latestSermon.spotifyUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-5 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
-                  >
-                    <Music2 className="w-4 h-4" />
-                    <span>Hør i Spotify</span>
-                    <ExternalLink className="w-3.5 h-3.5 text-emerald-200" />
-                  </a>
-                )}
-
-                <Link
-                  to="/taler"
-                  className="px-5 py-3 rounded-xl bg-white hover:bg-stone-50 text-stone-700 font-semibold text-xs text-center border border-stone-200 transition-all"
-                >
-                  Se hele prekenarkivet
-                </Link>
-              </div>
+                <span>Se hva som skjer</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/om-oss"
+                className="px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-sm backdrop-blur-sm border border-white/20 transition-all"
+              >
+                Bli kjent med oss
+              </Link>
             </div>
-
-            {/* Inline Direct Player */}
-            {isPlayingSermon && (
-              <div className="pt-4 border-t border-accent-200/80 space-y-3">
-                <div className="flex items-center justify-between text-xs text-accent-950 font-semibold">
-                  <span className="flex items-center gap-2">
-                    <Volume2 className="w-4 h-4 text-accent-700 animate-pulse" />
-                    <span>Spiller nå: {latestSermon.title} ({latestSermon.speaker})</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsPlayingSermon(false)}
-                    className="text-stone-500 hover:text-stone-900 font-medium"
-                  >
-                    Lukk
-                  </button>
-                </div>
-
-                {latestSermon.audioUrl ? (
-                  <audio controls autoPlay src={latestSermon.audioUrl} className="w-full h-11 rounded-xl" />
-                ) : latestSermon.spotifyUrl && getSpotifyEmbedUrl(latestSermon.spotifyUrl) ? (
-                  <iframe
-                    src={getSpotifyEmbedUrl(latestSermon.spotifyUrl)!}
-                    width="100%"
-                    height="152"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy"
-                    className="rounded-xl shadow-xs"
-                    title={`Spotify avspiller for ${latestSermon.title}`}
-                  />
-                ) : (
-                  <p className="text-xs text-stone-500">Ingen direkte lydfil registrert for denne talen.</p>
-                )}
-              </div>
-            )}
           </div>
         </section>
       )}
 
-      {/* 5. Husfellesskap & Grupper CTA */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-br from-primary-900 to-primary-800 rounded-3xl text-white p-8 sm:p-12 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-xl">
-          <div className="space-y-4 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-accent-300 text-xs font-semibold">
-              <Users className="w-3.5 h-3.5" />
-              <span>Nære fellesskap</span>
-            </div>
-            <h3 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
-              Bli med i et husfellesskap
-            </h3>
-            <p className="text-sm sm:text-base text-stone-200 leading-relaxed font-normal">
-              Tro og liv deles best sammen med andre. I husfellesskapene våre samles vi i hjemmene til et enkelt måltid, bønn og gode samtaler om hverdagen.
-            </p>
-            <div className="pt-2 flex flex-wrap gap-4 text-xs text-stone-200">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-accent-300" />
-                <span>Grupper for alle aldre</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-accent-300" />
-                <span>Annenhver uke</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-accent-300" />
-                <span>Uforpliktende å prøve</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="shrink-0 flex flex-col sm:flex-row lg:flex-col gap-3 w-full sm:w-auto">
-            <Link
-              to="/fellesskap"
-              className="px-6 py-3.5 rounded-xl bg-white hover:bg-stone-100 text-stone-900 font-bold text-sm text-center shadow transition-all"
-            >
-              Finn en gruppe
-            </Link>
-            <Link
-              to="/kontakt"
-              className="px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm text-center border border-white/20 transition-all"
-            >
-              Snakk med en leder
-            </Link>
-          </div>
+      {/* 2. Modulbasert innholdsflyt */}
+      {hasStructuredBlocks ? (
+        <div className="space-y-6">
+          {activePage.blocks!.map((block, idx) => renderVisualBlock(block, idx))}
         </div>
-      </section>
-
-      {/* 6. Givertjeneste & Vipps */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-xs font-semibold">
-          <Heart className="w-3.5 h-3.5" />
-          <span>Givertjeneste & Støtte</span>
-        </div>
-        <h3 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
-          Støtt menighetens arbeid
-        </h3>
-        <p className="text-sm text-stone-600 max-w-xl mx-auto">
-          Arbeidet drives utelukkende av frivillige gaver fra medlemmer og støttespillere. Din gave gjør barnekirke, ungdomsarbeid og diakonalt arbeid mulig.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-          <div className="px-6 py-4 rounded-2xl bg-white border border-stone-200/90 shadow-sm flex items-center gap-4">
-            <div className="text-left">
-              <div className="text-xs text-stone-500 font-medium">Vipps til nummer</div>
-              <div className="text-xl font-black text-accent-700">{settings.vippsNumber}</div>
+      ) : hasModuleDirectives ? (
+        <CmsContentRenderer content={content} />
+      ) : (
+        // Fallback for sider uten blokker/modultagger
+        <div className="space-y-12">
+          <WorshipModule variant="highlight" />
+          {content && (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <CmsContentRenderer content={content} />
             </div>
-          </div>
-
-          <div className="px-6 py-4 rounded-2xl bg-white border border-stone-200/90 shadow-sm flex items-center gap-4">
-            <div className="text-left">
-              <div className="text-xs text-stone-500 font-medium">Bankkonto for gaver</div>
-              <div className="text-base font-mono font-bold text-stone-800">{settings.bankAccount}</div>
-            </div>
-          </div>
+          )}
+          <CalendarModule variant="grid" />
+          <NewsModule variant="grid" />
+          <SermonModule variant="player" />
+          <GroupsModule variant="banner" />
+          <GivingModule variant="card" />
         </div>
-      </section>
+      )}
     </div>
   );
 };

@@ -8,7 +8,6 @@ import { ShowFeedback } from "../../pages/admin/studio";
 import { PageTreeList } from "../../pages/admin/tabs/pages/PageTreeList";
 import { PageEditModal } from "../../pages/admin/tabs/pages/PageEditModal";
 import { PageDeleteDialog } from "../../pages/admin/tabs/pages/PageDeleteDialog";
-import { PagePreviewModal } from "../../pages/admin/tabs/pages/PagePreviewModal";
 
 export interface AdminCmsPanelProps {
   showFeedback: ShowFeedback;
@@ -31,7 +30,6 @@ export const AdminCmsPanel: React.FC<AdminCmsPanelProps> = ({
   const [editingPage, setEditingPage] = useState<Partial<CmsPage> | null>(null);
   const [isNewPage, setIsNewPage] = useState(false);
   const [deleteConfirmPageId, setDeleteConfirmPageId] = useState<string | null>(null);
-  const [previewPage, setPreviewPage] = useState<Partial<CmsPage> | null>(null);
 
   const handleOpenEditPage = (page: CmsPage) => {
     setEditingPage({ ...page });
@@ -172,17 +170,6 @@ export const AdminCmsPanel: React.FC<AdminCmsPanelProps> = ({
     return pages.filter((p) => getParentId(p) === deleteConfirmPageId).length;
   }, [pages, deleteConfirmPageId]);
 
-  // Resolves parent page title for preview breadcrumbs
-  const previewParentTitle = useMemo(() => {
-    if (!previewPage) return undefined;
-    const parentId =
-      previewPage.parentPageId !== undefined
-        ? previewPage.parentPageId
-        : previewPage.parentId || null;
-    if (!parentId) return undefined;
-    return pages.find((p) => p.id === parentId)?.title;
-  }, [previewPage, pages]);
-
   useEffect(() => {
     if (createRequested) {
       handleOpenNewPage();
@@ -191,7 +178,7 @@ export const AdminCmsPanel: React.FC<AdminCmsPanelProps> = ({
   }, [createRequested, onCreateHandled]);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="w-full space-y-6 transition-all">
       {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
@@ -287,12 +274,11 @@ export const AdminCmsPanel: React.FC<AdminCmsPanelProps> = ({
           availableParentPages={availableParentPages}
           onUpdate={setEditingPage}
           onSave={handleSavePage}
-          onPreview={(draft) => setPreviewPage(draft)}
           onClose={() => setEditingPage(null)}
         />
       )}
 
-      {/* Hierarchical Tree of Pages with Drag & Drop & Preview */}
+      {/* Hierarchical Tree of Pages with Drag & Drop */}
       <PageTreeList
         hierarchicalPages={hierarchicalPages}
         orphanPages={orphanPages}
@@ -300,7 +286,6 @@ export const AdminCmsPanel: React.FC<AdminCmsPanelProps> = ({
         onOpenEditPage={handleOpenEditPage}
         onRequestDelete={setDeleteConfirmPageId}
         onReorder={handleReorder}
-        onPreviewPage={(page) => setPreviewPage(page)}
         onTogglePublish={handleTogglePublish}
       />
 
@@ -311,18 +296,6 @@ export const AdminCmsPanel: React.FC<AdminCmsPanelProps> = ({
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteConfirmPageId(null)}
       />
-
-      {/* Public Styling Draft Preview Modal */}
-      {previewPage && (
-        <PagePreviewModal
-          page={previewPage}
-          parentPageTitle={previewParentTitle}
-          onClose={() => setPreviewPage(null)}
-          onContinueEditing={
-            editingPage ? () => setPreviewPage(null) : undefined
-          }
-        />
-      )}
     </div>
   );
 };

@@ -1,139 +1,171 @@
-# Implementeringsplan: 'Database & Testdata' i Admin Studio
+# Målarkitektur: Visuell blokkbygger i CMS med fast Hero-ramme og modulkort
 
-Bygge og ferdigstille den nye integrerte modulen **«Database & Testdata»** som en egen fane i Admin Studio. Løsningen gir full fleksibilitet med glidebrytere for datatyper og mengde, forhåndsdefinerte pakker, en standard avkrysset boks for å tømme eksisterende testdata (personer, grupper og planlegger-data, mens CMS-sider og nyheter bevares), og en direkte handling for å fylle 32 realistiske personer med mangfoldige roller og gruppetilhørigheter i Firestore.
+Denne planen presiserer og hever CMS-brukeropplevelsen fra rå tekst-/kodesyntaks til en **ren, visuell blokk- og kortbasert editor**, med fast låst Hero-ramme øverst og et strengt skille mellom blokkstyring og innholdsredigering.
 
 ---
 
-### Brukervalg og kritiske beslutninger
+### Brukeravklaring & Kritiske beslutninger
 
 > [!IMPORTANT]
-> **Bekreftede valg fra brukeren:**
-> 1. **Plassering i menyen:** Egen fane i Admin Studio kalt **«Database og Testdata»** (`database-admin`), samstemt med det mørke studio-temaet.
-> 2. **Styring av testdata:** Både **ferdige pakker** (*Kompakt 8*, *Mellomstor 16*, *Fullskala 32*) og **egne glidebrytere** for nøyaktig valg av antall personer, grupper, samlinger og oppgaver.
-> 3. **Tømmingsomfang før populering:** Tømmer utelukkende testpersoner, grupper og planlegger-data (`persons`, `groups`, `gatherings`, `tasks`, `assignments`, `groupMessages`, `gatheringAttendances`). CMS-nettsider, nyheter, prekener og CMS-innstillinger **bevares intakt**.
-> 4. **Styring med avkrysningsboks:** Avkrysningsboks merket *«Tøm eksisterende testpersoner og planleggerdata før fylling»*, som er **krysset av som standard**.
-> 5. **32-personers fullskala-injeksjon:** En dedikert knapp for øyeblikkelig å tømme og injisere alle 32 testpersoner med roller (hovedpastor, ungdomspastor, familiepastor, menighetsråd, diakoni, lovsang, teknikk, vertskap og husfellesskap).
+> **Kjernepremisser for den visuelle redaktøropplevelsen:**
+> 1. **Hero som egen, låst toppramme:**  
+>    * Plassert fast øverst på siden.  
+>    * Kan **ikke flyttes** og **ikke slettes**.  
+>    * Visuelt merket med `📌 Fast Toppramme (Hero)`.  
+>    * Feltene (overskrift, ingress/undertittel, bakgrunnsbilde, knapper) redigeres direkte i denne rammen.
+> 2. **Ingen rå kodesyntaks (`:::module...`) for redaktøren:**  
+>    * Alle innholdsblokker og moduler representeres som **visuelle kort** i redigeringskolonnen.  
+>    * Rå kode er skjult; redaktøren forholder seg kun til intuitive kort med ikoner, navn og handlinger.
+> 3. **Skille mellom «Endre blokk» og «Rediger innhold»:**  
+>    * **Endre blokk:** Flytte opp (↑), flytte ned (↓), slette/skjule (🗑️), og velge godkjent layoutvariant (`[Fremhevet visning ▾]`).  
+>    * **Rediger innhold:** For statiske blokker åpnes en ren innholdseditor (tittel, tekst, bilde). For dynamiske moduler er underliggende datainnhenting 100 % låst i koden.
 
 ---
 
-### 1. Oversikt og kjernefunksjonalitet
+## 1. Oversikt & Kjernekonsept
 
-- **Hva modulen leverer:**
-  - En komplett erstatter for den gamle, separate mobil-innstillingssiden, direkte integrert som en førsteklasses fane i Admin Studio.
-  - **Sanntidsoversikt:** Live dokumenttellere som viser nøyaktig antall personer, grupper, samlinger, oppgaver, tildelinger og CMS-dokumenter i Firestore.
-  - **Datatype- og mengdevelger:**
-    - Glidebrytere for personer (4–32), grupper (2–10), samlinger (2–19) og oppgaver (2–21).
-    - Direkte hurtigpakker som automatisk setter synkroniserte verdier.
-  - **Trygg tømming & injeksjon:**
-    - Standard avkryssing for selektiv tømming: Fjerner gamle testmedlemmer før nye skrives, slik at listen aldri blir uryddig eller fylt med duplikater.
-    - Beskytter CMS-innhold (statisk opprettede menighetssider, nyhetsartikler og talearkiv forblir uberørt).
-  - **Fullskala 32-personers hurtigpopulering:**
-    - Ett klikk for å tømme og injisere alle 32 personer med korrekte roller, stillinger, telefonnumre, e-poster, avatars og tilhørighet i menighetsråd, stab og husfellesskap.
-  - **Tilleggsstyring:**
-    - Aktivering/deaktivering av valgfrie moduler (Kalender og Interne meldinger).
-    - Testknapp for det offentlige JSON API-endepunktet (`GET /api/public/gatherings`).
-    - Nødsletting (Farefelt) for total nullstilling med 2-trinns bekreftelsesmodal.
+* **Hva redaktøren ser i CMS (`PageEditModal`):**
+  Redaktøren møter ikke lenger et stort, uoversiktlig tekstområde med blandet Markdown og modultagger. I stedet er redigeringsflaten delt inn i to soner:
+  1. **Øverst (Fast):** En dedikert, lekker **Hero-redigeringsboks** (låst til toppen).
+  2. **Under (Fleksibel blokkliste):** En visuell **kortstokk** av innholdsblokker og moduler som kan sorteres, legges til eller fjernes.
+* **Tydelig tagging:**
+  * `⚡ DYNAMISK MODUL` (Indigo badge): Henter automatisk data fra menighetens systemer (Gudstjenester, Kalender, Nyheter, Taler, Vipps).
+  * `📝 STATISK INNHOLD` (Grågrønn badge): Egendefinerte tekster, bilder, sitater, informasjonsbokser.
 
 ---
 
-### 2. Brukeropplevelse og visuelt design
+## 2. Brukeropplevelse & Visuell komposisjon
 
-- **Plassering og navigasjon:**
-  - Vises i `StudioSidebar` under overskriften **System & Database** som **«Database og Testdata»** med et database-ikon og statusindikator.
-  - URL: `/admin?tab=database-admin`.
-  - Eldre lenker til `/admin/settings` videresender automatisk til `/admin?tab=database-admin`.
+### A. Fast Hero-ramme (Øverst)
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ 📌 HERO / TOPPBANNER  [Låst øverst · Kan ikke flyttes/slettes]         │
+├────────────────────────────────────────────────────────────────────────┤
+│ Tittel:   [ Velkommen til Lillesand Misjonskirke                     ] │
+│ Ingress:  [ Et åpent hjem for alle generasjoner. Vi samles til...    ] │
+│ Bakgrunn: [🖼️ Hovedbilde valgt: sommer-kirke.jpg ] [Endre / Slett]     │
+│ Knapper:  Primary: "Se hva som skjer" → /hva-skjer                     │
+│           Secondary: "Bli kjent med oss" → /om-oss                     │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
-- **Visuell stil og designprinsipper:**
-  - Utformet etter mørk studio-stil (`bg-slate-900`, `border-slate-800`, `text-slate-100`).
-  - **Fargeaksenter:**
-    - Indigo (`bg-indigo-600`, `text-indigo-400`) for generering og populering.
-    - Emerald (`text-emerald-400`, `bg-emerald-950/60`) for tilkoblingsstatus og suksessmeldinger.
-    - Amber (`text-amber-400`, `bg-amber-950/40`) for selektiv tømming og forhåndsvisningsvarsler.
-    - Rose/Rød (`bg-red-600`, `border-red-850`) for ugjenkallelige farefelthandlinger.
-  - **Typografi:** Tabulære monospace-tall (`font-mono tabular-nums`) for tellere og glidebryter-verdier for å unngå layout-skjelving under justering.
-  - **Tilstander og mikrobevegelser:**
-    - Animerte pulserende statussirkler ved aktiv Firestore-tilkobling.
-    - Roterende lastespinner (`Loader2`) på knappene mens `writeBatch` kjøres i bakgrunnen.
-    - Tydelige tilbakemeldingsbannere via `showFeedback(message, type)`.
+### B. Visuelle modulkort i blokklisten
+Hver blokk i listen under Hero representeres som et eget interaktivt kort:
 
-- **Arbeidsflyt i modulen:**
-  1. Brukeren ser gjeldende dokumentstatus øverst (f.eks. `4 personer, 2 grupper`).
-  2. Brukeren velger enten en ferdig pakke (f.eks. *Fullskala 32 personer*) eller drar i glidebryterne.
-  3. Brukeren verifiserer at avkrysningsboksen *«Tøm eksisterende testpersoner og planleggerdata før fylling»* er huket av (standard).
-  4. Brukeren trykker **«Populer databasen (32 personer, 10 grupper)»**.
-  5. Systemet sletter selektivt gamle testpersoner og grupper, og skriver de 32 personene i batch til Firestore.
-  6. Sanntidstellerne hopper umiddelbart til `32 personer, 10 grupper`, og sidene `/admin?tab=planlegger-personer` og `/admin?tab=cms-stab` viser de nye personene i full bredde.
+#### Eksempel 1: Dynamisk modul (Neste gudstjeneste)
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ ⠿  ⚡ NESTE GUDSTJENESTE                      [⚡ Dynamisk modul]     │
+│    Datakilde: Henter automatisk fra Gudstjenesteplanleggeren           │
+│                                                                        │
+│    Layout: [ Fremhevet visning (kort) ▾ ]       [ ↑ ] [ ↓ ] [ 🗑️ ]    │
+└────────────────────────────────────────────────────────────────────────┘
+```
+* **Koden bestemmer:** Henter automatisk neste gudstjeneste fra Firebase, dato, klokkeslett, tema og ledere.
+* **Redaktøren styrer:** Posisjon på siden (↑/↓), layoutvariant dropdown, eller skjul (🗑️).
+
+#### Eksempel 2: Dynamisk modul (Kalender)
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ ⠿  ⚡ KALENDER: HVA SKJER                     [⚡ Dynamisk modul]     │
+│    Datakilde: Henter de 4 neste samlingene fra arrangementsdatabasen   │
+│                                                                        │
+│    Layout: [ 4 kort i grid ▾ ]                  [ ↑ ] [ ↓ ] [ 🗑️ ]    │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Eksempel 3: Statisk innholdsblokk (Tekst / Pastorhilsen)
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ ⠿  📝 TEKST & AVSNITT                         [📝 Statisk innhold]    │
+│    «Varm velkomst til nye studenter og familier denne høsten...»       │
+│                                                                        │
+│    [ ✏️ Rediger tekst ]                         [ ↑ ] [ ↓ ] [ 🗑️ ]    │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### C. Knapp for å sette inn ny blokk
+Nederst i listen ligger en tydelig knapp:
+`[ + Legg til blokk eller modul ]`
+Når denne klikkes, åpnes det felles blokkbiblioteket der redaktøren kan velge mellom ferdige statiske formater og dynamiske moduler.
 
 ---
 
-### 3. Tekniske arkitektur- og produktbeslutninger
+## 3. Nøkkelbeslutninger & Avveininger
+
+* **Beslutning 1: Visuell kortstokk i stedet for rå modulkode**
+  * *Valgt løsning:* Konvertere mellom den visuelle kortlisten og den underliggende lagringsstrukturen automatisk bak kulissene.
+  * *Hvorfor:* Redaktører skal aldri behøve å lære eller huske syntaks som `:::module-worship[highlight]`. De skal se og håndtere bokser med klare etiketter, piler og valg.
+* **Beslutning 2: Fastlåst Hero-ramme**
+  * *Valgt løsning:* Hero løftes ut av den generelle blokklisten og forankres som en permanent toppseksjon i editoren.
+  * *Hvorfor:* Sikrer en stabil visuell identitet for nettsiden. Siden har alltid et definert topp-anker uavhengig av hvordan modulene under omorganiseres.
+* **Beslutning 3: Robust og tapsfri datamodell**
+  * *Valgt løsning:* Blokklisten lagres og serialiseres automatisk til/fra `page.content`.
+  * *Hvorfor:* Krever ingen endring i databasestrukturen, bevarer full bakoverkompatibilitet med eksisterende sider og tester, og gjør det enkelt å utvide med nye moduler senere.
+
+---
+
+## 4. Teknisk arkitektur & Datastrategi
+
+### Arkitektur- og komponentdiagram
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        Admin Studio (/admin)                          │
-├─────────────────────┬──────────────────────────────────────────────────┤
-│ StudioSidebar       │ DatabaseTab                                      │
-│                     │ ┌──────────────────────────────────────────────┐ │
-│ ├── Sider & Innhold │ │ Live Firestore-tellere: Personer, Grupper... │ │
-│ ├── Nyheter & Taler │ └──────────────────────────────────────────────┘ │
-│ ├── Lederskap & Stab│ ┌──────────────────────────────────────────────┐ │
-│ ├── Planlegger      │ │ Pakkevelger: [Kompakt 8] [Medium 16] [Full]  │ │
-│ └── Database & Data │ ├──────────────────────────────────────────────┤ │
-│     (Aktiv fane)    │ │ Glidebrytere: Personer | Grupper | Oppgaver  │ │
-│                     │ ├──────────────────────────────────────────────┤ │
-│                     │ │ [x] Tøm eksisterende testdata før fylling    │ │
-│                     │ │     (bevarer CMS-sider og nyheter)           │ │
-│                     │ ├──────────────────────────────────────────────┤ │
-│                     │ │ [ Populer databasen med valgt oppsett ]      │ │
-│                     │ └──────────────────────────────────────────────┘ │
-└─────────────────────┴──────────────────────────────────────────────────┘
-                                │
-                                ▼
-         ┌─────────────────────────────────────────────┐
-         │ databaseAdmin.ts                            │
-         │ - clearPlannerTestData() (kun testdata)     │
-         │ - populateCustomMockData({ clearFirst: ...})│
-         │ - deleteAllData() (komplett tilbakestilling)│
-         └─────────────────────────────────────────────┘
-                                │ (Firestore WriteBatch)
-                                ▼
-         ┌─────────────────────────────────────────────┐
-         │ Firebase Firestore DB                       │
-         │ (ai-studio-menighetsplan20-ea550243-...)    │
-         └─────────────────────────────────────────────┘
+│                     AdminStudio / PageEditModal                        │
+│                                                                        │
+│   ┌────────────────────────────────────────────────────────────────┐   │
+│   │ [1] Fast Hero-ramme (Tittel, ingress, bilde, knapper)          │   │
+│   ├────────────────────────────────────────────────────────────────┤   │
+│   │ [2] Visuell Blokkbygger (BlockListManager):                    │   │
+│   │     • Kort 1: ⚡ Neste gudstjeneste  [Fremhevet ▾]  [↑][↓][🗑️]  │   │
+│   │     • Kort 2: 📝 Pastorhilsen (tekst) [✏️ Rediger]  [↑][↓][🗑️]  │   │
+│   │     • Kort 3: ⚡ Kalender: Hva skjer [Grid ▾]       [↑][↓][🗑️]  │   │
+│   │     • Kort 4: ⚡ Nyheter & Artikler  [3 kort ▾]     [↑][↓][🗑️]  │   │
+│   │     • Kort 5: ⚡ Siste tale          [Spiller ▾]    [↑][↓][🗑️]  │   │
+│   │     • Kort 6: ⚡ Husfellesskap       [Banner ▾]     [↑][↓][🗑️]  │   │
+│   │     • Kort 7: ⚡ Givertjeneste/Vipps [Kort ▾]       [↑][↓][🗑️]  │   │
+│   │     [ + Legg til blokk eller modul ]                           │   │
+│   └────────────────────────────────┬───────────────────────────────┘   │
+└────────────────────────────────────┼───────────────────────────────────┘
+                                     │ Auto-synk til draftPage
+                                     ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                   1:1 Live Preview & Offentlig visning                 │
+│                                                                        │
+│  [Hero]           ──► Fast Hero-banner med live bilde og tekst        │
+│  [WorshipModule]  ──► Henter sanntidsdata fra Firebase gatherings      │
+│  [Pastor-tekst]   ──► Rendres i standard designtypografi               │
+│  [CalendarModule] ──► Henter 4 neste samlinger fra gatherings          │
+│  [NewsModule]     ──► Henter 3 siste saker fra CMS-nyheter             │
+│  [SermonModule]   ──► Viser prekespiller med Spotify og lyd            │
+│  [GroupsModule]   ──► Viser fellesskapsbanner                          │
+│  [GivingModule]   ──► Viser Vipps og konto                             │
+└────────────────────────────────────────────────────────────────────────┘
 ```
-
-- **Hovedbeslutning 1: Selektiv tømming (`clearPlannerTestData`) vs full sletting (`deleteAllData`)**
-  - Vi innfører `clearPlannerTestData()` i `src/services/databaseAdmin.ts`.
-  - Denne funksjonen tømmer kun:
-    - `persons`
-    - `groups`
-    - `gatherings`
-    - `tasks`
-    - `assignments`
-    - `groupMessages`
-    - `gatheringAttendances`
-  - Samlingene `pages`, `news`, `sermons`, `staff` og `cms-settings` **røres ikke**, i tråd med brukerens eksplisitte ønske.
-
-- **Hovedbeslutning 2: Integrert avkrysningsboks i `DatabaseTab.tsx`**
-  - En state `clearBeforePopulate` settes til `true` som standard.
-  - Når `handlePopulate` kjøres:
-    - Hvis `clearBeforePopulate === true`: kjører først `clearPlannerTestData()`.
-    - Deretter kjøres `populateCustomMockData({ personCount, groupCount, gatheringCount, taskCount })`.
-    - Hvis ikke avkrysset: oppdaterer og overskriver eksisterende ID-er uten å slette andre oppføringer.
-
-- **Hovedbeslutning 3: Navnejustering og menysynkronisering**
-  - Menyelementet i `StudioSidebar.tsx` og tittelen i `DatabaseTab.tsx` navngis **«Database og Testdata»** nøyaktig slik brukeren spesifiserte.
-  - Gamle ruter `/admin/settings` i `App.tsx` navigerer automatisk til `AdminStudio` med aktiv fane `database-admin`.
 
 ---
 
-### 4. Verifisering og teststrategi
+## 5. Implementeringsplan ved godkjenning
 
-1. **Automatisert testing med Vitest:**
-   - Kjøre `tests/database-admin.test.ts` for å verifisere at `clearPlannerTestData` og `populateCustomMockData` overholder relasjonell integritet.
-   - Kjøre `tests/public-profile.test.ts` og `src/tests/staff-leadership-firebase.test.tsx` for å sikre at GDPR-filtrering og stabsattributter forblir 100 % grønne.
-2. **Typekontroll og linter:**
-   - Kjøre `lint_applet` for å garantere null ubrukte variabler eller typefeil.
-3. **Produksjonsbygging:**
-   - Kjøre `compile_applet` for å validere at hele Vite-applikasjonen bygges rent uten advarsler.
+1. **Visuell blokkmodell & serialisering (`src/utils/blockParser.ts`):**
+   * Funksjoner for å parse `page.content` til en ren liste av visuelle blokk-objekter (`ContentBlockItem`), og serialisere listen tilbake til Markdown/modultagger ved lagring.
+2. **Visuell blokkliste-komponent (`VisualBlockManager.tsx`):**
+   * Komponent som viser listen med modulkort i `PageEditModal`.
+   * Støtter direkte flytting opp/ned, sletting, valg av layoutvariant fra dropdown, og åpning av tekst-editor for statiske blokker.
+3. **Hero-ramme i `PageEditModal.tsx`:**
+   * Tydelig merket toppramme med `📌 Hero / Toppbanner (Fast øverst)`.
+   * Inneholder tittel, ingress og bildeopplaster for Hero.
+4. **Dedikerte dynamiske moduler (`src/components/cms/modules/`):**
+   * `WorshipModule.tsx` (highlight / compact)
+   * `CalendarModule.tsx` (grid / list)
+   * `NewsModule.tsx` (grid / compact)
+   * `SermonModule.tsx` (player / minimal)
+   * `GroupsModule.tsx` (banner / cards)
+   * `GivingModule.tsx` (card / vipps)
+5. **Oppdatere `ContentBlockPickerModal.tsx`:**
+   * Felles bibliotek der redaktøren kan velge både nye statiske blokker og dynamiske moduler med ett klikk.
+6. **Integrasjon i `PublicHomePage.tsx` og `PublicStaticPage.tsx`:**
+   * Knytte sammen Hero og den moduldrevne innholdsrendereren.
+7. **Verifisering og testkjøring:**
+   * Kjøre hele testsuiten (`npx vitest run`) og verifisere at alle 514 tester består.
+   * Kjøre `compile_applet` for å bekrefte feilfritt produksjonsbygg.

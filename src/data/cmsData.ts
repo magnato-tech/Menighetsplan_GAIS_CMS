@@ -1,9 +1,13 @@
+import { VisualBlock } from "../utils/cmsBlocks";
+
 export interface CmsPage {
   id: string;
   slug: string;
   title: string;
   summary: string;
   content: string;
+  blocks?: VisualBlock[];
+  showHero?: boolean;
   isPublished: boolean;
   status?: "draft" | "published" | "scheduled";
   parentPageId?: string | null; // Canonical reference to parent page (null = top-level main tab)
@@ -441,7 +445,26 @@ export const initialCmsPages: CmsPage[] = [
     slug: "",
     title: "Forside",
     summary: "Hovedsiden for Lillesand Misjonskirke med velkomst, neste gudstjeneste og snarveier.",
-    content: `## Velkommen til Lillesand Misjonskirke\nEt åpent hjem for alle generasjoner. Hver søndag feirer vi gudstjeneste kl. 11:00 med Sprell Levende søndagsskole og kirkekaffe.`,
+    content: `:::module-worship[highlight]
+:::
+
+## Velkommen til Lillesand Misjonskirke
+Et åpent hjem for alle generasjoner. Vi samles til gudstjeneste, bønn og nære fellesskap der tro og hverdag møtes.
+
+:::module-calendar[grid]
+:::
+
+:::module-news[grid]
+:::
+
+:::module-sermon[player]
+:::
+
+:::module-groups[banner]
+:::
+
+:::module-giving[card]
+:::`,
     isPublished: true,
     status: "published",
     parentPageId: null,

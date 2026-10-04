@@ -54,9 +54,9 @@ export function isPagePublished(page: CmsPage, now = new Date()): boolean {
 }
 
 /** The tree visitors see: published pages that are marked for the menu and not scheduled in the future. */
-export function buildPublicMenu(pages: CmsPage[], now = new Date()): PageNode[] {
+export function buildPublicMenu(pages: CmsPage[] = [], now = new Date()): PageNode[] {
   return buildPageTree(
-    pages.filter((p) => isPagePublished(p, now) && p.inNavMenu !== false)
+    (pages || []).filter((p) => isPagePublished(p, now) && p.inNavMenu !== false)
   );
 }
 

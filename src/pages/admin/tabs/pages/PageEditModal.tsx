@@ -1,17 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { CmsPage } from "../../../../data/cmsData";
 import {
   Edit3,
   X,
   FolderTree,
-  Layers,
   Eye,
-  Sparkles,
-  Info,
-  AlertTriangle,
   LayoutGrid,
-  Quote,
-  MousePointerClick,
   Plus,
   Globe,
   Search,
@@ -22,10 +16,10 @@ import {
   ChevronUp,
   Image as ImageIcon,
   Clock,
-  Calendar,
-  Briefcase,
-  Shield,
-  Users,
+  ExternalLink,
+  Monitor,
+  Tablet,
+  Smartphone,
 } from "lucide-react";
 import { HeroImageUploader } from "./HeroImageUploader";
 import { ContentBlockPickerModal } from "./ContentBlockPickerModal";
@@ -33,6 +27,18 @@ import { useCms } from "../../../../context/CmsContext";
 import { useTimedMessage } from "../../../../hooks/useTimedMessage";
 import { formatNorwegianDateTime } from "../../../../utils/dates";
 import { shareableImageUrl } from "../../../../utils/seoUtils";
+import { getThemeCssVariables, SITE_THEME_CLASS } from "../../../../utils/themeUtils";
+import { PublicNavbar } from "../../../../components/public/PublicNavbar";
+import { PublicFooter } from "../../../../components/public/PublicFooter";
+import { PublicStaticPage } from "../../../public/PublicStaticPage";
+import { PublicHomePage } from "../../../public/PublicHomePage";
+import { VisualBlockManager } from "./VisualBlockManager";
+import {
+  parseContentToVisualBlocks,
+  serializeVisualBlocksToContent,
+  getDefaultForsideBlocks,
+  VisualBlock,
+} from "../../../../utils/cmsBlocks";
 
 function toDatetimeLocal(iso?: string): string {
   if (!iso) return "";
@@ -67,13 +73,13 @@ function getPresetDate(type: "tomorrow" | "sunday" | "monday"): string {
   return d.toISOString();
 }
 
-interface PageEditModalProps {
+export interface PageEditModalProps {
   editingPage: Partial<CmsPage>;
   isNewPage: boolean;
   availableParentPages: CmsPage[];
   onUpdate: (updated: Partial<CmsPage>) => void;
   onSave: (e: React.FormEvent) => void;
-  onPreview: (draft: Partial<CmsPage>) => void;
+  onPreview?: (draft: Partial<CmsPage>) => void;
   onClose: () => void;
 }
 
@@ -91,22 +97,40 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
   const [showSeoDetails, setShowSeoDetails] = useState(false);
   const [copiedIngress, showCopiedIngress] = useTimedMessage<true>(2000);
 
-  // What the search result and the share card will show
-  const siteHost = window.location.host;
+  // View mode state: edit (full-width form), split (side-by-side with real frontend), preview (full-width real frontend)
+  const [viewMode, setViewMode] = useState<"edit" | "split" | "preview">(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+      return "split";
+    }
+    return "edit";
+  });
+
+  // Responsive device simulation in preview area: desktop (full width), tablet (768px), mobile (390px)
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+
+  const themeVariables = useMemo(() => getThemeCssVariables(settings?.theme), [settings?.theme]);
+
+  // Search and share card preview values
+  const siteHost = typeof window !== "undefined" ? window.location.host : "lillesand.misjonskirke.no";
   const previewTitle = `${editingPage.title || "Sidetittel"} – ${settings.churchName}`;
   const previewDescription =
     editingPage.metaDescription?.trim() ||
     editingPage.summary?.trim() ||
     `Velkommen til ${editingPage.title || "siden"} i ${settings.churchName}.`;
-  // An uploaded image has no address a sharing service can fetch
   const shareImage =
-    shareableImageUrl(editingPage.ogImage, window.location.origin) ||
-    shareableImageUrl(editingPage.heroImage, window.location.origin);
+    shareableImageUrl(editingPage.ogImage, typeof window !== "undefined" ? window.location.origin : "") ||
+    shareableImageUrl(editingPage.heroImage, typeof window !== "undefined" ? window.location.origin : "");
 
   const insertComponentSnippet = (snippet: string) => {
-    const current = editingPage.content || "";
-    const separator = current && !current.endsWith("\n\n") ? (current.endsWith("\n") ? "\n" : "\n\n") : "";
-    onUpdate({ ...editingPage, content: current + separator + snippet });
+    const parsedNew = parseContentToVisualBlocks(snippet);
+    if (parsedNew.length > 0) {
+      const nextBlocks = [...visualBlocks, ...parsedNew];
+      handleBlocksChange(nextBlocks);
+    } else {
+      const current = editingPage.content || "";
+      const separator = current && !current.endsWith("\n\n") ? (current.endsWith("\n") ? "\n" : "\n\n") : "";
+      onUpdate({ ...editingPage, content: current + separator + snippet });
+    }
   };
 
   const currentParentId =
@@ -142,8 +166,6 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
   const isFutureScheduled =
     editingPage.isPublished !== false &&
     Boolean(publishTime && publishTime > Date.now());
-  const isManuallyPublished = editingPage.isPublished !== false && !isFutureScheduled;
-  const isDraft = editingPage.isPublished === false;
 
   const handlePublishDateChange = (val: string) => {
     if (!val) {
@@ -167,43 +189,183 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
     });
   };
 
-  return (
-    <form
-      onSubmit={onSave}
-      className="p-6 rounded-2xl bg-slate-800 border border-indigo-500/80 shadow-2xl space-y-4 transition-all"
-    >
-      <div className="flex items-center justify-between border-b border-slate-700 pb-3">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <Edit3 className="w-4 h-4 text-indigo-400" />
-          <span>
-            {isNewPage
-              ? currentParentId
-                ? "Opprett ny underfane"
-                : "Opprett ny hovedfane"
-              : `Rediger side: ${editingPage.title || "Uten tittel"}`}
-          </span>
-        </h3>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onPreview(editingPage)}
-            className="px-2.5 py-1 rounded-lg bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-            title="Forhåndsvis hvordan denne kladden vil se ut for besøkende"
+  const cleanSlug = (editingPage.slug || editingPage.title?.toLowerCase().replace(/\s+/g, "-") || "side")
+    .toLowerCase()
+    .replace(/^\//, "")
+    .trim();
+  const targetPath = editingPage.linkUrl?.trim() || (cleanSlug === "forside" || !cleanSlug ? "/" : `/${cleanSlug}`);
+  const previewUrl = `${targetPath}${targetPath.includes("?") ? "&" : "?"}preview=true`;
+
+  const isHomePage = cleanSlug === "forside" || (!cleanSlug && targetPath === "/");
+
+  const [editorMode, setEditorMode] = useState<"visual" | "raw">("visual");
+
+  const visualBlocks = useMemo(() => {
+    if (editingPage.blocks && editingPage.blocks.length > 0) {
+      return editingPage.blocks;
+    }
+    const parsed = parseContentToVisualBlocks(editingPage.content || "");
+    if (isHomePage && parsed.length === 0) {
+      return getDefaultForsideBlocks();
+    }
+    return parsed;
+  }, [editingPage.blocks, editingPage.content, isHomePage]);
+
+  // Real-time draft page passed directly to the public page renderer
+  const draftPage: Partial<CmsPage> = useMemo(
+    () => ({
+      ...editingPage,
+      id: editingPage.id || "draft-page-preview",
+      title: editingPage.title || "Uten tittel",
+      slug: cleanSlug,
+      summary: editingPage.summary || "",
+      content: editingPage.content || "",
+      blocks: editingPage.blocks || visualBlocks,
+      showHero: editingPage.showHero,
+      heroImage: editingPage.heroImage,
+      isPublished: editingPage.isPublished,
+      inNavMenu: editingPage.inNavMenu,
+      publishAt: editingPage.publishAt,
+    }),
+    [editingPage, cleanSlug, visualBlocks]
+  );
+
+  const handleBlocksChange = (newBlocks: VisualBlock[]) => {
+    const serialized = serializeVisualBlocksToContent(newBlocks);
+    onUpdate({
+      ...editingPage,
+      blocks: newBlocks,
+      content: serialized,
+    });
+  };
+
+  const handleSaveActiveDraftToStorage = () => {
+    try {
+      const draftPayload = {
+        ...editingPage,
+        slug: cleanSlug,
+        updatedAt: new Date().toISOString(),
+      };
+      sessionStorage.setItem("cms_preview_active", JSON.stringify(draftPayload));
+      sessionStorage.setItem(`cms_preview_draft_${cleanSlug}`, JSON.stringify(draftPayload));
+      if (editingPage.id) {
+        sessionStorage.setItem(`cms_preview_draft_${editingPage.id}`, JSON.stringify(draftPayload));
+      }
+    } catch {}
+  };
+
+  // Real frontend preview container: exact 1:1 public website rendering
+  const renderLiveFrontendPreview = () => {
+
+    return (
+      <div className="flex flex-col h-full bg-slate-900 border border-slate-700/80 rounded-2xl overflow-hidden shadow-2xl">
+        {/* Preview Sub-Toolbar */}
+        <div className="px-4 py-2.5 bg-slate-950 border-b border-slate-700/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-bold text-white">Ekte nettside-rendering</span>
+            <span className="text-slate-400 hidden xl:inline">· 1:1 produksjonslayout & tema</span>
+          </div>
+
+          {/* Enhetsvelger: Desktop (Full) | Nettbrett | Mobil */}
+          <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded-lg border border-slate-800">
+            <button
+              type="button"
+              onClick={() => setPreviewDevice("desktop")}
+              className={`px-2.5 py-1 rounded text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                previewDevice === "desktop"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+              }`}
+              title="Full bredde desktop-layout (tilpasser seg skjermen)"
+            >
+              <Monitor className="w-3.5 h-3.5" />
+              <span>Desktop</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewDevice("tablet")}
+              className={`px-2.5 py-1 rounded text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                previewDevice === "tablet"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+              }`}
+              title="Nettbrett-format (768px bredde)"
+            >
+              <Tablet className="w-3.5 h-3.5" />
+              <span>Nettbrett</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewDevice("mobile")}
+              className={`px-2.5 py-1 rounded text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                previewDevice === "mobile"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+              }`}
+              title="Mobil-format (390px bredde)"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Mobil</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-700 hidden sm:inline">
+              {targetPath}
+            </span>
+            <a
+              href={previewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleSaveActiveDraftToStorage}
+              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white border border-slate-700 text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Åpne forhåndsvisningen i egen full nettleserfane"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="hidden sm:inline">Ny fane</span>
+            </a>
+          </div>
+        </div>
+
+        {/* Real Public Layout Frame */}
+        <div className="flex-1 overflow-y-auto bg-slate-950/60 p-2 sm:p-4 max-h-[82vh] flex justify-center">
+          <div
+            style={themeVariables}
+            className={`${SITE_THEME_CLASS} bg-page text-stone-900 select-text transition-all duration-200 ${
+              previewDevice === "desktop"
+                ? "w-full rounded-xl shadow-lg border border-stone-200/40 overflow-hidden"
+                : previewDevice === "tablet"
+                ? "w-[768px] max-w-full rounded-2xl shadow-2xl border-4 border-slate-700 overflow-hidden my-auto"
+                : "w-[390px] max-w-full rounded-3xl shadow-2xl border-8 border-slate-700 overflow-hidden my-auto"
+            }`}
           >
-            <Eye className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="hidden sm:inline">Forhåndsvis kladd</span>
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 cursor-pointer transition-colors"
-            aria-label="Lukk"
-          >
-            <X className="w-5 h-5" />
-          </button>
+            {/* Real Public Navbar */}
+            <PublicNavbar />
+
+            {/* Real Public Page Content with live draft data */}
+            <main className="min-h-[400px]">
+              {isHomePage ? (
+                <PublicHomePage pageOverride={draftPage} hidePreviewBanner={true} />
+              ) : (
+                <PublicStaticPage
+                  pageOverride={draftPage}
+                  forcedSlug={cleanSlug}
+                  hidePreviewBanner={true}
+                />
+              )}
+            </main>
+
+            {/* Real Public Footer */}
+            <PublicFooter />
+          </div>
         </div>
       </div>
+    );
+  };
 
+  const renderFormFields = () => (
+    <>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Tittel */}
         <div className="space-y-1">
@@ -270,357 +432,279 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             ))}
           </select>
           <p className="text-[11px] text-slate-400">
-            Velg om siden skal ligge direkte i menylinjen eller som et valg i nedtrekksmenyen under en hovedfane.
+            Velg hvilken hovedside denne siden hører under for å bygge nedtrekksmeny.
           </p>
         </div>
 
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-white flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Menyrekkefølge</span>
+            <span>Rekkefølge i meny</span>
           </label>
           <input
             type="number"
-            min={1}
+            min="1"
             value={currentOrder}
-            onChange={(e) => handleOrderChange(parseInt(e.target.value, 10) || 1)}
+            onChange={(e) => handleOrderChange(parseInt(e.target.value) || 1)}
             className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500"
           />
           <p className="text-[11px] text-slate-400">
-            Lavt tall vises først fra venstre (f.eks. 1 = først, 2 = neste).
+            Lavere tall vises først i toppmenyen eller underfanelisten.
           </p>
         </div>
       </div>
 
-      {/* Sammendrag / Ingress */}
-      <div className="space-y-1">
-        <label className="text-xs font-semibold text-slate-300 block">Kort ingress / sammendrag</label>
-        <input
-          type="text"
-          value={editingPage.summary || ""}
-          onChange={(e) => onUpdate({ ...editingPage, summary: e.target.value })}
-          placeholder="Kort beskrivelse som vises under tittelen på siden..."
-          className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500"
-        />
-      </div>
+      {/* 📌 Fast Toppramme (Hero) */}
+      <div className="bg-slate-900/90 border border-indigo-700/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-950 pb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <span>📌 Hero / Toppbanner</span>
+              <span className="text-[10px] text-indigo-300 font-normal bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800">
+                Toppseksjon
+              </span>
+            </h4>
+          </div>
 
-      {/* Hovedbilde (Hero Image) Opplasting */}
-      <HeroImageUploader
-        currentImageUrl={editingPage.heroImage}
-        onImageChange={(url) => onUpdate({ ...editingPage, heroImage: url })}
-        pageTitle={editingPage.title}
-      />
-
-      {/* Innhold med komponentvelger */}
-      <div className="space-y-2">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-          <label className="text-xs font-semibold text-slate-300 block">
-            Hovedinnhold
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-300">
+            <input
+              type="checkbox"
+              checked={editingPage.showHero !== false}
+              onChange={(e) => onUpdate({ ...editingPage, showHero: e.target.checked })}
+              className="w-4 h-4 rounded text-indigo-600 bg-slate-950 border-slate-700 cursor-pointer"
+            />
+            <span>Aktiv på denne siden</span>
           </label>
         </div>
 
-        {/* Komponent-verktøylinje */}
-        <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-700/80 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300 uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Ferdige innholdsblokker:</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsBlockPickerOpen(true)}
-              className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-              title="Åpne visuell blokkvelger med forhåndsvisning av alle innholdsblokker"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Legg til innhold</span>
-            </button>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-            <button
-              type="button"
-              onClick={() =>
-                insertComponentSnippet(
-                  `:::callout[info] Informasjon\nDette er en fremhevet infoboks for kunngjøringer eller nyttig informasjon for menigheten.\n:::`
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-sky-950/80 hover:bg-sky-900 text-sky-300 border border-sky-800/80 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-              title="Sett inn infoboks"
-            >
-              <Info className="w-3 h-3 text-sky-400" />
-              <span>Infoboks</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                insertComponentSnippet(
-                  `:::callout[warning] Viktig merknad\nVennligst merk at arrangementet krever forhåndspåmelding eller spesiell oppfølging.\n:::`
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-800/80 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-              title="Sett inn viktig varsel"
-            >
-              <AlertTriangle className="w-3 h-3 text-amber-400" />
-              <span>Viktig varsel</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                insertComponentSnippet(
-                  `:::grid\n:::card Fellesskap & Grupper\nBli med i en av våre livsnære cellegrupper eller temakvelder.\n:::\n:::card Bønn & Omsorg\nVi ber for hverandre og tilbyr samtaler og forbønn ved behov.\n:::\n:::`
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-800/80 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-              title="Sett inn to likeverdige kort side ved side"
-            >
-              <LayoutGrid className="w-3 h-3 text-emerald-400" />
-              <span>2-kolonners kort</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                insertComponentSnippet(
-                  `:::quote[Pastorens hilsen]\nVelkommen hjem til et varmt og inkluderende fellesskap for alle generasjoner.\n:::`
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/80 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-              title="Sett inn sitatblokk"
-            >
-              <Quote className="w-3 h-3 text-indigo-400" />
-              <span>Sitatblokk</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                insertComponentSnippet(
-                  `[Knapp: Meld deg på samlingen](/kontakt)`
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-              title="Sett inn handlingsknapp"
-            >
-              <MousePointerClick className="w-3 h-3 text-indigo-400" />
-              <span>Handlingsknapp</span>
-            </button>
-
-            <span className="w-px h-4 bg-slate-700 mx-1 hidden sm:inline-block" />
-
-            <button
-              type="button"
-              onClick={() =>
-                insertComponentSnippet(
-                  `:::personer[stab]`
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/60 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-              title="Sett inn alle ansatte i staben med bilde og kontaktinfo"
-            >
-              <Briefcase className="w-3 h-3 text-indigo-400" />
-              <span>Stab (ansatte)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                insertComponentSnippet(
-                  `:::personer[lederskap]`
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-amber-950/60 hover:bg-amber-900 text-amber-300 border border-amber-800/60 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-              title="Sett inn valgt lederskap / menighetsråd med verv"
-            >
-              <Shield className="w-3 h-3 text-amber-400" />
-              <span>Lederskap</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                insertComponentSnippet(
-                  `:::personer[pastor]`
-                )
-              }
-              className="px-2.5 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border border-emerald-800/60 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-              title="Sett inn kun pastoren"
-            >
-              <Users className="w-3 h-3 text-emerald-400" />
-              <span>Kun pastor</span>
-            </button>
-          </div>
-        </div>
-
-        <textarea
-          rows={7}
-          value={editingPage.content || ""}
-          onChange={(e) => onUpdate({ ...editingPage, content: e.target.value })}
-          placeholder="Skriv tekst eller bruk komponentknappene ovenfor..."
-          className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:outline-hidden focus:border-indigo-500 leading-relaxed"
-        />
-      </div>
-
-      {/* Søkemotoroptimalisering (SEO) & Sosiale medier (OpenGraph) */}
-      <div className="bg-slate-900/70 border border-slate-700/80 rounded-2xl p-4 space-y-3.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <Globe className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
-                <span>Søk og deling</span>
-              </h3>
-              <p className="text-[11px] text-slate-400">
-                Styr hvordan siden vises i søkeresultater og når noen deler lenken.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowSeoDetails(!showSeoDetails)}
-            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
-          >
-            <span>{showSeoDetails ? "Skjul detaljer" : "Rediger søk og deling"}</span>
-            {showSeoDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-          </button>
-        </div>
-
-        {/* SEO Fields - can be expanded or previewed */}
-        {(showSeoDetails || editingPage.metaDescription || editingPage.ogImage) && (
-          <div className="space-y-4 pt-2 border-t border-slate-800">
-            {/* Meta Description */}
-            <div className="space-y-1.5">
+        {editingPage.showHero !== false ? (
+          <>
+            {/* Sammendrag / Ingress / Undertittel */}
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Search className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>Beskrivelse i søkeresultater</span>
+                <label className="text-xs font-semibold text-slate-300 block">
+                  Ingress / Undertittel i Hero (Vises også i søkeresultater)
                 </label>
-                <div className="flex items-center gap-2">
-                  {editingPage.summary && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onUpdate({ ...editingPage, metaDescription: editingPage.summary });
-                        showCopiedIngress(true);
-                      }}
-                      className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer transition-colors"
-                      title="Kopier innholdet fra ingressen over som metabeskrivelse"
-                    >
-                      {copiedIngress ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedIngress ? "Kopiert!" : "Kopier fra ingress"}</span>
-                    </button>
-                  )}
-                  <span
-                    className={`text-[10px] font-mono ${
-                      (editingPage.metaDescription || "").length >= 120 &&
-                      (editingPage.metaDescription || "").length <= 160
-                        ? "text-emerald-400 font-bold"
-                        : (editingPage.metaDescription || "").length > 160
-                        ? "text-amber-400"
-                        : "text-slate-400"
-                    }`}
-                  >
-                    {(editingPage.metaDescription || "").length}/160 tegn
-                  </span>
-                </div>
-              </div>
-              <textarea
-                rows={2}
-                value={editingPage.metaDescription || ""}
-                onChange={(e) => onUpdate({ ...editingPage, metaDescription: e.target.value })}
-                placeholder="Kort, innbydende oppsummering av sidens innhold for søkeresultater (anbefalt 120–160 tegn)..."
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500 leading-relaxed"
-              />
-              <p className="text-[11px] text-slate-400">
-                Hvis feltet er tomt, brukes sidens ingress automatisk som reserve for søkemotorer.
-              </p>
-            </div>
-
-            {/* OG Image */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Share2 className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>Delebilde (nettadresse)</span>
-                </label>
-                {shareableImageUrl(editingPage.heroImage, window.location.origin) && (
+                {editingPage.summary && (
                   <button
                     type="button"
-                    onClick={() => onUpdate({ ...editingPage, ogImage: editingPage.heroImage })}
+                    onClick={() => {
+                      onUpdate({
+                        ...editingPage,
+                        metaDescription: editingPage.summary,
+                      });
+                      showCopiedIngress(true);
+                    }}
                     className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer transition-colors"
+                    title="Kopier denne ingressen til meta-beskrivelsen for søkemotorer og sosiale medier"
                   >
-                    <ImageIcon className="w-3 h-3" />
-                    <span>Bruk samme som hovedbilde</span>
+                    {copiedIngress ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-400" />
+                        <span className="text-emerald-400 font-semibold">Kopiert til SEO-felt</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3" />
+                        <span>Bruk som SEO-beskrivelse</span>
+                      </>
+                    )}
                   </button>
                 )}
               </div>
-              <div className="flex gap-2 items-center">
+              <textarea
+                rows={2}
+                value={editingPage.summary || ""}
+                onChange={(e) => onUpdate({ ...editingPage, summary: e.target.value })}
+                placeholder="En engasjerende setning eller to som oppsummerer sidens budskap..."
+                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500 resize-y"
+              />
+            </div>
+
+            {/* Hovedbilde (Hero Image) */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-300 block">
+                Hovedbilde / Toppbanner (Hero Image)
+              </label>
+              <HeroImageUploader
+                currentImageUrl={editingPage.heroImage}
+                onImageChange={(url: string) => onUpdate({ ...editingPage, heroImage: url })}
+                pageTitle={editingPage.title}
+              />
+            </div>
+          </>
+        ) : (
+          <p className="text-xs text-slate-400 italic py-1">
+            Hero-toppbanneret er deaktivert for denne siden. Siden starter direkte med innholdsblokkene nedenfor.
+          </p>
+        )}
+      </div>
+
+      {/* Visuell Blokkbygger & Modulstyring */}
+      <div className="space-y-3 bg-slate-900/60 p-4 sm:p-5 rounded-2xl border border-slate-700/80">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div>
+            <label className="text-xs font-bold text-white uppercase tracking-wider block">
+              Innholdsblokker & Moduler
+            </label>
+            <p className="text-[11px] text-slate-400">
+              Flytt moduler opp/ned, skjul, eller velg layoutvarianter.
+            </p>
+          </div>
+
+          {/* Mode switch: Visuell vs Rå Markdown */}
+          <div className="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setEditorMode("visual")}
+              className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all cursor-pointer ${
+                editorMode === "visual"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Visuelle blokker
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditorMode("raw")}
+              className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all cursor-pointer ${
+                editorMode === "raw"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Rå Markdown
+            </button>
+          </div>
+        </div>
+
+        {editorMode === "visual" ? (
+          <VisualBlockManager
+            blocks={visualBlocks}
+            onChange={handleBlocksChange}
+            onOpenBlockPicker={() => setIsBlockPickerOpen(true)}
+          />
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-slate-400">
+                Rediger rå Markdown eller modulsyntaks direkte:
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsBlockPickerOpen(true)}
+                className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition-colors shadow-xs"
+              >
+                <Plus className="w-3 h-3" />
+                <span>Sett inn blokk</span>
+              </button>
+            </div>
+            <textarea
+              rows={12}
+              value={editingPage.content || ""}
+              onChange={(e) => onUpdate({ ...editingPage, content: e.target.value })}
+              placeholder="Skriv innholdet her..."
+              className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono focus:outline-hidden focus:border-indigo-500 resize-y leading-relaxed"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* SEO & Deling i sosiale medier */}
+      <div className="rounded-xl border border-slate-700/80 bg-slate-900/40 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setShowSeoDetails(!showSeoDetails)}
+          className="w-full p-3.5 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5">
+            <Globe className="w-4 h-4 text-indigo-400" />
+            <div>
+              <span className="text-xs font-bold text-white block">
+                Søkemotoroptimalisering (SEO) & Delingskort
+              </span>
+              <span className="text-[11px] text-slate-400 block">
+                Tilpass hvordan siden vises på Google, Facebook og andre sosiale medier.
+              </span>
+            </div>
+          </div>
+          {showSeoDetails ? (
+            <ChevronUp className="w-4 h-4 text-slate-400" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-slate-400" />
+          )}
+        </button>
+
+        {showSeoDetails && (
+          <div className="p-4 pt-2 border-t border-slate-700/70 space-y-4 bg-slate-950/40">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300 block">
+                  Meta-beskrivelse for søkemotorer
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingPage.metaDescription || ""}
+                  onChange={(e) => onUpdate({ ...editingPage, metaDescription: e.target.value })}
+                  placeholder="Kort beskrivelse (ca. 150-160 tegn) som Google viser under sidetittelen..."
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500 resize-y"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300 block">
+                  Delingsbilde URL (OpenGraph / Facebook / Twitter)
+                </label>
                 <input
                   type="text"
                   value={editingPage.ogImage || ""}
                   onChange={(e) => onUpdate({ ...editingPage, ogImage: e.target.value })}
-                  placeholder="https://... (adressen til delebildet, helst 1200 × 630 piksler)"
-                  className="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-hidden focus:border-indigo-500"
+                  placeholder="La stå tom for å bruke toppbanneret automatisk"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-hidden focus:border-indigo-500"
                 />
-                {editingPage.ogImage && (
-                  <button
-                    type="button"
-                    onClick={() => onUpdate({ ...editingPage, ogImage: "" })}
-                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
-                    title="Fjern tilpasset delebilde"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
               </div>
-              <p className="text-[11px] text-slate-400">
-                Vises som stort bildekort ved deling på sosiale medier. Anbefalt format er 1200 × 630 piksler.
-                Bildet må ha en nettadresse. Et hovedbilde som er lastet opp fra maskinen, kan ikke brukes som delebilde.
-              </p>
             </div>
 
-            {/* Live Search & Social Preview Box */}
-            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 space-y-3">
-              <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                <span>Forhåndsvisning: søkeresultat</span>
+            {/* Google Search Result Preview */}
+            <div className="p-3 rounded-xl bg-white border border-stone-200 text-stone-800 space-y-1 shadow-xs">
+              <div className="flex items-center gap-1.5 text-[11px] text-stone-500">
+                <Search className="w-3 h-3 text-stone-400" />
+                <span className="truncate">{siteHost} › {cleanSlug}</span>
               </div>
-
-              <div className="space-y-1 bg-white p-3 rounded-lg text-left shadow-xs">
-                <div className="text-[11px] text-stone-500 flex items-center gap-1 truncate">
-                  <span>{siteHost}</span>
-                  <span>›</span>
-                  <span className="font-mono text-[10px] text-stone-600">{editingPage.slug || "side"}</span>
-                </div>
-                <div className="text-sm font-semibold text-blue-700 hover:underline cursor-pointer truncate">
-                  {previewTitle}
-                </div>
-                <div className="text-xs text-stone-600 leading-snug line-clamp-2">{previewDescription}</div>
+              <div className="text-sm font-semibold text-blue-700 hover:underline truncate">
+                {previewTitle}
               </div>
+              <div className="text-xs text-stone-600 leading-snug line-clamp-2">
+                {previewDescription}
+              </div>
+            </div>
 
-              {/* Social share card preview */}
-              <div className="space-y-1.5 pt-1">
-                <div className="text-[11px] font-semibold text-slate-400">
-                  Delingskort i sosiale medier
-                </div>
-                <div className="border border-slate-700/80 rounded-xl overflow-hidden bg-slate-900 max-w-sm">
-                  {shareImage ? (
-                    <div className="w-full h-32 bg-slate-800 overflow-hidden">
-                      <img src={shareImage} alt="Delebilde" className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="w-full h-20 bg-slate-800/80 flex items-center justify-center text-slate-500 text-xs italic">
-                      Uten delebilde vises menighetens ikon
-                    </div>
-                  )}
-                  <div className="p-3 space-y-1">
-                    <span className="text-[10px] text-slate-400 uppercase font-mono block">{siteHost}</span>
-                    <h4 className="text-xs font-bold text-white truncate">{previewTitle}</h4>
-                    <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">{previewDescription}</p>
+            {/* Social Share Card Preview */}
+            <div className="p-3 rounded-xl bg-slate-900 border border-slate-700 text-white space-y-2">
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                <Share2 className="w-3 h-3 text-indigo-400" />
+                <span>Forhåndsvisning av delebilde på sosiale medier</span>
+              </div>
+              <div className="rounded-xl overflow-hidden border border-slate-700 bg-slate-800">
+                {shareImage ? (
+                  <img
+                    src={shareImage}
+                    alt={editingPage.title || "Forhåndsvisning"}
+                    className="w-full h-36 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-24 bg-slate-800/80 flex items-center justify-center text-slate-400 text-xs gap-1.5">
+                    <ImageIcon className="w-4 h-4 text-slate-500" />
+                    <span>Intet bilde valgt (standard logo/toppbanner benyttes)</span>
                   </div>
+                )}
+                <div className="p-3 space-y-1 bg-slate-900/90">
+                  <div className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider">
+                    {siteHost}
+                  </div>
+                  <h4 className="text-xs font-bold text-white truncate">{previewTitle}</h4>
+                  <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">{previewDescription}</p>
                 </div>
               </div>
             </div>
@@ -628,42 +712,12 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
         )}
       </div>
 
-      {/* Publiserings- og Tidsstyringsinnstillinger */}
-      <div className="bg-slate-900/60 border border-slate-700/70 rounded-2xl p-4 sm:p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <Calendar className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-xs font-bold text-white flex flex-wrap items-center gap-2">
-                <span>Publiseringsstatus & Tidsstyring</span>
-                {isFutureScheduled && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-600/70 flex items-center gap-1 font-semibold">
-                    <Clock className="w-3 h-3" />
-                    <span>Planlagt publisering</span>
-                  </span>
-                )}
-                {isManuallyPublished && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-600/70 flex items-center gap-1 font-semibold">
-                    <Check className="w-3 h-3" />
-                    <span>Publisert (aktiv)</span>
-                  </span>
-                )}
-                {isDraft && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-600/70 flex items-center gap-1 font-semibold">
-                    <span>Kladd (upublisert)</span>
-                  </span>
-                )}
-              </h3>
-              <p className="text-[11px] text-slate-400">
-                Styr når siden skal gå fra 'Kladd' til 'Publisert', enten umiddelbart eller automatisk på en valgt dato.
-              </p>
-            </div>
-          </div>
-        </div>
+      {/* Publisering & Synlighet */}
+      <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-700/80 space-y-4">
+        <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+          Publisering & Synlighet
+        </h4>
 
-        {/* 1. Hovedmodus: Publisert vs Kladd */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-900 border border-slate-700/60 cursor-pointer hover:border-slate-600 transition-colors">
             <input
@@ -696,7 +750,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
           </label>
         </div>
 
-        {/* 2. 'Publiseringsdato'-velger (Planlagt publisering) */}
+        {/* 'Publiseringsdato'-velger (Planlagt publisering) */}
         <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
             <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
@@ -794,17 +848,138 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
           )}
         </div>
       </div>
+    </>
+  );
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-        <button
-          type="button"
-          onClick={() => onPreview(editingPage)}
-          className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-950 text-indigo-300 hover:text-indigo-200 border border-indigo-700/60 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-xs"
-          title="Forhåndsvis hvordan denne kladden ser ut med offentlig styling før publisering"
-        >
-          <Eye className="w-4 h-4 text-indigo-400" />
-          <span>Forhåndsvis kladd</span>
-        </button>
+  return (
+    <form
+      onSubmit={onSave}
+      className={`p-4 sm:p-6 rounded-2xl bg-slate-800 border border-indigo-500/80 shadow-2xl space-y-5 transition-all ${
+        viewMode === "split"
+          ? "w-full max-w-none"
+          : viewMode === "preview"
+          ? "w-full max-w-none"
+          : "max-w-4xl mx-auto w-full"
+      }`}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700 pb-3">
+        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <Edit3 className="w-4 h-4 text-indigo-400" />
+          <span>
+            {isNewPage
+              ? currentParentId
+                ? "Opprett ny underfane"
+                : "Opprett ny hovedfane"
+              : `Rediger side: ${editingPage.title || "Uten tittel"}`}
+          </span>
+        </h3>
+
+        {/* Modus-velger: Rediger | Splitt | Forhåndsvis */}
+        <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-700/80">
+          <button
+            type="button"
+            onClick={() => setViewMode("edit")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              viewMode === "edit"
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Rediger</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("split")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              viewMode === "split"
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>Splitt</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("preview")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              viewMode === "preview"
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span>Forhåndsvis</span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <a
+            href={previewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={handleSaveActiveDraftToStorage}
+            className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-950 text-indigo-300 hover:text-white border border-indigo-700/60 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+            title="Åpne en ekte forhåndsvisning av dette utkastet i en ny nettleserfane"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="hidden sm:inline">Forhåndsvis i ny fane</span>
+            <span className="sm:hidden">Ny fane</span>
+          </a>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 cursor-pointer transition-colors"
+            aria-label="Lukk"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {viewMode === "preview" ? (
+        <div className="space-y-4">
+          {renderLiveFrontendPreview()}
+        </div>
+      ) : viewMode === "split" ? (
+        <div className="flex flex-col lg:flex-row gap-6 items-start w-full">
+          <div className="w-full lg:w-[460px] xl:w-[500px] 2xl:w-[540px] shrink-0 space-y-4 overflow-y-auto max-h-[82vh] pr-2">
+            {renderFormFields()}
+          </div>
+          <div className="flex-1 min-w-0 w-full sticky top-0">
+            {renderLiveFrontendPreview()}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {renderFormFields()}
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-700/80">
+        <div className="flex items-center gap-2">
+          <a
+            href={previewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={handleSaveActiveDraftToStorage}
+            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-950 text-indigo-300 hover:text-white border border-indigo-700/60 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+            title="Åpne en ekte forhåndsvisning av dette utkastet i en ny nettleserfane"
+          >
+            <ExternalLink className="w-4 h-4 text-indigo-400" />
+            <span>Forhåndsvis i ny fane</span>
+          </a>
+          {onPreview && (
+            <button
+              type="button"
+              onClick={() => onPreview(editingPage)}
+              className="hidden"
+              aria-hidden="true"
+            />
+          )}
+        </div>
 
         <div className="flex items-center justify-end gap-2">
           <button

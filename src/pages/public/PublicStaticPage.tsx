@@ -1,7 +1,8 @@
 import React from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
 import { useFirebase } from "../../context/FirebaseDataContext";
+import { CmsPage } from "../../data/cmsData";
 import { toPublicProfile } from "../../utils/publicProfile";
 import {
   ArrowLeft,
@@ -18,18 +19,51 @@ import { formatNorwegianDateTime } from "../../utils/dates";
 interface PublicStaticPageProps {
   forcedSlug?: string;
   fallbackComponent?: React.ReactNode;
+  pageOverride?: Partial<CmsPage>;
+  hidePreviewBanner?: boolean;
 }
 
-export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug, fallbackComponent }) => {
+export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({
+  forcedSlug,
+  fallbackComponent,
+  pageOverride,
+  hidePreviewBanner,
+}) => {
   const { slug: paramSlug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
+  const isPreviewMode = searchParams.get("preview") === "true";
   const { getPageBySlug, settings } = useCms();
   const { allPersons } = useFirebase();
 
-  const currentSlug = forcedSlug || paramSlug || "om-oss";
-  const page = getPageBySlug(currentSlug);
+  const currentSlug = pageOverride?.slug || forcedSlug || paramSlug || "om-oss";
+  const savedPage = getPageBySlug(currentSlug);
 
-  // The tab title and the share card for the page are set for the whole site in App.tsx
-  const isAvailable = page ? isPagePublished(page) : false;
+  // Check for active editor draft in sessionStorage when previewing in new tab
+  const draftData = React.useMemo(() => {
+    if (pageOverride) return pageOverride;
+    if (!isPreviewMode || typeof window === "undefined") return null;
+    try {
+      const bySlug = sessionStorage.getItem(`cms_preview_draft_${currentSlug}`);
+      if (bySlug) return JSON.parse(bySlug);
+      const active = sessionStorage.getItem("cms_preview_active");
+      if (active) {
+        const parsed = JSON.parse(active);
+        if (parsed.slug === currentSlug || parsed.id === savedPage?.id) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return null;
+  }, [pageOverride, isPreviewMode, currentSlug, savedPage?.id]);
+
+  const page = pageOverride
+    ? ({ ...savedPage, ...pageOverride } as CmsPage)
+    : draftData
+    ? ({ ...savedPage, ...draftData } as CmsPage)
+    : savedPage;
+
+  // In preview mode or when pageOverride is provided, allow viewing the page even if unpublished or scheduled
+  const isAvailable = page ? (Boolean(pageOverride) || isPreviewMode || isPagePublished(page)) : false;
 
   if (!page || !isAvailable) {
     if (fallbackComponent) {
@@ -64,6 +98,28 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug, 
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10">
+      {/* Top Banner when previewing draft */}
+      {isPreviewMode && !hidePreviewBanner && (
+        <div className="bg-stone-900 text-stone-200 border border-stone-700 px-4 py-2.5 text-xs flex flex-wrap items-center justify-between gap-3 shadow-md rounded-2xl">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-accent-400 animate-pulse" />
+            <span className="font-bold text-stone-100">Forhåndsvisning av utkast</span>
+            <span className="text-stone-300 hidden sm:inline">· Ekte offentlig layout og styling</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono bg-stone-800 px-2 py-0.5 rounded border border-stone-700">
+              {page.isPublished === false ? "Status: Kladd (upublisert)" : "Status: Publisert"}
+            </span>
+            <Link
+              to="/admin?tab=pages"
+              className="text-[11px] font-semibold text-white bg-stone-800 hover:bg-stone-700 px-2.5 py-1 rounded-lg transition-colors border border-stone-600"
+            >
+              Tilbake til CMS
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="space-y-3 border-b border-stone-200 pb-6">
         <Link
@@ -96,11 +152,13 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({ forcedSlug, 
 
       {/* Main Content Area */}
       <div className="bg-white rounded-2xl border border-stone-200/80 p-6 sm:p-10 shadow-xs space-y-4">
-        <CmsContentRenderer content={page.content} />
+        <CmsContentRenderer content={page.content || ""} />
       </div>
 
       {/* Lederskap & Stab (vises under Om oss hvis ikke allerede inkludert i blokk) */}
-      {isAboutPage && !page.content.includes(":::personer") && !page.content.includes(":::stab") && (
+      {isAboutPage &&
+        !(page.content || "").includes(":::personer") &&
+        !(page.content || "").includes(":::stab") && (
         <section className="space-y-6 pt-4">
           <div className="border-b border-stone-200 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>

@@ -1,0 +1,179 @@
+import React, { useMemo } from "react";
+import { Link } from "react-router-dom";
+import { useFirebase } from "../../../context/FirebaseDataContext";
+import { locationOf, pickHighlight } from "../../../utils/gatherings";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Sparkles,
+  Coffee,
+  BookOpen,
+  ArrowRight,
+} from "lucide-react";
+
+export interface WorshipModuleProps {
+  variant?: "highlight" | "compact";
+  titleOverride?: string;
+}
+
+export const WorshipModule: React.FC<WorshipModuleProps> = ({
+  variant = "highlight",
+  titleOverride,
+}) => {
+  const { gatherings } = useFirebase();
+
+  const highlight = useMemo(() => pickHighlight(gatherings, Date.now()), [gatherings]);
+  const nextWorship = highlight?.gathering;
+  const highlightLabel = titleOverride || (
+    highlight?.kind === "featured"
+      ? "Fremhevet samling"
+      : highlight?.kind === "next"
+      ? "Neste arrangement"
+      : "Neste Gudstjeneste"
+  );
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      return new Intl.DateTimeFormat("no-NO", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      }).format(d);
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatTime = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      return new Intl.DateTimeFormat("no-NO", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(d);
+    } catch {
+      return "";
+    }
+  };
+
+  if (variant === "compact") {
+    return (
+      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6">
+        <div className="bg-white rounded-xl border border-stone-200/90 p-4 sm:p-5 shadow-sm hover:border-primary-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-lg bg-primary-100 text-primary-800 flex items-center justify-center shrink-0 font-bold">
+              <Calendar className="w-5 h-5 text-primary-700" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary-700 block">
+                {highlightLabel}
+              </span>
+              <h3 className="font-bold text-stone-900 text-base">
+                {nextWorship ? nextWorship.title : "Ingen planlagte samlinger"}
+              </h3>
+              {nextWorship && (
+                <div className="flex flex-wrap items-center gap-3 text-xs text-stone-600 mt-0.5">
+                  <span className="capitalize">{formatDate(nextWorship.startsAt)}</span>
+                  <span>·</span>
+                  <span>Kl. {formatTime(nextWorship.startsAt)}</span>
+                  <span>·</span>
+                  <span>{locationOf(nextWorship)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Link
+            to="/hva-skjer"
+            className="px-4 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors self-start sm:self-auto shrink-0"
+          >
+            <span>Se detaljer</span>
+            <ArrowRight className="w-3.5 h-3.5 text-stone-500" />
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  // Standard "highlight" card variant
+  return (
+    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8 relative z-10">
+      <div className="bg-white rounded-2xl shadow-xl border border-stone-200/80 p-6 sm:p-8 lg:p-10">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-stone-100">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-primary-50 text-primary-800 text-xs font-bold uppercase tracking-wider">
+              <Calendar className="w-3.5 h-3.5 text-primary-600" />
+              <span>{highlightLabel}</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+              {nextWorship ? nextWorship.title : "Ingen samlinger er lagt ut ennå"}
+            </h2>
+            {nextWorship?.theme && (
+              <p className="text-sm font-medium text-stone-600">
+                <span className="font-semibold text-stone-800">Tema:</span> {nextWorship.theme}
+                {nextWorship.bibleText && ` (${nextWorship.bibleText})`}
+              </p>
+            )}
+          </div>
+
+          {nextWorship && (
+            <div className="flex flex-wrap items-center gap-4 text-sm text-stone-700 bg-stone-50 p-4 rounded-xl border border-stone-200/60">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-primary-600" />
+                <span className="font-semibold capitalize">{formatDate(nextWorship.startsAt)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary-600" />
+                <span>Kl. {formatTime(nextWorship.startsAt)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-primary-600" />
+                <span>{locationOf(nextWorship)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-stone-600">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-accent-50 text-accent-700 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="font-bold text-stone-900 text-sm">Sprell Levende Søndagsskole</h4>
+              <p className="mt-0.5 text-stone-500 leading-relaxed">
+                Eget tilrettelagt opplegg for småbarn, barn og tweens under gudstjenesten.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary-50 text-primary-700 flex items-center justify-center shrink-0">
+              <Coffee className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="font-bold text-stone-900 text-sm">Kirkekaffe & Drøs</h4>
+              <p className="mt-0.5 text-stone-500 leading-relaxed">
+                Vi samles i kafeen etter gudstjenesten til kaffe, te, saft og en hyggelig prat.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+              <BookOpen className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="font-bold text-stone-900 text-sm">Rom for alle</h4>
+              <p className="mt-0.5 text-stone-500 leading-relaxed">
+                Uansett bakgrunn er du hjertelig velkommen. Ingen forkunnskaper kreves.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
