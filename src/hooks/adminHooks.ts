@@ -60,6 +60,10 @@ export function useAdminDashboard() {
     createTask,
     updateTask,
     assignTaskToPerson,
+    volunteerRoles,
+    createVolunteerRole,
+    updateVolunteerRole,
+    deleteVolunteerRole,
   } = useFirebase();
 
   const isAdmin = currentUser.globalRole === "admin";
@@ -142,7 +146,7 @@ export function useAdminDashboard() {
   const adminTasks = useMemo<AdminTaskItem[]>(() => {
     return tasks.map((task) => {
       const gathering = getGatheringById(task.gatheringId);
-      const group = getGroupById(task.groupId);
+      const group = task.groupId ? getGroupById(task.groupId) : undefined;
       const taskAssignments = assignments.filter((a) => a.taskId === task.id);
       const taskStaffing = calculateTaskStaffingStatus(task, taskAssignments);
       const slots = countSlots(task, taskAssignments);
@@ -163,11 +167,18 @@ export function useAdminDashboard() {
     });
   }, [tasks, assignments, getGatheringById, getGroupById, getPersonById]);
 
+  const adminVolunteerRoles = useMemo(() => {
+    return [...volunteerRoles].sort(
+      (a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, "nb")
+    );
+  }, [volunteerRoles]);
+
   return {
     isAdmin,
     currentUser,
     allPersons,
     adminPersons,
+    adminVolunteerRoles,
     adminGroups,
     adminGatherings,
     adminTasks,
@@ -182,6 +193,9 @@ export function useAdminDashboard() {
     createTask,
     updateTask,
     assignTaskToPerson,
+    createVolunteerRole,
+    updateVolunteerRole,
+    deleteVolunteerRole,
     tasks,
   };
 }
@@ -324,7 +338,7 @@ export function useAdminTaskDetail(taskId: string) {
   const isAdmin = currentUser.globalRole === "admin";
   const task = (taskId && getTaskById(taskId)) || null;
   const gathering = (task && getGatheringById(task.gatheringId)) || null;
-  const group = (task && getGroupById(task.groupId)) || null;
+  const group = (task?.groupId && getGroupById(task.groupId)) || null;
 
   const taskAssignments = useMemo(
     () => (task ? getAllAssignmentsForTask(task.id) : []),

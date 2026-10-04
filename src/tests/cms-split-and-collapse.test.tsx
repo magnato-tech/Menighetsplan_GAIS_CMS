@@ -37,6 +37,8 @@ vi.mock("../context/FirebaseDataContext", () => ({
     allPersons: [
       { id: "p1", name: "Kari Nordmann", isStaff: true, isPublicProfile: true, publicTitle: "Hovedpastor" },
     ],
+    gatherings: [],
+    groups: [],
   }),
 }));
 
@@ -272,8 +274,10 @@ describe("PageEditModal & PublicStaticPage: Ekte forhåndsvisning i ny fane", ()
     expect(screen.getByRole("button", { name: /^Splitt$/i })).toBeDefined();
     expect(screen.getByRole("button", { name: /^Forhåndsvis$/i })).toBeDefined();
 
-    // Verifiser at ekte nettside-rendering finnes i preview-området
+    // Verifiser at ekte nettside-rendering finnes i preview-området som iframe
     expect(screen.getByText(/Ekte nettside-rendering/i)).toBeDefined();
+    const iframe = document.querySelector('iframe[title="Forhåndsvisning av nettsiden"]');
+    expect(iframe?.getAttribute("src")).toContain("/gudstjenester?preview=true&embedded=1");
 
     // Verifiser at 'Forhåndsvis i ny fane' lenke finnes og har preview=true
     const previewLinks = screen.getAllByRole("link", { name: /Forhåndsvis i ny fane/i });
@@ -291,8 +295,58 @@ describe("PageEditModal & PublicStaticPage: Ekte forhåndsvisning i ny fane", ()
     expect(JSON.parse(storedDraft!).title).toBe("Gudstjenester");
   });
 
-  test("PublicStaticPage i forhåndsvisningsmodus (?preview=true) viser upubliserte utkast og forhåndsvisningsbanner", () => {
-    mockGetPageBySlug.mockReturnValue(samplePage);
+  test("Hero-rammen er låst og statisk innhold redigeres som felt, ikke som modulkode", () => {
+    const onUpdate = vi.fn();
+    render(
+      <MemoryRouter>
+        <PageEditModal
+          editingPage={{
+            ...samplePage,
+            heroTitle: "Velkommen hit",
+            content: "## Pastorhilsen\n\nVarm velkomst til høsten.\n\n:::module-worship[highlight]\n:::",
+          }}
+          isNewPage={false}
+          availableParentPages={[]}
+          onUpdate={onUpdate}
+          onSave={vi.fn()}
+          onClose={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText(/Låst øverst · Kan ikke flyttes eller slettes/i)).toBeDefined();
+    expect(screen.getByDisplayValue("Velkommen hit")).toBeDefined();
+    expect(screen.getByText("Neste gudstjeneste")).toBeDefined();
+    expect(screen.queryByRole("button", { name: /Rå Markdown/i })).toBeNull();
+    expect(screen.queryByText(/:::module-worship/)).toBeNull();
+
+    const pastorCard = [...document.querySelectorAll("[data-cms-editor-target]")].find((el) =>
+      el.textContent?.includes("Pastorhilsen")
+    );
+    const editPastor = pastorCard?.querySelector(
+      'button[title="Rediger innhold"]'
+    ) as HTMLButtonElement | null;
+    expect(editPastor).toBeTruthy();
+    fireEvent.click(editPastor!);
+    expect(screen.getByDisplayValue("Pastorhilsen")).toBeDefined();
+    expect(screen.getByDisplayValue("Varm velkomst til høsten.")).toBeDefined();
+
+    const [primaryButton] = screen.getAllByPlaceholderText("Knappetekst");
+    fireEvent.change(primaryButton, { target: { value: "Se kalenderen" } });
+    expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({ heroCtaText: "Se kalenderen" }));
+  });
+
+  test("PublicStaticPage med lagret utkast i session viser upublisert side i preview", () => {
+    mockGetPageBySlug.mockReturnValue(undefined);
+    sessionStorage.setItem(
+      "cms_preview_draft_id_test-page-1",
+      JSON.stringify({
+        ...samplePage,
+        revision: 1,
+        publicPath: "/gudstjenester",
+      })
+    );
+    sessionStorage.setItem("cms_preview_active", JSON.stringify(samplePage));
 
     render(
       <MemoryRouter initialEntries={["/gudstjenester?preview=true"]}>
@@ -300,11 +354,8 @@ describe("PageEditModal & PublicStaticPage: Ekte forhåndsvisning i ny fane", ()
       </MemoryRouter>
     );
 
-    // Verifiser at forhåndsvisningsbanner vises
     expect(screen.getByText("Forhåndsvisning av utkast")).toBeDefined();
     expect(screen.getByText("Status: Kladd (upublisert)")).toBeDefined();
-
-    // Verifiser at tittel og innhold fra utkastet vises i den ekte offentlige layouten
     expect(screen.getByText("Gudstjenester")).toBeDefined();
     expect(screen.getByText("Oversikt over våre søndagssamlinger")).toBeDefined();
     expect(screen.getByText("Velkommen hjem")).toBeDefined();

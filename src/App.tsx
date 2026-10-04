@@ -3,17 +3,21 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { FirebaseDataProvider } from "./context/FirebaseDataContext";
 import { CmsProvider, useCms } from "./context/CmsContext";
 import { SITE_THEME_CLASS, getThemeCssVariables } from "./utils/themeUtils";
-import { isAdminStudioPath, isMinSidePath } from "./utils/routes";
+import { isAdminStudioPath, isMinSidePath, isPublicPath } from "./utils/routes";
+import { PreviewQueryPersist } from "./components/public/PreviewQueryPersist";
+import { EmbeddedPreviewGuard } from "./components/public/EmbeddedPreviewGuard";
+import { PreviewBridgeNotifier } from "./components/public/PreviewBridgeNotifier";
+import { IframeInternalRouteBlock } from "./components/public/IframeInternalRouteBlock";
 import { injectPageSeo } from "./utils/seoUtils";
 import { seoForPath } from "./utils/siteSeo";
 import { Header } from "./components/Header";
 import { WriteErrorBanner } from "./components/WriteErrorBanner";
 import { PublicNavbar } from "./components/public/PublicNavbar";
 import { PublicFooter } from "./components/public/PublicFooter";
+import { PublicHashScroll } from "./components/public/PublicHashScroll";
 
 // Public Pages
 import { PublicHomePage } from "./pages/public/PublicHomePage";
-import { PublicCalendarPage } from "./pages/public/PublicCalendarPage";
 import { PublicGroupsPage } from "./pages/public/PublicGroupsPage";
 import { PublicStaticPage } from "./pages/public/PublicStaticPage";
 import { PublicArticlePage } from "./pages/public/PublicArticlePage";
@@ -62,6 +66,12 @@ function AppContent() {
   // Route type checks
   const isAdminStudio = isAdminStudioPath(location.pathname);
   const isMinSideRoute = isMinSidePath(location.pathname);
+  const inIframe = typeof window !== "undefined" && window.parent !== window;
+
+  // Embedded preview must not mount admin or Min side inside the iframe
+  if (inIframe && !isPublicPath(location.pathname)) {
+    return <IframeInternalRouteBlock />;
+  }
 
   // 1. Fullscreen Admin Studio
   if (isAdminStudio) {
@@ -109,15 +119,18 @@ function AppContent() {
   // 3. Public Website Layout (Menighetsplan - Offentlig nettside for Lillesand Misjonskirke)
   return (
     <div style={themeVariables} className={`${SITE_THEME_CLASS} min-h-screen flex flex-col bg-page text-stone-900`}>
+      <PreviewQueryPersist />
+      <EmbeddedPreviewGuard />
+      <PreviewBridgeNotifier />
+      <PublicHashScroll />
       <PublicNavbar />
       <main className="flex-1">
         <Routes>
           {/* Public Home */}
           <Route path="/" element={<PublicHomePage />} />
 
-          {/* Public Calendar & Events */}
-          <Route path="/hva-skjer" element={<PublicCalendarPage />} />
-          <Route path="/kalender" element={<PublicCalendarPage />} />
+          {/* Legacy calendar URL */}
+          <Route path="/kalender" element={<Navigate to="/hva-skjer" replace />} />
 
           {/* Public Sermons */}
           <Route path="/taler" element={<PublicSermonsPage />} />
@@ -153,10 +166,11 @@ function AppContent() {
 function DataProviders({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const internal = isAdminStudioPath(pathname) || isMinSidePath(pathname);
+  const publicPagesOnly = isPublicPath(pathname);
 
   return (
     <FirebaseDataProvider internal={internal}>
-      <CmsProvider>{children}</CmsProvider>
+      <CmsProvider publicPagesOnly={publicPagesOnly}>{children}</CmsProvider>
     </FirebaseDataProvider>
   );
 }

@@ -112,9 +112,13 @@ export interface GroupMessage {
 export interface Task {
   id: string;
   gatheringId: string;
-  groupId: string;
+  /** Team responsible for staffing. Absent for roles without a team (e.g. Taler, Møteleder). */
+  groupId?: string;
+  /** When set, title and instruction come from the role library. */
+  volunteerRoleId?: string;
   title: string;
   description?: string;
+  /** Legacy per-task instruction. Used when volunteerRoleId is not set. */
   instruction?: string;
   status: "open" | "assigned" | "confirmed" | "vacant" | "cancelled";
   // Absent when an admin has reset the need to "not set"; readers then count it as 1
@@ -132,4 +136,15 @@ export interface Assignment {
   assignedAt?: string;
   respondedAt?: string;
   withdrawalReason?: string;
+}
+
+/** Named volunteer slot on a gathering, e.g. Lyd or Kjøkken, with its own instruction. */
+export interface VolunteerRole {
+  id: string;
+  name: string;
+  instruction?: string;
+  /** Default tjenesteteam for the role. Absent when the role has no team. */
+  groupId?: string;
+  sortOrder: number;
+  updatedAt?: string;
 }

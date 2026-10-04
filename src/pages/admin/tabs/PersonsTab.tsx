@@ -57,13 +57,13 @@ export const PersonsTab: React.FC<PersonsTabProps> = ({ studio, showFeedback }) 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
-            <span>Personregister & Roller</span>
+            <span>Personregister</span>
             <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-normal">
               {adminPersons.length} personer
             </span>
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Administrer roller, kontaktinfo og tilganger for medlemmer og ledere.
+            Administrer kontaktinfo, tilganger og fravær for medlemmer og ledere.
           </p>
         </div>
 

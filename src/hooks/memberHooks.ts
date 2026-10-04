@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useFirebase } from "../context/FirebaseDataContext";
 import { Person } from "../types";
+import { resolveTaskInstruction } from "../utils/roleStaffing";
 import { countSlots, holdsSlot } from "../utils/staffing";
 
 // 1. Hook: useCurrentUser
@@ -42,14 +43,12 @@ export function useTaskDetail(taskId: string | undefined) {
     assignTaskToPerson,
     updateAssignmentStatus,
     reportAbsence,
+    volunteerRoles,
   } = useFirebase();
 
   const task = (taskId && getTaskById(taskId)) || null;
-  const group = (task && getGroupById(task.groupId)) || null;
+  const group = (task?.groupId && getGroupById(task.groupId)) || null;
   const gathering = (task && getGatheringById(task.gatheringId)) || null;
-
-  // A task is only shown to the group it belongs to
-  const permissionDenied = task !== null && !isPersonInGroup(currentUser.id, task.groupId);
 
   const taskAssignments = task ? getAllAssignmentsForTask(task.id) : [];
   const freeSlots = task ? countSlots(task, taskAssignments).free : 0;
@@ -58,6 +57,15 @@ export function useTaskDetail(taskId: string | undefined) {
   const myAssignment = taskAssignments.find((a) => a.personId === currentUser.id && holdsSlot(a)) ?? null;
   const isAssignedToMe = myAssignment?.response === "confirmed";
   const isAskedOfMe = myAssignment?.response === "pending";
+
+  // Tasks with a team are for group members; tasks without a team are for assignees and admins
+  const permissionDenied =
+    task !== null &&
+    currentUser.globalRole !== "admin" &&
+    !myAssignment &&
+    (task.groupId ? !isPersonInGroup(currentUser.id, task.groupId) : true);
+
+  const instruction = task ? resolveTaskInstruction(task, volunteerRoles) : "";
 
   // The others who are on it, those who have said yes first
   const othersOnTask = taskAssignments
@@ -72,6 +80,7 @@ export function useTaskDetail(taskId: string | undefined) {
 
   return {
     task: permissionDenied ? null : task,
+    instruction,
     gathering,
     group,
     othersOnTask,

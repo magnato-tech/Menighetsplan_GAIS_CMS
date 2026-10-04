@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { CmsPage } from "../../../../data/cmsData";
 import {
   Edit3,
@@ -6,7 +6,6 @@ import {
   FolderTree,
   Eye,
   LayoutGrid,
-  Plus,
   Globe,
   Search,
   Share2,
@@ -27,18 +26,23 @@ import { useCms } from "../../../../context/CmsContext";
 import { useTimedMessage } from "../../../../hooks/useTimedMessage";
 import { formatNorwegianDateTime } from "../../../../utils/dates";
 import { shareableImageUrl } from "../../../../utils/seoUtils";
-import { getThemeCssVariables, SITE_THEME_CLASS } from "../../../../utils/themeUtils";
-import { PublicNavbar } from "../../../../components/public/PublicNavbar";
-import { PublicFooter } from "../../../../components/public/PublicFooter";
-import { PublicStaticPage } from "../../../public/PublicStaticPage";
-import { PublicHomePage } from "../../../public/PublicHomePage";
 import { VisualBlockManager } from "./VisualBlockManager";
+import { usePreviewBridgeParent } from "../../../../hooks/usePreviewBridgeParent";
+import {
+  buildDraftSnapshot,
+  buildEmbeddedPreviewUrl,
+  buildNewTabPreviewUrl,
+  writeDraftSnapshot,
+} from "../../../../utils/previewBridge";
 import {
   parseContentToVisualBlocks,
   serializeVisualBlocksToContent,
-  getDefaultForsideBlocks,
+  resolveVisualBlocks,
+  CMS_PREVIEW_TARGET_HERO,
   VisualBlock,
 } from "../../../../utils/cmsBlocks";
+import { ensureSectionAnchors } from "../../../../utils/cmsLinks";
+import { CmsLinkPicker } from "../../../../components/admin/CmsLinkPicker";
 
 function toDatetimeLocal(iso?: string): string {
   if (!iso) return "";
@@ -54,6 +58,39 @@ function toDatetimeLocal(iso?: string): string {
   } catch {
     return "";
   }
+}
+
+/** Scrolls the preview pane so the target block is visible. Returns false if already fully in view. */
+export function scrollPreviewToTarget(
+  scrollRoot: HTMLElement,
+  target: HTMLElement,
+  offset = 16
+): boolean {
+  const rootRect = scrollRoot.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const visibleTop = rootRect.top + offset;
+  const visibleBottom = rootRect.bottom - offset;
+  const targetTop = targetRect.top;
+  const targetBottom = targetRect.bottom;
+  const targetHeight = targetRect.height;
+  const rootHeight = rootRect.height;
+
+  if (targetTop >= visibleTop && targetBottom <= visibleBottom) {
+    return false;
+  }
+
+  let scrollTop: number;
+  if (targetHeight > rootHeight - 2 * offset) {
+    scrollTop = targetTop - rootRect.top + scrollRoot.scrollTop - offset;
+  } else if (targetTop < visibleTop) {
+    scrollTop = targetTop - rootRect.top + scrollRoot.scrollTop - offset;
+  } else {
+    scrollTop =
+      targetBottom - rootRect.top + scrollRoot.scrollTop - (rootHeight - offset);
+  }
+
+  scrollRoot.scrollTo({ top: Math.max(0, scrollTop), behavior: "smooth" });
+  return true;
 }
 
 function getPresetDate(type: "tomorrow" | "sunday" | "monday"): string {
@@ -96,6 +133,13 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
   const [isBlockPickerOpen, setIsBlockPickerOpen] = useState(false);
   const [showSeoDetails, setShowSeoDetails] = useState(false);
   const [copiedIngress, showCopiedIngress] = useTimedMessage<true>(2000);
+  const [focusedPreviewTarget, setFocusedPreviewTarget] = useState<string>(CMS_PREVIEW_TARGET_HERO);
+  const previewScrollRef = useRef<HTMLDivElement>(null);
+  const previewIframeRef = useRef<HTMLIFrameElement>(null);
+  const previousSlugRef = useRef("");
+  const [previewRevision, setPreviewRevision] = useState(0);
+  const [previewLocationPath, setPreviewLocationPath] = useState<string | null>(null);
+  const [previewBlockedNotice, setPreviewBlockedNotice] = useState(false);
 
   // View mode state: edit (full-width form), split (side-by-side with real frontend), preview (full-width real frontend)
   const [viewMode, setViewMode] = useState<"edit" | "split" | "preview">(() => {
@@ -107,8 +151,6 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
 
   // Responsive device simulation in preview area: desktop (full width), tablet (768px), mobile (390px)
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
-
-  const themeVariables = useMemo(() => getThemeCssVariables(settings?.theme), [settings?.theme]);
 
   // Search and share card preview values
   const siteHost = typeof window !== "undefined" ? window.location.host : "lillesand.misjonskirke.no";
@@ -194,65 +236,108 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
     .replace(/^\//, "")
     .trim();
   const targetPath = editingPage.linkUrl?.trim() || (cleanSlug === "forside" || !cleanSlug ? "/" : `/${cleanSlug}`);
-  const previewUrl = `${targetPath}${targetPath.includes("?") ? "&" : "?"}preview=true`;
+  const embeddedPreviewUrl = buildEmbeddedPreviewUrl(targetPath);
+  const previewUrl = buildNewTabPreviewUrl(targetPath);
 
   const isHomePage = cleanSlug === "forside" || (!cleanSlug && targetPath === "/");
 
-  const [editorMode, setEditorMode] = useState<"visual" | "raw">("visual");
-
-  const visualBlocks = useMemo(() => {
-    if (editingPage.blocks && editingPage.blocks.length > 0) {
-      return editingPage.blocks;
-    }
-    const parsed = parseContentToVisualBlocks(editingPage.content || "");
-    if (isHomePage && parsed.length === 0) {
-      return getDefaultForsideBlocks();
-    }
-    return parsed;
-  }, [editingPage.blocks, editingPage.content, isHomePage]);
-
-  // Real-time draft page passed directly to the public page renderer
-  const draftPage: Partial<CmsPage> = useMemo(
-    () => ({
-      ...editingPage,
-      id: editingPage.id || "draft-page-preview",
-      title: editingPage.title || "Uten tittel",
-      slug: cleanSlug,
-      summary: editingPage.summary || "",
-      content: editingPage.content || "",
-      blocks: editingPage.blocks || visualBlocks,
-      showHero: editingPage.showHero,
-      heroImage: editingPage.heroImage,
-      isPublished: editingPage.isPublished,
-      inNavMenu: editingPage.inNavMenu,
-      publishAt: editingPage.publishAt,
-    }),
-    [editingPage, cleanSlug, visualBlocks]
+  const visualBlocks = useMemo(
+    () => ensureSectionAnchors(resolveVisualBlocks(editingPage, { home: isHomePage })),
+    [editingPage, isHomePage]
   );
 
   const handleBlocksChange = (newBlocks: VisualBlock[]) => {
-    const serialized = serializeVisualBlocksToContent(newBlocks);
+    const anchored = ensureSectionAnchors(newBlocks);
+    const serialized = serializeVisualBlocksToContent(anchored);
     onUpdate({
-      ...editingPage,
-      blocks: newBlocks,
+      blocks: anchored,
       content: serialized,
     });
+    setPreviewRevision((r) => r + 1);
   };
+
+  const { flushSnapshot, sendWarmDraft, sendFocus } = usePreviewBridgeParent({
+    editingPage: { ...editingPage, slug: cleanSlug },
+    blocks: visualBlocks,
+    revision: previewRevision,
+    previousSlugRef,
+    iframeRef: previewIframeRef,
+    onPreviewLocation: (path) => setPreviewLocationPath(path),
+    onPreviewBlocked: () => {
+      setPreviewBlockedNotice(true);
+      window.setTimeout(() => setPreviewBlockedNotice(false), 4000);
+    },
+  });
 
   const handleSaveActiveDraftToStorage = () => {
     try {
-      const draftPayload = {
-        ...editingPage,
-        slug: cleanSlug,
-        updatedAt: new Date().toISOString(),
-      };
-      sessionStorage.setItem("cms_preview_active", JSON.stringify(draftPayload));
-      sessionStorage.setItem(`cms_preview_draft_${cleanSlug}`, JSON.stringify(draftPayload));
-      if (editingPage.id) {
-        sessionStorage.setItem(`cms_preview_draft_${editingPage.id}`, JSON.stringify(draftPayload));
-      }
+      const snapshot = buildDraftSnapshot(
+        { ...editingPage, slug: cleanSlug, blocks: visualBlocks },
+        previewRevision,
+        visualBlocks
+      );
+      writeDraftSnapshot(snapshot, previousSlugRef.current);
+      previousSlugRef.current = cleanSlug;
     } catch {}
   };
+
+  useEffect(() => {
+    setPreviewRevision((r) => r + 1);
+  }, [editingPage.title, editingPage.summary, editingPage.heroTitle, editingPage.heroCtaText, editingPage.heroCtaLink, editingPage.heroCtaSecondaryText, editingPage.heroCtaSecondaryLink, editingPage.heroImage, editingPage.content, editingPage.isPublished, editingPage.linkUrl, cleanSlug]);
+
+  useEffect(() => {
+    if (viewMode === "edit") return;
+    const timer = window.setTimeout(() => {
+      sendWarmDraft(true);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [viewMode, previewRevision, sendWarmDraft]);
+
+  useEffect(() => {
+    if (viewMode === "edit") return;
+    flushSnapshot();
+  }, [cleanSlug, targetPath, viewMode, flushSnapshot]);
+
+  useEffect(() => {
+    if (viewMode === "edit" || !focusedPreviewTarget) return;
+    sendFocus(focusedPreviewTarget);
+
+    const iframeDoc = previewIframeRef.current?.contentDocument;
+    const scrollRoot = iframeDoc?.documentElement;
+    if (!scrollRoot) return;
+
+    const findTarget = () =>
+      iframeDoc?.querySelector(
+        `[data-cms-preview-target="${focusedPreviewTarget}"]`
+      ) as HTMLElement | null;
+
+    const scrollIfNeeded = () => {
+      const target = findTarget();
+      const container = previewScrollRef.current;
+      if (target && container) scrollPreviewToTarget(container, target);
+      else target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
+    const frame = window.requestAnimationFrame(scrollIfNeeded);
+    const target = findTarget();
+    let resizeObserver: ResizeObserver | null = null;
+    if (target && typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(scrollIfNeeded);
+      resizeObserver.observe(target);
+    }
+
+    if (target instanceof HTMLElement) {
+      iframeDoc
+        ?.querySelectorAll("[data-cms-preview-focused]")
+        .forEach((el) => el.removeAttribute("data-cms-preview-focused"));
+      target.setAttribute("data-cms-preview-focused", "true");
+    }
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+    };
+  }, [focusedPreviewTarget, previewDevice, viewMode, sendFocus]);
 
   // Real frontend preview container: exact 1:1 public website rendering
   const renderLiveFrontendPreview = () => {
@@ -312,8 +397,13 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
 
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-700 hidden sm:inline">
-              {targetPath}
+              {previewLocationPath || targetPath}
             </span>
+            {previewBlockedNotice && (
+              <span className="text-[11px] text-amber-300 hidden sm:inline">
+                Admin og Min side åpnes ikke i forhåndsvisningen
+              </span>
+            )}
             <a
               href={previewUrl}
               target="_blank"
@@ -328,36 +418,35 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
           </div>
         </div>
 
-        {/* Real Public Layout Frame */}
-        <div className="flex-1 overflow-y-auto bg-slate-950/60 p-2 sm:p-4 max-h-[82vh] flex justify-center">
+        <div
+          ref={previewScrollRef}
+          className="cms-preview-scroll-root flex-1 overflow-y-auto bg-slate-950/60 p-2 sm:p-4 max-h-[82vh] flex justify-center items-start"
+        >
+          <style>{`
+            .cms-preview-scroll-root iframe[data-cms-preview-focused="true"] {
+              outline: none;
+            }
+          `}</style>
           <div
-            style={themeVariables}
-            className={`${SITE_THEME_CLASS} bg-page text-stone-900 select-text transition-all duration-200 ${
+            className={`self-start shrink-0 transition-all duration-200 overflow-hidden bg-white ${
               previewDevice === "desktop"
-                ? "w-full rounded-xl shadow-lg border border-stone-200/40 overflow-hidden"
+                ? "w-full rounded-xl shadow-lg border border-stone-200/40"
                 : previewDevice === "tablet"
-                ? "w-[768px] max-w-full rounded-2xl shadow-2xl border-4 border-slate-700 overflow-hidden my-auto"
-                : "w-[390px] max-w-full rounded-3xl shadow-2xl border-8 border-slate-700 overflow-hidden my-auto"
+                ? "w-[768px] max-w-full rounded-2xl shadow-2xl border-4 border-slate-700"
+                : "w-[390px] max-w-full rounded-3xl shadow-2xl border-8 border-slate-700"
             }`}
           >
-            {/* Real Public Navbar */}
-            <PublicNavbar />
-
-            {/* Real Public Page Content with live draft data */}
-            <main className="min-h-[400px]">
-              {isHomePage ? (
-                <PublicHomePage pageOverride={draftPage} hidePreviewBanner={true} />
-              ) : (
-                <PublicStaticPage
-                  pageOverride={draftPage}
-                  forcedSlug={cleanSlug}
-                  hidePreviewBanner={true}
-                />
-              )}
-            </main>
-
-            {/* Real Public Footer */}
-            <PublicFooter />
+            <iframe
+              ref={previewIframeRef}
+              key={`${editingPage.id || "new"}-${cleanSlug}`}
+              title="Forhåndsvisning av nettsiden"
+              src={embeddedPreviewUrl}
+              className="w-full min-h-[70vh] border-0 bg-white"
+              onLoad={() => {
+                handleSaveActiveDraftToStorage();
+                sendWarmDraft(true);
+              }}
+            />
           </div>
         </div>
       </div>
@@ -403,12 +492,12 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             Peker menyvalget til en innebygd side som /hva-skjer, /fellesskap eller /taler, eller til en full nettadresse
           </span>
         </div>
-        <input
-          type="text"
+        <CmsLinkPicker
           value={editingPage.linkUrl || ""}
-          onChange={(e) => onUpdate({ ...editingPage, linkUrl: e.target.value })}
-          placeholder="f.eks. /hva-skjer eller https://..."
-          className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-hidden focus:border-indigo-500"
+          onChange={(linkUrl) => onUpdate({ ...editingPage, linkUrl })}
+          currentPageId={editingPage.id}
+          allowEmpty
+          emptyLabel="Bruk sidens vanlige adresse"
         />
       </div>
 
@@ -454,90 +543,163 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
       </div>
 
       {/* 📌 Fast Toppramme (Hero) */}
-      <div className="bg-slate-900/90 border border-indigo-700/80 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setFocusedPreviewTarget(CMS_PREVIEW_TARGET_HERO)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") setFocusedPreviewTarget(CMS_PREVIEW_TARGET_HERO);
+        }}
+        data-cms-editor-target={CMS_PREVIEW_TARGET_HERO}
+        className={`bg-slate-900/90 border rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm cursor-pointer transition-all ${
+          focusedPreviewTarget === CMS_PREVIEW_TARGET_HERO
+            ? "border-indigo-400 ring-2 ring-indigo-500/60"
+            : "border-indigo-700/80"
+        }`}
+      >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-950 pb-2.5">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
             <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
               <span>📌 Hero / Toppbanner</span>
               <span className="text-[10px] text-indigo-300 font-normal bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800">
-                Toppseksjon
+                Fast toppramme
               </span>
             </h4>
           </div>
-
-          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-300">
-            <input
-              type="checkbox"
-              checked={editingPage.showHero !== false}
-              onChange={(e) => onUpdate({ ...editingPage, showHero: e.target.checked })}
-              className="w-4 h-4 rounded text-indigo-600 bg-slate-950 border-slate-700 cursor-pointer"
-            />
-            <span>Aktiv på denne siden</span>
-          </label>
+          <span className="text-[11px] font-semibold text-indigo-200">
+            Låst øverst · Kan ikke flyttes eller slettes
+          </span>
         </div>
 
-        {editingPage.showHero !== false ? (
-          <>
-            {/* Sammendrag / Ingress / Undertittel */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-300 block">
-                  Ingress / Undertittel i Hero (Vises også i søkeresultater)
-                </label>
-                {editingPage.summary && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onUpdate({
-                        ...editingPage,
-                        metaDescription: editingPage.summary,
-                      });
-                      showCopiedIngress(true);
-                    }}
-                    className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer transition-colors"
-                    title="Kopier denne ingressen til meta-beskrivelsen for søkemotorer og sosiale medier"
-                  >
-                    {copiedIngress ? (
-                      <>
-                        <Check className="w-3 h-3 text-emerald-400" />
-                        <span className="text-emerald-400 font-semibold">Kopiert til SEO-felt</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3 h-3" />
-                        <span>Bruk som SEO-beskrivelse</span>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-              <textarea
-                rows={2}
-                value={editingPage.summary || ""}
-                onChange={(e) => onUpdate({ ...editingPage, summary: e.target.value })}
-                placeholder="En engasjerende setning eller to som oppsummerer sidens budskap..."
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500 resize-y"
-              />
-            </div>
-
-            {/* Hovedbilde (Hero Image) */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-300 block">
-                Hovedbilde / Toppbanner (Hero Image)
-              </label>
-              <HeroImageUploader
-                currentImageUrl={editingPage.heroImage}
-                onImageChange={(url: string) => onUpdate({ ...editingPage, heroImage: url })}
-                pageTitle={editingPage.title}
-              />
-            </div>
-          </>
-        ) : (
-          <p className="text-xs text-slate-400 italic py-1">
-            Hero-toppbanneret er deaktivert for denne siden. Siden starter direkte med innholdsblokkene nedenfor.
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-slate-300 block">Tittel i Hero</label>
+          <input
+            type="text"
+            value={editingPage.heroTitle || ""}
+            onChange={(e) => onUpdate({ ...editingPage, heroTitle: e.target.value })}
+            placeholder={isHomePage ? settings.welcomeHeadline || "Velkommen til menigheten" : editingPage.title || "Overskrift i toppbanneret"}
+            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500"
+          />
+          <p className="text-[11px] text-slate-400">
+            Sidetittelen over styrer menyen. Dette feltet er overskriften i toppbanneret.
           </p>
-        )}
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-slate-300 block">
+              Ingress / Undertittel
+            </label>
+            {editingPage.summary && (
+              <button
+                type="button"
+                onClick={() => {
+                  onUpdate({
+                    ...editingPage,
+                    metaDescription: editingPage.summary,
+                  });
+                  showCopiedIngress(true);
+                }}
+                className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer transition-colors"
+                title="Kopier denne ingressen til meta-beskrivelsen for søkemotorer og sosiale medier"
+              >
+                {copiedIngress ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-400" />
+                    <span className="text-emerald-400 font-semibold">Kopiert til SEO-felt</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>Bruk som SEO-beskrivelse</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+          <textarea
+            rows={2}
+            value={editingPage.summary || ""}
+            onChange={(e) => onUpdate({ ...editingPage, summary: e.target.value })}
+            placeholder="En engasjerende setning eller to som oppsummerer sidens budskap..."
+            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500 resize-y"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-slate-300 block">
+            Bakgrunnsbilde
+          </label>
+          <HeroImageUploader
+            currentImageUrl={editingPage.heroImage}
+            onImageChange={(url: string) => onUpdate({ heroImage: url })}
+            pageTitle={editingPage.heroTitle || editingPage.title}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-semibold text-slate-300 block">Primærknapp</label>
+              <label className="flex items-center gap-2 cursor-pointer text-[11px] font-semibold text-slate-300 shrink-0">
+                <input
+                  type="checkbox"
+                  checked={editingPage.showHeroPrimaryCta !== false}
+                  onChange={(e) => onUpdate({ showHeroPrimaryCta: e.target.checked })}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-4 h-4 rounded text-indigo-600 bg-slate-950 border-slate-700 cursor-pointer"
+                />
+                <span>Vis på siden</span>
+              </label>
+            </div>
+            <input
+              type="text"
+              value={editingPage.heroCtaText || ""}
+              onChange={(e) => onUpdate({ ...editingPage, heroCtaText: e.target.value })}
+              placeholder={isHomePage ? "Se hva som skjer" : "Knappetekst"}
+              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500"
+            />
+            <CmsLinkPicker
+              value={editingPage.heroCtaLink || ""}
+              onChange={(heroCtaLink) => onUpdate({ ...editingPage, heroCtaLink })}
+              currentPageId={editingPage.id}
+              allowEmpty={isHomePage}
+              emptyLabel={isHomePage ? "Hva skjer på forsiden (anbefalt)" : "Ingen lenke"}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-semibold text-slate-300 block">Sekundærknapp</label>
+              <label className="flex items-center gap-2 cursor-pointer text-[11px] font-semibold text-slate-300 shrink-0">
+                <input
+                  type="checkbox"
+                  checked={editingPage.showHeroSecondaryCta !== false}
+                  onChange={(e) => onUpdate({ showHeroSecondaryCta: e.target.checked })}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-4 h-4 rounded text-indigo-600 bg-slate-950 border-slate-700 cursor-pointer"
+                />
+                <span>Vis på siden</span>
+              </label>
+            </div>
+            <input
+              type="text"
+              value={editingPage.heroCtaSecondaryText || ""}
+              onChange={(e) => onUpdate({ ...editingPage, heroCtaSecondaryText: e.target.value })}
+              placeholder={isHomePage ? "Bli kjent med oss" : "Knappetekst"}
+              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500"
+            />
+            <CmsLinkPicker
+              value={editingPage.heroCtaSecondaryLink || ""}
+              onChange={(heroCtaSecondaryLink) =>
+                onUpdate({ ...editingPage, heroCtaSecondaryLink })
+              }
+              currentPageId={editingPage.id}
+              allowEmpty
+              emptyLabel="Ingen lenke"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Visuell Blokkbygger & Modulstyring */}
@@ -548,67 +710,19 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               Innholdsblokker & Moduler
             </label>
             <p className="text-[11px] text-slate-400">
-              Flytt moduler opp/ned, skjul, eller velg layoutvarianter.
+              Flytt kort opp eller ned, skjul dem, eller velg en layout. Innholdet i dynamiske moduler hentes av systemet.
             </p>
-          </div>
-
-          {/* Mode switch: Visuell vs Rå Markdown */}
-          <div className="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 self-start sm:self-auto">
-            <button
-              type="button"
-              onClick={() => setEditorMode("visual")}
-              className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all cursor-pointer ${
-                editorMode === "visual"
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Visuelle blokker
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditorMode("raw")}
-              className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all cursor-pointer ${
-                editorMode === "raw"
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Rå Markdown
-            </button>
           </div>
         </div>
 
-        {editorMode === "visual" ? (
-          <VisualBlockManager
-            blocks={visualBlocks}
-            onChange={handleBlocksChange}
-            onOpenBlockPicker={() => setIsBlockPickerOpen(true)}
-          />
-        ) : (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-slate-400">
-                Rediger rå Markdown eller modulsyntaks direkte:
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsBlockPickerOpen(true)}
-                className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition-colors shadow-xs"
-              >
-                <Plus className="w-3 h-3" />
-                <span>Sett inn blokk</span>
-              </button>
-            </div>
-            <textarea
-              rows={12}
-              value={editingPage.content || ""}
-              onChange={(e) => onUpdate({ ...editingPage, content: e.target.value })}
-              placeholder="Skriv innholdet her..."
-              className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono focus:outline-hidden focus:border-indigo-500 resize-y leading-relaxed"
-            />
-          </div>
-        )}
+        <VisualBlockManager
+          blocks={visualBlocks}
+          onChange={handleBlocksChange}
+          onOpenBlockPicker={() => setIsBlockPickerOpen(true)}
+          selectedBlockId={focusedPreviewTarget === CMS_PREVIEW_TARGET_HERO ? null : focusedPreviewTarget}
+          onSelectBlock={setFocusedPreviewTarget}
+          currentPageId={editingPage.id}
+        />
       </div>
 
       {/* SEO & Deling i sosiale medier */}

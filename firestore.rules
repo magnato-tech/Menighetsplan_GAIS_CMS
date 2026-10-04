@@ -74,9 +74,15 @@ service cloud.firestore {
       allow write: if true;
     }
 
-    // Public CMS Pages collection
-    match /cms_pages/{pageId} {
+    // Volunteer roles (tjenesteroller med instruks) — same open write as assignments until real auth ships
+    match /volunteer_roles/{roleId} {
       allow read: if true;
+      allow write: if true;
+    }
+
+    // CMS Pages: published pages are public; drafts require admin
+    match /cms_pages/{pageId} {
+      allow read: if (resource.data.isPublished == true && resource.data.status != 'draft') || isAdmin();
       allow write: if isValidAuditUpdate();
     }
 

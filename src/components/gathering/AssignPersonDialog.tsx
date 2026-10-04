@@ -1,9 +1,7 @@
 import React, { useState, useMemo } from "react";
-import {
-  X,
-  Search,
-} from "lucide-react";
+import { X, Search } from "lucide-react";
 import { GatheringDetail } from "./gatheringDetail";
+import { suggestedLeaderIds } from "../../utils/roleStaffing";
 
 interface AssignPersonDialogProps {
   detail: GatheringDetail;
@@ -14,33 +12,49 @@ interface AssignPersonDialogProps {
   onClose: () => void;
 }
 
-export const AssignPersonDialog: React.FC<AssignPersonDialogProps> = ({ detail, taskId, canAdminister, showToast, onClose }) => {
-  const { gathering, group, groupMembers, allPersons, tasksWithDetails, assignTaskToPerson } = detail;
+export const AssignPersonDialog: React.FC<AssignPersonDialogProps> = ({
+  detail,
+  taskId,
+  canAdminister,
+  showToast,
+  onClose,
+}) => {
+  const { gathering, groupMembers, allPersons, tasksWithDetails, assignTaskToPerson } = detail;
 
-  // Search in assignment modal
   const [personSearchQuery, setPersonSearchQuery] = useState<string>("");
 
-  // Available persons for assignment in modal (all parish members or group members)
+  const activeTaskDetail = tasksWithDetails.find((td) => td.task.id === taskId);
+  const taskGroup = activeTaskDetail?.taskGroup;
+  const leaderIds = new Set(suggestedLeaderIds(taskGroup));
+
   const availablePersonsForModal = useMemo(() => {
     if (!taskId) return [];
-    const activeTaskDetail = tasksWithDetails.find((td) => td.task.id === taskId);
     const assignedIds = activeTaskDetail ? activeTaskDetail.assignedPersons.map((p) => p.person?.id) : [];
-
-    // In admin mode, show all parish persons; in leader mode, prioritize group members but allow seeing all if needed
     const pool = canAdminister ? allPersons : groupMembers;
 
-    return pool
+    const filtered = pool
       .filter((p) => !assignedIds.includes(p.id))
       .filter((p) => {
         if (!personSearchQuery.trim()) return true;
         const q = personSearchQuery.toLowerCase();
         return p.name.toLowerCase().includes(q) || (p.email && p.email.toLowerCase().includes(q));
       });
-  }, [taskId, tasksWithDetails, canAdminister, allPersons, groupMembers, personSearchQuery]);
 
-  // Direct assign handler
-  const handleAssignPerson = (taskId: string, personId: string, personName: string, response: "confirmed" | "pending" = "confirmed") => {
-    const res = assignTaskToPerson(taskId, personId, response);
+    return [...filtered].sort((a, b) => {
+      const aLeader = leaderIds.has(a.id) ? 0 : 1;
+      const bLeader = leaderIds.has(b.id) ? 0 : 1;
+      if (aLeader !== bLeader) return aLeader - bLeader;
+      return a.name.localeCompare(b.name, "nb");
+    });
+  }, [taskId, activeTaskDetail, canAdminister, allPersons, groupMembers, personSearchQuery, leaderIds]);
+
+  const handleAssignPerson = (
+    assignTaskId: string,
+    personId: string,
+    personName: string,
+    response: "confirmed" | "pending" = "pending"
+  ) => {
+    const res = assignTaskToPerson(assignTaskId, personId, response);
     if (res.success) {
       onClose();
       setPersonSearchQuery("");
@@ -63,10 +77,10 @@ export const AssignPersonDialog: React.FC<AssignPersonDialogProps> = ({ detail, 
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block">
-              Direkte bemanningshåndtering
+              Bemanning
             </span>
             <h3 className="text-base font-extrabold text-slate-900 leading-tight">
-              Tildel person til oppgaven
+              Sett person på oppgaven
             </h3>
           </div>
           <button
@@ -78,7 +92,6 @@ export const AssignPersonDialog: React.FC<AssignPersonDialogProps> = ({ detail, 
           </button>
         </div>
 
-        {/* Quick Search */}
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
@@ -90,12 +103,9 @@ export const AssignPersonDialog: React.FC<AssignPersonDialogProps> = ({ detail, 
           />
         </div>
 
-        {/* Person List */}
         <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
           {availablePersonsForModal.length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-400">
-              Ingen personer matcher søket.
-            </div>
+            <div className="p-6 text-center text-xs text-slate-400">Ingen personer matcher søket.</div>
           ) : (
             availablePersonsForModal.map((person) => {
               const gatheringDate = gathering?.startsAt ? gathering.startsAt.split("T")[0] : "";
@@ -103,6 +113,7 @@ export const AssignPersonDialog: React.FC<AssignPersonDialogProps> = ({ detail, 
                 (p) => gatheringDate >= p.from && gatheringDate <= p.to
               );
               const isUnavailable = Boolean(matchingPeriod);
+              const isSuggestedLeader = leaderIds.has(person.id);
 
               return (
                 <div
@@ -114,13 +125,21 @@ export const AssignPersonDialog: React.FC<AssignPersonDialogProps> = ({ detail, 
                   }`}
                 >
                   <div className="space-y-0.5">
-                    <span className="font-bold text-slate-800 block">{person.name}</span>
+                    <span className="font-bold text-slate-800 block">
+                      {person.name}
+                      {isSuggestedLeader && (
+                        <span className="ml-1.5 text-[10px] font-bold uppercase tracking-wide text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">
+                          Forslag
+                        </span>
+                      )}
+                    </span>
                     <span className="text-[10px] text-slate-400 block">
                       {person.email || person.phone || person.globalRole}
                     </span>
                     {isUnavailable && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
-                        ⚠️ Bortreist: {matchingPeriod?.reason || "Ferie"} ({matchingPeriod?.from} - {matchingPeriod?.to})
+                        ⚠️ Bortreist: {matchingPeriod?.reason || "Ferie"} ({matchingPeriod?.from} -{" "}
+                        {matchingPeriod?.to})
                       </span>
                     )}
                   </div>
@@ -128,19 +147,19 @@ export const AssignPersonDialog: React.FC<AssignPersonDialogProps> = ({ detail, 
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => handleAssignPerson(taskId, person.id, person.name, "confirmed")}
-                      className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg shadow-xs transition-colors cursor-pointer"
-                      title="Tildel direkte med Akseptert status"
+                      onClick={() => handleAssignPerson(taskId, person.id, person.name, "pending")}
+                      className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] rounded-lg shadow-xs transition-colors cursor-pointer"
+                      title="Send forespørsel"
                     >
-                      Tildel
+                      Forespør
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleAssignPerson(taskId, person.id, person.name, "pending")}
+                      onClick={() => handleAssignPerson(taskId, person.id, person.name, "confirmed")}
                       className="px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-[10px] rounded-lg transition-colors cursor-pointer"
-                      title="Send forespørsel (Forespurt status)"
+                      title="Tildel direkte når personen allerede er spurt"
                     >
-                      Forespør
+                      Tildel
                     </button>
                   </div>
                 </div>
@@ -151,7 +170,7 @@ export const AssignPersonDialog: React.FC<AssignPersonDialogProps> = ({ detail, 
 
         <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
           <span className="text-[11px]">
-            {canAdminister ? "Viser personer i menigheten" : `Viser medlemmer i ${group?.name || "gruppen"}`}
+            {canAdminister ? "Viser personer i menigheten" : `Viser medlemmer i ${taskGroup?.name || "gruppen"}`}
           </span>
           <button
             type="button"

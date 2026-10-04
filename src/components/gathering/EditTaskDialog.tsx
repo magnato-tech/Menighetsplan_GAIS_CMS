@@ -1,9 +1,7 @@
-import React, { useState } from "react";
-import {
-  X,
-  Trash2,
-} from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { X, Trash2 } from "lucide-react";
 import { GatheringDetail, EditableTask } from "./gatheringDetail";
+import { sortVolunteerRoles } from "../../utils/roleStaffing";
 
 interface EditTaskDialogProps {
   detail: GatheringDetail;
@@ -14,26 +12,45 @@ interface EditTaskDialogProps {
 }
 
 export const EditTaskDialog: React.FC<EditTaskDialogProps> = ({ detail, task, showToast, onClose }) => {
-  const { allGroups, updateTask, deleteTask } = detail;
+  const { allGroups, volunteerRoles, group, updateTask, deleteTask } = detail;
 
   const [editingTask, setEditingTask] = useState<EditableTask>(task);
 
-  // Admin: Save Task Edits
+  const preferredGroupId = group?.id;
+  const sortedRoles = useMemo(
+    () => sortVolunteerRoles(volunteerRoles, preferredGroupId),
+    [volunteerRoles, preferredGroupId]
+  );
+  const selectedRole = sortedRoles.find((r) => r.id === editingTask.volunteerRoleId);
+  const teamFieldVisible = Boolean(selectedRole?.groupId || editingTask.groupId);
+
+  useEffect(() => {
+    if (!selectedRole) return;
+    setEditingTask((prev) => ({
+      ...prev,
+      title: selectedRole.name,
+      groupId: selectedRole.groupId || prev.groupId,
+    }));
+  }, [editingTask.volunteerRoleId, selectedRole]);
+
   const handleSaveTaskEdit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingTask) return;
-
-    if (!editingTask.title.trim()) {
-      showToast("Oppgavetittel kan ikke være tom.");
+    if (!editingTask.volunteerRoleId) {
+      showToast("Velg en rolle fra biblioteket.");
+      return;
+    }
+    if (!selectedRole) {
+      showToast("Rollen finnes ikke i biblioteket.");
       return;
     }
 
     const res = updateTask(editingTask.id, {
-      title: editingTask.title.trim(),
-      groupId: editingTask.groupId,
+      title: selectedRole.name,
+      volunteerRoleId: editingTask.volunteerRoleId,
+      groupId: selectedRole.groupId ? editingTask.groupId : undefined,
       neededCount: editingTask.neededCount || 1,
       description: editingTask.description?.trim() || undefined,
-      instruction: editingTask.instruction?.trim() || undefined,
+      instruction: undefined,
     });
 
     if (res.success) {
@@ -44,7 +61,6 @@ export const EditTaskDialog: React.FC<EditTaskDialogProps> = ({ detail, task, sh
     }
   };
 
-  // Admin: Delete Task
   const handleDeleteTask = (taskId: string, taskTitle: string) => {
     if (window.confirm(`Er du sikker på at du vil fjerne oppgaven «${taskTitle}» fra samlingen?`)) {
       const res = deleteTask(taskId);
@@ -86,43 +102,47 @@ export const EditTaskDialog: React.FC<EditTaskDialogProps> = ({ detail, task, sh
         </div>
 
         <form onSubmit={handleSaveTaskEdit} className="space-y-3 text-xs">
-          {/* Task Title */}
           <div>
-            <label className="block font-bold text-slate-700 mb-1">
-              Oppgavetittel / Rolle
-            </label>
-            <input
-              type="text"
-              value={editingTask.title}
-              onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
-              className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-900"
-              required
-            />
-          </div>
-
-          {/* Responsible Group */}
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">
-              Ansvarlig tjenestegruppe
-            </label>
+            <label className="block font-bold text-slate-700 mb-1">Rolle fra biblioteket</label>
             <select
-              value={editingTask.groupId}
-              onChange={(e) => setEditingTask({ ...editingTask, groupId: e.target.value })}
+              value={editingTask.volunteerRoleId || ""}
+              onChange={(e) =>
+                setEditingTask({
+                  ...editingTask,
+                  volunteerRoleId: e.target.value || undefined,
+                })
+              }
               className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
+              required
             >
-              {allGroups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name} ({g.category || "gruppe"})
+              <option value="">Velg rolle...</option>
+              {sortedRoles.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.name}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Needed Count */}
+          {teamFieldVisible && (
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Ansvarlig tjenestegruppe</label>
+              <select
+                value={editingTask.groupId || ""}
+                onChange={(e) => setEditingTask({ ...editingTask, groupId: e.target.value || undefined })}
+                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
+              >
+                {allGroups.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name} ({g.category || "gruppe"})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
-            <label className="block font-bold text-slate-700 mb-1">
-              Bemanningsbehov (antall personer)
-            </label>
+            <label className="block font-bold text-slate-700 mb-1">Bemanningsbehov (antall personer)</label>
             <input
               type="number"
               min="1"
@@ -138,21 +158,6 @@ export const EditTaskDialog: React.FC<EditTaskDialogProps> = ({ detail, task, sh
             />
           </div>
 
-          {/* Instruction */}
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">
-              Oppgaveinstruks (vises ved behov)
-            </label>
-            <textarea
-              rows={3}
-              value={editingTask.instruction}
-              onChange={(e) => setEditingTask({ ...editingTask, instruction: e.target.value })}
-              className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
-              placeholder="Beskriv oppmøtetid, rutiner og forventninger..."
-            />
-          </div>
-
-          {/* Actions */}
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
             <button
               type="button"

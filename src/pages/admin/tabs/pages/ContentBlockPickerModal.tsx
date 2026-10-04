@@ -55,10 +55,10 @@ export const CONTENT_BLOCKS: ContentBlockDefinition[] = [
   },
   {
     id: "module-calendar",
-    title: "Kalender: Hva skjer",
+    title: "Hva skjer",
     category: "Dynamisk",
     isDynamic: true,
-    description: "Viser de 4 neste planlagte samlingene og møtene automatisk fra arrangementsdatabasen.",
+    description: "De fire neste offentlige arrangementene – uten kalender-merkelapp eller lenke.",
     dataSource: "Møtekalender (Firebase)",
     icon: <Calendar className="w-5 h-5 text-sky-400" />,
     template: `:::module-calendar[grid]\n:::`,
@@ -66,6 +66,22 @@ export const CONTENT_BLOCKS: ContentBlockDefinition[] = [
       <div className="grid grid-cols-2 gap-1.5 text-[9px] w-full">
         <div className="p-1.5 rounded bg-white border border-stone-200 font-medium">Søndag 11. Okt · Gudstjeneste</div>
         <div className="p-1.5 rounded bg-white border border-stone-200 font-medium">Onsdag 14. Okt · Bønnemøte</div>
+      </div>
+    ),
+  },
+  {
+    id: "module-kalender",
+    title: "Kalender",
+    category: "Dynamisk",
+    isDynamic: true,
+    description: "Full kalender med liste, månedsvisning og abonnement på iCal-feed.",
+    dataSource: "Møtekalender (Firebase)",
+    icon: <Calendar className="w-5 h-5 text-primary-400" />,
+    template: `:::module-kalender[month]\n:::`,
+    previewNode: (
+      <div className="w-full p-2 rounded-lg bg-white border border-stone-200 text-[9px] space-y-1">
+        <div className="font-bold text-stone-900">Månedsrutenett med arrangementer</div>
+        <div className="text-stone-500">Bytt til liste eller abonner på kalenderen</div>
       </div>
     ),
   },
@@ -254,7 +270,7 @@ export const CONTENT_BLOCKS: ContentBlockDefinition[] = [
     description: "Viser alle ansatte i staben med bilde, stillingstittel, bio, telefon og e-post direkte fra registeret.",
     dataSource: "Personregisteret",
     icon: <Briefcase className="w-5 h-5 text-indigo-400" />,
-    template: `:::personer[stab]\n:::`,
+    template: `:::personer[stab]`,
     previewNode: (
       <div className="grid grid-cols-2 gap-2 text-[10px] w-full p-1.5 bg-stone-100 rounded-lg border border-stone-300">
         <div className="p-2 rounded bg-white border border-stone-200 space-y-0.5">
@@ -265,6 +281,38 @@ export const CONTENT_BLOCKS: ContentBlockDefinition[] = [
           <div className="font-bold text-stone-900 truncate">Ola Hansen</div>
           <div className="text-[8px] text-stone-500">Daglig leder</div>
         </div>
+      </div>
+    ),
+  },
+  {
+    id: "personer-lederskap",
+    title: "Menighetsråd & Lederskap",
+    category: "Personer & Roller",
+    isDynamic: true,
+    description: "Viser menighetsråd og valgt lederskap fra personregisteret.",
+    dataSource: "Personregisteret",
+    icon: <Users className="w-5 h-5 text-indigo-400" />,
+    template: `:::personer[lederskap]`,
+    previewNode: (
+      <div className="w-full p-2 rounded-lg bg-white border border-stone-200 text-[10px]">
+        <div className="font-bold text-stone-900">Menighetsråd</div>
+        <div className="text-[9px] text-stone-500">Ledere og medlemmer med offentlig profil</div>
+      </div>
+    ),
+  },
+  {
+    id: "personer-pastor",
+    title: "Kun Pastor / Forkynnere",
+    category: "Personer & Roller",
+    isDynamic: true,
+    description: "Viser pastorer og forkynnere fra personregisteret.",
+    dataSource: "Personregisteret",
+    icon: <Users className="w-5 h-5 text-amber-400" />,
+    template: `:::personer[pastor]`,
+    previewNode: (
+      <div className="w-full p-2 rounded-lg bg-white border border-stone-200 text-[10px]">
+        <div className="font-bold text-stone-900">Kari Nordmann</div>
+        <div className="text-[9px] text-stone-500">Hovedpastor</div>
       </div>
     ),
   },

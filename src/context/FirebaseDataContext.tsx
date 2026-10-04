@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
-import { Person, Group, Gathering, Task, Assignment, GroupMessage, GatheringAttendance } from "../types";
+import { Person, Group, Gathering, Task, Assignment, GroupMessage, GatheringAttendance, VolunteerRole } from "../types";
 import { initialPersons } from "../data/mockData";
-import { COLLECTIONS } from "../data/collections";
+import { CMS_COLLECTIONS, COLLECTIONS } from "../data/collections";
 import {
   NewPersonInput,
   NewGroupInput,
   NewGatheringInput,
   NewTaskInput,
+  NewVolunteerRoleInput,
   buildPerson,
   buildGroup,
   buildGathering,
@@ -14,8 +15,10 @@ import {
   buildAssignment,
   buildAttendance,
   buildGroupMessage,
+  buildVolunteerRole,
 } from "../data/newDocuments";
 import { testConnection } from "../firebase";
+import { subscribeVolunteerRoles } from "../services/volunteerRoles";
 import { reportWriteError } from "../services/writeErrors";
 import {
   subscribeCollection,
@@ -57,6 +60,7 @@ export interface FirebaseDataContextType {
   assignments: Assignment[];
   groupMessages: GroupMessage[];
   attendances: GatheringAttendance[];
+  volunteerRoles: VolunteerRole[];
 
   // Module configuration
   moduleConfig: ModuleConfig;
@@ -109,6 +113,9 @@ export interface FirebaseDataContextType {
   deleteGroupMessage: (messageId: string) => ActionResult;
   toggleGroupNotifications: (groupId: string, personId?: string, forceState?: boolean) => { success: boolean; enabled: boolean };
   respondToGathering: (gatheringId: string, personId: string, status: "attending" | "declined") => ActionResult;
+  createVolunteerRole: (data: NewVolunteerRoleInput) => ActionResult & { role?: VolunteerRole };
+  updateVolunteerRole: (roleId: string, updates: Partial<VolunteerRole>) => ActionResult;
+  deleteVolunteerRole: (roleId: string) => ActionResult;
 }
 
 export const FirebaseDataContext = createContext<FirebaseDataContextType | undefined>(undefined);
@@ -146,6 +153,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [groupMessages, setGroupMessages] = useState<GroupMessage[]>([]);
   const [attendances, setAttendances] = useState<GatheringAttendance[]>([]);
+  const [volunteerRoles, setVolunteerRoles] = useState<VolunteerRole[]>([]);
   const [isFirestoreConnected, setIsFirestoreConnected] = useState<boolean>(false);
   const [currentUserId, setCurrentUserId] = useState<string>("person-1");
 
@@ -188,6 +196,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       subscribeCollection<Assignment>(COLLECTIONS.ASSIGNMENTS, setAssignments),
       subscribeCollection<GroupMessage>(COLLECTIONS.GROUP_MESSAGES, setGroupMessages),
       subscribeCollection<GatheringAttendance>(COLLECTIONS.GATHERING_ATTENDANCES, setAttendances),
+      subscribeVolunteerRoles(setVolunteerRoles),
     ];
     return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
   }, [internal]);
@@ -341,6 +350,26 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
         const attendance = buildAttendance(gatheringId, personId, status);
         return save("lagre svaret", () => createDocument(COLLECTIONS.GATHERING_ATTENDANCES, attendance));
       },
+
+      createVolunteerRole: (data: NewVolunteerRoleInput) => {
+        const role = buildVolunteerRole(data);
+        return {
+          ...save("lagre rollen", () =>
+            createDocument(CMS_COLLECTIONS.SETTINGS, { ...role, recordType: "volunteerRole" })
+          ),
+          role,
+        };
+      },
+      updateVolunteerRole: (roleId: string, updates: Partial<VolunteerRole>) =>
+        save("lagre endringene i rollen", () =>
+          updateDocument(CMS_COLLECTIONS.SETTINGS, roleId, {
+            ...updates,
+            recordType: "volunteerRole",
+            updatedAt: new Date().toISOString(),
+          })
+        ),
+      deleteVolunteerRole: (roleId: string) =>
+        save("slette rollen", () => deleteDocument(CMS_COLLECTIONS.SETTINGS, roleId)),
     };
   }, []);
 
@@ -452,6 +481,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       assignments,
       groupMessages,
       attendances,
+      volunteerRoles,
       moduleConfig,
       setModuleStatus,
       toggleKalender,
@@ -478,6 +508,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       assignments,
       groupMessages,
       attendances,
+      volunteerRoles,
       moduleConfig,
       setModuleStatus,
       toggleKalender,

@@ -1,14 +1,68 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Users, CheckCircle2, ArrowRight } from "lucide-react";
+import {
+  groupsFieldsFromPresentation,
+  MODULE_PRESENTATION_DEFAULTS,
+  ModulePresentationConfig,
+} from "../../../utils/modulePresentation";
+import { GroupsModuleFields } from "../../../utils/cmsBlocks";
 
 export interface GroupsModuleProps {
   variant?: "banner" | "cards";
+  presentation?: ModulePresentationConfig;
+  /** @deprecated use presentation */
+  fields?: GroupsModuleFields;
+}
+
+function BannerBackground({
+  fields,
+  children,
+}: {
+  fields: GroupsModuleFields;
+  children: React.ReactNode;
+}) {
+  const image = fields.backgroundImage.trim();
+  const color = fields.backgroundColor.trim();
+  const useThemeGradient = !image && !color;
+
+  return (
+    <div className="rounded-3xl shadow-xl relative overflow-hidden text-white">
+      {image && (
+        <>
+          <img
+            src={image}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundColor: color ? `${color}cc` : "rgba(28, 25, 23, 0.72)",
+            }}
+          />
+        </>
+      )}
+      <div
+        className={`relative z-10 p-8 sm:p-12 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-8 ${
+          useThemeGradient ? "bg-gradient-to-br from-primary-900 to-primary-800" : ""
+        }`}
+        style={!useThemeGradient && !image && color ? { backgroundColor: color } : undefined}
+      >
+        {children}
+      </div>
+    </div>
+  );
 }
 
 export const GroupsModule: React.FC<GroupsModuleProps> = ({
   variant = "banner",
+  presentation,
+  fields,
 }) => {
+  const resolvedFields =
+    fields ||
+    groupsFieldsFromPresentation(presentation || MODULE_PRESENTATION_DEFAULTS["module-groups"]);
   if (variant === "cards") {
     return (
       <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-10">
@@ -18,10 +72,8 @@ export const GroupsModule: React.FC<GroupsModuleProps> = ({
               <div className="w-10 h-10 rounded-xl bg-primary-100 text-primary-800 flex items-center justify-center font-bold">
                 <Users className="w-5 h-5 text-primary-700" />
               </div>
-              <h3 className="text-xl font-bold text-stone-900">Bli med i et husfellesskap</h3>
-              <p className="text-xs text-stone-600 leading-relaxed">
-                I husfellesskapene våre samles vi i hjemmene til et enkelt måltid, bønn og gode samtaler om tro og hverdag.
-              </p>
+              <h3 className="text-xl font-bold text-stone-900">{resolvedFields.title}</h3>
+              <p className="text-xs text-stone-600 leading-relaxed">{resolvedFields.body}</p>
             </div>
             <Link
               to="/fellesskap"
@@ -55,34 +107,27 @@ export const GroupsModule: React.FC<GroupsModuleProps> = ({
     );
   }
 
-  // Standard "banner" variant
   return (
     <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-12">
-      <div className="bg-gradient-to-br from-primary-900 to-primary-800 rounded-3xl text-white p-8 sm:p-12 lg:p-16 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-xl">
+      <BannerBackground fields={resolvedFields}>
         <div className="space-y-4 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-accent-300 text-xs font-semibold">
             <Users className="w-3.5 h-3.5" />
-            <span>Nære fellesskap</span>
+            <span>{resolvedFields.badge}</span>
           </div>
           <h3 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
-            Bli med i et husfellesskap
+            {resolvedFields.title}
           </h3>
           <p className="text-sm sm:text-base text-stone-200 leading-relaxed font-normal">
-            Tro og liv deles best sammen med andre. I husfellesskapene våre samles vi i hjemmene til et enkelt måltid, bønn og gode samtaler om hverdagen.
+            {resolvedFields.body}
           </p>
           <div className="pt-2 flex flex-wrap gap-4 text-xs text-stone-200">
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-accent-300" />
-              <span>Grupper for alle aldre</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-accent-300" />
-              <span>Annenhver uke</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-accent-300" />
-              <span>Uforpliktende å prøve</span>
-            </div>
+            {resolvedFields.highlights.map((item) => (
+              <div key={item} className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-accent-300" />
+                <span>{item}</span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -100,7 +145,7 @@ export const GroupsModule: React.FC<GroupsModuleProps> = ({
             Snakk med en leder
           </Link>
         </div>
-      </div>
+      </BannerBackground>
     </section>
   );
 };

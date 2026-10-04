@@ -19,6 +19,9 @@ import { CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID } from './src/data/collections';
 import { type CmsNewsArticle, type CmsPage, type CmsSettings, initialCmsSettings } from './src/data/cmsData';
 import { isPublicPath } from './src/utils/routes';
 import { type SiteContent, resolvePageSeo, seoForPath } from './src/utils/siteSeo';
+import { toIcalendar } from './src/utils/calendarFeed';
+import { validateEvent } from './src/utils/validation';
+import type { Gathering } from './src/types';
 
 const app = express();
 const port = 3000;
@@ -84,6 +87,45 @@ app.get('/api/offentlig/arrangementer', async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error('Error fetching /api/offentlig/arrangementer:', err);
     res.status(500).json({ error: 'Kunne ikke hente arrangementer', message: err.message });
+  }
+});
+
+/**
+ * Public iCal subscription for open community gatherings (same inclusion rule as the calendar module).
+ */
+app.get('/api/offentlig/kalender.ics', async (_req: Request, res: Response) => {
+  try {
+    const now = new Date();
+    const gatherings: Gathering[] = [];
+    for (const doc of await loadGatheringDocs()) {
+      try {
+        gatherings.push(validateEvent(doc));
+      } catch (err) {
+        console.warn(
+          `iCal feed: skipping invalid gathering ${doc.id ?? '(no id)'}:`,
+          err instanceof Error ? err.message : err
+        );
+      }
+    }
+
+    let calendarName = 'Menighetsplan';
+    try {
+      const settingsSnap = await getDoc(doc(db, CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID));
+      const churchName = settingsSnap.data()?.churchName;
+      if (typeof churchName === 'string' && churchName.trim()) {
+        calendarName = churchName.trim();
+      }
+    } catch {
+      // Default name is fine when settings are unavailable
+    }
+
+    res.set('Content-Type', 'text/calendar; charset=utf-8');
+    res.set('Content-Disposition', 'attachment; filename="kalender.ics"');
+    res.set('Cache-Control', 'public, max-age=300');
+    res.send(toIcalendar(gatherings, { calendarName, now }));
+  } catch (err: any) {
+    console.error('Error fetching /api/offentlig/kalender.ics:', err);
+    res.status(500).json({ error: 'Kunne ikke hente kalenderabonnement', message: err.message });
   }
 });
 
@@ -177,6 +219,11 @@ app.get('/api/public/all', async (_req: Request, res: Response) => {
     console.error('Error fetching all public data for CMS:', err);
     res.status(500).json({ error: 'Kunne ikke hente data', message: err.message });
   }
+});
+
+// Unmatched API paths must not fall through to the SPA (Vite serves index.html for .ics etc.)
+app.use('/api', (_req: Request, res: Response) => {
+  res.status(404).json({ error: 'Fant ikke API-endepunkt' });
 });
 
 // ---------------------------------------------------------------------------
@@ -290,7 +337,10 @@ async function startServer() {
       server: { middlewareMode: true },
       appType: 'spa',
     });
-    app.use(vite.middlewares);
+    app.use((req, res, next) => {
+      if (req.path.startsWith('/api/')) return next();
+      vite.middlewares(req, res, next);
+    });
   }
 
   app.listen(port, '0.0.0.0', () => {

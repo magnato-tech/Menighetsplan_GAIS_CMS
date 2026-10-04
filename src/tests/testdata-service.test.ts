@@ -44,15 +44,16 @@ describe("testdataService", () => {
   test("generateTestdata genererer testdata og skriver til Firestore med referanseintegritet", async () => {
     const result = await generateTestdata({
       personCount: 32,
-      groupCount: 12,
-      roleCount: 14,
+      groupCount: 14,
+      roleCount: 15,
       clearExisting: false,
     });
 
     expect(result.success).toBe(true);
     expect(result.counts[COLLECTIONS.PERSONS]).toBe(32);
-    expect(result.counts[COLLECTIONS.GROUPS]).toBe(12);
+    expect(result.counts[COLLECTIONS.GROUPS]).toBe(14);
     expect(result.failures).toHaveLength(0);
+    expect(result.counts[COLLECTIONS.VOLUNTEER_ROLES]).toBe(15);
     expect(result.total).toBeGreaterThan(44);
   });
 
@@ -61,7 +62,7 @@ describe("testdataService", () => {
 
     expect(result.success).toBe(true);
     expect(result.counts[COLLECTIONS.PERSONS]).toBe(32);
-    expect(result.counts[COLLECTIONS.GROUPS]).toBe(12);
+    expect(result.counts[COLLECTIONS.GROUPS]).toBe(14);
   });
 
   test("clearTestdata sletter kun planlegger-samlinger og bevarer CMS-innhold", async () => {
@@ -80,6 +81,13 @@ describe("testdataService", () => {
     expect(deletedCollections).toContain(COLLECTIONS.PERSONS);
     expect(deletedCollections).toContain(COLLECTIONS.GROUPS);
     expect(deletedCollections).toContain(COLLECTIONS.ASSIGNMENTS);
+    expect(deletedCollections).toContain(COLLECTIONS.VOLUNTEER_ROLES);
+  });
+
+  test("deleteRolesTestdata sletter også rollebiblioteket", async () => {
+    const result = await deleteRolesTestdata();
+    expect(result.success).toBe(true);
+    expect(Object.keys(result.counts)).toContain(COLLECTIONS.VOLUNTEER_ROLES);
   });
 
   test("clearPlannerTestData fungerer som alias for total planleggertømming", async () => {

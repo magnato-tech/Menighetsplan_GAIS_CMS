@@ -9,6 +9,7 @@ import {
   GroupMessage,
   GroupCategory,
   MeetingSchedule,
+  VolunteerRole,
 } from "../types";
 import { newId } from "../utils/id";
 import { visibilityFields } from "../utils/visibility";
@@ -54,12 +55,20 @@ export interface NewGatheringInput {
 
 export interface NewTaskInput {
   gatheringId: string;
-  groupId: string;
+  groupId?: string;
+  volunteerRoleId?: string;
   title: string;
   description?: string;
   instruction?: string;
   status?: Task["status"];
   neededCount?: number;
+}
+
+export interface NewVolunteerRoleInput {
+  name: string;
+  instruction?: string;
+  groupId?: string;
+  sortOrder?: number;
 }
 
 export function buildPerson(data: NewPersonInput): Person {
@@ -115,6 +124,7 @@ export function buildTask(data: NewTaskInput): Task {
     id: newId("task"),
     gatheringId: data.gatheringId,
     groupId: data.groupId,
+    volunteerRoleId: data.volunteerRoleId,
     title: data.title.trim(),
     description: data.description,
     instruction: data.instruction,
@@ -152,6 +162,16 @@ export function buildAttendance(
     personId,
     status,
     updatedAt: new Date().toISOString(),
+  };
+}
+
+export function buildVolunteerRole(data: NewVolunteerRoleInput): VolunteerRole {
+  return {
+    id: newId("volrole"),
+    name: data.name.trim(),
+    instruction: data.instruction?.trim() || "",
+    groupId: data.groupId,
+    sortOrder: data.sortOrder ?? 0,
   };
 }
 

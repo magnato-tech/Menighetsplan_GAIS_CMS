@@ -14,6 +14,7 @@ export const STUDIO_TABS = [
   "planlegger-oppgaver",
   "planlegger-grupper",
   "planlegger-personer",
+  "planlegger-roller",
   "database-admin",
 ] as const;
 

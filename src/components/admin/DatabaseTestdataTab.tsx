@@ -8,6 +8,7 @@ import {
   deleteRolesTestdata,
   type TestdataServiceResult,
 } from "../../services/testdataService";
+import { DEFAULT_VOLUNTEER_ROLE_NAMES } from "../../data/defaultVolunteerRoles";
 import { useFirebase } from "../../context/FirebaseDataContext";
 import {
   Database,
@@ -35,7 +36,7 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
 
   // 1. Tre kontrollere med glidebrytere (0-100) for 'Personer', 'Grupper' og 'Roller'
   const [personCount, setPersonCount] = useState<number>(32);
-  const [groupCount, setGroupCount] = useState<number>(12);
+  const [groupCount, setGroupCount] = useState<number>(14);
   const [roleCount, setRoleCount] = useState<number>(14);
 
   // 2. En avkrysningsboks for 'Tøm eksisterende testdata' (standard valgt)
@@ -65,7 +66,7 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
       // Trigger Firebase Firestore-skriving: genererer 32 testpersoner med varierende tilhørighet og roller
       const result: TestdataServiceResult = await generateTestdata({
         personCount: Math.max(32, personCount),
-        groupCount: groupCount > 0 ? groupCount : 12,
+        groupCount: groupCount > 0 ? groupCount : 14,
         roleCount: roleCount > 0 ? roleCount : 14,
       });
 
@@ -75,7 +76,7 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
         showFeedback?.(errorText, "error");
       } else {
         const resetNote = clearExistingData ? "Eksisterende data ble nullstilt. " : "";
-        const successText = `${resetNote}32 nye testpersoner med varierende tilhørighet og roller er nå generert i Firestore!`;
+        const successText = `${resetNote}Testdata er skrevet til Firestore: personer, grupper, samlinger, oppgaver og ${DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller.`;
         setStatusMessage({ text: successText, type: "success" });
         showFeedback?.(successText, "success");
       }
@@ -175,7 +176,7 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
             <span>Glidebrytere for testdata (0–100)</span>
           </span>
           <span className="text-xs font-mono text-indigo-300 font-semibold bg-indigo-950/80 border border-indigo-800 px-2 py-0.5 rounded">
-            {personCount} Personer · {groupCount} Grupper · {roleCount} Roller
+            {personCount} personer · {groupCount} grupper · {DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller
           </span>
         </div>
 
@@ -236,13 +237,13 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
             />
             <div className="flex justify-between text-[10px] text-slate-400 font-mono">
               <span>0 (Ingen)</span>
-              <span className="text-emerald-400 font-semibold">12 (Team & husfellesskap)</span>
+              <span className="text-emerald-400 font-semibold">14 (Team & husfellesskap)</span>
               <span>50</span>
               <span>100 (Maks)</span>
             </div>
           </div>
 
-          {/* Kontroller 3: Roller (0-100) */}
+          {/* Kontroller 3: Stabroller på personer (0-100) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
               <label
@@ -250,7 +251,7 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
                 className="font-bold text-slate-200 flex items-center gap-2 cursor-pointer"
               >
                 <Shield className="w-4 h-4 text-purple-400" />
-                <span>Roller</span>
+                <span>Stabroller (personer)</span>
               </label>
               <span className="font-mono font-bold text-purple-400 text-sm bg-purple-950/80 border border-purple-850 px-2.5 py-0.5 rounded-lg">
                 {roleCount} av 100
@@ -271,6 +272,10 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
               <span>50</span>
               <span>100 (Maks)</span>
             </div>
+            <p className="text-[10px] text-indigo-300/90">
+              Alle {DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller (Lyd, Kjøkken, Taler …) følger alltid med i
+              rollebiblioteket og kobles til oppgaver på samlinger.
+            </p>
           </div>
         </div>
       </div>
@@ -350,7 +355,7 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
             )}
           </span>
           <span className="text-slate-400">
-            Genererer 32 medlemmer på tvers av lederskap, stab og grupper
+            Inkluderer {DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller koblet til oppgaver på samlinger
           </span>
         </div>
       </div>

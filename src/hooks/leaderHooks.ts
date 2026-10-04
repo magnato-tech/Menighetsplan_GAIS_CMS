@@ -82,7 +82,7 @@ export function useLeaderDashboard() {
   // All semester gatherings across leader's groups (consolidated)
   const allSemesterGatherings = useMemo(() => {
     const leaderGroupIds = new Set(leaderGroups.map((g) => g.id));
-    const leaderTasks = tasks.filter((t) => leaderGroupIds.has(t.groupId));
+    const leaderTasks = tasks.filter((t) => t.groupId && leaderGroupIds.has(t.groupId));
 
     const relevantGatheringIds = new Set([
       ...gatherings.filter((g) => leaderGroupIds.has(g.groupId)).map((g) => g.id),
@@ -109,7 +109,7 @@ export function useLeaderDashboard() {
   // Urgent tasks across leader's groups
   const urgentTasks = useMemo(() => {
     const leaderGroupIds = new Set(leaderGroups.map((g) => g.id));
-    return tasks.filter((t) => leaderGroupIds.has(t.groupId) && t.status === "vacant");
+    return tasks.filter((t) => t.groupId && leaderGroupIds.has(t.groupId) && t.status === "vacant");
   }, [leaderGroups, tasks]);
 
   // Urgent gatherings across leader's groups (all semester gatherings where staffing is red)
@@ -303,6 +303,7 @@ export function useLeaderGatheringDetail(gatheringId: string) {
     createTask,
     deleteTask,
     updateGathering,
+    volunteerRoles,
   } = useFirebase();
 
   const gathering = useMemo(() => {
@@ -322,7 +323,9 @@ export function useLeaderGatheringDetail(gatheringId: string) {
     if (gathering) {
       ids.add(gathering.groupId);
     }
-    gatheringTasks.forEach((t) => ids.add(t.groupId));
+    gatheringTasks.forEach((t) => {
+      if (t.groupId) ids.add(t.groupId);
+    });
     return Array.from(ids);
   }, [gathering, gatheringTasks]);
 
@@ -365,7 +368,7 @@ export function useLeaderGatheringDetail(gatheringId: string) {
     if (!gathering) return [];
 
     return gatheringTasks.map((task) => {
-      const taskGroup = getGroupById(task.groupId);
+      const taskGroup = task.groupId ? getGroupById(task.groupId) : undefined;
       const taskAssignments = assignments.filter((a) => a.taskId === task.id);
       const assignedPersons = describeAssignments(taskAssignments, getPersonById);
 
@@ -375,7 +378,7 @@ export function useLeaderGatheringDetail(gatheringId: string) {
       const isFullyCovered = taskStaffing.isFullyCovered;
       const hasWithdrawn = taskStaffing.hasForfall;
       const missingCount = taskStaffing.missingCount;
-      const isMyGroup = Boolean(group && task.groupId === group.id);
+      const isMyGroup = Boolean(group && task.groupId && task.groupId === group.id);
       const staffingStatusLabel = taskStaffing.statusText;
 
       return {
@@ -421,5 +424,7 @@ export function useLeaderGatheringDetail(gatheringId: string) {
     deleteTask,
     allGroups: groups,
     updateGathering,
+    volunteerRoles,
+    gatheringTasks,
   };
 }

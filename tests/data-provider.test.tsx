@@ -2,7 +2,7 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
-import { COLLECTIONS } from "../src/data/collections";
+import { CMS_COLLECTIONS, COLLECTIONS } from "../src/data/collections";
 import { clearWriteError, getWriteError } from "../src/services/writeErrors";
 import type { Assignment, Gathering, Group, GroupMessage, Person, Task } from "../src/types";
 import { clearCollections, offline, seed, stored, storedIds } from "./support/offlineFirestore";
@@ -400,6 +400,26 @@ describe("Bemanning", () => {
     data.current.updateTaskNeededCount("task-2", undefined);
     await waitFor(() => expect(data.current.getTaskById("task-2")).not.toHaveProperty("neededCount"));
     expect((await stored(COLLECTIONS.TASKS, "task-2"))?.status).toBe("confirmed");
+  });
+});
+
+describe("Tjenesteroller", () => {
+  test("ny rolle med instruks kan opprettes og redigeres", async () => {
+    const data = await mountProvider();
+    const created = data.current.createVolunteerRole({
+      name: "Teknikk",
+      instruction: "Møt kl. 09:00",
+      sortOrder: 0,
+    }).role!;
+
+    await waitFor(() => expect(data.current.volunteerRoles.some((r) => r.id === created.id)).toBe(true));
+    expect((await stored(CMS_COLLECTIONS.SETTINGS, created.id))?.instruction).toBe("Møt kl. 09:00");
+
+    data.current.updateVolunteerRole(created.id, { instruction: "Møt kl. 10:00" });
+    await waitFor(() =>
+      expect(data.current.volunteerRoles.find((r) => r.id === created.id)?.instruction).toBe("Møt kl. 10:00")
+    );
+    expect((await stored(CMS_COLLECTIONS.SETTINGS, created.id))?.instruction).toBe("Møt kl. 10:00");
   });
 });
 

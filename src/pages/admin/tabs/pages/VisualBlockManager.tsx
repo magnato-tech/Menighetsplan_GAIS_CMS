@@ -3,7 +3,22 @@ import {
   VisualBlock,
   DYNAMIC_MODULES_META,
   DynamicModuleType,
+  PERSON_GRID_VARIANTS,
+  StaticBlockFields,
+  readStaticFields,
+  applyStaticFields,
+  staticPreviewText,
+  shortenHeading,
 } from "../../../../utils/cmsBlocks";
+import {
+  applyModulePresentation,
+  isEditableDynamicModule,
+  ModulePresentationConfig,
+  readModulePresentation,
+} from "../../../../utils/modulePresentation";
+import { ModulePresentationEditor } from "../../../../components/admin/ModulePresentationEditor";
+import { CmsImagePicker } from "../../../../components/admin/CmsImagePicker";
+import { CmsLinkPicker } from "../../../../components/admin/CmsLinkPicker";
 import {
   ChevronUp,
   ChevronDown,
@@ -31,15 +46,29 @@ interface VisualBlockManagerProps {
   blocks: VisualBlock[];
   onChange: (blocks: VisualBlock[]) => void;
   onOpenBlockPicker: () => void;
+  selectedBlockId?: string | null;
+  onSelectBlock?: (blockId: string) => void;
+  currentPageId?: string;
+}
+
+function isInteractiveTarget(target: EventTarget | null): boolean {
+  return Boolean(
+    target &&
+      (target as HTMLElement).closest("button, select, textarea, input, a, label, option")
+  );
 }
 
 export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
   blocks,
   onChange,
   onOpenBlockPicker,
+  selectedBlockId,
+  onSelectBlock,
+  currentPageId,
 }) => {
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
-  const [editTextBuffer, setEditTextBuffer] = useState<string>("");
+  const [editFields, setEditFields] = useState<StaticBlockFields | null>(null);
+  const [moduleEditConfig, setModuleEditConfig] = useState<ModulePresentationConfig | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
@@ -77,26 +106,44 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
 
   const handleVariantChange = (index: number, variant: string) => {
     const next = [...blocks];
+    const personLabel = PERSON_GRID_VARIANTS.find((item) => item.id === variant)?.label;
     next[index] = {
       ...next[index],
       variant,
+      title: next[index].type === "person-grid" && personLabel ? personLabel : next[index].title,
     };
     onChange(next);
   };
+
+  const canEditBlockContent = (block: VisualBlock) =>
+    !block.isDynamic || isEditableDynamicModule(block.type);
 
   const handleStartEditContent = (block: VisualBlock) => {
     setEditingBlockId(block.id);
-    setEditTextBuffer(block.rawContent || "");
+    if (isEditableDynamicModule(block.type)) {
+      setEditFields(null);
+      setModuleEditConfig(readModulePresentation(block));
+    } else {
+      setModuleEditConfig(null);
+      setEditFields(readStaticFields(block));
+    }
+    onSelectBlock?.(block.id);
   };
 
   const handleSaveEditContent = (index: number) => {
+    const block = blocks[index];
     const next = [...blocks];
-    next[index] = {
-      ...next[index],
-      rawContent: editTextBuffer,
-    };
+    if (isEditableDynamicModule(block.type) && moduleEditConfig) {
+      next[index] = applyModulePresentation(block, moduleEditConfig);
+    } else if (editFields) {
+      next[index] = applyStaticFields(block, editFields);
+    } else {
+      return;
+    }
     onChange(next);
     setEditingBlockId(null);
+    setEditFields(null);
+    setModuleEditConfig(null);
   };
 
   // Drag and drop handlers
@@ -141,6 +188,8 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
         return <Calendar className="w-4 h-4 text-amber-400" />;
       case "module-calendar":
         return <Calendar className="w-4 h-4 text-sky-400" />;
+      case "module-kalender":
+        return <Calendar className="w-4 h-4 text-primary-400" />;
       case "module-news":
         return <FileText className="w-4 h-4 text-emerald-400" />;
       case "module-sermon":
@@ -166,7 +215,7 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-cms-surface="editor">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Layers className="w-4 h-4 text-indigo-400" />
@@ -193,18 +242,30 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
           const isEditing = editingBlockId === block.id;
           const isBeingDragged = draggedIndex === index;
           const isDragTarget = dragOverIndex === index;
+          const isSelected = selectedBlockId === block.id;
+          const displayTitle = shortenHeading(block.title, 48);
 
           return (
             <div
               key={block.id || index}
               draggable={!isEditing}
+              onClick={(e) => {
+                if (isInteractiveTarget(e.target)) return;
+                onSelectBlock?.(block.id);
+              }}
               onDragStart={(e) => handleDragStart(e, index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDrop={(e) => handleDrop(e, index)}
               onDragEnd={handleDragEnd}
-              className={`p-3.5 rounded-xl border transition-all ${
-                isDragTarget ? "border-indigo-400 ring-2 ring-indigo-500/50 bg-slate-800" : ""
-              } ${isBeingDragged ? "opacity-40" : ""} ${
+              data-cms-block={block.type}
+              data-cms-variant={block.variant || ""}
+              data-cms-hidden={isHidden ? "true" : "false"}
+              data-cms-editor-target={block.id}
+              className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+                isSelected ? "ring-2 ring-indigo-400 border-indigo-500" : ""
+              } ${isDragTarget ? "border-indigo-400 ring-2 ring-indigo-500/50 bg-slate-800" : ""} ${
+                isBeingDragged ? "opacity-40" : ""
+              } ${
                 isHidden
                   ? "bg-slate-950/70 border-dashed border-slate-700 opacity-60"
                   : isDynamic
@@ -212,12 +273,12 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                   : "bg-slate-900/70 border-slate-700 hover:border-slate-600"
               }`}
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                {/* Left: Drag handle + Info & Badges */}
+              <div className="space-y-3">
                 <div className="flex items-start gap-2.5 min-w-0">
                   <div
                     className="p-1 cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 mt-1 shrink-0"
                     title="Klikk og dra for å flytte blokk"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <GripVertical className="w-4 h-4" />
                   </div>
@@ -232,10 +293,13 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                     {getModuleIcon(block.type)}
                   </div>
 
-                  <div className="min-w-0 space-y-1">
+                  <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className={`font-bold text-xs truncate ${isHidden ? "line-through text-slate-400" : "text-white"}`}>
-                        {block.title}
+                      <span
+                        className={`font-bold text-xs ${isHidden ? "line-through text-slate-400" : "text-white"}`}
+                        title={block.title}
+                      >
+                        {displayTitle}
                       </span>
 
                       {isHidden && (
@@ -257,29 +321,28 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                       )}
                     </div>
 
-                    <p className="text-[11px] text-slate-400 leading-snug truncate">
+                    <p className="text-[11px] text-slate-400 leading-snug line-clamp-2">
                       {isDynamic && dynamicMeta
                         ? `Datakilde: ${dynamicMeta.dataSource}`
-                        : block.rawContent
-                        ? block.rawContent.split("\n")[0].replace(/^#+\s*/, "")
-                        : "Tom innholdsblokk"}
+                        : block.type === "person-grid"
+                        ? "Datakilde: Personregisteret"
+                        : `«${staticPreviewText(block)}»`}
                     </p>
                   </div>
                 </div>
 
-                {/* Right: Controls (Variant Selector + Vis/Skjul + Up/Down/Delete) */}
-                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                <div className="flex flex-wrap items-center gap-2 pl-9">
                   {/* Layout variant dropdown for dynamic modules */}
-                  {isDynamic && dynamicMeta?.supportedVariants && (
+                  {isDynamic && (dynamicMeta?.supportedVariants || block.type === "person-grid") && (
                     <div className="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
                       <span className="text-[10px] text-slate-400 hidden xl:inline">Visning:</span>
                       <select
-                        value={block.variant || dynamicMeta.supportedVariants[0].id}
+                        value={block.variant || (dynamicMeta?.supportedVariants || personVariants(block.variant))[0].id}
                         onChange={(e) => handleVariantChange(index, e.target.value)}
                         className="bg-transparent text-indigo-300 text-xs font-semibold focus:outline-hidden cursor-pointer"
                         title="Velg godkjent layoutvariant for denne modulen"
                       >
-                        {dynamicMeta.supportedVariants.map((v) => (
+                        {(dynamicMeta?.supportedVariants || personVariants(block.variant)).map((v) => (
                           <option key={v.id} value={v.id} className="bg-slate-900 text-white">
                             {v.label}
                           </option>
@@ -288,8 +351,8 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                     </div>
                   )}
 
-                  {/* Edit button for static content */}
-                  {!isDynamic && (
+                  {/* Edit button for static content and groups module presentation */}
+                  {canEditBlockContent(block) && (
                     <button
                       type="button"
                       onClick={() =>
@@ -371,27 +434,34 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
               </div>
 
               {/* Inline editor when expanding a static block */}
-              {isEditing && (
-                <div className="mt-3 pt-3 border-t border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold text-slate-300">
-                      Rediger tekst / Markdown for denne blokken:
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleSaveEditContent(index)}
-                      className="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium"
-                    >
-                      Bruk endringer
-                    </button>
-                  </div>
-                  <textarea
-                    rows={4}
-                    value={editTextBuffer}
-                    onChange={(e) => setEditTextBuffer(e.target.value)}
-                    className="w-full p-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs font-mono focus:outline-hidden focus:border-indigo-500 leading-relaxed"
-                  />
-                </div>
+              {isEditing && isEditableDynamicModule(block.type) && moduleEditConfig && (
+                <ModulePresentationEditor
+                  moduleType={block.type as DynamicModuleType}
+                  config={moduleEditConfig}
+                  currentPageId={currentPageId}
+                  onChange={(next) => {
+                    setModuleEditConfig(next);
+                    onSelectBlock?.(block.id);
+                  }}
+                  onSave={() => handleSaveEditContent(index)}
+                  dataSourceNote={
+                    block.type.startsWith("module-")
+                      ? `Arrangement, artikler og tall hentes fra ${DYNAMIC_MODULES_META[block.type as DynamicModuleType]?.dataSource}. Feltene over styrrer bare tekst og utseende på modulen.`
+                      : undefined
+                  }
+                />
+              )}
+              {isEditing && !isEditableDynamicModule(block.type) && editFields && (
+                <StaticBlockEditor
+                  block={block}
+                  fields={editFields}
+                  currentPageId={currentPageId}
+                  onChange={(next) => {
+                    setEditFields(next);
+                    onSelectBlock?.(block.id);
+                  }}
+                  onSave={() => handleSaveEditContent(index)}
+                />
               )}
             </div>
           );
@@ -405,8 +475,145 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
         className="w-full py-3 px-4 rounded-xl border border-dashed border-indigo-700/80 hover:border-indigo-500 bg-indigo-950/30 hover:bg-indigo-950/60 text-indigo-300 hover:text-white text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
       >
         <Plus className="w-4 h-4 text-indigo-400" />
-        <span>+ Legg til blokk eller modul</span>
+        <span>Legg til blokk eller modul</span>
       </button>
     </div>
   );
 };
+
+function personVariants(current?: string) {
+  if (current && !PERSON_GRID_VARIANTS.some((variant) => variant.id === current)) {
+    return [...PERSON_GRID_VARIANTS, { id: current, label: current }];
+  }
+  return PERSON_GRID_VARIANTS;
+}
+
+const fieldClass =
+  "w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500";
+
+function StaticBlockEditor({
+  block,
+  fields,
+  currentPageId,
+  onChange,
+  onSave,
+}: {
+  block: VisualBlock;
+  fields: StaticBlockFields;
+  currentPageId?: string;
+  onChange: (fields: StaticBlockFields) => void;
+  onSave: () => void;
+}) {
+  const set = (patch: Partial<StaticBlockFields>) => onChange({ ...fields, ...patch });
+
+  return (
+    <div className="mt-3 pt-3 border-t border-slate-800 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-semibold text-slate-300">Rediger innhold</span>
+        <button
+          type="button"
+          onClick={onSave}
+          className="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium cursor-pointer"
+        >
+          Bruk endringer
+        </button>
+      </div>
+
+      {block.type === "cta" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <label className="space-y-1 block">
+            <span className="text-[10px] font-semibold text-slate-400">Knappetekst</span>
+            <input className={fieldClass} value={fields.ctaLabel} onChange={(e) => set({ ctaLabel: e.target.value })} />
+          </label>
+          <div className="space-y-1">
+            <span className="text-[10px] font-semibold text-slate-400 block">Lenke</span>
+            <CmsLinkPicker
+              value={fields.ctaUrl}
+              onChange={(ctaUrl) => set({ ctaUrl })}
+              currentPageId={currentPageId}
+              allowEmpty
+              emptyLabel="Ingen lenke"
+            />
+          </div>
+        </div>
+      ) : block.type === "quote" ? (
+        <div className="space-y-2">
+          <label className="space-y-1 block">
+            <span className="text-[10px] font-semibold text-slate-400">Sitat</span>
+            <textarea rows={3} className={fieldClass} value={fields.body} onChange={(e) => set({ body: e.target.value })} />
+          </label>
+          <label className="space-y-1 block">
+            <span className="text-[10px] font-semibold text-slate-400">Kilde</span>
+            <input className={fieldClass} value={fields.author} onChange={(e) => set({ author: e.target.value })} />
+          </label>
+        </div>
+      ) : block.type === "grid" ? (
+        <div className="space-y-2">
+          {fields.cards.map((card, cardIndex) => (
+            <div key={cardIndex} className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 rounded-lg border border-slate-800">
+              <label className="space-y-1 block">
+                <span className="text-[10px] font-semibold text-slate-400">Kort {cardIndex + 1}: tittel</span>
+                <input
+                  className={fieldClass}
+                  value={card.title}
+                  onChange={(e) => {
+                    const cards = fields.cards.map((item, i) => (i === cardIndex ? { ...item, title: e.target.value } : item));
+                    set({ cards });
+                  }}
+                />
+              </label>
+              <label className="space-y-1 block">
+                <span className="text-[10px] font-semibold text-slate-400">Tekst</span>
+                <textarea
+                  rows={2}
+                  className={fieldClass}
+                  value={card.body}
+                  onChange={(e) => {
+                    const cards = fields.cards.map((item, i) => (i === cardIndex ? { ...item, body: e.target.value } : item));
+                    set({ cards });
+                  }}
+                />
+              </label>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => set({ cards: [...fields.cards, { title: "", body: "" }] })}
+            className="text-[11px] font-semibold text-indigo-300 hover:text-white cursor-pointer"
+          >
+            Legg til kort
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {(block.type === "media-left" || block.type === "media-right") && (
+            <CmsImagePicker
+              label="Bilde"
+              value={fields.imageUrl}
+              onChange={(url) => set({ imageUrl: url })}
+            />
+          )}
+          {block.type === "callout" && (
+            <label className="space-y-1 block">
+              <span className="text-[10px] font-semibold text-slate-400">Type</span>
+              <select className={fieldClass} value={fields.tone} onChange={(e) => set({ tone: e.target.value })}>
+                <option value="info">Informasjon</option>
+                <option value="warning">Viktig</option>
+                <option value="success">Tips</option>
+                <option value="primary">Fremhevet</option>
+              </select>
+            </label>
+          )}
+          <label className="space-y-1 block">
+            <span className="text-[10px] font-semibold text-slate-400">Tittel</span>
+            <input className={fieldClass} value={fields.title} onChange={(e) => set({ title: e.target.value })} />
+          </label>
+          <label className="space-y-1 block">
+            <span className="text-[10px] font-semibold text-slate-400">Tekst</span>
+            <textarea rows={4} className={fieldClass} value={fields.body} onChange={(e) => set({ body: e.target.value })} />
+          </label>
+        </div>
+      )}
+    </div>
+  );
+}

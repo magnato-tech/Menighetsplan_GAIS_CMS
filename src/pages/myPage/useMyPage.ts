@@ -79,7 +79,7 @@ export function useMyPage() {
           taskDescription: task.description,
           startsAt: gathering?.startsAt || "",
           location: gathering?.location || gathering?.title,
-          groupName: getGroupById(task.groupId)?.name || "",
+          groupName: task.groupId ? getGroupById(task.groupId)?.name || "" : "",
         });
       });
 
@@ -105,7 +105,7 @@ export function useMyPage() {
     // C) Oppgaver med ledig plass i gruppene brukeren er med i
     const myGroupSet = new Set(myGroupIds);
     tasks
-      .filter((task) => myGroupSet.has(task.groupId) && task.status !== "cancelled")
+      .filter((task) => task.groupId && myGroupSet.has(task.groupId) && task.status !== "cancelled")
       .forEach((task) => {
         const taskAssignments = getAllAssignmentsForTask(task.id);
         // Leave out a task the user is already on, has been asked about (shown above) or has said no to
@@ -123,7 +123,7 @@ export function useMyPage() {
           taskDescription: task.description,
           startsAt: gathering?.startsAt || "",
           location: gathering?.location || gathering?.title,
-          groupName: getGroupById(task.groupId)?.name || "",
+          groupName: task.groupId ? getGroupById(task.groupId)?.name || "" : "",
           needsSubstitute: task.status === "vacant",
         });
       });

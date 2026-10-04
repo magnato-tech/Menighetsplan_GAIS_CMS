@@ -1,6 +1,12 @@
 import React, { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { CmsResolvedLink } from "../CmsResolvedLink";
 import { useCms } from "../../../context/CmsContext";
+import {
+  MODULE_PRESENTATION_DEFAULTS,
+  ModulePresentationConfig,
+  presentationText,
+} from "../../../utils/modulePresentation";
+import { PresentationSection } from "../PresentationSection";
 import { Headphones, Play, Music2, ExternalLink, Volume2 } from "lucide-react";
 
 function getSpotifyEmbedUrl(url: string | undefined): string | null {
@@ -15,25 +21,42 @@ function getSpotifyEmbedUrl(url: string | undefined): string | null {
 
 export interface SermonModuleProps {
   variant?: "player" | "minimal";
+  presentation?: ModulePresentationConfig;
 }
 
 export const SermonModule: React.FC<SermonModuleProps> = ({
   variant = "player",
+  presentation,
 }) => {
   const { sermons } = useCms();
   const [isPlayingSermon, setIsPlayingSermon] = useState(false);
+  const config = presentation || MODULE_PRESENTATION_DEFAULTS["module-sermon"];
+  const defaults = MODULE_PRESENTATION_DEFAULTS["module-sermon"];
+  const badge = presentationText(config, "badge", defaults.badge);
+  const linkLabel = presentationText(config, "linkLabel", defaults.linkLabel);
+  const linkUrl = presentationText(config, "linkUrl", defaults.linkUrl);
 
   const latestSermon = useMemo(() => {
-    return sermons.length > 0 ? sermons[0] : null;
+    const list = sermons ?? [];
+    return list.length > 0 ? list[0] : null;
   }, [sermons]);
 
   if (!latestSermon) {
-    return null;
+    return (
+      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6">
+        <div className="rounded-2xl border border-stone-200 bg-white p-6 text-sm text-stone-500">
+          Ingen tale er publisert ennå.
+        </div>
+      </section>
+    );
   }
 
   if (variant === "minimal") {
     return (
-      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6">
+      <PresentationSection
+        config={config}
+        className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6"
+      >
         <div className="bg-accent-50/80 border border-accent-200/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-accent-200 text-accent-900 flex items-center justify-center shrink-0">
@@ -41,7 +64,7 @@ export const SermonModule: React.FC<SermonModuleProps> = ({
             </div>
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-accent-800 block">
-                Siste tale fra søndagen
+                {badge}
               </span>
               <h4 className="font-bold text-stone-900 text-base">{latestSermon.title}</h4>
               <p className="text-xs text-stone-600">Taler: {latestSermon.speaker}</p>
@@ -57,12 +80,13 @@ export const SermonModule: React.FC<SermonModuleProps> = ({
               <Play className="w-3.5 h-3.5 fill-slate-950" />
               <span>{isPlayingSermon ? "Pause" : "Spill av"}</span>
             </button>
-            <Link
-              to="/taler"
+            <CmsResolvedLink
+              raw={linkUrl}
+              fallback={defaults.linkUrl}
               className="px-3.5 py-2 rounded-xl bg-white hover:bg-stone-50 text-stone-700 text-xs font-semibold border border-stone-200"
             >
-              Arkiv
-            </Link>
+              {linkLabel}
+            </CmsResolvedLink>
           </div>
         </div>
 
@@ -86,19 +110,22 @@ export const SermonModule: React.FC<SermonModuleProps> = ({
             )}
           </div>
         )}
-      </section>
+      </PresentationSection>
     );
   }
 
   // Standard "player" variant
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-10">
+    <PresentationSection
+      config={config}
+      className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-10"
+    >
       <div className="bg-accent-50/70 border border-accent-200/80 rounded-3xl p-6 sm:p-10 shadow-xs space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-100 text-accent-900 text-xs font-semibold">
               <Headphones className="w-3.5 h-3.5 text-accent-800" />
-              <span>Siste tale fra søndagen</span>
+              <span>{badge}</span>
             </div>
             <h3 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
               {latestSermon.title}
@@ -138,12 +165,13 @@ export const SermonModule: React.FC<SermonModuleProps> = ({
               </a>
             )}
 
-            <Link
-              to="/taler"
+            <CmsResolvedLink
+              raw={linkUrl}
+              fallback={defaults.linkUrl}
               className="px-5 py-3 rounded-xl bg-white hover:bg-stone-50 text-stone-700 font-semibold text-xs text-center border border-stone-200 transition-all"
             >
-              Se hele prekenarkivet
-            </Link>
+              {linkLabel}
+            </CmsResolvedLink>
           </div>
         </div>
 
@@ -183,6 +211,6 @@ export const SermonModule: React.FC<SermonModuleProps> = ({
           </div>
         )}
       </div>
-    </section>
+    </PresentationSection>
   );
 };

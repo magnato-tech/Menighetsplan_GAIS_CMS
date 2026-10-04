@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { CmsPage } from "../../../../data/cmsData";
 import { PageNode, pageUrl, getMenuOrder } from "../../../../utils/menu";
@@ -23,6 +23,8 @@ import {
   Clock,
 } from "lucide-react";
 import { formatNorwegianDateTime } from "../../../../utils/dates";
+import { useCms } from "../../../../context/CmsContext";
+import { buildLinkContext, pageHasBrokenLinks } from "../../../../utils/cmsLinks";
 
 interface PageTreeListProps {
   hierarchicalPages: PageNode[];
@@ -45,6 +47,9 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
   onPreviewPage,
   onTogglePublish,
 }) => {
+  const { pages } = useCms();
+  const linkContext = useMemo(() => buildLinkContext(pages), [pages]);
+
   // Drag and drop state
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [draggingType, setDraggingType] = useState<"top" | "sub" | null>(null);
@@ -473,6 +478,16 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                       </span>
                     )}
 
+                    {pageHasBrokenLinks(parent, linkContext) && (
+                      <span
+                        className="text-[10px] font-semibold text-amber-300 bg-amber-950/40 border border-amber-700/50 px-2 py-0.5 rounded inline-flex items-center gap-1"
+                        title="En eller flere lenker på siden peker på noe som ikke finnes"
+                      >
+                        <AlertTriangle className="w-3 h-3" />
+                        <span>Lenke trenger oppmerksomhet</span>
+                      </span>
+                    )}
+
                     {hasChildren && (
                       <button
                         type="button"
@@ -671,6 +686,16 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                             ) : (
                               <span className="text-[10px] font-semibold text-stone-400 bg-slate-950 px-1.5 py-0.5 rounded">
                                 Skjult
+                              </span>
+                            )}
+
+                            {pageHasBrokenLinks(child, linkContext) && (
+                              <span
+                                className="text-[10px] font-semibold text-amber-300 bg-amber-950/40 border border-amber-700/50 px-1.5 py-0.5 rounded inline-flex items-center gap-1"
+                                title="En eller flere lenker på siden peker på noe som ikke finnes"
+                              >
+                                <AlertTriangle className="w-2.5 h-2.5" />
+                                <span>Lenke</span>
                               </span>
                             )}
 

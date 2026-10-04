@@ -1,5 +1,6 @@
-import type { Group, ProgramItem, Task } from "../types";
+import type { Group, ProgramItem, Task, VolunteerRole } from "../types";
 import type { AssignedPerson } from "./staffing";
+import { resolveTaskInstruction } from "./roleStaffing";
 
 // The run sheet of a gathering ("kjøreplan"): its programme and its tasks on one timeline.
 // It shows what is registered and nothing else. A programme item nobody has linked a task
@@ -56,7 +57,7 @@ export function meetingTimeOf(task: Pick<Task, "instruction">): string | undefin
   return match ? normalizeClock(match[1]) : undefined;
 }
 
-function taskFields(detail: RunSheetTask) {
+function taskFields(detail: RunSheetTask, roles: Map<string, VolunteerRole>) {
   const { task } = detail;
   return {
     task,
@@ -68,11 +69,16 @@ function taskFields(detail: RunSheetTask) {
     isFullyCovered: detail.isFullyCovered,
     hasForfall: detail.hasWithdrawn || task.status === "vacant",
     assignedPersons: detail.assignedPersons,
-    instruction: task.instruction || task.description,
+    instruction: resolveTaskInstruction(task, roles),
   };
 }
 
-export function buildRunSheet(programSchedule: ProgramItem[], tasks: RunSheetTask[]): RunSheetRow[] {
+export function buildRunSheet(
+  programSchedule: ProgramItem[],
+  tasks: RunSheetTask[],
+  volunteerRoles: VolunteerRole[] = []
+): RunSheetRow[] {
+  const roles = new Map(volunteerRoles.map((r) => [r.id, r]));
   const linkedTaskIds = new Set<string>();
 
   const programRows = programSchedule.map((item, index): RunSheetRow => {
@@ -87,7 +93,13 @@ export function buildRunSheet(programSchedule: ProgramItem[], tasks: RunSheetTas
       return { ...base, isMyGroup: false, neededCount: 0, confirmedCount: 0, isFullyCovered: true, hasForfall: false, assignedPersons: [] };
     }
     linkedTaskIds.add(linked.task.id);
-    return { ...base, roleTitle: linked.task.title, meetAt: meetingTimeOf(linked.task), ...taskFields(linked) };
+    const instruction = resolveTaskInstruction(linked.task, roles);
+    return {
+      ...base,
+      roleTitle: linked.task.title,
+      meetAt: meetingTimeOf({ instruction }),
+      ...taskFields(linked, roles),
+    };
   });
 
   // Tasks outside the programme are placed at the time their people meet, when that is known
@@ -95,10 +107,10 @@ export function buildRunSheet(programSchedule: ProgramItem[], tasks: RunSheetTas
     .filter((t) => !linkedTaskIds.has(t.task.id))
     .map((detail): RunSheetRow => ({
       id: `task-${detail.task.id}`,
-      time: meetingTimeOf(detail.task) ?? "",
+      time: meetingTimeOf({ instruction: resolveTaskInstruction(detail.task, roles) }) ?? "",
       title: detail.task.title,
       description: detail.task.description,
-      ...taskFields(detail),
+      ...taskFields(detail, roles),
     }));
 
   // By the clock, with rows without a time last. The sort is stable, so the programme keeps its order.

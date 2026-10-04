@@ -69,6 +69,7 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
     taskId?: string;
     title: string;
     instruction: string;
+    volunteerRoleId?: string;
     time?: string;
     groupName?: string;
   } | null>(null);
@@ -84,10 +85,10 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
   const [editingTask, setEditingTask] = useState<{
     id: string;
     title: string;
-    groupId: string;
+    volunteerRoleId?: string;
+    groupId?: string;
     neededCount: number;
     description: string;
-    instruction: string;
   } | null>(null);
 
   // Admin: Create Task modal
@@ -97,9 +98,11 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
   const [toastMessage, showToast] = useTimedMessage<string>();
 
   // The programme and the tasks on one timeline, built from what is registered and nothing else
+  const { volunteerRoles } = detail;
+
   const integratedSchedule = useMemo(
-    () => buildRunSheet(programSchedule, tasksWithDetails),
-    [programSchedule, tasksWithDetails]
+    () => buildRunSheet(programSchedule, tasksWithDetails, volunteerRoles),
+    [programSchedule, tasksWithDetails, volunteerRoles]
   );
 
   // The groups that have tasks in the schedule, for filtering
@@ -513,6 +516,7 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
                     taskId: shown.task?.id,
                     title: shown.roleTitle ? `${shown.title} – ${shown.roleTitle}` : shown.title,
                     instruction: shown.instruction || "",
+                    volunteerRoleId: shown.task?.volunteerRoleId,
                     time: shown.time,
                     groupName: shown.groupName,
                   })
@@ -522,10 +526,10 @@ export const GatheringDetailView: React.FC<GatheringDetailViewProps> = ({
                   setEditingTask({
                     id: task.id,
                     title: task.title,
+                    volunteerRoleId: task.volunteerRoleId,
                     groupId: task.groupId,
                     neededCount: task.neededCount || 1,
                     description: task.description || "",
-                    instruction: task.instruction || "",
                   })
                 }
               />

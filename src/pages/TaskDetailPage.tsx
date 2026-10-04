@@ -15,6 +15,7 @@ export const TaskDetailPage: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();
   const {
     task,
+    instruction,
     gathering,
     group,
     othersOnTask,
@@ -241,7 +242,7 @@ export const TaskDetailPage: React.FC = () => {
             Instruks for rollen
           </h3>
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal bg-slate-50/50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-line">
-            {task.instruction || task.description || "Ingen instruks oppgitt for denne oppgaven ennå."}
+            {instruction || "Ingen instruks oppgitt for denne oppgaven ennå."}
           </p>
         </div>
 

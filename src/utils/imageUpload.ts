@@ -9,6 +9,14 @@ export interface CompressionOptions {
   quality?: number;
 }
 
+/** Keep hero images small enough for Firestore page documents. */
+export const MAX_HERO_IMAGE_BYTES = 200 * 1024;
+
+function dataUrlByteSize(dataUrl: string): number {
+  const base64 = dataUrl.split(",")[1] || "";
+  return Math.ceil((base64.length * 3) / 4);
+}
+
 /**
  * Resizes and compresses an image File or Blob to an optimized JPEG data URL.
  */
@@ -59,8 +67,20 @@ export function compressImageFile(
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Convert to web-standard JPEG Data URL
-        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        let currentQuality = quality;
+        let dataUrl = canvas.toDataURL("image/jpeg", currentQuality);
+        while (dataUrlByteSize(dataUrl) > MAX_HERO_IMAGE_BYTES && currentQuality > 0.35) {
+          currentQuality -= 0.08;
+          dataUrl = canvas.toDataURL("image/jpeg", currentQuality);
+        }
+        if (dataUrlByteSize(dataUrl) > MAX_HERO_IMAGE_BYTES) {
+          reject(
+            new Error(
+              "Bildet er fortsatt for stort etter komprimering. Prøv et mindre bilde eller lavere oppløsning."
+            )
+          );
+          return;
+        }
         resolve(dataUrl);
       };
       img.src = reader.result as string;

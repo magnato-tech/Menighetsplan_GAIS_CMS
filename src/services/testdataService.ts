@@ -8,6 +8,8 @@ import {
   type CustomMockCounts,
 } from "../data/mockDocuments";
 import { chunk } from "../utils/chunk";
+import { VOLUNTEER_ROLE_RECORD, volunteerRoleFields } from "./volunteerRoles";
+import type { VolunteerRole } from "../types";
 
 // Firestore støtter maksimalt 500 operasjoner per batch write
 const BATCH_SIZE = 400;
@@ -33,8 +35,10 @@ export interface ClearTestdataOptions {
   persons?: boolean;
   /** Slett grupper (standard: true) */
   groups?: boolean;
-  /** Slett roller og tildelinger (standard: true) */
+  /** Slett oppgavetildelinger (standard: true) */
   roles?: boolean;
+  /** Slett rollebiblioteket (standard: true) */
+  volunteerRoles?: boolean;
   /** Slett samlinger (standard: true) */
   gatherings?: boolean;
   /** Slett oppgaver (standard: true) */
@@ -97,6 +101,7 @@ export async function clearTestdata(
     persons = true,
     groups = true,
     roles = true,
+    volunteerRoles = true,
     gatherings = true,
     tasks = true,
     groupMessages = true,
@@ -112,6 +117,7 @@ export async function clearTestdata(
   if (gatherings) targetCollections.push(COLLECTIONS.GATHERINGS);
   if (groupMessages) targetCollections.push(COLLECTIONS.GROUP_MESSAGES);
   if (attendance) targetCollections.push(COLLECTIONS.GATHERING_ATTENDANCES);
+  if (volunteerRoles) targetCollections.push(COLLECTIONS.VOLUNTEER_ROLES);
 
   // Sikre at CMS-samlinger aldri slettes
   const protectedCollections = new Set(Object.values(CMS_COLLECTIONS));
@@ -121,6 +127,20 @@ export async function clearTestdata(
 
   for (const collectionName of safeCollections) {
     try {
+      if (collectionName === COLLECTIONS.VOLUNTEER_ROLES) {
+        const snap = await getDocs(collection(db, CMS_COLLECTIONS.SETTINGS));
+        const roleDocs = snap.docs.filter((d) => d.data().recordType === VOLUNTEER_ROLE_RECORD);
+        if (roleDocs.length > 0) {
+          for (const piece of chunk(roleDocs, BATCH_SIZE)) {
+            const batch = writeBatch(db);
+            for (const docSnap of piece) batch.delete(docSnap.ref);
+            await batch.commit();
+          }
+        }
+        result.counts[collectionName] = roleDocs.length;
+        result.total += roleDocs.length;
+        continue;
+      }
       const snap = await getDocs(collection(db, collectionName));
       if (!snap.empty) {
         for (const piece of chunk(snap.docs, BATCH_SIZE)) {
@@ -181,6 +201,7 @@ export async function deleteRolesTestdata(): Promise<TestdataServiceResult> {
     persons: false,
     groups: false,
     roles: true,
+    volunteerRoles: true,
     gatherings: false,
     tasks: false,
     groupMessages: false,
@@ -209,7 +230,7 @@ export async function generateTestdata(
   // 2. Klargjør mock-dokumenter med konsistente relasjoner
   const counts: CustomMockCounts = {
     personCount: options.personCount !== undefined ? Math.max(1, options.personCount) : 32,
-    groupCount: options.groupCount !== undefined ? Math.max(1, options.groupCount) : 12,
+    groupCount: options.groupCount !== undefined ? Math.max(1, options.groupCount) : 14,
     roleCount: options.roleCount !== undefined ? Math.max(0, options.roleCount) : 14,
     gatheringCount: options.gatheringCount,
     taskCount: options.taskCount,
@@ -232,7 +253,14 @@ export async function generateTestdata(
       for (const piece of chunk(documents, BATCH_SIZE)) {
         const batch = writeBatch(db);
         for (const item of piece) {
-          batch.set(doc(db, collectionName, item.id), sanitizeForFirestore(item.data));
+          if (collectionName === COLLECTIONS.VOLUNTEER_ROLES) {
+            batch.set(
+              doc(db, CMS_COLLECTIONS.SETTINGS, item.id),
+              sanitizeForFirestore(volunteerRoleFields(item.data as VolunteerRole))
+            );
+          } else {
+            batch.set(doc(db, collectionName, item.id), sanitizeForFirestore(item.data));
+          }
         }
         await batch.commit();
       }
@@ -259,7 +287,7 @@ export async function generate32TestPersons(options?: {
 }): Promise<TestdataServiceResult> {
   return generateTestdata({
     personCount: 32,
-    groupCount: options?.groupCount ?? 12,
+    groupCount: options?.groupCount ?? 14,
     roleCount: options?.roleCount ?? 14,
     clearExisting: options?.clearExisting ?? true,
   });

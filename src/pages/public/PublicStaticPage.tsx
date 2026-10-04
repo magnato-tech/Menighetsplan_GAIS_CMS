@@ -12,15 +12,21 @@ import {
   Clock,
   Users,
 } from "lucide-react";
-import { CmsContentRenderer } from "../../components/cms/CmsContentRenderer";
+import { VisualBlockFlow } from "../../components/cms/VisualBlockFlow";
+import { resolveVisualBlocks } from "../../utils/cmsBlocks";
+import { buildLinkContext, ensureSectionAnchors, resolveCmsLinkForDisplay } from "../../utils/cmsLinks";
+import { HeroButtons } from "../../components/cms/HeroButtons";
 import { isPagePublished } from "../../utils/menu";
 import { formatNorwegianDateTime } from "../../utils/dates";
+import { usePreviewPageDraft } from "../../hooks/usePreviewPageDraft";
+import { useLocation } from "react-router-dom";
 
 interface PublicStaticPageProps {
   forcedSlug?: string;
   fallbackComponent?: React.ReactNode;
   pageOverride?: Partial<CmsPage>;
   hidePreviewBanner?: boolean;
+  relaxLinkValidation?: boolean;
 }
 
 export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({
@@ -28,42 +34,35 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({
   fallbackComponent,
   pageOverride,
   hidePreviewBanner,
+  relaxLinkValidation: relaxLinkValidationProp = false,
 }) => {
   const { slug: paramSlug } = useParams<{ slug: string }>();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const isPreviewMode = searchParams.get("preview") === "true";
-  const { getPageBySlug, settings } = useCms();
+  const isEmbedded = searchParams.get("embedded") === "1";
+  const { getPageBySlug, settings, pages } = useCms();
   const { allPersons } = useFirebase();
+  const linkContext = React.useMemo(() => buildLinkContext(pages), [pages]);
 
   const currentSlug = pageOverride?.slug || forcedSlug || paramSlug || "om-oss";
   const savedPage = getPageBySlug(currentSlug);
 
-  // Check for active editor draft in sessionStorage when previewing in new tab
-  const draftData = React.useMemo(() => {
-    if (pageOverride) return pageOverride;
-    if (!isPreviewMode || typeof window === "undefined") return null;
-    try {
-      const bySlug = sessionStorage.getItem(`cms_preview_draft_${currentSlug}`);
-      if (bySlug) return JSON.parse(bySlug);
-      const active = sessionStorage.getItem("cms_preview_active");
-      if (active) {
-        const parsed = JSON.parse(active);
-        if (parsed.slug === currentSlug || parsed.id === savedPage?.id) {
-          return parsed;
-        }
-      }
-    } catch {}
-    return null;
-  }, [pageOverride, isPreviewMode, currentSlug, savedPage?.id]);
+  const { draftPage, isLiveDraft, relaxLinkValidation: relaxFromPreview } = usePreviewPageDraft(
+    savedPage,
+    location.pathname
+  );
+  const relaxLinkValidation = relaxLinkValidationProp || relaxFromPreview;
 
   const page = pageOverride
     ? ({ ...savedPage, ...pageOverride } as CmsPage)
-    : draftData
-    ? ({ ...savedPage, ...draftData } as CmsPage)
+    : draftPage
+    ? ({ ...savedPage, ...draftPage } as CmsPage)
     : savedPage;
 
-  // In preview mode or when pageOverride is provided, allow viewing the page even if unpublished or scheduled
-  const isAvailable = page ? (Boolean(pageOverride) || isPreviewMode || isPagePublished(page)) : false;
+  const isAvailable = page
+    ? Boolean(pageOverride) || isLiveDraft || isPagePublished(page)
+    : false;
 
   if (!page || !isAvailable) {
     if (fallbackComponent) {
@@ -93,13 +92,20 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({
     );
   }
 
+  const blocks = ensureSectionAnchors(resolveVisualBlocks(page));
+  const primaryLink = resolveCmsLinkForDisplay(page.heroCtaLink, linkContext, {
+    relaxValidation: relaxLinkValidation,
+  });
+  const secondaryLink = resolveCmsLinkForDisplay(page.heroCtaSecondaryLink, linkContext, {
+    relaxValidation: relaxLinkValidation,
+  });
   const isAboutPage = currentSlug.includes("om-oss");
   const isContactPage = currentSlug.includes("kontakt");
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-10">
       {/* Top Banner when previewing draft */}
-      {isPreviewMode && !hidePreviewBanner && (
+      {isPreviewMode && !hidePreviewBanner && !isEmbedded && (
         <div className="bg-stone-900 text-stone-200 border border-stone-700 px-4 py-2.5 text-xs flex flex-wrap items-center justify-between gap-3 shadow-md rounded-2xl">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-accent-400 animate-pulse" />
@@ -130,13 +136,23 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({
           <span>Tilbake til forsiden</span>
         </Link>
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-stone-900 tracking-tight">
-          {page.title}
+          {page.heroTitle?.trim() || page.title}
         </h1>
         {page.summary && (
           <p className="text-base sm:text-lg text-stone-600 max-w-2xl font-medium leading-relaxed">
             {page.summary}
           </p>
         )}
+        <HeroButtons
+          tone="on-light"
+          align="start"
+          showPrimary={page.showHeroPrimaryCta !== false}
+          showSecondary={page.showHeroSecondaryCta !== false}
+          primaryText={page.heroCtaText?.trim() || undefined}
+          primaryLink={primaryLink || undefined}
+          secondaryText={page.heroCtaSecondaryText?.trim() || undefined}
+          secondaryLink={secondaryLink || undefined}
+        />
       </div>
 
       {/* Hovedbilde (Hero Image) */}
@@ -152,7 +168,7 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({
 
       {/* Main Content Area */}
       <div className="bg-white rounded-2xl border border-stone-200/80 p-6 sm:p-10 shadow-xs space-y-4">
-        <CmsContentRenderer content={page.content || ""} />
+        <VisualBlockFlow blocks={blocks} embed />
       </div>
 
       {/* Lederskap & Stab (vises under Om oss hvis ikke allerede inkludert i blokk) */}

@@ -1,23 +1,40 @@
 import React from "react";
 import { useCms } from "../../../context/CmsContext";
+import {
+  MODULE_PRESENTATION_DEFAULTS,
+  ModulePresentationConfig,
+  presentationText,
+} from "../../../utils/modulePresentation";
+import { PresentationSection } from "../PresentationSection";
 import { Heart } from "lucide-react";
 
 export interface GivingModuleProps {
   variant?: "card" | "vipps";
+  presentation?: ModulePresentationConfig;
 }
 
 export const GivingModule: React.FC<GivingModuleProps> = ({
   variant = "card",
+  presentation,
 }) => {
   const { settings } = useCms();
+  const config = presentation || MODULE_PRESENTATION_DEFAULTS["module-giving"];
+  const defaults = MODULE_PRESENTATION_DEFAULTS["module-giving"];
+
+  const badge = presentationText(config, "badge", defaults.badge);
+  const title = presentationText(config, "title", defaults.title);
+  const body = presentationText(config, "body", defaults.body);
 
   if (variant === "vipps") {
     return (
-      <section className="w-full max-w-xl mx-auto px-4 sm:px-6 my-10 text-center space-y-4">
+      <PresentationSection
+        config={config}
+        className="w-full max-w-xl mx-auto px-4 sm:px-6 my-10 text-center space-y-4"
+      >
         <div className="p-6 rounded-2xl bg-white border border-stone-200 shadow-sm space-y-2">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 text-xs font-semibold">
             <Heart className="w-3 h-3" />
-            <span>Vipps til menigheten</span>
+            <span>{badge}</span>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-accent-700 font-mono">
             {settings.vippsNumber}
@@ -26,22 +43,24 @@ export const GivingModule: React.FC<GivingModuleProps> = ({
             Takk for din gave til arbeidet i {settings.churchName}!
           </p>
         </div>
-      </section>
+      </PresentationSection>
     );
   }
 
-  // Standard "card" variant
   return (
-    <section className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 my-12">
+    <PresentationSection
+      config={config}
+      className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 my-12"
+    >
       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-xs font-semibold">
         <Heart className="w-3.5 h-3.5" />
-        <span>Givertjeneste & Støtte</span>
+        <span>{badge}</span>
       </div>
       <h3 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
-        Støtt menighetens arbeid
+        {title}
       </h3>
       <p className="text-sm text-stone-600 max-w-xl mx-auto leading-relaxed">
-        Arbeidet drives utelukkende av frivillige gaver fra medlemmer og støttespillere. Din gave gjør barnekirke, ungdomsarbeid og diakonalt arbeid mulig.
+        {body}
       </p>
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
@@ -59,6 +78,6 @@ export const GivingModule: React.FC<GivingModuleProps> = ({
           </div>
         </div>
       </div>
-    </section>
+    </PresentationSection>
   );
 };

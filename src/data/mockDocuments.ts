@@ -16,6 +16,8 @@ import {
   initialCmsSettings,
 } from "./cmsData";
 import { Person, Group } from "../types";
+import { buildInitialVolunteerRoles } from "./defaultVolunteerRoles";
+import { enrichTasksWithVolunteerRoles } from "./mockTaskVolunteerRoles";
 
 export interface MockDocument {
   collection: string;
@@ -149,9 +151,9 @@ export function getCustomMockDocuments(counts?: CustomMockCounts): MockDocument[
 
   // 4. Tasks (must belong to included gatherings and groups)
   const candidateTasks = initialTasks.filter(
-    (t) => gatheringIds.has(t.gatheringId) && groupIds.has(t.groupId)
+    (t) => gatheringIds.has(t.gatheringId) && (!t.groupId || groupIds.has(t.groupId))
   );
-  const tasks = candidateTasks.slice(0, tCount);
+  const tasks = enrichTasksWithVolunteerRoles(candidateTasks.slice(0, tCount));
   const taskIds = new Set(tasks.map((t) => t.id));
 
   // 5. Assignments (must belong to included tasks and persons)
@@ -173,6 +175,7 @@ export function getCustomMockDocuments(counts?: CustomMockCounts): MockDocument[
     [COLLECTIONS.ASSIGNMENTS, assignments],
     [COLLECTIONS.GROUP_MESSAGES, groupMessages],
     [COLLECTIONS.GATHERING_ATTENDANCES, attendances],
+    [COLLECTIONS.VOLUNTEER_ROLES, buildInitialVolunteerRoles()],
     [CMS_COLLECTIONS.PAGES, initialCmsPages],
     [CMS_COLLECTIONS.NEWS, initialCmsNews],
     [CMS_COLLECTIONS.SERMONS, initialCmsSermons],

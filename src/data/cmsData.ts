@@ -19,8 +19,13 @@ export interface CmsPage {
   updatedAt: string;
   updatedBy?: string;
   heroImage?: string;
+  heroTitle?: string;
   heroCtaText?: string;
   heroCtaLink?: string;
+  heroCtaSecondaryText?: string;
+  heroCtaSecondaryLink?: string;
+  showHeroPrimaryCta?: boolean;
+  showHeroSecondaryCta?: boolean;
   metaDescription?: string;
   ogImage?: string;
   publishAt?: string; // Scheduled publish date/time in ISO 8601 format
@@ -483,7 +488,8 @@ Et åpent hjem for alle generasjoner. Vi samles til gudstjeneste, bønn og nære
     slug: "hva-skjer",
     title: "Kalender",
     summary: "Oversikt over alle gudstjenester, fellessamlinger, bønnemøter og aktiviteter.",
-    content: `## Hva skjer i menigheten\nFølg kalenderen for oppdaterte tider og arrangementer for hele storfamilien.`,
+    content: `:::module-kalender[month]
+:::`,
     isPublished: true,
     status: "published",
     parentPageId: null,
@@ -491,7 +497,6 @@ Et åpent hjem for alle generasjoner. Vi samles til gudstjeneste, bønn og nære
     menuOrder: 2,
     navOrder: 2,
     inNavMenu: true,
-    linkUrl: "/hva-skjer",
     updatedAt: "2026-09-28T10:00:00.000Z",
   },
   // 3. Grupper/Aktiviteter (Toppfane med underfaner)

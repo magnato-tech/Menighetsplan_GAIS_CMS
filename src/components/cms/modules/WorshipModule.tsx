@@ -1,7 +1,13 @@
 import React, { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { CmsResolvedLink } from "../CmsResolvedLink";
 import { useFirebase } from "../../../context/FirebaseDataContext";
 import { locationOf, pickHighlight } from "../../../utils/gatherings";
+import {
+  MODULE_PRESENTATION_DEFAULTS,
+  ModulePresentationConfig,
+  presentationText,
+} from "../../../utils/modulePresentation";
+import { PresentationSection } from "../PresentationSection";
 import {
   Calendar,
   Clock,
@@ -15,23 +21,52 @@ import {
 export interface WorshipModuleProps {
   variant?: "highlight" | "compact";
   titleOverride?: string;
+  presentation?: ModulePresentationConfig;
 }
 
 export const WorshipModule: React.FC<WorshipModuleProps> = ({
   variant = "highlight",
   titleOverride,
+  presentation,
 }) => {
   const { gatherings } = useFirebase();
+  const config = presentation || MODULE_PRESENTATION_DEFAULTS["module-worship"];
+  const defaults = MODULE_PRESENTATION_DEFAULTS["module-worship"];
 
   const highlight = useMemo(() => pickHighlight(gatherings, Date.now()), [gatherings]);
   const nextWorship = highlight?.gathering;
-  const highlightLabel = titleOverride || (
+  const autoLabel =
     highlight?.kind === "featured"
       ? "Fremhevet samling"
       : highlight?.kind === "next"
       ? "Neste arrangement"
-      : "Neste Gudstjeneste"
-  );
+      : "Neste Gudstjeneste";
+  const highlightLabel =
+    titleOverride ||
+    presentationText(config, "badge", autoLabel);
+  const linkLabel = presentationText(config, "linkLabel", defaults.linkLabel);
+  const linkUrl = presentationText(config, "linkUrl", defaults.linkUrl);
+
+  const infoCards = [
+    {
+      icon: Sparkles,
+      iconClass: "bg-accent-50 text-accent-700",
+      title: presentationText(config, "info1Title", defaults.info1Title),
+      body: presentationText(config, "info1Body", defaults.info1Body),
+    },
+    {
+      icon: Coffee,
+      iconClass: "bg-primary-50 text-primary-700",
+      title: presentationText(config, "info2Title", defaults.info2Title),
+      body: presentationText(config, "info2Body", defaults.info2Body),
+    },
+    {
+      icon: BookOpen,
+      iconClass: "bg-emerald-50 text-emerald-700",
+      title: presentationText(config, "info3Title", defaults.info3Title),
+      body: presentationText(config, "info3Body", defaults.info3Body),
+    },
+  ];
 
   const formatDate = (dateStr: string) => {
     try {
@@ -60,7 +95,10 @@ export const WorshipModule: React.FC<WorshipModuleProps> = ({
 
   if (variant === "compact") {
     return (
-      <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6">
+      <PresentationSection
+        config={config}
+        className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6"
+      >
         <div className="bg-white rounded-xl border border-stone-200/90 p-4 sm:p-5 shadow-sm hover:border-primary-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-lg bg-primary-100 text-primary-800 flex items-center justify-center shrink-0 font-bold">
@@ -85,21 +123,24 @@ export const WorshipModule: React.FC<WorshipModuleProps> = ({
             </div>
           </div>
 
-          <Link
-            to="/hva-skjer"
+          <CmsResolvedLink
+            raw={linkUrl}
+            fallback={defaults.linkUrl}
             className="px-4 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors self-start sm:self-auto shrink-0"
           >
-            <span>Se detaljer</span>
+            <span>{linkLabel}</span>
             <ArrowRight className="w-3.5 h-3.5 text-stone-500" />
-          </Link>
+          </CmsResolvedLink>
         </div>
-      </section>
+      </PresentationSection>
     );
   }
 
-  // Standard "highlight" card variant
   return (
-    <section className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8 relative z-10">
+    <PresentationSection
+      config={config}
+      className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8 relative z-10"
+    >
       <div className="bg-white rounded-2xl shadow-xl border border-stone-200/80 p-6 sm:p-8 lg:p-10">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-stone-100">
           <div className="space-y-2">
@@ -137,43 +178,21 @@ export const WorshipModule: React.FC<WorshipModuleProps> = ({
         </div>
 
         <div className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-stone-600">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-accent-50 text-accent-700 flex items-center justify-center shrink-0">
-              <Sparkles className="w-4 h-4" />
+          {infoCards.map((card) => (
+            <div key={card.title} className="flex items-start gap-3">
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${card.iconClass}`}
+              >
+                <card.icon className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="font-bold text-stone-900 text-sm">{card.title}</h4>
+                <p className="mt-0.5 text-stone-500 leading-relaxed">{card.body}</p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-bold text-stone-900 text-sm">Sprell Levende Søndagsskole</h4>
-              <p className="mt-0.5 text-stone-500 leading-relaxed">
-                Eget tilrettelagt opplegg for småbarn, barn og tweens under gudstjenesten.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary-50 text-primary-700 flex items-center justify-center shrink-0">
-              <Coffee className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="font-bold text-stone-900 text-sm">Kirkekaffe & Drøs</h4>
-              <p className="mt-0.5 text-stone-500 leading-relaxed">
-                Vi samles i kafeen etter gudstjenesten til kaffe, te, saft og en hyggelig prat.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-              <BookOpen className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className="font-bold text-stone-900 text-sm">Rom for alle</h4>
-              <p className="mt-0.5 text-stone-500 leading-relaxed">
-                Uansett bakgrunn er du hjertelig velkommen. Ingen forkunnskaper kreves.
-              </p>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
-    </section>
+    </PresentationSection>
   );
 };

@@ -15,10 +15,19 @@ import {
 } from "lucide-react";
 import { WorshipModule } from "./modules/WorshipModule";
 import { CalendarModule } from "./modules/CalendarModule";
+import { KalenderModule } from "./modules/KalenderModule";
 import { NewsModule } from "./modules/NewsModule";
 import { SermonModule } from "./modules/SermonModule";
 import { GroupsModule } from "./modules/GroupsModule";
 import { GivingModule } from "./modules/GivingModule";
+import {
+  CMS_BLOCKS_AUTHORED,
+  DynamicModuleType,
+  HIDDEN_BLOCK_END,
+  HIDDEN_BLOCK_START,
+} from "../../utils/cmsBlocks";
+import { readModulePresentation } from "../../utils/modulePresentation";
+import { CmsResolvedLink } from "./CmsResolvedLink";
 
 interface CmsContentRendererProps {
   content?: string;
@@ -35,13 +44,25 @@ export type ParsedBlock =
   | { type: "list"; items: string[]; ordered?: boolean }
   | { type: "paragraph"; text: string }
   | { type: "person-grid"; filter: string }
-  | { type: "module-worship"; variant?: "highlight" | "compact" }
-  | { type: "module-calendar"; variant?: "grid" | "list" }
-  | { type: "module-news"; variant?: "grid" | "compact" }
-  | { type: "module-sermon"; variant?: "player" | "minimal" }
-  | { type: "module-groups"; variant?: "banner" | "cards" }
-  | { type: "module-giving"; variant?: "card" | "vipps" }
+  | { type: "module-worship"; variant?: "highlight" | "compact"; rawConfig?: string }
+  | { type: "module-calendar"; variant?: "grid"; rawConfig?: string }
+  | { type: "module-kalender"; variant?: "month" | "list"; rawConfig?: string }
+  | { type: "module-news"; variant?: "grid" | "compact"; rawConfig?: string }
+  | { type: "module-sermon"; variant?: "player" | "minimal"; rawConfig?: string }
+  | { type: "module-groups"; variant?: "banner" | "cards"; rawConfig?: string }
+  | { type: "module-giving"; variant?: "card" | "vipps"; rawConfig?: string }
   | { type: "spacer" };
+
+function presentationFromRaw(rawConfig?: string, type?: DynamicModuleType) {
+  if (!type) return undefined;
+  return readModulePresentation({
+    id: "module",
+    type,
+    title: "",
+    isDynamic: true,
+    rawContent: rawConfig,
+  });
+}
 
 /**
  * Parses CMS markdown with support for controlled components and safe formatting.
@@ -57,6 +78,18 @@ export function parseCmsContent(rawContent: string): ParsedBlock[] {
   while (i < lines.length) {
     const line = lines[i];
     const trimmed = line.trim();
+
+    if (trimmed === CMS_BLOCKS_AUTHORED) {
+      i++;
+      continue;
+    }
+
+    if (trimmed === HIDDEN_BLOCK_START) {
+      i++;
+      while (i < lines.length && lines[i].trim() !== HIDDEN_BLOCK_END) i++;
+      if (i < lines.length) i++;
+      continue;
+    }
 
     // Empty line / spacer
     if (trimmed === "") {
@@ -282,30 +315,40 @@ export function parseCmsContent(rawContent: string): ParsedBlock[] {
       const match = trimmed.match(/^:::module-([a-zA-Z0-9_-]+)(?:\[(.*?)\])?/);
       const modType = match ? `module-${match[1]}` : "";
       const variant = match && match[2] ? match[2].trim() : undefined;
+      const bodyLines: string[] = [];
       i++;
       while (i < lines.length && !lines[i].trim().startsWith(":::")) {
+        bodyLines.push(lines[i]);
         i++;
       }
       if (i < lines.length && lines[i].trim().startsWith(":::")) {
         i++;
       }
+      const rawConfig = bodyLines.join("\n").trim() || undefined;
       if (modType === "module-worship") {
-        blocks.push({ type: "module-worship", variant: variant as "highlight" | "compact" });
+        blocks.push({ type: "module-worship", variant: variant as "highlight" | "compact", rawConfig });
         continue;
       } else if (modType === "module-calendar") {
-        blocks.push({ type: "module-calendar", variant: variant as "grid" | "list" });
+        blocks.push({ type: "module-calendar", variant: "grid", rawConfig });
+        continue;
+      } else if (modType === "module-kalender") {
+        blocks.push({ type: "module-kalender", variant: variant as "month" | "list", rawConfig });
         continue;
       } else if (modType === "module-news") {
-        blocks.push({ type: "module-news", variant: variant as "grid" | "compact" });
+        blocks.push({ type: "module-news", variant: variant as "grid" | "compact", rawConfig });
         continue;
       } else if (modType === "module-sermon") {
-        blocks.push({ type: "module-sermon", variant: variant as "player" | "minimal" });
+        blocks.push({ type: "module-sermon", variant: variant as "player" | "minimal", rawConfig });
         continue;
       } else if (modType === "module-groups") {
-        blocks.push({ type: "module-groups", variant: variant as "banner" | "cards" });
+        blocks.push({
+          type: "module-groups",
+          variant: variant as "banner" | "cards",
+          rawConfig,
+        });
         continue;
       } else if (modType === "module-giving") {
-        blocks.push({ type: "module-giving", variant: variant as "card" | "vipps" });
+        blocks.push({ type: "module-giving", variant: variant as "card" | "vipps", rawConfig });
         continue;
       }
     }
@@ -646,31 +689,15 @@ export const CmsContentRenderer: React.FC<CmsContentRendererProps> = ({
             );
 
           case "cta": {
-            const isExternal = block.url.startsWith("http://") || block.url.startsWith("https://");
             const btnClass =
               "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white shadow-sm hover:shadow-md transition-all my-2 bg-primary-600 hover:bg-primary-700 cursor-pointer";
 
-            if (isExternal) {
-              return (
-                <div key={idx} className="my-3">
-                  <a
-                    href={block.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={btnClass}
-                  >
-                    <span>{block.label}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </a>
-                </div>
-              );
-            }
             return (
               <div key={idx} className="my-3">
-                <Link to={block.url} className={btnClass}>
+                <CmsResolvedLink raw={block.url} className={btnClass}>
                   <span>{block.label}</span>
                   <ArrowRight className="w-4 h-4" />
-                </Link>
+                </CmsResolvedLink>
               </div>
             );
           }
@@ -679,22 +706,66 @@ export const CmsContentRenderer: React.FC<CmsContentRendererProps> = ({
             return <PersonGridRenderer key={idx} filter={block.filter} />;
 
           case "module-worship":
-            return <WorshipModule key={idx} variant={block.variant} />;
+            return (
+              <WorshipModule
+                key={idx}
+                variant={block.variant}
+                presentation={presentationFromRaw(block.rawConfig, "module-worship")}
+              />
+            );
 
           case "module-calendar":
-            return <CalendarModule key={idx} variant={block.variant} />;
+            return (
+              <CalendarModule
+                key={idx}
+                presentation={presentationFromRaw(block.rawConfig, "module-calendar")}
+              />
+            );
+
+          case "module-kalender":
+            return (
+              <KalenderModule
+                key={idx}
+                variant={block.variant}
+                presentation={presentationFromRaw(block.rawConfig, "module-kalender")}
+              />
+            );
 
           case "module-news":
-            return <NewsModule key={idx} variant={block.variant} />;
+            return (
+              <NewsModule
+                key={idx}
+                variant={block.variant}
+                presentation={presentationFromRaw(block.rawConfig, "module-news")}
+              />
+            );
 
           case "module-sermon":
-            return <SermonModule key={idx} variant={block.variant} />;
+            return (
+              <SermonModule
+                key={idx}
+                variant={block.variant}
+                presentation={presentationFromRaw(block.rawConfig, "module-sermon")}
+              />
+            );
 
           case "module-groups":
-            return <GroupsModule key={idx} variant={block.variant} />;
+            return (
+              <GroupsModule
+                key={idx}
+                variant={block.variant}
+                presentation={presentationFromRaw(block.rawConfig, "module-groups")}
+              />
+            );
 
           case "module-giving":
-            return <GivingModule key={idx} variant={block.variant} />;
+            return (
+              <GivingModule
+                key={idx}
+                variant={block.variant}
+                presentation={presentationFromRaw(block.rawConfig, "module-giving")}
+              />
+            );
 
           default:
             return null;

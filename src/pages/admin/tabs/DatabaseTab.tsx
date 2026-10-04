@@ -5,8 +5,10 @@ import {
   populateCustomMockData,
   clearPlannerTestData,
   deleteAllData,
+  restoreFullMockDatabase,
   type DatabaseAdminResult,
 } from "../../../services/databaseAdmin";
+import { DEFAULT_VOLUNTEER_ROLE_NAMES } from "../../../data/defaultVolunteerRoles";
 import { ShowFeedback, StudioData } from "../studio";
 import { DatabaseTestdataTab } from "../../../components/admin/DatabaseTestdataTab";
 import {
@@ -70,11 +72,11 @@ const PRESET_PACKAGES: PresetPackage[] = [
   {
     id: "full",
     name: "Fullskala menighet",
-    description: "Komplett menighetsregister: 32 personer, 12 grupper, samlinger og oppgaver.",
+    description: "Komplett menighetsregister: 32 personer, 14 grupper, samlinger og oppgaver.",
     persons: 32,
     groups: 12,
     gatherings: 19,
-    tasks: 21,
+    tasks: 24,
     tag: "32 personer (Maks)",
   },
 ];
@@ -96,9 +98,9 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
 
   // Custom counts state
   const [personCount, setPersonCount] = useState<number>(32);
-  const [groupCount, setGroupCount] = useState<number>(12);
+  const [groupCount, setGroupCount] = useState<number>(14);
   const [gatheringCount, setGatheringCount] = useState<number>(19);
-  const [taskCount, setTaskCount] = useState<number>(21);
+  const [taskCount, setTaskCount] = useState<number>(24);
   const [activePreset, setActivePreset] = useState<string>("full");
 
   // Checkbox for clearing planner records before population
@@ -144,7 +146,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
       } else {
         const clearedNote = clearBeforePopulate ? "Tidligere testdata ble ryddet. " : "";
         showFeedback(
-          `${clearedNote}Databasen er nå fylt med ${personCount} personer, ${groupCount} grupper, ${gatheringCount} samlinger og ${taskCount} oppgaver!`
+          `${clearedNote}Databasen er fylt med ${personCount} personer, ${groupCount} grupper, ${gatheringCount} samlinger, ${taskCount} oppgaver og ${DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller.`
         );
       }
     } catch (err) {
@@ -161,15 +163,15 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
       setPersonCount(32);
       setGroupCount(12);
       setGatheringCount(19);
-      setTaskCount(21);
+      setTaskCount(24);
       setActivePreset("full");
 
       const result: DatabaseAdminResult = await populateCustomMockData(
         {
           personCount: 32,
-          groupCount: 12,
+          groupCount: 14,
           gatheringCount: 19,
-          taskCount: 21,
+          taskCount: 24,
         },
         { clearPlannerFirst: clearBeforePopulate }
       );
@@ -177,7 +179,9 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
       if (result.failures.length > 0) {
         showFeedback(`Fylling fullført med feil: ${result.failures[0].message}`, "error");
       } else {
-        showFeedback("Databasen er nå fullstendig populert med alle 32 medlemmer, roller og grupper!");
+        showFeedback(
+          `Databasen er fylt med 32 medlemmer, 14 grupper, 19 samlinger, oppgaver og ${DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller.`
+        );
       }
     } catch (err) {
       showFeedback(err instanceof Error ? err.message : "Kunne ikke fylle med 32 personer.", "error");
@@ -201,6 +205,25 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
     } finally {
       setIsWorking(false);
       setConfirmClearPlannerDialog(false);
+    }
+  };
+
+  const handleRestoreFullMock = async () => {
+    if (isWorking) return;
+    setIsWorking(true);
+    try {
+      const result = await restoreFullMockDatabase();
+      if (result.failures.length > 0) {
+        showFeedback(`Gjenoppretting fullført med feil: ${result.failures[0].message}`, "error");
+      } else {
+        showFeedback(
+          `Demo-databasen er lagt inn på nytt: 32 personer, 14 grupper, samlinger, oppgaver og ${DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller.`
+        );
+      }
+    } catch (err) {
+      showFeedback(err instanceof Error ? err.message : "Kunne ikke gjenopprette demo-data.", "error");
+    } finally {
+      setIsWorking(false);
     }
   };
 
@@ -399,7 +422,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-indigo-300 font-semibold bg-indigo-950/80 border border-indigo-800/80 px-2.5 py-1 rounded-lg">
-                  Maks oppsett: 32 personer / 12 grupper
+                  Maks oppsett: 32 personer / 14 grupper
                 </span>
               </div>
             </div>
@@ -488,7 +511,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-300 font-semibold">Grupper & Husfellesskap:</span>
-                <span className="font-mono font-bold text-emerald-400 text-sm">{groupCount} av 12</span>
+                <span className="font-mono font-bold text-emerald-400 text-sm">{groupCount} av 14</span>
               </div>
               <input
                 type="range"
@@ -784,7 +807,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
           {/* Valg 1: Tøm kun testdata */}
           <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-700/80 flex flex-col justify-between space-y-3">
             <div className="space-y-1">
@@ -808,7 +831,30 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             </button>
           </div>
 
-          {/* Valg 2: Komplett sletting av alt */}
+          {/* Valg 2: Gjenopprett demo-data */}
+          <div className="p-4 rounded-xl bg-indigo-950/40 border border-indigo-900/60 flex flex-col justify-between space-y-3">
+            <div className="space-y-1">
+              <span className="font-bold text-indigo-100 text-xs flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
+                <span>Legg inn demo-data på nytt</span>
+              </span>
+              <p className="text-[11px] text-indigo-200/80 leading-relaxed">
+                Fyller databasen med 32 personer, grupper, samlinger, oppgaver og alle{" "}
+                {DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller fra rollebiblioteket.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleRestoreFullMock}
+              disabled={isWorking}
+              className="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer self-start"
+            >
+              {isWorking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              <span>Fyll inn alt på nytt</span>
+            </button>
+          </div>
+
+          {/* Valg 3: Komplett sletting av alt */}
           <div className="p-4 rounded-xl bg-red-950/40 border border-red-900/60 flex flex-col justify-between space-y-3">
             <div className="space-y-1">
               <span className="font-bold text-red-200 text-xs flex items-center gap-1.5">

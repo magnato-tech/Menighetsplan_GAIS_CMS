@@ -11,6 +11,7 @@ export interface InstructionTarget {
   taskId?: string;
   title: string;
   instruction: string;
+  volunteerRoleId?: string;
   time?: string;
   groupName?: string;
 }
@@ -19,8 +20,8 @@ export interface InstructionTarget {
 export interface EditableTask {
   id: string;
   title: string;
-  groupId: string;
+  volunteerRoleId?: string;
+  groupId?: string;
   neededCount: number;
   description: string;
-  instruction: string;
 }

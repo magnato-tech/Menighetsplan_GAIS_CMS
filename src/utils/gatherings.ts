@@ -22,10 +22,25 @@ export function locationOf(g: Pick<Gathering, "location">): string {
 
 const startOf = (g: Pick<Gathering, "startsAt">) => new Date(g.startsAt).getTime();
 
-/** The public gatherings that start at `from` or later, the nearest first. */
+/** A group meeting (`gruppesamling`), as opposed to a church-wide gathering (`arrangement`). */
+export function isGroupGathering(g: Pick<Partial<Gathering>, "type">): boolean {
+  return g.type === "gruppesamling";
+}
+
+/**
+ * Open to the whole congregation and visitors: visible outward and not a group-only meeting.
+ * Same rule as contract v1 (`excludeGroupGatherings` in the public API).
+ */
+export function isOpenCommunityGathering(
+  g: Pick<Partial<Gathering>, "type" | "visibility" | "isPublic">
+): boolean {
+  return isPubliclyVisible(g) && !isGroupGathering(g);
+}
+
+/** Open community gatherings from `from` onward, nearest first. */
 export function upcomingPublicGatherings<T extends Gathering>(gatherings: T[], from: number): T[] {
   return gatherings
-    .filter((g) => isPubliclyVisible(g) && startOf(g) >= from)
+    .filter((g) => isOpenCommunityGathering(g) && startOf(g) >= from)
     .sort((a, b) => startOf(a) - startOf(b));
 }
 

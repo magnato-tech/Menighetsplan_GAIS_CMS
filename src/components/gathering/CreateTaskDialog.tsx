@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Gathering } from "../../types";
-import {
-  X,
-} from "lucide-react";
+import { X } from "lucide-react";
 import { GatheringDetail } from "./gatheringDetail";
+import { findExistingTaskForRole, sortVolunteerRoles } from "../../utils/roleStaffing";
+import { studioTabUrl } from "../../pages/admin/studio";
 
 interface CreateTaskDialogProps {
   detail: GatheringDetail;
@@ -14,46 +15,105 @@ interface CreateTaskDialogProps {
   onClose: () => void;
 }
 
-export const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({ detail, gathering, open, showToast, onClose }) => {
-  const { group, involvedGroups, allGroups, createTask } = detail;
+export const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
+  detail,
+  gathering,
+  open,
+  showToast,
+  onClose,
+}) => {
+  const { group, volunteerRoles, gatheringTasks, allGroups, createTask, updateGathering } = detail;
 
-  const [newTaskTitle, setNewTaskTitle] = useState<string>("");
-  // Starts on the user's own group, then the gathering's, then the first group there is
-  const [newTaskGroupId, setNewTaskGroupId] = useState<string>(
-    group?.id || involvedGroups[0]?.id || allGroups[0]?.id || ""
+  const [selectedRoleId, setSelectedRoleId] = useState<string>("");
+  const [programTime, setProgramTime] = useState<string>("11:00");
+  const [programTitle, setProgramTitle] = useState<string>("");
+  const [taskGroupId, setTaskGroupId] = useState<string>("");
+  const [neededCount, setNeededCount] = useState<number>(1);
+  const [pendingShare, setPendingShare] = useState<{ existingTaskId: string } | null>(null);
+
+  const preferredGroupId = group?.id || gathering.groupId;
+  const sortedRoles = useMemo(
+    () => sortVolunteerRoles(volunteerRoles, preferredGroupId),
+    [volunteerRoles, preferredGroupId]
   );
-  const [newTaskNeededCount, setNewTaskNeededCount] = useState<number>(1);
-  const [newTaskInstruction, setNewTaskInstruction] = useState<string>("");
+  const selectedRole = sortedRoles.find((r) => r.id === selectedRoleId);
+  const teamFieldVisible = Boolean(selectedRole?.groupId);
 
-  // Admin: Create Task
-  const handleCreateTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTaskTitle.trim()) {
-      showToast("Vennligst oppgi en tittel på oppgaven.");
-      return;
-    }
-    if (!newTaskGroupId) {
-      showToast("Velg hvilken gruppe som har ansvaret for oppgaven.");
-      return;
-    }
+  useEffect(() => {
+    if (!selectedRole) return;
+    setProgramTitle(selectedRole.name);
+    setTaskGroupId(selectedRole.groupId || "");
+  }, [selectedRoleId, selectedRole]);
 
+  const resetForm = () => {
+    setSelectedRoleId("");
+    setProgramTime("11:00");
+    setProgramTitle("");
+    setTaskGroupId("");
+    setNeededCount(1);
+    setPendingShare(null);
+  };
+
+  const appendProgramPost = (taskId: string) => {
+    const newItem = {
+      time: programTime.trim(),
+      title: programTitle.trim(),
+      taskId,
+    };
+    const updatedSchedule = [...(gathering.programSchedule || []), newItem];
+    const res = updateGathering(gathering.id, { programSchedule: updatedSchedule });
+    if (res.success) {
+      showToast(`Programposten «${programTitle.trim()}» ble lagt til!`);
+      resetForm();
+      onClose();
+    } else {
+      showToast(res.error || "Kunne ikke lagre programposten.");
+    }
+  };
+
+  const createNewTask = (): string | null => {
+    if (!selectedRole) return null;
     const res = createTask({
       gatheringId: gathering.id,
-      groupId: newTaskGroupId,
-      title: newTaskTitle.trim(),
-      instruction: newTaskInstruction.trim() || undefined,
-      neededCount: newTaskNeededCount || 1,
+      groupId: selectedRole.groupId ? taskGroupId || selectedRole.groupId : undefined,
+      volunteerRoleId: selectedRole.id,
+      title: selectedRole.name,
+      neededCount: neededCount || 1,
     });
-
-    if (res.success) {
-      showToast(`Oppgaven «${newTaskTitle.trim()}» ble lagt til i samlingen!`);
-      onClose();
-      setNewTaskTitle("");
-      setNewTaskInstruction("");
-      setNewTaskNeededCount(1);
-    } else {
+    if (!res.success || !res.task) {
       showToast(res.error || "Kunne ikke opprette oppgave.");
+      return null;
     }
+    return res.task.id;
+  };
+
+  const handleCreatePost = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRoleId || !selectedRole) {
+      showToast("Velg en rolle fra biblioteket.");
+      return;
+    }
+    if (!programTime.trim() || !programTitle.trim()) {
+      showToast("Programposten trenger tid og tittel.");
+      return;
+    }
+
+    const existing = findExistingTaskForRole(gatheringTasks, gathering.id, selectedRoleId);
+    if (existing && !pendingShare) {
+      setPendingShare({ existingTaskId: existing.id });
+      return;
+    }
+
+    const taskId = pendingShare ? pendingShare.existingTaskId : createNewTask();
+    if (!taskId) return;
+    appendProgramPost(taskId);
+  };
+
+  const handleShareChoice = (reusePeople: boolean) => {
+    if (!selectedRole) return;
+    const taskId = reusePeople && pendingShare ? pendingShare.existingTaskId : createNewTask();
+    if (!taskId) return;
+    appendProgramPost(taskId);
   };
 
   if (!open) return null;
@@ -74,7 +134,7 @@ export const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({ detail, gath
               Legg til i samlingen
             </span>
             <h3 className="text-base font-extrabold text-slate-900 leading-tight">
-              Ny oppgave / programpunkt
+              Ny programpost
             </h3>
           </div>
           <button
@@ -86,86 +146,136 @@ export const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({ detail, gath
           </button>
         </div>
 
-        <form onSubmit={handleCreateTask} className="space-y-3 text-xs">
-          {/* Task Title */}
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">
-              Oppgavetittel / Rolle *
-            </label>
-            <input
-              type="text"
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              placeholder="f.eks. Dørvert / Velkomst"
-              className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-900"
-              required
-            />
-          </div>
-
-          {/* Responsible Group */}
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">
-              Ansvarlig tjenestegruppe *
-            </label>
-            <select
-              value={newTaskGroupId}
-              onChange={(e) => setNewTaskGroupId(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
+        {volunteerRoles.length === 0 ? (
+          <div className="space-y-3 text-xs text-slate-600">
+            <p>Det finnes ingen roller i biblioteket ennå. Legg inn roller i admin før du setter opp programmet.</p>
+            <Link
+              to={studioTabUrl("planlegger-roller")}
+              className="inline-flex text-indigo-700 font-bold hover:text-indigo-900 underline"
             >
-              {allGroups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name} ({g.category || "gruppe"})
-                </option>
-              ))}
-            </select>
+              Gå til Roller
+            </Link>
           </div>
+        ) : pendingShare ? (
+          <div className="space-y-4 text-xs">
+            <p className="text-slate-700 leading-relaxed">
+              Rollen <strong>{selectedRole?.name}</strong> finnes allerede på denne samlingen. Skal denne
+              programposten bruke de samme personene?
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => handleShareChoice(true)}
+                className="w-full px-4 py-2.5 font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl cursor-pointer"
+              >
+                Ja, samme personer
+              </button>
+              <button
+                type="button"
+                onClick={() => handleShareChoice(false)}
+                className="w-full px-4 py-2.5 font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl cursor-pointer"
+              >
+                Nei, egen oppgave
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingShare(null)}
+                className="text-slate-500 hover:text-slate-700 font-semibold cursor-pointer"
+              >
+                Tilbake
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleCreatePost} className="space-y-3 text-xs">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Rolle fra biblioteket *</label>
+              <select
+                value={selectedRoleId}
+                onChange={(e) => setSelectedRoleId(e.target.value)}
+                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
+                required
+              >
+                <option value="">Velg rolle...</option>
+                {sortedRoles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                    {role.groupId ? ` (${allGroups.find((g) => g.id === role.groupId)?.name || "team"})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Needed Count */}
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">
-              Bemanningsbehov (antall personer)
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="20"
-              value={newTaskNeededCount}
-              onChange={(e) => setNewTaskNeededCount(parseInt(e.target.value, 10) || 1)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-900"
-            />
-          </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Klokkeslett *</label>
+                <input
+                  type="text"
+                  value={programTime}
+                  onChange={(e) => setProgramTime(e.target.value)}
+                  placeholder="11:00"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-900"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Programtittel *</label>
+                <input
+                  type="text"
+                  value={programTitle}
+                  onChange={(e) => setProgramTitle(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-900"
+                  required
+                />
+              </div>
+            </div>
 
-          {/* Instruction */}
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">
-              Oppgaveinstruks (valgfritt)
-            </label>
-            <textarea
-              rows={2}
-              value={newTaskInstruction}
-              onChange={(e) => setNewTaskInstruction(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
-              placeholder="Beskriv forberedelser og rutiner..."
-            />
-          </div>
+            {teamFieldVisible && (
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Tjenesteteam</label>
+                <select
+                  value={taskGroupId}
+                  onChange={(e) => setTaskGroupId(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
+                >
+                  {allGroups.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name} ({g.category || "gruppe"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
-          {/* Actions */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => onClose()}
-              className="px-3 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
-            >
-              Avbryt
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs cursor-pointer"
-            >
-              Opprett oppgave
-            </button>
-          </div>
-        </form>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Bemanningsbehov (antall personer)</label>
+              <input
+                type="number"
+                min="1"
+                max="20"
+                value={neededCount}
+                onChange={(e) => setNeededCount(parseInt(e.target.value, 10) || 1)}
+                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-900"
+              />
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => onClose()}
+                className="px-3 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+              >
+                Avbryt
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs cursor-pointer"
+              >
+                Legg til programpost
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

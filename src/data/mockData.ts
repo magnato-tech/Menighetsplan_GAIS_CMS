@@ -375,12 +375,38 @@ export const initialGroups: Group[] = [
     },
   },
   {
-    id: "group-kaffe",
-    name: "Kirkekaffe & vertskap",
+    id: "group-rigging",
+    name: "Rigging",
     category: "tjenestegruppe",
-    memberIds: ["person-15", "person-21", "person-27", "person-31", "person-32", "person-1", "person-2", "person-4"],
+    memberIds: ["person-19", "person-18", "person-2", "person-1"],
+    leaderIds: ["person-19"],
+    deputyLeaderIds: ["person-18"],
+    meetingSchedule: {
+      weekday: "Søndag",
+      time: "09:00",
+      frequency: "hver uke",
+    },
+  },
+  {
+    id: "group-kjokken",
+    name: "Kjøkken",
+    category: "tjenestegruppe",
+    memberIds: ["person-15", "person-21", "person-27", "person-31", "person-1", "person-2"],
     leaderIds: ["person-15"], // Camilla Bakke
     deputyLeaderIds: ["person-21"], // Anne Grethe Nilsen
+    meetingSchedule: {
+      weekday: "Søndag",
+      time: "10:30",
+      frequency: "annenhver uke",
+    },
+  },
+  {
+    id: "group-motevert",
+    name: "Møtevert",
+    category: "tjenestegruppe",
+    memberIds: ["person-32", "person-4", "person-15", "person-1"],
+    leaderIds: ["person-32"], // Torleif Røed
+    deputyLeaderIds: ["person-4"], // Jonas Lie
     meetingSchedule: {
       weekday: "Søndag",
       time: "10:30",
@@ -582,7 +608,7 @@ export const initialGatherings: Gathering[] = [
   },
   {
     id: "gathering-aug-2",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "Gudstjeneste & velkomstkaffe",
     startsAt: "2026-08-30T11:00:00+02:00",
     endsAt: "2026-08-30T13:00:00+02:00",
@@ -601,7 +627,7 @@ export const initialGatherings: Gathering[] = [
   },
   {
     id: "gathering-1",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "Gudstjeneste & dåp",
     startsAt: "2026-09-06T11:00:00+02:00",
     endsAt: "2026-09-06T13:00:00+02:00",
@@ -613,11 +639,11 @@ export const initialGatherings: Gathering[] = [
     cancelled: false,
     programSchedule: [
       { time: "11:00", title: "Klokkeringing, preludium & velkommen", description: "Liturg og dåpsfamilier samles i våpenhuset" },
-      { time: "11:05", title: "Fellessang & lovsang", description: "Lovsangsteamet leder 3 sanger", taskId: "task-1" },
+      { time: "11:05", title: "Fellessang & lovsang", description: "Lovsangsteamet leder 3 sanger", taskId: "task-g1-lovsang" },
       { time: "11:20", title: "Dåpshandling & barnevelsignelse", description: "2 dåpsbarn bæres frem til døpefonten" },
-      { time: "11:35", title: "Barnekirke sendes til kjellersalen", description: "Barna går samlet til søndagsskolen", taskId: "task-7" },
+      { time: "11:35", title: "Barnekirke sendes til kjellersalen", description: "Barna går samlet til søndagsskolen", taskId: "task-g1-barn" },
       { time: "11:40", title: "Kunngjøringer & kollekt" },
-      { time: "11:50", title: "Preken / Dagens tale", description: "Pastor preker om nåde og fellesskap", taskId: "task-9" },
+      { time: "11:50", title: "Preken / Dagens tale", description: "Pastor preker om nåde og fellesskap", taskId: "task-g1-taler" },
       { time: "12:15", title: "Nattverd & personlig forbønn", description: "3 nattverdstasjoner i salen" },
       { time: "12:30", title: "Velsignelse & postludium" },
       { time: "12:35", title: "Kirkekaffe & fellesskap i kafeen", description: "Kaffeservering og prat", taskId: "task-3" },
@@ -644,7 +670,7 @@ export const initialGatherings: Gathering[] = [
   },
   {
     id: "gathering-3",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "Høstgudstjeneste & kirkelunsj",
     startsAt: "2026-09-13T11:00:00+02:00",
     endsAt: "2026-09-13T13:00:00+02:00",
@@ -663,8 +689,8 @@ export const initialGatherings: Gathering[] = [
   },
   {
     id: "gathering-4",
-    groupId: "group-kaffe",
-    title: "Kaffeteam-samling & menyplanlegging",
+    groupId: "group-kjokken",
+    title: "Kjøkkenteam-samling & menyplanlegging",
     startsAt: "2026-09-16T18:30:00+02:00",
     endsAt: "2026-09-16T20:30:00+02:00",
     location: "Kjøkkenet & peisestua",
@@ -735,7 +761,7 @@ export const initialGatherings: Gathering[] = [
   },
   {
     id: "gathering-okt-1",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "Høsttakkefest & felleskapsmåltid",
     startsAt: "2026-10-11T11:00:00+02:00",
     endsAt: "2026-10-11T13:00:00+02:00",
@@ -769,7 +795,7 @@ export const initialGatherings: Gathering[] = [
   },
   {
     id: "gathering-nov-1",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "Allehelgensgudstjeneste & minnestund",
     startsAt: "2026-11-01T11:00:00+01:00",
     endsAt: "2026-11-01T12:30:00+01:00",
@@ -803,7 +829,7 @@ export const initialGatherings: Gathering[] = [
   },
   {
     id: "gathering-des-1",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "1. søndag i advent & julegrantenning",
     startsAt: "2026-12-06T11:00:00+01:00",
     endsAt: "2026-12-06T13:00:00+01:00",
@@ -836,7 +862,7 @@ export const initialGatherings: Gathering[] = [
   },
   {
     id: "gathering-jan-1",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "Nyttårsgudstjeneste & kirkekaffe",
     startsAt: "2027-01-10T11:00:00+01:00",
     endsAt: "2027-01-10T13:00:00+01:00",
@@ -872,10 +898,10 @@ export const initialGatherings: Gathering[] = [
 export const initialGroupMessages: GroupMessage[] = [
   {
     id: "msg-1",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     senderPersonId: "person-1",
     senderName: "Kari Nordmann",
-    content: "Velkommen til nytt semester i kaffegruppen! Husk å sjekke datoene dine for september og høsten.",
+    content: "Velkommen til nytt semester i kjøkkengruppen! Husk å sjekke datoene dine for september og høsten.",
     createdAt: "2026-09-01T09:00:00+02:00",
   },
   {
@@ -917,7 +943,7 @@ export const initialTasks: Task[] = [
   {
     id: "task-aug-1",
     gatheringId: "gathering-aug-1",
-    groupId: "group-lyd",
+    groupId: "group-rigging",
     title: "Teknisk riggansvarlig",
     description: "Klargjøre miksebord og teste trådløse mikrofoner.",
     instruction: "Møt kl. 17:30. Slå på rack og sjekk batterier.",
@@ -927,7 +953,7 @@ export const initialTasks: Task[] = [
   {
     id: "task-aug-2",
     gatheringId: "gathering-aug-2",
-    groupId: "group-kaffe",
+    groupId: "group-motevert",
     title: "Velkomstkaffe vert",
     description: "Trakte kaffe og sette frem boller til semesterstart.",
     instruction: "Møt kl. 10:15. Trakte 3 kanner kaffe.",
@@ -977,7 +1003,7 @@ export const initialTasks: Task[] = [
   {
     id: "task-3",
     gatheringId: "gathering-1",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "Kirkekaffe-ansvarlig",
     description: "Trakte kaffe og te før møtet, sette frem kopper og rydde av etterpå.",
     instruction: "Møt opp kl. 10:00. Sett på 4 kanner kaffe og 2 kanner tevann. Finn frem kopper, servietter, melk og sukker på serveringsbordet. Etter møteslutt: fyll oppvaskmaskinen, tørk av bordene og kast søppel.",
@@ -987,7 +1013,7 @@ export const initialTasks: Task[] = [
   {
     id: "task-4",
     gatheringId: "gathering-1",
-    groupId: "group-kaffe",
+    groupId: "group-motevert",
     title: "Vertskap i døren",
     description: "Ønske velkommen med et smil, dele ut program og hjelpe barnefamilier til rette. Forrige person meldte forfall.",
     instruction: "Stå ved hovedinngangen fra kl. 10:35. Hils på alle som kommer, del ut gudstjenesteprogram og vis nye familier veien til søndagsskolens rom.",
@@ -997,7 +1023,7 @@ export const initialTasks: Task[] = [
   {
     id: "task-5",
     gatheringId: "gathering-1",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "Bake kake / fruktfat",
     description: "Ta med en langpannekake, boller eller et friskt fruktfat til kirkekaffen etter gudstjenesten.",
     instruction: "Lever ferdig oppskåret kake eller fruktfat på kjøkkenet før kl. 10:45. Husk å merke fat med navn om du ønsker det tilbake.",
@@ -1017,7 +1043,7 @@ export const initialTasks: Task[] = [
   {
     id: "task-7",
     gatheringId: "gathering-3",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "Kjøkkenansvarlig høstlunsj",
     description: "Lede anretning av felles lunsj, organisere servering og sette i gang oppvask.",
     instruction: "Koordiner kjøkkenteamet fra kl. 10:30. Sett opp lunsjbuffet, hold oversikt over påfyll under serveringen og fordel oppgaver for opprydding og oppvask.",
@@ -1037,7 +1063,7 @@ export const initialTasks: Task[] = [
   {
     id: "task-sep-6-kaffe",
     gatheringId: "gathering-6",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "Saft og boller vertskap",
     description: "Dele ut saft og boller til barna etter møtet.",
     instruction: "Oppmøte 11:30 på kjøkkenet.",
@@ -1047,7 +1073,7 @@ export const initialTasks: Task[] = [
   {
     id: "task-okt-1",
     gatheringId: "gathering-okt-1",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "Suppe- og kaffeservering",
     description: "Servere varm suppe og brød på høsttakkefesten.",
     instruction: "Oppmøte kl. 10:30. Varme suppegryter og skjære brød.",
@@ -1067,7 +1093,7 @@ export const initialTasks: Task[] = [
   {
     id: "task-nov-1",
     gatheringId: "gathering-nov-1",
-    groupId: "group-kaffe",
+    groupId: "group-motevert",
     title: "Vertskap allehelgensdag",
     description: "Enkel kaffeservering og vertskap i kirkestua.",
     instruction: "Oppmøte kl. 10:30.",
@@ -1087,7 +1113,7 @@ export const initialTasks: Task[] = [
   {
     id: "task-des-1",
     gatheringId: "gathering-des-1",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "Gløgg- og julekakeansvarlig",
     description: "Varme gløgg og dekke bord med pepperkaker og klementiner.",
     instruction: "Oppmøte kl. 10:30 på kjøkkenet.",
@@ -1107,7 +1133,7 @@ export const initialTasks: Task[] = [
   {
     id: "task-jan-1",
     gatheringId: "gathering-jan-1",
-    groupId: "group-kaffe",
+    groupId: "group-kjokken",
     title: "Nyttårskirkekaffe",
     description: "Trakte kaffe og rydde etter årets første gudstjeneste.",
     instruction: "Oppmøte kl. 10:15.",
@@ -1124,6 +1150,32 @@ export const initialTasks: Task[] = [
     status: "confirmed",
     neededCount: 1,
   },
+  {
+    id: "task-g1-lovsang",
+    gatheringId: "gathering-1",
+    groupId: "group-lovsang",
+    title: "Lovsangsteam søndag",
+    description: "Lede tre sanger under gudstjenesten.",
+    status: "open",
+    neededCount: 3,
+  },
+  {
+    id: "task-g1-barn",
+    gatheringId: "gathering-1",
+    groupId: "group-barn",
+    title: "Barnekirke søndag",
+    description: "Ta imot barna og lede dem til kjellersalen.",
+    status: "open",
+    neededCount: 2,
+  },
+  {
+    id: "task-g1-taler",
+    gatheringId: "gathering-1",
+    title: "Dagens taler",
+    description: "Holde dagens preken.",
+    status: "confirmed",
+    neededCount: 1,
+  },
 ];
 
 export const initialAssignments: Assignment[] = [
@@ -1136,6 +1188,18 @@ export const initialAssignments: Assignment[] = [
   {
     id: "assign-aug-2",
     taskId: "task-aug-2",
+    personId: "person-1", // Kari Nordmann
+    response: "confirmed",
+  },
+  {
+    id: "assign-g1-lovsang",
+    taskId: "task-g1-lovsang",
+    personId: "person-5", // Martin Kleveland
+    response: "confirmed",
+  },
+  {
+    id: "assign-g1-taler",
+    taskId: "task-g1-taler",
     personId: "person-1", // Kari Nordmann
     response: "confirmed",
   },

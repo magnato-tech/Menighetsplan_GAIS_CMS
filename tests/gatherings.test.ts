@@ -1,6 +1,12 @@
 import { describe } from "vitest";
 import { assert } from "./assert";
-import { DEFAULT_LOCATION, locationOf, pickHighlight, upcomingPublicGatherings } from "../src/utils/gatherings";
+import {
+  DEFAULT_LOCATION,
+  isOpenCommunityGathering,
+  locationOf,
+  pickHighlight,
+  upcomingPublicGatherings,
+} from "../src/utils/gatherings";
 import type { Gathering } from "../src/types";
 
 describe("Samlinger på den offentlige nettsiden", () => {
@@ -32,6 +38,24 @@ describe("Samlinger på den offentlige nettsiden", () => {
   );
   assert(ids(upcomingPublicGatherings(mixed, now - 48 * 60 * 60 * 1000)).startsWith("i-gaar"), "Grensen for hva som er kommende bestemmes av kalleren");
   assert(ids(mixed).startsWith("om-to-uker"), "Listen som sendes inn blir ikke sortert om");
+
+  const withGroupMeeting = [
+    gathering("offentlig-arrangement", 24, { type: "arrangement" }),
+    gathering("offentlig-gruppe", 36, { type: "gruppesamling", visibility: "offentlig" }),
+    gathering("intern-gruppe", 48, { type: "gruppesamling", visibility: "intern" }),
+  ];
+  assert(
+    ids(upcomingPublicGatherings(withGroupMeeting, now)) === "offentlig-arrangement",
+    "Gruppesamlinger er ute selv om de er merket offentlige"
+  );
+  assert(
+    isOpenCommunityGathering({ visibility: "offentlig", type: "arrangement" }),
+    "Åpne menighetsarrangementer er med"
+  );
+  assert(
+    !isOpenCommunityGathering({ visibility: "offentlig", type: "gruppesamling" }),
+    "Gruppesamlinger er ikke åpne menighetsarrangementer"
+  );
 
   // 2. The front page: a featured gathering first, then the next worship service, then whatever is next
   const pick = (list: Gathering[]) => {

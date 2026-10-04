@@ -76,7 +76,7 @@ describe("DatabaseTestdataTab Component med testdataService", () => {
     expect(grupperSlider).toBeDefined();
     expect(grupperSlider.min).toBe("0");
     expect(grupperSlider.max).toBe("100");
-    expect(grupperSlider.value).toBe("12");
+    expect(grupperSlider.value).toBe("14");
 
     // Kontroller 3: Roller (0-100)
     const rollerSlider = document.getElementById("roller-slider") as HTMLInputElement;
@@ -108,17 +108,17 @@ describe("DatabaseTestdataTab Component med testdataService", () => {
       // 2. Verifiser at testdataService.generateTestdata kalles for å generere 32 testpersoner
       expect(testdataService.generateTestdata).toHaveBeenCalledWith({
         personCount: 32,
-        groupCount: 12,
+        groupCount: 14,
         roleCount: 14,
       });
     });
 
     await waitFor(() => {
       expect(
-        screen.getByText(/32 nye testpersoner med varierende tilhørighet og roller er nå generert i Firestore/i)
+        screen.getByText(/Testdata er skrevet til Firestore: personer, grupper, samlinger, oppgaver og 15 tjenesteroller/i)
       ).toBeDefined();
       expect(showFeedbackMock).toHaveBeenCalledWith(
-        expect.stringContaining("32 nye testpersoner"),
+        expect.stringContaining("15 tjenesteroller"),
         "success"
       );
     });

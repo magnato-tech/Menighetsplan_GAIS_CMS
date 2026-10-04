@@ -55,8 +55,10 @@ describe("Fylling og sletting av databasen", () => {
   const tasks = ids(COLLECTIONS.TASKS);
   assert(rows(COLLECTIONS.GATHERINGS).every((g) => groups.has(g.groupId)), "Alle samlinger peker på en gruppe som finnes");
   assert(
-    rows(COLLECTIONS.TASKS).every((t) => gatherings.has(t.gatheringId) && groups.has(t.groupId)),
-    "Alle oppgaver peker på en samling og gruppe som finnes"
+    rows(COLLECTIONS.TASKS).every(
+      (t) => gatherings.has(t.gatheringId) && (!t.groupId || groups.has(t.groupId))
+    ),
+    "Alle oppgaver peker på en samling og eventuelt team som finnes"
   );
   assert(
     rows(COLLECTIONS.ASSIGNMENTS).every((a) => tasks.has(a.taskId) && persons.has(a.personId)),
@@ -98,11 +100,11 @@ describe("Fylling og sletting av databasen", () => {
   );
 
   // 7. Fullscale 32-person mock dataset verification
-  const fullDocs = getCustomMockDocuments({ personCount: 32, groupCount: 12, gatheringCount: 19, taskCount: 21 });
+  const fullDocs = getCustomMockDocuments({ personCount: 32, groupCount: 14, gatheringCount: 19, taskCount: 21 });
   const fPersons = fullDocs.filter((d) => d.collection === COLLECTIONS.PERSONS);
   const fGroups = fullDocs.filter((d) => d.collection === COLLECTIONS.GROUPS);
   assert(fPersons.length === 32, "Fullskala oppsett genererer nøyaktig 32 personer");
-  assert(fGroups.length === 12, "Fullskala oppsett genererer 12 grupper");
+  assert(fGroups.length === 14, "Fullskala oppsett genererer 14 grupper");
   const staffMembers = fPersons.filter((p: any) => p.data.isStaff === true);
   assert(staffMembers.length >= 8, "Fullskala oppsett inneholder minst 8 stabsmedlemmer");
   const pastors = staffMembers.filter((p: any) => p.data.staffCategory === "pastor");

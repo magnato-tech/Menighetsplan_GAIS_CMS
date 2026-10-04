@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
-import { collection, doc, onSnapshot } from "firebase/firestore";
+import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID } from "../data/collections";
 import {
@@ -48,6 +48,7 @@ const CmsContext = createContext<CmsContextValue | null>(null);
 // something to show before Firestore has answered.
 const STORAGE_KEYS = {
   pages: "menighetsplan_cms_pages_v3",
+  pagesPublic: "menighetsplan_cms_pages_public_v1",
   news: "menighetsplan_cms_news_v3",
   sermons: "menighetsplan_cms_sermons_v3",
   staff: "menighetsplan_cms_staff_v3",
@@ -86,13 +87,21 @@ const latestDateFirst = (a: { date: string }, b: { date: string }) =>
  * A CMS collection as Firestore has it, starting from the copy kept in the browser.
  * A write shows up here through the listener; nothing else changes the list.
  */
-function useCmsCollection<T>(name: string, storageKey: string, compare?: (a: T, b: T) => number): T[] {
+function useCmsCollection<T>(
+  name: string,
+  storageKey: string,
+  compare?: (a: T, b: T) => number,
+  filterPublishedOnly = false
+): T[] {
   const [items, setItems] = useState<T[]>(() => readCache<T[]>(storageKey) ?? []);
 
   useEffect(() => {
     let isFirst = true;
+    const source = filterPublishedOnly
+      ? query(collection(db, name), where("isPublished", "==", true))
+      : collection(db, name);
     return onSnapshot(
-      collection(db, name),
+      source,
       (snapshot) => {
         // Opened without a connection, Firestore first reports an empty collection. Keep the copy we have.
         const emptyBecauseOffline = isFirst && snapshot.empty && snapshot.metadata.fromCache;
@@ -195,8 +204,14 @@ const writes = {
       linkUrl: pageData.linkUrl || undefined,
       updatedAt: new Date().toISOString(),
       heroImage: pageData.heroImage || "",
+      heroTitle: pageData.heroTitle || "",
       heroCtaText: pageData.heroCtaText || "",
       heroCtaLink: pageData.heroCtaLink || "",
+      heroCtaSecondaryText: pageData.heroCtaSecondaryText || "",
+      heroCtaSecondaryLink: pageData.heroCtaSecondaryLink || "",
+      showHeroPrimaryCta: pageData.showHeroPrimaryCta !== false,
+      showHeroSecondaryCta: pageData.showHeroSecondaryCta !== false,
+      showHero: true,
       metaDescription: pageData.metaDescription?.trim() || undefined,
       ogImage: pageData.ogImage?.trim() || undefined,
       publishAt,
@@ -258,8 +273,16 @@ const writes = {
 
 const normalizeSlug = (slug: string) => slug.toLowerCase().replace(/^\//, "").trim();
 
-export const CmsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const pages = useCmsCollection<CmsPage>(CMS_COLLECTIONS.PAGES, STORAGE_KEYS.pages);
+export const CmsProvider: React.FC<{ children: React.ReactNode; publicPagesOnly?: boolean }> = ({
+  children,
+  publicPagesOnly = false,
+}) => {
+  const pages = useCmsCollection<CmsPage>(
+    CMS_COLLECTIONS.PAGES,
+    publicPagesOnly ? STORAGE_KEYS.pagesPublic : STORAGE_KEYS.pages,
+    undefined,
+    publicPagesOnly
+  );
   const news = useCmsCollection<CmsNewsArticle>(CMS_COLLECTIONS.NEWS, STORAGE_KEYS.news, newestFirst);
   const sermons = useCmsCollection<CmsSermon>(CMS_COLLECTIONS.SERMONS, STORAGE_KEYS.sermons, latestDateFirst);
   const staff = useCmsCollection<CmsStaffMember>(CMS_COLLECTIONS.STAFF, STORAGE_KEYS.staff);

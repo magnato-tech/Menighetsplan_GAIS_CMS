@@ -58,6 +58,20 @@ export async function populateWithMockData(options?: { clearPlannerFirst?: boole
   return populateCustomMockData(undefined, options);
 }
 
+/** Fills the database with the full demo set: persons, groups, gatherings, tasks and tjenesteroller. */
+export async function restoreFullMockDatabase(): Promise<DatabaseAdminResult> {
+  return populateCustomMockData(
+    {
+      personCount: 32,
+      groupCount: 14,
+      gatheringCount: 19,
+      taskCount: 24,
+      roleCount: 14,
+    },
+    { clearPlannerFirst: false }
+  );
+}
+
 /**
  * Permanently deletes every document in every collection the app uses.
  * There is no undo.

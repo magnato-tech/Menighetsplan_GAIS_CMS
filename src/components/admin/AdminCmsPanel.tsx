@@ -272,7 +272,7 @@ export const AdminCmsPanel: React.FC<AdminCmsPanelProps> = ({
           editingPage={editingPage}
           isNewPage={isNewPage}
           availableParentPages={availableParentPages}
-          onUpdate={setEditingPage}
+          onUpdate={(patch) => setEditingPage((prev) => (prev ? { ...prev, ...patch } : patch))}
           onSave={handleSavePage}
           onClose={() => setEditingPage(null)}
         />
