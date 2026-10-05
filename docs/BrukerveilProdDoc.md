@@ -284,9 +284,14 @@ Menypunktet heter **Sider & Innhold**. Overskriften på siden er **Sider & Innho
   4. Bytt mellom **Gudstjenester** og **Alle arrangementer**, eller trykk **Vis som tabell**.
   5. Trykk **Last ned CSV** for å hente oppmøtetallene til et regneark.
   6. Les **Kan trenge avlastning** og **Ikke brukt i perioden** før neste vaktliste lages. Navnene åpner personkortet.
-  7. **Datagrunnlag** nederst sier hva tallene bygger på, og hva som ikke måles.
+  7. **Bemanning per arrangement** viser hvor mange samlinger som hadde alle plasser bekreftet, og hvilke som manglet folk.
+  8. **Flere oppgaver på samme samling** viser hvem som har hatt to eller flere oppgaver på samme samling, og de vanligste kombinasjonene. **Samme klokkeslett i kjøreplanen** vises der kjøreplanen har klokkeslett for begge oppgavene.
+  9. **Oppgaver og aktiviteter per måned** viser hvor stor del av menigheten som har 0, 1, 2 … **8 eller flere** i en vanlig måned. Bytt med **Oppgaver** og **Aktiviteter**.
+  10. **Hver enkelt** er en tabell per person. Bruk **Sorter etter** og **Bare de som har vært med**, og **Vis alle** for hele listen.
+  11. Trykk **Tilpass bordet** for å velge moduler, eller øyet på en modul for å skjule den. **Vis alle** tar alt tilbake.
+  12. **Datagrunnlag** nederst sier hva tallene bygger på, og hva som ikke måles.
 - **Tekst i grensesnittet:** Vinduet heter **Registrer oppmøtetall** eller **Endre oppmøtetall**. Hjelpetekst: «Skriv inn hvor mange som var til stede, talt på dagen. Tell barn under konfirmasjonsalder som barn.» En samling uten tall vises i diagrammet som en lav grå strek, merket **Ikke registrert**. Et tall som mangler grunnlag vises som «–».
-- **Etter lagring:** «Oppmøtetallet for «[samling]» er lagret.» Ved **Fjern tellingen**: «Oppmøtetallet for «[samling]» er fjernet.» Søylen, snittet og nøkkeltallene oppdateres med en gang.
+- **Etter lagring:** «Oppmøtetallet for «[samling]» er lagret.» Ved **Fjern tellingen**: «Oppmøtetallet for «[samling]» er fjernet.» Søylen, snittet og nøkkeltallene oppdateres med en gang. Når en modul skjules: ««[modul]» er skjult. Du får den tilbake under Tilpass bordet.» Nederst står hvor mange moduler som er skjult. Valget lagres for den som er innlogget, ikke for andre.
 - **Påkrevd og feil:** «Skriv inn hvor mange som var til stede.» når begge feltene er tomme eller null. «Voksne må være et helt tall (0 eller mer).» og tilsvarende for **Barn**. Bare samlinger som er holdt, ikke avlyst og ikke gruppesamlinger, kan telles.
 - **Prøve med historikk:** Under **Database og Testdata**, **Simuler menighetsliv**: velg 12, 26 eller 52 uker og trykk **Simuler menighetsliv**. **Fjern simulert historikk** tar bort bare det som ble simulert.
 - **Rettigheter:** Fanen har ingen rollesjekk.

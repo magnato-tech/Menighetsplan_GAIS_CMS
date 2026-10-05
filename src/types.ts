@@ -28,6 +28,8 @@ export interface Person {
   staffCategory?: "pastor" | "stab" | "barneleder" | "diakoni" | "annet";
   staffBio?: string;
   staffOrder?: number;
+  /** Modules this person has hidden on the analysis board (see utils/analyticsModules.ts). */
+  analyticsHiddenModules?: string[];
   updatedBy?: string;
   updatedAt?: string;
 }

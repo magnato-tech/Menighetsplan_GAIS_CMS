@@ -11,6 +11,11 @@ interface RegisterAndWebsiteSectionProps {
   period: AnalyticsPeriod;
   people: PeopleSummary;
   content: ContentSummary;
+  /** Each half is its own module and can be hidden on its own. */
+  showRegister: boolean;
+  showWebsite: boolean;
+  onHideRegister: () => void;
+  onHideWebsite: () => void;
 }
 
 const link = "font-semibold text-[var(--studio-link)] hover:text-[var(--studio-link-hover)]";
@@ -29,18 +34,28 @@ const PersonList: React.FC<{ persons: Person[] }> = ({ persons }) => (
 );
 
 /** The person register as it stands today, and what was published on the website in the period. */
-export const RegisterAndWebsiteSection: React.FC<RegisterAndWebsiteSectionProps> = ({ period, people, content }) => {
+export const RegisterAndWebsiteSection: React.FC<RegisterAndWebsiteSectionProps> = ({
+  period,
+  people,
+  content,
+  showRegister,
+  showWebsite,
+  onHideRegister,
+  onHideWebsite,
+}) => {
   const { policeCertificates: certificates } = people;
   const newsChange = describeChange(content.newsPublished, content.previousNewsPublished);
   const sermonChange = describeChange(content.sermons, content.previousSermons);
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <div className={`grid grid-cols-1 gap-6 ${showRegister && showWebsite ? "xl:grid-cols-2" : ""}`}>
+      {showRegister && (
       <AnalyticsSection
         id="analyse-personregister"
         title="Personregisteret"
         description="Slik registeret står i dag."
         icon={<ShieldCheck className="w-5 h-5" />}
+        onHide={onHideRegister}
       >
         <div className="grid grid-cols-2 gap-3">
           <MiniStat label="Personer" value={String(people.total)}>
@@ -78,12 +93,15 @@ export const RegisterAndWebsiteSection: React.FC<RegisterAndWebsiteSectionProps>
           </div>
         )}
       </AnalyticsSection>
+      )}
 
+      {showWebsite && (
       <AnalyticsSection
         id="analyse-nettside"
         title="Nettsiden"
         description={`Hva som er publisert ${period.label.toLowerCase()}.`}
         icon={<Globe2 className="w-5 h-5" />}
+        onHide={onHideWebsite}
       >
         <div className="grid grid-cols-2 gap-3">
           <MiniStat label="Nyheter publisert" value={String(content.newsPublished)}>
@@ -104,6 +122,7 @@ export const RegisterAndWebsiteSection: React.FC<RegisterAndWebsiteSectionProps>
           Besøk på nettsiden måles ikke. Løsningen har ingen sporing av besøkende.
         </p>
       </AnalyticsSection>
+      )}
     </div>
   );
 };

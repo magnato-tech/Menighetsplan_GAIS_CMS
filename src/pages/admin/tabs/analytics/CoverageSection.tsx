@@ -7,6 +7,7 @@ interface CoverageSectionProps {
   coverage: CoverageNote[];
   /** Opens Database og Testdata, where a history can be simulated. */
   onOpenDatabase: () => void;
+  onHide: () => void;
 }
 
 const STATUS = {
@@ -16,12 +17,13 @@ const STATUS = {
 } as const;
 
 /** What the numbers on the board rest on, and what is not measured at all. */
-export const CoverageSection: React.FC<CoverageSectionProps> = ({ coverage, onOpenDatabase }) => (
+export const CoverageSection: React.FC<CoverageSectionProps> = ({ coverage, onOpenDatabase, onHide }) => (
   <AnalyticsSection
     id="analyse-datagrunnlag"
     title="Datagrunnlag"
     description="Tallene over er talt fra det som er registrert. Det som ikke er registrert, er ikke anslått."
     icon={<Info className="w-5 h-5" />}
+    onHide={onHide}
   >
     <ul className="space-y-2">
       {coverage.map((note) => {

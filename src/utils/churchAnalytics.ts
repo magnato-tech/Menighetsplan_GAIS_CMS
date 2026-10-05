@@ -535,6 +535,318 @@ export function summarizeGroups(
 }
 
 // ============================================================================
+// The congregation's health: full staffing, several tasks at once, how often each takes part
+// ============================================================================
+
+/** The role a task fills: its name in the role library, or else the task's own title. */
+function roleNameOf(task: Task, roleNameById: Map<string, string>): string {
+  return (task.volunteerRoleId && roleNameById.get(task.volunteerRoleId)) || task.title;
+}
+
+function groupBy<T>(items: T[], keyOf: (item: T) => string): Map<string, T[]> {
+  const map = new Map<string, T[]>();
+  for (const item of items) {
+    const key = keyOf(item);
+    const list = map.get(key) ?? [];
+    list.push(item);
+    map.set(key, list);
+  }
+  return map;
+}
+
+/** One person saying yes to one task on a gathering that was held. */
+interface Serving {
+  personId: string;
+  task: Task;
+  gathering: Gathering;
+}
+
+/** Every confirmed task on the gatherings, a cancelled task left out. */
+function servingsOn(gatherings: Gathering[], data: Pick<ChurchData, "tasks" | "assignments">): Serving[] {
+  const gatheringById = new Map(gatherings.map((g) => [g.id, g]));
+  const taskById = new Map(
+    data.tasks.filter((t) => gatheringById.has(t.gatheringId) && t.status !== "cancelled").map((t) => [t.id, t])
+  );
+  return data.assignments.flatMap((a) => {
+    const task = taskById.get(a.taskId);
+    if (a.response !== "confirmed" || !task) return [];
+    return [{ personId: a.personId, task, gathering: gatheringById.get(task.gatheringId)! }];
+  });
+}
+
+export interface GatheringStaffing {
+  gathering: Gathering;
+  isWorship: boolean;
+  needed: number;
+  filled: number;
+  missing: number;
+  /** Every slot on every task is filled by someone who said yes. */
+  full: boolean;
+}
+
+export interface FullStaffingSummary {
+  /** Held gatherings that had tasks, oldest first. A gathering without tasks has nothing to staff. */
+  gatherings: GatheringStaffing[];
+  full: number;
+  rate: number | null;
+  previousRate: number | null;
+  worship: { withTasks: number; full: number; rate: number | null };
+  /** Not fully staffed, newest first. */
+  notFull: GatheringStaffing[];
+}
+
+function staffingPerGathering(
+  gatherings: Gathering[],
+  data: Pick<ChurchData, "tasks" | "assignments">
+): GatheringStaffing[] {
+  const tasksByGathering = groupBy(
+    data.tasks.filter((t) => t.status !== "cancelled"),
+    (t) => t.gatheringId
+  );
+  const assignmentsByTask = groupBy(data.assignments, (a) => a.taskId);
+  return gatherings.flatMap((gathering) => {
+    const tasks = tasksByGathering.get(gathering.id) ?? [];
+    if (tasks.length === 0) return [];
+    let needed = 0;
+    let filled = 0;
+    for (const task of tasks) {
+      const slots = countSlots(task, assignmentsByTask.get(task.id) ?? []);
+      needed += slots.needed;
+      filled += Math.min(slots.confirmed, slots.needed);
+    }
+    const isWorship = !isGroupGathering(gathering) && isWorshipService(gathering);
+    return [{ gathering, isWorship, needed, filled, missing: needed - filled, full: filled === needed }];
+  });
+}
+
+export function summarizeFullStaffing(
+  data: Pick<ChurchData, "gatherings" | "tasks" | "assignments">,
+  period: AnalyticsPeriod
+): FullStaffingSummary {
+  const gatherings = staffingPerGathering(heldIn(data.gatherings, period.from, period.to), data);
+  const previous = staffingPerGathering(heldIn(data.gatherings, period.previousFrom, period.from, false), data);
+  const full = gatherings.filter((g) => g.full).length;
+  const worship = gatherings.filter((g) => g.isWorship);
+  const worshipFull = worship.filter((g) => g.full).length;
+  return {
+    gatherings,
+    full,
+    rate: share(full, gatherings.length),
+    previousRate: share(previous.filter((g) => g.full).length, previous.length),
+    worship: { withTasks: worship.length, full: worshipFull, rate: share(worshipFull, worship.length) },
+    notFull: gatherings.filter((g) => !g.full).reverse(),
+  };
+}
+
+export interface MultiTaskOccurrence {
+  person: Person;
+  gathering: Gathering;
+  /** The roles, in alphabetical order. */
+  roles: string[];
+  /** The run sheet puts two of the tasks at the same clock time. Only known where it gives times. */
+  sameTime: boolean;
+}
+
+export interface MultiTaskSummary {
+  /** A person with two or more tasks on the same gathering, newest first. */
+  occurrences: MultiTaskOccurrence[];
+  people: number;
+  /** Gatherings where at least one person had several tasks. */
+  gatherings: number;
+  /** Of all the times someone served on a gathering, the share where they had two or more tasks. */
+  shareOfServings: number | null;
+  /** The role combinations, most common first: "Bilde + Møteleder". */
+  combinations: { roles: string; count: number }[];
+  byPerson: { person: Person; times: number; mostTasks: number }[];
+  sameTimeCount: number;
+}
+
+export function summarizeMultiTasks(
+  data: Pick<ChurchData, "persons" | "gatherings" | "tasks" | "assignments" | "volunteerRoles">,
+  period: AnalyticsPeriod
+): MultiTaskSummary {
+  const personById = new Map(data.persons.map((p) => [p.id, p]));
+  const roleNameById = new Map(data.volunteerRoles.map((r) => [r.id, r.name]));
+  const byPersonAndGathering = groupBy(
+    servingsOn(heldIn(data.gatherings, period.from, period.to), data).filter((s) => personById.has(s.personId)),
+    (s) => `${s.personId}|${s.gathering.id}`
+  );
+
+  const occurrences: MultiTaskOccurrence[] = [];
+  for (const servings of byPersonAndGathering.values()) {
+    const tasks = [...new Map(servings.map((s) => [s.task.id, s.task])).values()];
+    if (tasks.length < 2) continue;
+    const gathering = servings[0].gathering;
+    const timeOfTask = new Map(
+      (gathering.programSchedule ?? []).filter((item) => item.taskId && item.time).map((item) => [item.taskId!, item.time])
+    );
+    const times = tasks.map((t) => timeOfTask.get(t.id)).filter((t): t is string => Boolean(t));
+    occurrences.push({
+      person: personById.get(servings[0].personId)!,
+      gathering,
+      roles: tasks.map((t) => roleNameOf(t, roleNameById)).sort((a, b) => a.localeCompare(b, "nb")),
+      sameTime: new Set(times).size < times.length,
+    });
+  }
+  occurrences.sort((a, b) => timeOf(b.gathering.startsAt) - timeOf(a.gathering.startsAt) || a.person.name.localeCompare(b.person.name, "nb"));
+
+  const combinations = [...groupBy(occurrences, (o) => o.roles.join(" + ")).entries()]
+    .map(([roles, list]) => ({ roles, count: list.length }))
+    .sort((a, b) => b.count - a.count || a.roles.localeCompare(b.roles, "nb"));
+  const byPerson = [...groupBy(occurrences, (o) => o.person.id).values()]
+    .map((list) => ({ person: list[0].person, times: list.length, mostTasks: Math.max(...list.map((o) => o.roles.length)) }))
+    .sort((a, b) => b.times - a.times || a.person.name.localeCompare(b.person.name, "nb"));
+
+  return {
+    occurrences,
+    people: byPerson.length,
+    gatherings: new Set(occurrences.map((o) => o.gathering.id)).size,
+    shareOfServings: share(occurrences.length, byPersonAndGathering.size),
+    combinations,
+    byPerson,
+    sameTimeCount: occurrences.filter((o) => o.sameTime).length,
+  };
+}
+
+/** Bands for "how many in a month": 0, 1, 2 … 7, and 8 or more. */
+export const MONTH_BANDS = ["0", "1", "2", "3", "4", "5", "6", "7", "8 eller flere"] as const;
+
+export interface MonthBand {
+  label: (typeof MONTH_BANDS)[number];
+  /** Share of the person register with this many in a typical month. */
+  share: number;
+  /** About how many people that is in a typical month. */
+  people: number;
+}
+
+export interface PersonEngagement {
+  person: Person;
+  tasks: number;
+  gatheringsServed: number;
+  worshipServed: number;
+  /** Of the worship services held in the period, the share where the person had a task. */
+  worshipShare: number | null;
+  /** Gatherings where the person had two or more tasks. */
+  multiTaskTimes: number;
+  serviceGroups: number;
+  otherGroups: number;
+  /** Group meetings the person answered «Kommer» to. */
+  meetingsAttending: number;
+  /** Tasks and group meetings per month (30 days), one decimal. */
+  activitiesPerMonth: number;
+}
+
+export interface EngagementSummary {
+  /** The period counted in months of 30 days, at least one. */
+  months: number;
+  worshipHeld: number;
+  /** Everyone in the register, most tasks first. */
+  people: PersonEngagement[];
+  /** Null when no gathering in the period had tasks: then nobody could have had one. */
+  tasksPerMonth: MonthBand[] | null;
+  /** Tasks and group meetings answered «Kommer». Null when there were neither. */
+  activitiesPerMonth: MonthBand[] | null;
+  withoutTasks: number | null;
+  withoutTasksShare: number | null;
+  /** In no group and without a task in the period. */
+  withoutTasksOrGroups: Person[];
+}
+
+const MONTH_MS = 30 * DAY_MS;
+
+/** The share of the congregation, and about how many people, with at least `from` in a typical month. */
+export function atLeastPerMonth(bands: MonthBand[], from: number): { share: number; people: number } {
+  const rest = bands.slice(Math.min(from, bands.length));
+  return {
+    share: rest.reduce((sum, b) => sum + b.share, 0),
+    people: Math.round(rest.reduce((sum, b) => sum + b.people, 0) * 10) / 10,
+  };
+}
+
+function bandsOf(perPersonAndMonth: number[][], personCount: number, months: number): MonthBand[] {
+  const counts = MONTH_BANDS.map(() => 0);
+  for (const perMonth of perPersonAndMonth) for (const n of perMonth) counts[Math.min(n, MONTH_BANDS.length - 1)]++;
+  return MONTH_BANDS.map((label, i) => ({
+    label,
+    share: counts[i] / (personCount * months),
+    people: Math.round((counts[i] / months) * 10) / 10,
+  }));
+}
+
+export function summarizeEngagement(
+  data: Pick<ChurchData, "persons" | "groups" | "gatherings" | "tasks" | "assignments" | "attendances">,
+  period: AnalyticsPeriod
+): EngagementSummary {
+  const held = heldIn(data.gatherings, period.from, period.to);
+  const months = Math.max(1, Math.round((period.to - period.from) / MONTH_MS));
+  const monthLength = (period.to - period.from) / months;
+  const monthOf = (iso: string) => Math.min(months - 1, Math.max(0, Math.floor((timeOf(iso) - period.from) / monthLength)));
+
+  const servingsByPerson = groupBy(servingsOn(held, data), (s) => s.personId);
+  const meetingIds = new Set(held.filter(isGroupGathering).map((g) => g.id));
+  const meetingById = new Map(held.map((g) => [g.id, g]));
+  const meetingsByPerson = groupBy(
+    data.attendances.filter((a) => a.status === "attending" && meetingIds.has(a.gatheringId)),
+    (a) => a.personId
+  );
+  const worshipHeld = held.filter((g) => !isGroupGathering(g) && isWorshipService(g)).length;
+
+  const taskMonths: number[][] = [];
+  const activityMonths: number[][] = [];
+  const people: PersonEngagement[] = data.persons.map((person) => {
+    const servings = servingsByPerson.get(person.id) ?? [];
+    const meetings = meetingsByPerson.get(person.id) ?? [];
+    const tasksPerMonth = Array.from({ length: months }, () => 0);
+    for (const s of servings) tasksPerMonth[monthOf(s.gathering.startsAt)]++;
+    const activitiesPerMonth = [...tasksPerMonth];
+    for (const a of meetings) activitiesPerMonth[monthOf(meetingById.get(a.gatheringId)!.startsAt)]++;
+    taskMonths.push(tasksPerMonth);
+    activityMonths.push(activitiesPerMonth);
+
+    const tasksByGathering = groupBy(servings, (s) => s.gathering.id);
+    const worshipServed = [...tasksByGathering.values()].filter((list) => {
+      const g = list[0].gathering;
+      return !isGroupGathering(g) && isWorshipService(g);
+    }).length;
+    const groupsOfPerson = data.groups.filter((g) => allGroupPersonIds(g).includes(person.id));
+    const serviceGroups = groupsOfPerson.filter((g) => g.category === "tjenestegruppe").length;
+    return {
+      person,
+      tasks: servings.length,
+      gatheringsServed: tasksByGathering.size,
+      worshipServed,
+      worshipShare: share(worshipServed, worshipHeld),
+      multiTaskTimes: [...tasksByGathering.values()].filter((list) => new Set(list.map((s) => s.task.id)).size >= 2).length,
+      serviceGroups,
+      otherGroups: groupsOfPerson.length - serviceGroups,
+      meetingsAttending: meetings.length,
+      activitiesPerMonth: Math.round(((servings.length + meetings.length) / months) * 10) / 10,
+    };
+  });
+  people.sort(
+    (a, b) => b.tasks - a.tasks || b.activitiesPerMonth - a.activitiesPerMonth || a.person.name.localeCompare(b.person.name, "nb")
+  );
+
+  const hadTasks = staffingPerGathering(held, data).length > 0;
+  const hadActivities = hadTasks || meetingIds.size > 0;
+  const withoutTasks = people.filter((p) => p.tasks === 0).length;
+  const count = data.persons.length;
+  return {
+    months,
+    worshipHeld,
+    people,
+    tasksPerMonth: hadTasks && count > 0 ? bandsOf(taskMonths, count, months) : null,
+    activitiesPerMonth: hadActivities && count > 0 ? bandsOf(activityMonths, count, months) : null,
+    withoutTasks: hadTasks ? withoutTasks : null,
+    withoutTasksShare: hadTasks ? share(withoutTasks, count) : null,
+    withoutTasksOrGroups: people
+      .filter((p) => p.tasks === 0 && p.serviceGroups + p.otherGroups === 0)
+      .map((p) => p.person)
+      .sort((a, b) => a.name.localeCompare(b.name, "nb")),
+  };
+}
+
+// ============================================================================
 // The person register
 // ============================================================================
 
@@ -618,8 +930,15 @@ export interface CoverageNote {
   text: string;
 }
 
-export function describeCoverage(attendance: AttendanceSummary, groups: GroupSummary, volunteers: VolunteerSummary): CoverageNote[] {
+export function describeCoverage(
+  attendance: AttendanceSummary,
+  groups: GroupSummary,
+  volunteers: VolunteerSummary,
+  staffing: FullStaffingSummary
+): CoverageNote[] {
   const worship = attendance.worship.length;
+  const withTasks = staffing.gatherings;
+  const withTimes = withTasks.filter((g) => (g.gathering.programSchedule ?? []).some((item) => item.taskId && item.time)).length;
   const counted = attendance.worshipCounted;
   const meetings = groups.groups.reduce((sum, g) => sum + g.meetings, 0);
   const answers = groups.groups.reduce((sum, g) => sum + g.responses.attending + g.responses.declined, 0);
@@ -649,6 +968,14 @@ export function describeCoverage(attendance: AttendanceSummary, groups: GroupSum
           : `${answers} svar («Kommer» / «Kommer ikke») på ${meetings} gruppesamlinger. Et svar sier hvem som planla å komme, ikke hvem som kom.`,
     },
     {
+      id: "kjoreplan",
+      status: withTasks.length === 0 || withTimes === 0 ? "missing" : withTimes === withTasks.length ? "ok" : "partial",
+      text:
+        withTasks.length === 0
+          ? "Ingen samlinger med oppgaver i perioden, så ingen kjøreplan å se samtidige oppgaver i."
+          : `Kjøreplanen har klokkeslett for oppgavene på ${withTimes} av ${withTasks.length} samlinger med oppgaver. Bare der kan bordet se om to oppgaver er samtidig.`,
+    },
+    {
       id: "nettside",
       status: "missing",
       text: "Besøk på nettsiden måles ikke. Løsningen har ingen sporing av besøkende.",
@@ -664,6 +991,9 @@ export interface ChurchAnalytics {
   period: AnalyticsPeriod;
   attendance: AttendanceSummary;
   gatherings: GatheringSummary;
+  fullStaffing: FullStaffingSummary;
+  multiTasks: MultiTaskSummary;
+  engagement: EngagementSummary;
   volunteers: VolunteerSummary;
   groups: GroupSummary;
   people: PeopleSummary;
@@ -676,15 +1006,19 @@ export function buildChurchAnalytics(data: ChurchData, periodId: AnalyticsPeriod
   const attendance = summarizeAttendance(data, period);
   const volunteers = summarizeVolunteers(data, period);
   const groups = summarizeGroups(data, period);
+  const fullStaffing = summarizeFullStaffing(data, period);
   return {
     period,
     attendance,
     gatherings: summarizeGatherings(data, period),
+    fullStaffing,
+    multiTasks: summarizeMultiTasks(data, period),
+    engagement: summarizeEngagement(data, period),
     volunteers,
     groups,
     people: summarizePeople(data, now),
     content: summarizeContent(data, period),
-    coverage: describeCoverage(attendance, groups, volunteers),
+    coverage: describeCoverage(attendance, groups, volunteers, fullStaffing),
   };
 }
 

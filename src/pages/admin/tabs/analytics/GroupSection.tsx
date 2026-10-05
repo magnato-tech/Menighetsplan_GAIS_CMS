@@ -10,13 +10,14 @@ interface GroupSectionProps {
   period: AnalyticsPeriod;
   groups: GroupSummary;
   now: number;
+  onHide: () => void;
 }
 
 const NAMES_SHOWN = 12;
 const CATEGORY_ORDER = ["ledergruppe", "strategigruppe", "tjenestegruppe", "husgruppe", "interessegruppe"];
 const link = "font-semibold text-[var(--studio-link)] hover:text-[var(--studio-link-hover)]";
 
-export const GroupSection: React.FC<GroupSectionProps> = ({ period, groups, now }) => {
+export const GroupSection: React.FC<GroupSectionProps> = ({ period, groups, now, onHide }) => {
   const messageChange = describeChange(groups.messages, groups.previousMessages);
   const rows = [...groups.groups].sort(
     (a, b) =>
@@ -30,6 +31,7 @@ export const GroupSection: React.FC<GroupSectionProps> = ({ period, groups, now 
       title="Grupper og fellesskap"
       description="Hvem som hører til i en gruppe, og hvor mye som skjer i gruppene: samlinger, svar på samlingene og meldinger."
       icon={<UsersRound className="w-5 h-5" />}
+      onHide={onHide}
     >
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MiniStat label="Grupper" value={String(groups.groups.length)}>

@@ -38,12 +38,22 @@ const data: ChurchData = {
 
 const registerHeadcount = vi.fn(() => ({ success: true }));
 const removeHeadcount = vi.fn(() => ({ success: true }));
+const setModuleHidden = vi.fn((_id: string, _hidden: boolean) => ({ success: true }));
+const showAllModules = vi.fn(() => ({ success: true }));
 const requestedPeriods: AnalyticsPeriodId[] = [];
+let hiddenModules: string[] = [];
 
 vi.mock("../src/hooks/useAppHooks", () => ({
   useAdminAnalytics: (periodId: AnalyticsPeriodId) => {
     requestedPeriods.push(periodId);
-    return { analytics: buildChurchAnalytics(data, periodId, now), registerHeadcount, removeHeadcount };
+    return {
+      analytics: buildChurchAnalytics(data, periodId, now),
+      registerHeadcount,
+      removeHeadcount,
+      hiddenModules,
+      setModuleHidden,
+      showAllModules,
+    };
   },
 }));
 
@@ -52,6 +62,7 @@ import { AnalyticsTab } from "../src/pages/admin/tabs/AnalyticsTab";
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  hiddenModules = [];
 });
 
 function renderTab() {
@@ -119,6 +130,49 @@ describe("Analysebord", () => {
     fireEvent.click(screen.getByRole("button", { name: "Siste 12 måneder" }));
     expect(requestedPeriods[requestedPeriods.length - 1]).toBe("12m");
     expect(screen.getByRole("button", { name: "Siste 12 måneder" }).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  test("de nye modulene vises: bemanning per arrangement, flere oppgaver, per måned og hver enkelt", () => {
+    renderTab();
+    expect(screen.getByRole("heading", { name: "Bemanning per arrangement" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Flere oppgaver på samme samling" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Oppgaver og aktiviteter per måned" })).toBeTruthy();
+    const table = screen.getByRole("table", { name: "Oppgaver og grupper per person" });
+    expect(within(table).getByText("Bjørn Bærer")).toBeTruthy();
+  });
+
+  test("en modul kan skjules fra kortet, og valget lagres", () => {
+    const { showFeedback } = renderTab();
+    fireEvent.click(screen.getByRole("button", { name: "Skjul Oppmøte" }));
+    expect(setModuleHidden).toHaveBeenCalledWith("oppmote", true);
+    expect(showFeedback).toHaveBeenCalledWith("«Oppmøte» er skjult. Du får den tilbake under Tilpass bordet.");
+  });
+
+  test("en skjult modul vises ikke, og bordet sier at noe er skjult", () => {
+    hiddenModules = ["oppmote", "hver-enkelt", "modul-som-ikke-finnes"];
+    renderTab();
+    expect(screen.queryByRole("heading", { name: "Oppmøte" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Hver enkelt" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "Frivillighet og bemanning" })).toBeTruthy();
+    expect(screen.getByText(/2 moduler er skjult/)).toBeTruthy();
+  });
+
+  test("Tilpass bordet slår moduler av og på, og viser alle igjen", () => {
+    hiddenModules = ["grupper"];
+    renderTab();
+    // One in the heading, one in the note at the bottom that says something is hidden
+    const openButtons = screen.getAllByRole("button", { name: "Tilpass bordet" });
+    expect(openButtons).toHaveLength(2);
+    fireEvent.click(openButtons[0]);
+    const dialog = screen.getByRole("dialog", { name: "Tilpass bordet" });
+    const groups = within(dialog).getByLabelText(/Grupper og fellesskap/) as HTMLInputElement;
+    expect(groups.checked).toBe(false);
+    fireEvent.click(groups);
+    expect(setModuleHidden).toHaveBeenCalledWith("grupper", false);
+    fireEvent.click(within(dialog).getByLabelText(/Nøkkeltall/));
+    expect(setModuleHidden).toHaveBeenCalledWith("nokkeltall", true);
+    fireEvent.click(within(dialog).getByRole("button", { name: "Vis alle" }));
+    expect(showAllModules).toHaveBeenCalled();
   });
 
   test("datagrunnlaget sier hva som ikke er målt, og lenker til testdata", () => {

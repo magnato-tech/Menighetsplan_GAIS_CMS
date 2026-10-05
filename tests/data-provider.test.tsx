@@ -499,6 +499,26 @@ describe("Oppmøtetall", () => {
   });
 });
 
+describe("Analysebordet", () => {
+  test("En modul skjules og vises igjen for personen som bruker bordet", async () => {
+    const data = await mountProvider();
+    data.current.setAnalyticsModuleHidden("oppmote", true);
+    data.current.setAnalyticsModuleHidden("grupper", true);
+    await waitFor(() => expect(data.current.currentUser.analyticsHiddenModules).toEqual(["oppmote", "grupper"]));
+    // Hiding twice keeps one entry
+    data.current.setAnalyticsModuleHidden("oppmote", true);
+    data.current.setAnalyticsModuleHidden("grupper", false);
+    await waitFor(() => expect(data.current.currentUser.analyticsHiddenModules).toEqual(["oppmote"]));
+    expect((await stored(COLLECTIONS.PERSONS, "person-1"))?.analyticsHiddenModules).toEqual(["oppmote"]);
+    // Another person's board is not touched
+    expect((await stored(COLLECTIONS.PERSONS, "person-2"))?.analyticsHiddenModules).toBeUndefined();
+
+    data.current.showAllAnalyticsModules();
+    await waitFor(() => expect(data.current.currentUser).not.toHaveProperty("analyticsHiddenModules"));
+    expect(await stored(COLLECTIONS.PERSONS, "person-1")).not.toHaveProperty("analyticsHiddenModules");
+  });
+});
+
 describe("Feil", () => {
   test("En skriving databasen avviser meldes til brukeren", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});

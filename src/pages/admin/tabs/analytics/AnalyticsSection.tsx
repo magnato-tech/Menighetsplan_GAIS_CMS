@@ -1,4 +1,5 @@
 import React from "react";
+import { EyeOff } from "lucide-react";
 
 interface AnalyticsSectionProps {
   id: string;
@@ -7,11 +8,13 @@ interface AnalyticsSectionProps {
   icon: React.ReactNode;
   /** Controls on the right of the heading, such as a filter or a view switch. */
   actions?: React.ReactNode;
+  /** Hides the module from this person's board. */
+  onHide?: () => void;
   children: React.ReactNode;
 }
 
 /** A titled card on the analysis board. */
-export const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ id, title, description, icon, actions, children }) => (
+export const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ id, title, description, icon, actions, onHide, children }) => (
   <section
     aria-labelledby={id}
     className="p-5 sm:p-6 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-5"
@@ -26,7 +29,22 @@ export const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({ id, title, d
           {description && <p className="text-xs text-[var(--studio-muted)] mt-0.5 max-w-2xl">{description}</p>}
         </div>
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {(actions || onHide) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {actions}
+          {onHide && (
+            <button
+              type="button"
+              onClick={onHide}
+              aria-label={`Skjul ${title}`}
+              title="Skjul modulen. Den kan vises igjen under Tilpass bordet."
+              className="p-1.5 rounded-lg text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-hover)] cursor-pointer"
+            >
+              <EyeOff className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
     </div>
     {children}
   </section>

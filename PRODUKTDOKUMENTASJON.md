@@ -122,10 +122,16 @@ Analysebordet er siste fane i menyen, under **Innsikt**. Det samler det løsning
 |:---|:---|:---|
 | Nøkkeltall | Snitt på gudstjeneste, aktive frivillige, bemanningsgrad, andel med i en gruppe | Snittet regnes bare av gudstjenestene som er talt. Aktiv frivillig: har sagt ja til minst én oppgave på en samling som er holdt i perioden. Bemanningsgrad: bekreftede plasser delt på behovet, på holdte samlinger |
 | Oppmøte | Søyle per samling (voksne og barn), snittlinje, liste over samlinger som mangler tall, tabellvisning, CSV | En samling uten tall vises som en lav grå strek, aldri som lavt oppmøte. Gruppesamlinger telles ikke her; de følges med svarene |
+| Bemanning per arrangement | Hvor mange holdte samlinger med oppgaver som var fullt bemannet, for alle og for gudstjenestene, sammenlignet med perioden før, og listen over dem som ikke var det | Fullt bemannet: alle plasser i alle oppgavene var bekreftet. En samling uten oppgaver telles ikke |
+| Flere oppgaver på samme samling | Hvor mange ganger noen har hatt to eller flere oppgaver på samme samling (for eksempel bilde og møteleder), hvem, de vanligste kombinasjonene og de siste gangene | Andel av tjenestene: av gangene noen tjenestegjorde på en samling, hvor ofte de hadde flere oppgaver. «Samme klokkeslett» vises bare der kjøreplanen har klokkeslett for begge oppgavene |
+| Oppgaver og aktiviteter per måned | Hvor stor del av personregisteret som har 0, 1, 2 … 8 eller flere oppgaver i en vanlig måned, med omtrent hvor mange personer det er. Kan byttes til aktiviteter. Antall uten oppgave, antall uten både oppgave og gruppe, og andelen med fire eller flere i måneden | En måned er 30 dager. Perioden deles i måneder, og hver person telles i hver måned. Aktiviteter er oppgaver og gruppesamlinger personen har svart «Kommer» på |
+| Hver enkelt | Tabell per person: oppgaver, gudstjenester med oppgave (antall og andel av alle gudstjenestene), ganger med flere oppgaver på samme samling, tjenestegrupper, andre grupper, aktiviteter per måned. Kan sorteres | En leder eller nestleder regnes som med i gruppen |
 | Frivillighet og bemanning | Forfall (akutte under 48 timer), avslag, svartid (median), de neste fire ukene, hvor ofte hver har stått på, roller som er vanskeligst å bemanne, «Kan trenge avlastning», «Ikke brukt i perioden» | Avlastning: har stått på minst like mange samlinger som halvparten av ukene i perioden, og minst tre. Ikke brukt: medlem av en tjenestegruppe uten oppgave i perioden |
 | Grupper og fellesskap | Antall grupper per kategori, nye medlemskap, meldinger, samlinger og svar per gruppe, sist aktiv, personer uten gruppe | Stille gruppe: verken samling eller melding de siste 30 dagene |
 | Personregisteret | Personer, administratorer, stab, offentlige profiler med samtykke, borte i dag, politiattester som er utløpt eller går ut innen 60 dager | Øyeblikksbilde |
 | Nettsiden | Nyheter publisert, taler lagt ut (med opptak), sider publisert, kladder og planlagte | Besøk måles ikke |
+
+**Tilpass bordet.** Bordet er delt i moduler: nøkkeltall, oppmøte, bemanning per arrangement, flere oppgaver på samme samling, oppgaver og aktiviteter per måned, hver enkelt, frivillighet, grupper, personregisteret, nettsiden og datagrunnlag. Hver administrator kan skjule moduler med øyet på modulen eller under **Tilpass bordet**, og ta dem tilbake med **Vis alle**. Valget lagres på personen (`analyticsHiddenModules`) og gjelder ikke for andre. Det som lagres er hva som er skjult, så en ny modul vises for alle til de selv skjuler den.
 
 **Oppmøtetall.** Administratoren trykker på en søyle eller **Registrer** og skriver inn voksne, barn og en valgfri merknad. Ett tall per samling: en ny telling erstatter den gamle, og den kan fjernes. Bare samlinger som er holdt, ikke er avlyst og ikke er gruppesamlinger, kan telles. **Last ned CSV** gir dato, samling, type, voksne, barn, totalt og merknad, klar for årsmeldingen.
 
@@ -239,6 +245,7 @@ Felles begrep for enhver samling: gudstjeneste, ungdomsmøte, bønnemøte, dugna
 | `publicTitle`, `publicPhone`, `publicEmail` | `string` | Nei | Tittel og kontaktinfo utad |
 | `avatarUrl` | `string` | Nei | Profilbilde |
 | `consentToPublishGivenAt`, `consentGivenBy` | ISO 8601, `string` | Nei | **Samtykkelogg:** når samtykket ble registrert, og av hvem |
+| `analyticsHiddenModules` | `string[]` | Nei | Modulene personen har skjult på Analysebord. Endres med `arrayUnion` / `arrayRemove` |
 | `updatedBy`, `updatedAt` | `string`, ISO 8601 | Nei | Siste endring |
 
 ### 5.5 Gruppe (`Group`)
@@ -551,6 +558,8 @@ De tre flatene, Firestore-databasen, bemanningsmotoren, husfellesskap, gruppemel
 | **Oppmøtetall** | Ny datatype `GatheringHeadcount`, registreres og rettes fra bordet. Prøvd mot databasen i drift: lagres, leses tilbake og fjernes |
 | **Simulert menighetsliv** | Historikk for å prøve bordet, under Database og Testdata. Prøvd mot databasen i drift: 862 dokumenter skrevet, ingen dobling ved ny kjøring, alt fjernet igjen |
 | **Trenger oppfølging** | En oppgave på en samling som er over, telles ikke lenger som ubesatt i menyen og vises ikke under «Trenger oppfølging» eller «Venter på svar». «Alle oppgaver» viser fortsatt alt |
+| **Menighetens helse** | Fire nye moduler: bemanning per arrangement, flere oppgaver på samme samling, oppgaver og aktiviteter per måned (0–8 eller flere), og hver enkelt. Simuleringen bemanner nå også møteleder og taler, slik at doble oppgaver forekommer |
+| **Tilpass bordet** | Hver administrator velger hvilke moduler som vises. Valget lagres på personen. Prøvd mot databasen i drift |
 
 ---
 

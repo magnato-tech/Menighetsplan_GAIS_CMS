@@ -110,6 +110,9 @@ const WEEKDAY_INDEX: Record<string, number> = {
   lørdag: 6,
 };
 
+/** The roles a Sunday service is staffed with in the simulation, when the role library has them. */
+const SUNDAY_ROLE_NAMES = ["Møteleder", "Taler", "Lovsang", "Lyd", "Bilde", "Møtevert", "Kjøkken", "Barnekirke", "Forbønn"];
+
 const SERVICE_TITLES = [
   "Gudstjeneste",
   "Gudstjeneste med nattverd",
@@ -185,14 +188,35 @@ export function buildSimulatedChurchLife(input: SimulationInput): MockDocument[]
     groups.find((g) => g.category === "tjenestegruppe")?.id ??
     groups[0].id;
 
-  // Team roles to staff each service with: the role library order, roles whose team exists
-  const teamRoles = input.volunteerRoles
-    .filter((role) => role.groupId && groupIds.has(role.groupId))
-    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, "nb"))
-    .slice(0, 5);
-  const teamOf = (role: VolunteerRole) => {
-    const group = groups.find((g) => g.id === role.groupId);
-    return group ? allGroupPersonIds(group) : [];
+  // The roles a Sunday usually needs, as far as the role library has them. Without any of
+  // them, the first roles that have a team are used instead.
+  const byName = new Map(input.volunteerRoles.map((role) => [role.name.toLowerCase(), role]));
+  const sundayRoles = SUNDAY_ROLE_NAMES.map((name) => byName.get(name.toLowerCase())).filter(
+    (role): role is VolunteerRole => role !== undefined
+  );
+  const serviceRoles =
+    sundayRoles.length > 0
+      ? sundayRoles
+      : input.volunteerRoles
+          .filter((role) => role.groupId && groupIds.has(role.groupId))
+          .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, "nb"))
+          .slice(0, 5);
+
+  // Who can take a role: its team; a role without a team (møteleder, taler) is taken by the
+  // leaders and the staff, and a sermon by a pastor where there is one. People who lead and
+  // also sit on a team are the ones who end up with two tasks on the same Sunday.
+  const leaders = [
+    ...new Set([
+      ...groups.flatMap((g) => [...g.leaderIds, ...(g.deputyLeaderIds ?? [])]),
+      ...persons.filter((p) => p.isStaff).map((p) => p.id),
+    ]),
+  ].filter((id) => personById.has(id));
+  const pastors = persons.filter((p) => p.staffCategory === "pastor").map((p) => p.id);
+  const poolOf = (role: VolunteerRole): string[] => {
+    const group = role.groupId ? groups.find((g) => g.id === role.groupId) : undefined;
+    if (group) return allGroupPersonIds(group);
+    if (role.name.toLowerCase() === "taler" && pastors.length > 0) return pastors;
+    return leaders.length > 0 ? leaders : persons.map((p) => p.id);
   };
   // Each team has someone who says yes more often than the others
   const turnByRole = new Map<string, number>();
@@ -239,17 +263,18 @@ export function buildSimulatedChurchLife(input: SimulationInput): MockDocument[]
       });
     }
 
-    teamRoles.forEach((role, roleIndex) => {
-      const team = teamOf(role);
+    serviceRoles.forEach((role, roleIndex) => {
+      const team = poolOf(role);
       const taskId = `${SIMULATION_PREFIX}task-${dayKey(day)}-${roleIndex}`;
       const task: Task = {
         id: taskId,
         gatheringId: id,
-        groupId: role.groupId,
+        groupId: role.groupId && groupIds.has(role.groupId) ? role.groupId : undefined,
         volunteerRoleId: role.id,
         title: role.name,
         status: "open",
-        neededCount: rng.chance(0.3) ? 2 : 1,
+        // A role without a team (møteleder, taler) is one person; a team role sometimes needs two
+        neededCount: role.groupId && rng.chance(0.3) ? 2 : 1,
       };
       const taskAssignments: Assignment[] = [];
       const used = new Set<string>();

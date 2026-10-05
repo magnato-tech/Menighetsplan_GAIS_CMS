@@ -87,6 +87,15 @@ export function removeGroupMember(groupId: string, personId: string): Promise<vo
   });
 }
 
+/** Hides or shows one module on the person's analysis board, without reading the list first. */
+export function setAnalyticsModuleHidden(personId: string, moduleId: string, hidden: boolean): Promise<void> {
+  return updateDoc(
+    doc(db, COLLECTIONS.PERSONS, personId),
+    "analyticsHiddenModules",
+    hidden ? arrayUnion(moduleId) : arrayRemove(moduleId)
+  );
+}
+
 export function setGroupNotifications(groupId: string, personId: string, enabled: boolean): Promise<void> {
   return updateDoc(doc(db, COLLECTIONS.GROUPS, groupId), new FieldPath("notificationPreferences", personId), enabled);
 }

@@ -41,6 +41,7 @@ import {
   removeGroupMember,
   setGroupNotifications,
   saveAssignmentChange,
+  setAnalyticsModuleHidden as storeAnalyticsModuleHidden,
 } from "../services/firestore";
 import { isInGroup } from "../utils/groups";
 import type { HeadcountInput } from "../utils/headcount";
@@ -131,6 +132,9 @@ export interface FirebaseDataContextType {
   /** Stores how many were there. A new count for the same gathering replaces the old one. */
   registerHeadcount: (gatheringId: string, input: HeadcountInput) => ActionResult;
   removeHeadcount: (gatheringId: string) => ActionResult;
+  /** Hides or shows a module on the analysis board, for the person using the app. */
+  setAnalyticsModuleHidden: (moduleId: string, hidden: boolean) => ActionResult;
+  showAllAnalyticsModules: () => ActionResult;
   createVolunteerRole: (data: NewVolunteerRoleInput) => ActionResult & { role?: VolunteerRole };
   updateVolunteerRole: (roleId: string, updates: Partial<VolunteerRole>) => ActionResult;
   deleteVolunteerRole: (roleId: string) => ActionResult;
@@ -403,6 +407,18 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
     [currentUser]
   );
 
+  const analyticsLayoutActions = useMemo(
+    () => ({
+      setAnalyticsModuleHidden: (moduleId: string, hidden: boolean) =>
+        save("lagre valget på analysebordet", () => storeAnalyticsModuleHidden(currentUser.id, moduleId, hidden)),
+      showAllAnalyticsModules: () =>
+        save("vise alle modulene på analysebordet", () =>
+          updateDocument(COLLECTIONS.PERSONS, currentUser.id, { analyticsHiddenModules: undefined })
+        ),
+    }),
+    [currentUser.id]
+  );
+
   const sendGroupMessage = useCallback(
     (groupId: string, content: string, imageUrl?: string) => {
       const message = buildGroupMessage(groupId, currentUser, content, imageUrl);
@@ -526,6 +542,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       ...staffingActions,
       sendGroupMessage,
       registerHeadcount,
+      ...analyticsLayoutActions,
       toggleGroupNotifications,
     }),
     [
@@ -555,6 +572,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       staffingActions,
       sendGroupMessage,
       registerHeadcount,
+      analyticsLayoutActions,
       toggleGroupNotifications,
     ]
   );

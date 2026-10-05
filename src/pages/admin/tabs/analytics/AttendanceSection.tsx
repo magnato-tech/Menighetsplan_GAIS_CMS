@@ -12,6 +12,7 @@ interface AttendanceSectionProps {
   attendance: AttendanceSummary;
   gatherings: GatheringSummary;
   onRegister: (row: CountedGathering) => void;
+  onHide: () => void;
 }
 
 type Scope = "gudstjenester" | "alle";
@@ -35,7 +36,7 @@ const scopeButton = (active: boolean) =>
     active ? "bg-indigo-600 text-white" : "text-[var(--studio-muted)] hover:text-[var(--studio-text)]"
   }`;
 
-export const AttendanceSection: React.FC<AttendanceSectionProps> = ({ period, attendance, gatherings, onRegister }) => {
+export const AttendanceSection: React.FC<AttendanceSectionProps> = ({ period, attendance, gatherings, onRegister, onHide }) => {
   const [scope, setScope] = useState<Scope>("gudstjenester");
   const [view, setView] = useState<"diagram" | "tabell">("diagram");
   const rows = scope === "gudstjenester" ? attendance.worship : attendance.gatherings;
@@ -47,6 +48,7 @@ export const AttendanceSection: React.FC<AttendanceSectionProps> = ({ period, at
       title="Oppmøte"
       description="Hvor mange som var til stede, slik det er talt og registrert etter hver samling. Trykk på en søyle for å registrere eller rette et tall."
       icon={<BarChart3 className="w-5 h-5" />}
+      onHide={onHide}
       actions={
         <>
           <div role="group" aria-label="Hvilke samlinger" className="flex items-center gap-1 p-1 rounded-xl bg-[var(--studio-row)] border border-[var(--studio-border)]">

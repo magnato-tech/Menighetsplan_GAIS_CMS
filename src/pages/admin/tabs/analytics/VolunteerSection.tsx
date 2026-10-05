@@ -8,6 +8,7 @@ import { AnalyticsSection, MiniStat } from "./AnalyticsSection";
 interface VolunteerSectionProps {
   period: AnalyticsPeriod;
   volunteers: VolunteerSummary;
+  onHide: () => void;
 }
 
 const NAMES_SHOWN = 12;
@@ -40,7 +41,7 @@ const LoadBars: React.FC<{ load: VolunteerSummary["load"] }> = ({ load }) => {
   );
 };
 
-export const VolunteerSection: React.FC<VolunteerSectionProps> = ({ period, volunteers }) => {
+export const VolunteerSection: React.FC<VolunteerSectionProps> = ({ period, volunteers, onHide }) => {
   const roles = volunteers.roles.slice(0, 6);
   const { upcoming } = volunteers;
 
@@ -50,6 +51,7 @@ export const VolunteerSection: React.FC<VolunteerSectionProps> = ({ period, volu
       title="Frivillighet og bemanning"
       description="Oppgavene på samlingene som er holdt i perioden: hvem som sa ja, forfall og hvor ofte hver enkelt har stått på."
       icon={<HandHeart className="w-5 h-5" />}
+      onHide={onHide}
     >
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MiniStat label="Forfall" value={formatCount(volunteers.withdrawals)}>

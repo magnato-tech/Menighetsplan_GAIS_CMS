@@ -406,6 +406,9 @@ export function useAdminAnalytics(periodId: AnalyticsPeriodId) {
     volunteerRoles,
     registerHeadcount,
     removeHeadcount,
+    currentUser,
+    setAnalyticsModuleHidden,
+    showAllAnalyticsModules,
   } = useFirebase();
   const { pages, news, sermons } = useCms();
 
@@ -441,5 +444,13 @@ export function useAdminAnalytics(periodId: AnalyticsPeriodId) {
     [allPersons, groups, gatherings, tasks, assignments, attendances, headcounts, groupMessages, volunteerRoles, pages, news, sermons, periodId, now]
   );
 
-  return { analytics, registerHeadcount, removeHeadcount };
+  return {
+    analytics,
+    registerHeadcount,
+    removeHeadcount,
+    /** The modules the person using the board has hidden. */
+    hiddenModules: currentUser.analyticsHiddenModules ?? [],
+    setModuleHidden: setAnalyticsModuleHidden,
+    showAllModules: showAllAnalyticsModules,
+  };
 }
