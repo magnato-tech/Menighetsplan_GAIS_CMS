@@ -29,8 +29,11 @@ export const HeadcountDialog: React.FC<HeadcountDialogProps> = ({ gathering, exi
   const [note, setNote] = useState(existing?.note ?? "");
   const [error, setError] = useState<string | null>(null);
 
+  // Focus starts in the first field, and goes back to the column or button that opened the dialog
   useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
     firstFieldRef.current?.focus();
+    return () => opener?.focus();
   }, []);
 
   useEffect(() => {

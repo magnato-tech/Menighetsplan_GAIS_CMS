@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import { useAdminAnalytics } from "../../../hooks/useAppHooks";
 import {
@@ -33,16 +33,23 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ showFeedback, onTabC
   const [periodId, setPeriodId] = useState<AnalyticsPeriodId>(DEFAULT_ANALYTICS_PERIOD);
   const [counting, setCounting] = useState<CountedGathering | null>(null);
   const [customizing, setCustomizing] = useState(false);
-  const { analytics, registerHeadcount, removeHeadcount, hiddenModules, setModuleHidden, showAllModules } =
+  const { analytics, registerHeadcount, removeHeadcount, hiddenModules, canCustomize, setModuleHidden, showAllModules } =
     useAdminAnalytics(periodId);
   const { period } = analytics;
+  const customizeButtonRef = useRef<HTMLButtonElement>(null);
 
   const shown = (id: AnalyticsModuleId) => isModuleShown(hiddenModules, id);
-  const hide = (id: AnalyticsModuleId) => () => {
-    const result = setModuleHidden(id, true);
-    const title = ANALYTICS_MODULES.find((m) => m.id === id)?.title ?? "Modulen";
-    if (result.success) showFeedback(`«${title}» er skjult. Du får den tilbake under Tilpass bordet.`);
-  };
+  // Without a person in the register there is nowhere to save the choice, so hiding is not offered
+  const hide = (id: AnalyticsModuleId) =>
+    canCustomize
+      ? () => {
+          const result = setModuleHidden(id, true);
+          const title = ANALYTICS_MODULES.find((m) => m.id === id)?.title ?? "Modulen";
+          if (result.success) showFeedback(`«${title}» er skjult. Du får den tilbake under Tilpass bordet.`);
+          // The module and its button are gone; keep the keyboard on the board
+          customizeButtonRef.current?.focus();
+        }
+      : undefined;
   const hiddenCount = hiddenModuleCount(hiddenModules);
 
   return (
@@ -74,7 +81,14 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ showFeedback, onTabC
               </button>
             ))}
           </div>
-          <button type="button" onClick={() => setCustomizing(true)} className={`${studioSecondaryButton} py-2 flex items-center gap-1.5`}>
+          <button
+            ref={customizeButtonRef}
+            type="button"
+            onClick={() => setCustomizing(true)}
+            disabled={!canCustomize}
+            title={canCustomize ? undefined : "Den aktive brukeren finnes ikke i personregisteret, så valget kan ikke lagres."}
+            className={`${studioSecondaryButton} py-2 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             Tilpass bordet
           </button>

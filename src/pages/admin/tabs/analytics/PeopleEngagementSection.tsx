@@ -8,7 +8,7 @@ import { studioSecondaryButton } from "../../studioTheme";
 
 interface PeopleEngagementSectionProps {
   engagement: EngagementSummary;
-  onHide: () => void;
+  onHide?: () => void;
 }
 
 const SHOWN = 15;
@@ -96,13 +96,13 @@ export const PeopleEngagementSection: React.FC<PeopleEngagementSectionProps> = (
                 </td>
                 <td className="py-2 pr-3 text-right tabular-nums font-bold">{row.tasks}</td>
                 <td className="py-2 pr-3 text-right tabular-nums whitespace-nowrap">
-                  {row.worshipServed > 0 ? `${row.worshipServed} av ${engagement.worshipHeld} (${formatPercent(row.worshipShare)})` : "–"}
+                  {engagement.worshipHeld > 0 ? `${row.worshipServed} av ${engagement.worshipHeld} (${formatPercent(row.worshipShare)})` : "–"}
                 </td>
                 <td className="py-2 pr-3 text-right tabular-nums">
-                  {row.multiTaskTimes > 0 ? <span className="font-bold text-[var(--studio-warn)]">{row.multiTaskTimes}</span> : "–"}
+                  {row.multiTaskTimes > 0 ? <span className="font-bold text-[var(--studio-warn)]">{row.multiTaskTimes}</span> : 0}
                 </td>
-                <td className="py-2 pr-3 text-right tabular-nums">{row.serviceGroups || "–"}</td>
-                <td className="py-2 pr-3 text-right tabular-nums">{row.otherGroups || "–"}</td>
+                <td className="py-2 pr-3 text-right tabular-nums">{row.serviceGroups}</td>
+                <td className="py-2 pr-3 text-right tabular-nums">{row.otherGroups}</td>
                 <td className="py-2 text-right tabular-nums">{row.activitiesPerMonth.toLocaleString("nb-NO")}</td>
               </tr>
             ))}

@@ -17,6 +17,7 @@ import { canRegisterHeadcount, headcountTotal } from "./headcount";
 import { isPagePublished } from "./menu";
 import { countSlots, isAcuteForfall } from "./staffing";
 import { parseIsoToDateAndTime } from "./dates";
+import { normalizeClock } from "./runSheet";
 
 // The analysis board (Analysebord): what the stored data says about the life of the
 // congregation over a period, compared with the period before. Every number is counted
@@ -593,6 +594,8 @@ export interface FullStaffingSummary {
   worship: { withTasks: number; full: number; rate: number | null };
   /** Not fully staffed, newest first. */
   notFull: GatheringStaffing[];
+  /** Slots that were not filled, on all the gatherings together. */
+  missingSlots: number;
 }
 
 function staffingPerGathering(
@@ -635,6 +638,7 @@ export function summarizeFullStaffing(
     previousRate: share(previous.filter((g) => g.full).length, previous.length),
     worship: { withTasks: worship.length, full: worshipFull, rate: share(worshipFull, worship.length) },
     notFull: gatherings.filter((g) => !g.full).reverse(),
+    missingSlots: gatherings.reduce((sum, g) => sum + g.missing, 0),
   };
 }
 
@@ -643,8 +647,11 @@ export interface MultiTaskOccurrence {
   gathering: Gathering;
   /** The roles, in alphabetical order. */
   roles: string[];
-  /** The run sheet puts two of the tasks at the same clock time. Only known where it gives times. */
-  sameTime: boolean;
+  /**
+   * The run sheet puts two of the tasks at the same clock time. Null when the run sheet does
+   * not give a time for at least two of them: then it cannot be said.
+   */
+  sameTime: boolean | null;
 }
 
 export interface MultiTaskSummary {
@@ -658,7 +665,10 @@ export interface MultiTaskSummary {
   /** The role combinations, most common first: "Bilde + Møteleder". */
   combinations: { roles: string; count: number }[];
   byPerson: { person: Person; times: number; mostTasks: number }[];
-  sameTimeCount: number;
+  /** How many of the occurrences the run sheet shows at the same time. Null when it cannot tell for any of them. */
+  sameTimeCount: number | null;
+  /** False when no gathering in the period had tasks: then nobody could have had several. */
+  hadTasks: boolean;
 }
 
 export function summarizeMultiTasks(
@@ -677,15 +687,23 @@ export function summarizeMultiTasks(
     const tasks = [...new Map(servings.map((s) => [s.task.id, s.task])).values()];
     if (tasks.length < 2) continue;
     const gathering = servings[0].gathering;
-    const timeOfTask = new Map(
-      (gathering.programSchedule ?? []).filter((item) => item.taskId && item.time).map((item) => [item.taskId!, item.time])
-    );
-    const times = tasks.map((t) => timeOfTask.get(t.id)).filter((t): t is string => Boolean(t));
+    // Every time a task has in the run sheet, read the way the run sheet reads it ("9.30" is "09:30")
+    const timesOfTask = new Map<string, Set<string>>();
+    for (const item of gathering.programSchedule ?? []) {
+      const time = item.time ? normalizeClock(item.time) : "";
+      if (!item.taskId || !time) continue;
+      const set = timesOfTask.get(item.taskId) ?? new Set<string>();
+      set.add(time);
+      timesOfTask.set(item.taskId, set);
+    }
+    const timed = tasks.filter((t) => timesOfTask.has(t.id));
+    const tasksAtTime = new Map<string, number>();
+    for (const t of timed) for (const time of timesOfTask.get(t.id)!) tasksAtTime.set(time, (tasksAtTime.get(time) ?? 0) + 1);
     occurrences.push({
       person: personById.get(servings[0].personId)!,
       gathering,
       roles: tasks.map((t) => roleNameOf(t, roleNameById)).sort((a, b) => a.localeCompare(b, "nb")),
-      sameTime: new Set(times).size < times.length,
+      sameTime: timed.length < 2 ? null : [...tasksAtTime.values()].some((n) => n >= 2),
     });
   }
   occurrences.sort((a, b) => timeOf(b.gathering.startsAt) - timeOf(a.gathering.startsAt) || a.person.name.localeCompare(b.person.name, "nb"));
@@ -704,7 +722,8 @@ export function summarizeMultiTasks(
     shareOfServings: share(occurrences.length, byPersonAndGathering.size),
     combinations,
     byPerson,
-    sameTimeCount: occurrences.filter((o) => o.sameTime).length,
+    sameTimeCount: occurrences.some((o) => o.sameTime !== null) ? occurrences.filter((o) => o.sameTime).length : null,
+    hadTasks: staffingPerGathering(heldIn(data.gatherings, period.from, period.to), data).length > 0,
   };
 }
 
@@ -739,6 +758,8 @@ export interface PersonEngagement {
 export interface EngagementSummary {
   /** The period counted in months of 30 days, at least one. */
   months: number;
+  /** How many days such a month is in this period: 28 for the last four weeks, else about 30. */
+  monthDays: number;
   worshipHeld: number;
   /** Everyone in the register, most tasks first. */
   people: PersonEngagement[];
@@ -748,8 +769,8 @@ export interface EngagementSummary {
   activitiesPerMonth: MonthBand[] | null;
   withoutTasks: number | null;
   withoutTasksShare: number | null;
-  /** In no group and without a task in the period. */
-  withoutTasksOrGroups: Person[];
+  /** In no group and without a task in the period. Null when no gathering had tasks. */
+  withoutTasksOrGroups: Person[] | null;
 }
 
 const MONTH_MS = 30 * DAY_MS;
@@ -785,8 +806,12 @@ export function summarizeEngagement(
   const servingsByPerson = groupBy(servingsOn(held, data), (s) => s.personId);
   const meetingIds = new Set(held.filter(isGroupGathering).map((g) => g.id));
   const meetingById = new Map(held.map((g) => [g.id, g]));
+  // A meeting the person already has a task on is one activity, not two
+  const servedOn = new Set(servingsOn(held, data).map((s) => `${s.personId}|${s.gathering.id}`));
   const meetingsByPerson = groupBy(
-    data.attendances.filter((a) => a.status === "attending" && meetingIds.has(a.gatheringId)),
+    data.attendances.filter(
+      (a) => a.status === "attending" && meetingIds.has(a.gatheringId) && !servedOn.has(`${a.personId}|${a.gatheringId}`)
+    ),
     (a) => a.personId
   );
   const worshipHeld = held.filter((g) => !isGroupGathering(g) && isWorshipService(g)).length;
@@ -833,16 +858,19 @@ export function summarizeEngagement(
   const count = data.persons.length;
   return {
     months,
+    monthDays: Math.round(monthLength / DAY_MS),
     worshipHeld,
     people,
     tasksPerMonth: hadTasks && count > 0 ? bandsOf(taskMonths, count, months) : null,
     activitiesPerMonth: hadActivities && count > 0 ? bandsOf(activityMonths, count, months) : null,
     withoutTasks: hadTasks ? withoutTasks : null,
     withoutTasksShare: hadTasks ? share(withoutTasks, count) : null,
-    withoutTasksOrGroups: people
-      .filter((p) => p.tasks === 0 && p.serviceGroups + p.otherGroups === 0)
-      .map((p) => p.person)
-      .sort((a, b) => a.name.localeCompare(b.name, "nb")),
+    withoutTasksOrGroups: hadTasks
+      ? people
+          .filter((p) => p.tasks === 0 && p.serviceGroups + p.otherGroups === 0)
+          .map((p) => p.person)
+          .sort((a, b) => a.name.localeCompare(b.name, "nb"))
+      : null,
   };
 }
 

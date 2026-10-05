@@ -42,6 +42,7 @@ const setModuleHidden = vi.fn((_id: string, _hidden: boolean) => ({ success: tru
 const showAllModules = vi.fn(() => ({ success: true }));
 const requestedPeriods: AnalyticsPeriodId[] = [];
 let hiddenModules: string[] = [];
+let canCustomize = true;
 
 vi.mock("../src/hooks/useAppHooks", () => ({
   useAdminAnalytics: (periodId: AnalyticsPeriodId) => {
@@ -51,6 +52,7 @@ vi.mock("../src/hooks/useAppHooks", () => ({
       registerHeadcount,
       removeHeadcount,
       hiddenModules,
+      canCustomize,
       setModuleHidden,
       showAllModules,
     };
@@ -63,6 +65,7 @@ afterEach(() => {
   cleanup();
   vi.clearAllMocks();
   hiddenModules = [];
+  canCustomize = true;
 });
 
 function renderTab() {
@@ -173,6 +176,19 @@ describe("Analysebord", () => {
     expect(setModuleHidden).toHaveBeenCalledWith("nokkeltall", true);
     fireEvent.click(within(dialog).getByRole("button", { name: "Vis alle" }));
     expect(showAllModules).toHaveBeenCalled();
+  });
+
+  test("uten en aktiv bruker i personregisteret kan ingenting skjules, så ingen får en falsk bekreftelse", () => {
+    canCustomize = false;
+    renderTab();
+    expect(screen.queryByRole("button", { name: /^Skjul / })).toBeNull();
+    expect((screen.getByRole("button", { name: "Tilpass bordet" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  test("etter at en modul er skjult, står fokus på Tilpass bordet", () => {
+    renderTab();
+    fireEvent.click(screen.getByRole("button", { name: "Skjul Oppmøte" }));
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Tilpass bordet" }));
   });
 
   test("datagrunnlaget sier hva som ikke er målt, og lenker til testdata", () => {

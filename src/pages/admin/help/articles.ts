@@ -312,7 +312,7 @@ const analysebord: HelpArticle = {
     "Trykk Last ned CSV for å hente oppmøtetallene til et regneark, f.eks. til årsmeldingen.",
     "Les Kan trenge avlastning og Ikke brukt i perioden før neste vaktliste lages. Navnene åpner personkortet.",
     "Bemanning per arrangement viser hvor mange samlinger som hadde alle plasser bekreftet, og hvilke som manglet folk.",
-    "Flere oppgaver på samme samling viser hvem som har hatt to eller flere oppgaver samtidig, for eksempel bilde og møteleder, og de vanligste kombinasjonene.",
+    "Flere oppgaver på samme samling viser hvem som har hatt to eller flere oppgaver på samme samling, for eksempel bilde og møteleder, og de vanligste kombinasjonene. Der kjøreplanen har klokkeslett for oppgavene, sies det fra om to av dem er samtidig.",
     "Oppgaver og aktiviteter per måned viser hvor stor del av menigheten som har 0, 1, 2 … 8 eller flere i en vanlig måned. Bytt mellom Oppgaver og Aktiviteter.",
     "Hver enkelt er en tabell per person. Velg Sorter etter, eller huk av Bare de som har vært med.",
     "Trykk Tilpass bordet for å velge hvilke moduler du vil se, eller trykk øyet øverst til høyre på en modul for å skjule den. Vis alle tar alt tilbake.",
@@ -321,7 +321,7 @@ const analysebord: HelpArticle = {
   knapper:
     "Siste 4 uker, Siste 3 måneder, Siste 12 måneder, Tilpass bordet, Gudstjenester, Alle arrangementer, Vis som tabell, Vis som diagram, Last ned CSV, Registrer, Endre, Oppgaver, Aktiviteter, Sorter etter, Bare de som har vært med, Vis alle. I vinduet for oppmøte: Registrer oppmøtetall eller Endre oppmøtetall, Lagre oppmøtetall, Avbryt, Fjern tellingen. I Tilpass bordet: en avkrysning per modul, Vis alle og Ferdig. En samling uten tall vises som en lav grå strek merket Ikke registrert.",
   etterLagring:
-    "«Oppmøtetallet for «[samling]» er lagret.» Søylen og snittet oppdateres med en gang. Ved fjerning: «Oppmøtetallet for «[samling]» er fjernet.» Uten tall: «Skriv inn hvor mange som var til stede.» Når en modul skjules: ««[modul]» er skjult. Du får den tilbake under Tilpass bordet.» Valget lagres for deg og gjelder ikke for andre. Under Database og Testdata kan du simulere et halvår med menighetsliv for å prøve bordet.",
+    "«Oppmøtetallet for «[samling]» er lagret.» Søylen og snittet oppdateres med en gang. Ved fjerning: «Oppmøtetallet for «[samling]» er fjernet.» Uten tall: «Skriv inn hvor mange som var til stede.» Når en modul skjules: ««[modul]» er skjult. Du får den tilbake under Tilpass bordet.» Valget lagres på den aktive brukeren. Under Database og Testdata kan du simulere et halvår med menighetsliv for å prøve bordet.",
 };
 
 export const helpSections: HelpSection[] = [

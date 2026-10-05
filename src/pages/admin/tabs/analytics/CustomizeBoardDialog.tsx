@@ -15,8 +15,11 @@ export const CustomizeBoardDialog: React.FC<CustomizeBoardDialogProps> = ({ hidd
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
 
+  // Focus starts in the dialog, and goes back to what opened it when it closes
   useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
     closeRef.current?.focus();
+    return () => opener?.focus();
   }, []);
 
   useEffect(() => {
@@ -44,7 +47,8 @@ export const CustomizeBoardDialog: React.FC<CustomizeBoardDialogProps> = ({ hidd
               Tilpass bordet
             </h3>
             <p className="text-[11px] text-[var(--studio-muted)] mt-0.5">
-              Velg hvilke moduler du vil se. Valget lagres for deg, og gjelder ikke for andre.
+              Velg hvilke moduler du vil se. Valget lagres på den aktive brukeren. Til innlogging er på plass, deler alle som
+              bruker samme bruker, samme valg.
             </p>
           </div>
           <button

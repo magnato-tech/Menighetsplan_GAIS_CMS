@@ -7,7 +7,7 @@ interface CoverageSectionProps {
   coverage: CoverageNote[];
   /** Opens Database og Testdata, where a history can be simulated. */
   onOpenDatabase: () => void;
-  onHide: () => void;
+  onHide?: () => void;
 }
 
 const STATUS = {

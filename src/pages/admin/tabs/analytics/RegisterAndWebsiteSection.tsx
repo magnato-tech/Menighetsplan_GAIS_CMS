@@ -14,8 +14,8 @@ interface RegisterAndWebsiteSectionProps {
   /** Each half is its own module and can be hidden on its own. */
   showRegister: boolean;
   showWebsite: boolean;
-  onHideRegister: () => void;
-  onHideWebsite: () => void;
+  onHideRegister?: () => void;
+  onHideWebsite?: () => void;
 }
 
 const link = "font-semibold text-[var(--studio-link)] hover:text-[var(--studio-link-hover)]";

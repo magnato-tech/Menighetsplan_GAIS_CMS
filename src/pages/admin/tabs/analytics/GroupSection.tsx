@@ -10,7 +10,7 @@ interface GroupSectionProps {
   period: AnalyticsPeriod;
   groups: GroupSummary;
   now: number;
-  onHide: () => void;
+  onHide?: () => void;
 }
 
 const NAMES_SHOWN = 12;

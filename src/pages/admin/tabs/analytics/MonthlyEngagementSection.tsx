@@ -7,7 +7,7 @@ import { AnalyticsSection, MiniStat } from "./AnalyticsSection";
 
 interface MonthlyEngagementSectionProps {
   engagement: EngagementSummary;
-  onHide: () => void;
+  onHide?: () => void;
 }
 
 const NAMES_SHOWN = 12;
@@ -58,13 +58,14 @@ export const MonthlyEngagementSection: React.FC<MonthlyEngagementSectionProps> =
   const [scope, setScope] = useState<"oppgaver" | "aktiviteter">("oppgaver");
   const bands = scope === "oppgaver" ? engagement.tasksPerMonth : engagement.activitiesPerMonth;
   const busy = bands ? atLeastPerMonth(bands, BUSY_FROM) : null;
+  const withoutBoth = engagement.withoutTasksOrGroups ?? [];
   const unit = UNITS[scope];
 
   return (
     <AnalyticsSection
       id="analyse-per-maned"
       title="Oppgaver og aktiviteter per måned"
-      description={`Hvor stor del av personregisteret som har 0, 1, 2 … 8 eller flere ${unit.many} i en vanlig måned (30 dager) i perioden. ${
+      description={`Hvor stor del av personregisteret som har 0, 1, 2 … 8 eller flere ${unit.many} i en vanlig måned (${engagement.monthDays} dager) i perioden. ${
         scope === "aktiviteter" ? "Aktiviteter er oppgaver og gruppesamlinger personen har svart «Kommer» på." : ""
       }`}
       icon={<CalendarRange className="w-5 h-5" />}
@@ -84,7 +85,10 @@ export const MonthlyEngagementSection: React.FC<MonthlyEngagementSectionProps> =
         <MiniStat label="Ingen oppgave i perioden" value={engagement.withoutTasks === null ? "–" : String(engagement.withoutTasks)}>
           {engagement.withoutTasksShare === null ? "ingen oppgaver i perioden" : `${formatPercent(engagement.withoutTasksShare)} av personregisteret`}
         </MiniStat>
-        <MiniStat label="Verken oppgave eller gruppe" value={String(engagement.withoutTasksOrGroups.length)}>
+        <MiniStat
+          label="Verken oppgave eller gruppe"
+          value={engagement.withoutTasksOrGroups === null ? "–" : String(engagement.withoutTasksOrGroups.length)}
+        >
           ingen gruppe og ingen oppgave i perioden
         </MiniStat>
         <MiniStat label={`${BUSY_FROM} eller flere ${unit.many} i måneden`} value={formatPercent(busy?.share ?? null)}>
@@ -100,11 +104,11 @@ export const MonthlyEngagementSection: React.FC<MonthlyEngagementSectionProps> =
         <BandBars bands={bands} unit={unit} />
       )}
 
-      {engagement.withoutTasksOrGroups.length > 0 && (
+      {engagement.withoutTasksOrGroups && engagement.withoutTasksOrGroups.length > 0 && (
         <div className="p-4 rounded-xl bg-[var(--studio-row)] border border-[var(--studio-border)] space-y-2">
           <h3 className="text-xs font-bold text-[var(--studio-text)]">Verken oppgave eller gruppe</h3>
           <p className="text-xs leading-relaxed">
-            {engagement.withoutTasksOrGroups.slice(0, NAMES_SHOWN).map((person, index) => (
+            {withoutBoth.slice(0, NAMES_SHOWN).map((person, index) => (
               <React.Fragment key={person.id}>
                 {index > 0 && ", "}
                 <Link to={`/admin/person/${person.id}`} className={link}>
@@ -112,8 +116,8 @@ export const MonthlyEngagementSection: React.FC<MonthlyEngagementSectionProps> =
                 </Link>
               </React.Fragment>
             ))}
-            {engagement.withoutTasksOrGroups.length > NAMES_SHOWN && (
-              <span className="text-[var(--studio-muted)]"> og {engagement.withoutTasksOrGroups.length - NAMES_SHOWN} til</span>
+            {withoutBoth.length > NAMES_SHOWN && (
+              <span className="text-[var(--studio-muted)]"> og {withoutBoth.length - NAMES_SHOWN} til</span>
             )}
           </p>
         </div>

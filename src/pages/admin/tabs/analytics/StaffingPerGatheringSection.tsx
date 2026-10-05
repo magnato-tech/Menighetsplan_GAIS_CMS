@@ -9,7 +9,7 @@ import { AnalyticsSection, MiniStat } from "./AnalyticsSection";
 interface StaffingPerGatheringSectionProps {
   period: AnalyticsPeriod;
   staffing: FullStaffingSummary;
-  onHide: () => void;
+  onHide?: () => void;
 }
 
 const SHOWN = 8;
@@ -18,7 +18,6 @@ const SHOWN = 8;
 export const StaffingPerGatheringSection: React.FC<StaffingPerGatheringSectionProps> = ({ period, staffing, onHide }) => {
   const change = describeChange(staffing.rate, staffing.previousRate, "rate");
   const total = staffing.gatherings.length;
-  const missingSlots = staffing.notFull.reduce((sum, g) => sum + g.missing, 0);
 
   return (
     <AnalyticsSection
@@ -44,7 +43,7 @@ export const StaffingPerGatheringSection: React.FC<StaffingPerGatheringSectionPr
               {staffing.worship.withTasks > 0 ? formatPercent(staffing.worship.rate) : "ingen gudstjenester med oppgaver"}
             </MiniStat>
             <MiniStat label="Ikke fullt bemannet" value={String(staffing.notFull.length)}>
-              {missingSlots > 0 ? `${missingSlots} plasser manglet til sammen` : "ingen plasser manglet"}
+              {staffing.missingSlots > 0 ? `${staffing.missingSlots} plasser manglet til sammen` : "ingen plasser manglet"}
             </MiniStat>
           </div>
 

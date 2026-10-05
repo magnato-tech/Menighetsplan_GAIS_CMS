@@ -12,7 +12,7 @@ interface AttendanceSectionProps {
   attendance: AttendanceSummary;
   gatherings: GatheringSummary;
   onRegister: (row: CountedGathering) => void;
-  onHide: () => void;
+  onHide?: () => void;
 }
 
 type Scope = "gudstjenester" | "alle";

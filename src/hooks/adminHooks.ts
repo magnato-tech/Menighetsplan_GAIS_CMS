@@ -450,6 +450,8 @@ export function useAdminAnalytics(periodId: AnalyticsPeriodId) {
     removeHeadcount,
     /** The modules the person using the board has hidden. */
     hiddenModules: currentUser.analyticsHiddenModules ?? [],
+    /** A choice can only be saved on a person who is in the register. */
+    canCustomize: allPersons.some((p) => p.id === currentUser.id),
     setModuleHidden: setAnalyticsModuleHidden,
     showAllModules: showAllAnalyticsModules,
   };

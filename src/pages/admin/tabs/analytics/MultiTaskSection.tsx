@@ -2,13 +2,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, Layers } from "lucide-react";
 import type { MultiTaskSummary } from "../../../../utils/churchAnalytics";
-import { formatPercent } from "../../../../utils/analyticsFormat";
+import { formatCount, formatPercent } from "../../../../utils/analyticsFormat";
 import { formatNorwegianDateTime } from "../../../../utils/dates";
 import { AnalyticsSection, MiniStat } from "./AnalyticsSection";
 
 interface MultiTaskSectionProps {
   multiTasks: MultiTaskSummary;
-  onHide: () => void;
+  onHide?: () => void;
 }
 
 const SHOWN = 8;
@@ -28,21 +28,25 @@ export const MultiTaskSection: React.FC<MultiTaskSectionProps> = ({ multiTasks, 
       onHide={onHide}
     >
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <MiniStat label="Ganger" value={String(multiTasks.occurrences.length)}>
-          på {multiTasks.gatherings} {multiTasks.gatherings === 1 ? "samling" : "samlinger"}
+        <MiniStat label="Ganger" value={multiTasks.hadTasks ? String(multiTasks.occurrences.length) : "–"}>
+          {multiTasks.hadTasks
+            ? `på ${multiTasks.gatherings} ${multiTasks.gatherings === 1 ? "samling" : "samlinger"}`
+            : "ingen samlinger med oppgaver"}
         </MiniStat>
-        <MiniStat label="Personer" value={String(multiTasks.people)}>
+        <MiniStat label="Personer" value={multiTasks.hadTasks ? String(multiTasks.people) : "–"}>
           har hatt flere oppgaver på samme samling
         </MiniStat>
         <MiniStat label="Andel av tjenestene" value={formatPercent(multiTasks.shareOfServings)}>
           av gangene noen tjenestegjorde
         </MiniStat>
-        <MiniStat label="Samme klokkeslett" value={String(multiTasks.sameTimeCount)}>
-          der kjøreplanen viser det
+        <MiniStat label="Samme klokkeslett" value={formatCount(multiTasks.sameTimeCount)}>
+          {multiTasks.sameTimeCount === null ? "kjøreplanene har ikke klokkeslett for oppgavene" : "der kjøreplanen viser det"}
         </MiniStat>
       </div>
 
-      {multiTasks.occurrences.length === 0 ? (
+      {!multiTasks.hadTasks ? (
+        <p className="text-xs text-[var(--studio-muted)]">Ingen samlinger i perioden hadde oppgaver.</p>
+      ) : multiTasks.occurrences.length === 0 ? (
         <p className="text-xs text-[var(--studio-muted)]">Ingen har hatt flere oppgaver på samme samling i perioden.</p>
       ) : (
         <>
@@ -96,7 +100,7 @@ export const MultiTaskSection: React.FC<MultiTaskSectionProps> = ({ multiTasks, 
                     {o.person.name}
                   </Link>
                   <span className="text-[var(--studio-text)]">{o.roles.join(" + ")}</span>
-                  {o.sameTime && (
+                  {o.sameTime === true && (
                     <span className="inline-flex items-center gap-1 font-bold text-[var(--studio-warn)]">
                       <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
                       Samme klokkeslett i kjøreplanen

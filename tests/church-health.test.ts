@@ -40,7 +40,14 @@ describe("Menighetens helse på analysebordet", () => {
   const gatherings: Gathering[] = [
     service("p1", "2026-06-14T09:00:00.000Z"),
     service("s4", "2026-07-19T09:00:00.000Z"),
-    service("s3", "2026-08-16T09:00:00.000Z"),
+    // Written the way people type it: "9:30" and "09.30" are the same time, and a task can sit on two rows
+    service("s3", "2026-08-16T09:00:00.000Z", {
+      programSchedule: [
+        { time: "9:30", title: "Bønn med medarbeiderne", taskId: "s3-moteleder" },
+        { time: "11:00", title: "Velkommen", taskId: "s3-moteleder" },
+        { time: "09.30", title: "Lydsjekk og bilder", taskId: "s3-bilde" },
+      ],
+    }),
     service("s1", "2026-09-13T09:00:00.000Z", {
       programSchedule: [
         { time: "11:00", title: "Velkommen", taskId: "s1-moteleder" },
@@ -118,6 +125,7 @@ describe("Menighetens helse på analysebordet", () => {
     ids(fullStaffing.notFull) === "s2,s4" && fullStaffing.notFull[1].missing === 1 && fullStaffing.notFull[1].needed === 2,
     "Samlingene som ikke var fullt bemannet, nyeste først, med hvor mange som manglet"
   );
+  assert(fullStaffing.missingSlots === 2, "Plassene som manglet, til sammen");
 
   // 2. Several tasks on the same gathering
   assert(multiTasks.occurrences.length === 3, "Tre ganger hadde noen to oppgaver på samme samling");
@@ -139,16 +147,19 @@ describe("Menighetens helse på analysebordet", () => {
     multiTasks.byPerson.map((p) => `${p.person.id}:${p.times}`).join(",") === "b:2,c:1",
     "Den som oftest har flere oppgaver, står først"
   );
+  const occurrenceOn = (id: string) => multiTasks.occurrences.find((o) => o.gathering.id === id);
+  assert(occurrenceOn("s1")?.sameTime === true, "Samme klokkeslett i kjøreplanen merkes");
   assert(
-    multiTasks.occurrences.find((o) => o.gathering.id === "s1")?.sameTime === true &&
-      multiTasks.occurrences.find((o) => o.gathering.id === "s2")?.sameTime === false &&
-      multiTasks.sameTimeCount === 1,
-    "Samme klokkeslett i kjøreplanen merkes; uten kjøreplan kan det ikke sies"
+    occurrenceOn("s3")?.sameTime === true,
+    "«9:30» og «09.30» er samme tid, og alle tidene til en oppgave i kjøreplanen telles"
   );
+  assert(occurrenceOn("s2")?.sameTime === null, "Uten klokkeslett i kjøreplanen kan det ikke sies, og det står som ukjent");
+  assert(multiTasks.sameTimeCount === 2 && multiTasks.hadTasks, "To ganger på samme klokkeslett");
 
   // 3. Each person
   const row = (id: string) => engagement.people.find((p) => p.person.id === id)!;
-  assert(engagement.months === 3 && engagement.worshipHeld === 4, "Tre måneder med fire gudstjenester");
+  assert(engagement.months === 3 && engagement.monthDays === 30 && engagement.worshipHeld === 4, "Tre måneder på 30 dager med fire gudstjenester");
+  assert(summarizeEngagement(data, analyticsPeriod("4w", now)).monthDays === 28, "Siste fire uker er én måned på 28 dager");
   assert(engagement.people.map((p) => p.person.id).join(",") === "b,c,a,d,e", "Flest oppgaver først");
   assert(
     row("b").tasks === 4 && row("b").gatheringsServed === 2 && row("b").worshipServed === 2 && row("b").worshipShare === 0.5,
@@ -179,11 +190,11 @@ describe("Menighetens helse på analysebordet", () => {
   const twoOrMore = atLeastPerMonth(engagement.tasksPerMonth!, 2);
   assert(twoOrMore.share === 3 / 15 && twoOrMore.people === 1, "Andelen med to eller flere oppgaver i en måned");
   assert(engagement.withoutTasks === 2 && engagement.withoutTasksShare === 0.4, "To av fem hadde ingen oppgave");
-  assert(engagement.withoutTasksOrGroups.map((p) => p.id).join(",") === "e", "Én er verken med i en gruppe eller har hatt en oppgave");
+  assert(engagement.withoutTasksOrGroups?.map((p) => p.id).join(",") === "e", "Én er verken med i en gruppe eller har hatt en oppgave");
 
   // 5. What the numbers rest on
   const runSheet = coverage.find((c) => c.id === "kjoreplan")!;
-  assert(runSheet.status === "partial" && runSheet.text.includes("1 av 4"), "Datagrunnlaget sier hvor mange kjøreplaner som har klokkeslett");
+  assert(runSheet.status === "partial" && runSheet.text.includes("2 av 4"), "Datagrunnlaget sier hvor mange kjøreplaner som har klokkeslett");
 
   // 6. Eight or more, and nothing made up
   const busy = summarizeEngagement(
@@ -198,6 +209,23 @@ describe("Menighetens helse på analysebordet", () => {
     analyticsPeriod("4w", now)
   );
   assert(busy.tasksPerMonth!.find((b) => b.label === "8 eller flere")?.share === 1, "Ni oppgaver i en måned havner i «8 eller flere»");
+
+  // 7. One evening is one activity, even with a task on it and a «Kommer»
+  const evening = summarizeEngagement(
+    {
+      persons: [persons[2]],
+      groups,
+      gatherings: [meeting("h1", "2026-09-16T17:30:00.000Z")],
+      tasks: [task("h1-bevertning", "h1", "Bevertning")],
+      assignments: [yes("h1-bevertning", "c")],
+      attendances: [{ id: "att-h1-c", gatheringId: "h1", personId: "c", status: "attending" }],
+    },
+    analyticsPeriod("4w", now)
+  );
+  assert(
+    evening.people[0].tasks === 1 && evening.people[0].meetingsAttending === 0 && evening.people[0].activitiesPerMonth === 1,
+    "En oppgave på en gruppesamling og «Kommer» på samme samling er én aktivitet"
+  );
   const empty = buildChurchAnalytics(
     { ...data, gatherings: [], tasks: [], assignments: [], attendances: [] },
     "3m",
@@ -208,7 +236,10 @@ describe("Menighetens helse på analysebordet", () => {
       empty.multiTasks.shareOfServings === null &&
       empty.engagement.tasksPerMonth === null &&
       empty.engagement.activitiesPerMonth === null &&
-      empty.engagement.withoutTasks === null,
+      empty.engagement.withoutTasks === null &&
+      empty.engagement.withoutTasksOrGroups === null &&
+      empty.multiTasks.sameTimeCount === null &&
+      !empty.multiTasks.hadTasks,
     "Uten samlinger er tallene tomme, ikke null"
   );
 });

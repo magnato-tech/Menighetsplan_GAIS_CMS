@@ -8,7 +8,7 @@ import { AnalyticsSection, MiniStat } from "./AnalyticsSection";
 interface VolunteerSectionProps {
   period: AnalyticsPeriod;
   volunteers: VolunteerSummary;
-  onHide: () => void;
+  onHide?: () => void;
 }
 
 const NAMES_SHOWN = 12;

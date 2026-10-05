@@ -42,7 +42,7 @@ export interface RunSheetRow {
 }
 
 /** "9:30" and "9.30" as "09:30", so times sort by the clock. Anything else is left as it is written. */
-function normalizeClock(value: string): string {
+export function normalizeClock(value: string): string {
   const match = value.trim().match(/^(\d{1,2})[:.](\d{2})$/);
   return match ? `${match[1].padStart(2, "0")}:${match[2]}` : value.trim();
 }
