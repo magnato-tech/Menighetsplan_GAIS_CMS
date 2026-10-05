@@ -172,6 +172,10 @@ async function main() {
       width: tableBox.width,
       height: rowBox.y + rowBox.height - tableBox.y,
     }, "hjelp-personer.png");
+
+    await gotoTab(page, "analyse");
+    await page.waitForSelector("text=Analysebord", { timeout: 30000 });
+    await shotLocator(page.locator('section[aria-labelledby="analyse-oppmote"]'), "hjelp-analysebord.png");
   } finally {
     await context.close();
     await browser.close();

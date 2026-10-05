@@ -113,6 +113,16 @@ describe("Lesing", () => {
   });
 
   test("Den offentlige nettsiden får ikke oppgaver, tildelinger, meldinger eller oppmøte", async () => {
+    seed(CMS_COLLECTIONS.SETTINGS, [
+      {
+        id: "headcount-gathering-1",
+        recordType: "gatheringHeadcount",
+        gatheringId: "gathering-1",
+        adults: 40,
+        children: 9,
+        registeredAt: "2026-10-01T12:00:00.000Z",
+      },
+    ]);
     const data = await mountProvider(false);
     await waitFor(() => expect(data.current.groups).toHaveLength(1));
     await pause(60);
@@ -120,6 +130,7 @@ describe("Lesing", () => {
     expect(data.current.assignments).toEqual([]);
     expect(data.current.groupMessages).toEqual([]);
     expect(data.current.attendances).toEqual([]);
+    expect(data.current.headcounts).toEqual([]);
   });
 
   test("Aktiv bruker er personen som er valgt", async () => {
@@ -433,6 +444,58 @@ describe("Oppmøte", () => {
     await waitFor(() => expect(data.current.getPersonAttendance("gathering-1", "person-2")?.status).toBe("declined"));
     expect(data.current.getGatheringAttendances("gathering-1")).toHaveLength(1);
     expect(await storedIds(COLLECTIONS.GATHERING_ATTENDANCES)).toHaveLength(1);
+  });
+});
+
+describe("Oppmøtetall", () => {
+  // Stored in cms_settings, marked by recordType, until the live rules allow their own collection
+  const storedCounts = async () =>
+    (await storedIds(CMS_COLLECTIONS.SETTINGS)).filter((id) => id.startsWith("headcount-"));
+
+  beforeEach(async () => {
+    await clearCollections([CMS_COLLECTIONS.SETTINGS]);
+  });
+
+  test("Et oppmøtetall lagres med hvem som registrerte det, og en ny telling erstatter den gamle", async () => {
+    const data = await mountProvider();
+    data.current.registerHeadcount("gathering-1", { adults: 80, children: 20, note: "Dåp" });
+    await waitFor(() => expect(data.current.headcounts).toHaveLength(1));
+    const first = await stored(CMS_COLLECTIONS.SETTINGS, "headcount-gathering-1");
+    expect(first).toMatchObject({
+      recordType: "gatheringHeadcount",
+      gatheringId: "gathering-1",
+      adults: 80,
+      children: 20,
+      note: "Dåp",
+      registeredBy: "person-1",
+    });
+    expect(isTimestamp(first?.registeredAt)).toBe(true);
+    expect(data.current.headcounts[0]).not.toHaveProperty("recordType");
+
+    data.current.registerHeadcount("gathering-1", { adults: 82, children: 20 });
+    await waitFor(() => expect(data.current.headcounts[0]?.adults).toBe(82));
+    expect(data.current.headcounts).toHaveLength(1);
+    expect(await storedCounts()).toEqual(["headcount-gathering-1"]);
+    // The corrected count has no note, so the old note is gone too
+    expect(await stored(CMS_COLLECTIONS.SETTINGS, "headcount-gathering-1")).not.toHaveProperty("note");
+  });
+
+  test("Et oppmøtetall kan fjernes igjen", async () => {
+    const data = await mountProvider();
+    data.current.registerHeadcount("gathering-1", { adults: 10, children: 0 });
+    await waitFor(() => expect(data.current.headcounts).toHaveLength(1));
+    data.current.removeHeadcount("gathering-1");
+    await waitFor(() => expect(data.current.headcounts).toEqual([]));
+    expect(await storedCounts()).toEqual([]);
+  });
+
+  test("Tjenesteroller i samme samling blir ikke lest som oppmøtetall", async () => {
+    const data = await mountProvider();
+    data.current.createVolunteerRole({ name: "Lyd", sortOrder: 0 });
+    data.current.registerHeadcount("gathering-1", { adults: 10, children: 0 });
+    await waitFor(() => expect(data.current.headcounts).toHaveLength(1));
+    await waitFor(() => expect(data.current.volunteerRoles.map((r) => r.name)).toContain("Lyd"));
+    expect(data.current.volunteerRoles.some((r) => r.id === "headcount-gathering-1")).toBe(false);
   });
 });
 

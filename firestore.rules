@@ -74,6 +74,14 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // Headcounts (oppmøtetall) per gathering. Internal: only read behind the planner,
+    // never by the public website. Same open write as attendances until real auth ships.
+    // Until these rules are deployed, headcounts are stored in cms_settings (src/services/headcounts.ts).
+    match /gatheringHeadcounts/{headcountId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     // Volunteer roles (tjenesteroller med instruks) — same open write as assignments until real auth ships
     match /volunteer_roles/{roleId} {
       allow read: if true;

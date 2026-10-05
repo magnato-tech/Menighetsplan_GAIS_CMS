@@ -106,6 +106,21 @@
       },
       "required": ["id", "gatheringId", "personId", "status"]
     },
+    "GatheringHeadcount": {
+      "title": "GatheringHeadcount",
+      "description": "How many were present at a gathering, counted on the day. One per gathering, internal only",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "gatheringId": { "type": "string" },
+        "adults": { "type": "number" },
+        "children": { "type": "number" },
+        "note": { "type": "string" },
+        "registeredAt": { "type": "string" },
+        "registeredBy": { "type": "string" }
+      },
+      "required": ["id", "gatheringId", "adults", "children", "registeredAt"]
+    },
     "CmsPage": {
       "title": "CmsPage",
       "description": "CMS page content and hierarchical navigation positioning",
@@ -157,6 +172,10 @@
     "/gatheringAttendances/{attendanceId}": {
       "schema": "GatheringAttendance",
       "description": "Collection of gathering RSVP responses"
+    },
+    "/gatheringHeadcounts/{headcountId}": {
+      "schema": "GatheringHeadcount",
+      "description": "Counted attendance per gathering (oppmøtetall)"
     },
     "/cms_pages/{pageId}": {
       "schema": "CmsPage",

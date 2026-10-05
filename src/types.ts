@@ -99,6 +99,21 @@ export interface GatheringAttendance {
   updatedAt?: string;
 }
 
+/**
+ * How many were actually there, counted on the day and registered afterwards.
+ * A response ("Kommer") says who planned to come; this says who came. One count per
+ * gathering: the id is derived from the gathering, so registering again replaces it.
+ */
+export interface GatheringHeadcount {
+  id: string;
+  gatheringId: string;
+  adults: number;
+  children: number;
+  note?: string;
+  registeredAt: string; // ISO timestamp
+  registeredBy?: string; // person id
+}
+
 export interface GroupMessage {
   id: string;
   groupId: string;

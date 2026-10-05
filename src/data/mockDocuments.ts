@@ -7,6 +7,7 @@ import {
   initialAssignments,
   initialGroupMessages,
   initialGatheringAttendances,
+  initialGatheringHeadcounts,
 } from "./mockData";
 import {
   initialCmsPages,
@@ -161,11 +162,12 @@ export function getCustomMockDocuments(counts?: CustomMockCounts): MockDocument[
     (a) => taskIds.has(a.taskId) && personIds.has(a.personId)
   );
 
-  // 6. Group messages and attendances
+  // 6. Group messages, responses and headcounts
   const groupMessages = initialGroupMessages.filter((m) => groupIds.has(m.groupId));
   const attendances = initialGatheringAttendances.filter(
     (att) => gatheringIds.has(att.gatheringId) && personIds.has(att.personId)
   );
+  const headcounts = initialGatheringHeadcounts.filter((count) => gatheringIds.has(count.gatheringId));
 
   const sets: [string, { id: string }[]][] = [
     [COLLECTIONS.PERSONS, persons],
@@ -175,6 +177,7 @@ export function getCustomMockDocuments(counts?: CustomMockCounts): MockDocument[
     [COLLECTIONS.ASSIGNMENTS, assignments],
     [COLLECTIONS.GROUP_MESSAGES, groupMessages],
     [COLLECTIONS.GATHERING_ATTENDANCES, attendances],
+    [COLLECTIONS.GATHERING_HEADCOUNTS, headcounts],
     [COLLECTIONS.VOLUNTEER_ROLES, buildInitialVolunteerRoles()],
     [CMS_COLLECTIONS.PAGES, initialCmsPages],
     [CMS_COLLECTIONS.NEWS, initialCmsNews],

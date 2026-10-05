@@ -1,5 +1,7 @@
 import { useMemo, useCallback } from "react";
 import { useFirebase } from "../context/FirebaseDataContext";
+import { useCms } from "../context/CmsContext";
+import { AnalyticsPeriodId, buildChurchAnalytics } from "../utils/churchAnalytics";
 import { Task, Group, Gathering } from "../types";
 import { validateGathering } from "../utils/validation";
 import {
@@ -382,4 +384,51 @@ export function useAdminTaskDetail(taskId: string) {
     updateTaskInstruction: handleUpdateInstruction,
     updateTaskNeededCount: handleUpdateNeededCount,
   };
+}
+
+// 14. Hook: useAdminAnalytics
+/**
+ * Everything the analysis board shows for the chosen period, worked out from the
+ * planning data and the website content. The numbers follow the live data.
+ */
+export function useAdminAnalytics(periodId: AnalyticsPeriodId) {
+  const {
+    allPersons,
+    groups,
+    gatherings,
+    tasks,
+    assignments,
+    attendances,
+    headcounts,
+    groupMessages,
+    volunteerRoles,
+    registerHeadcount,
+    removeHeadcount,
+  } = useFirebase();
+  const { pages, news, sermons } = useCms();
+
+  const analytics = useMemo(
+    () =>
+      buildChurchAnalytics(
+        {
+          persons: allPersons,
+          groups,
+          gatherings,
+          tasks,
+          assignments,
+          attendances,
+          headcounts,
+          messages: groupMessages,
+          volunteerRoles,
+          pages,
+          news,
+          sermons,
+        },
+        periodId,
+        Date.now()
+      ),
+    [allPersons, groups, gatherings, tasks, assignments, attendances, headcounts, groupMessages, volunteerRoles, pages, news, sermons, periodId]
+  );
+
+  return { analytics, registerHeadcount, removeHeadcount };
 }

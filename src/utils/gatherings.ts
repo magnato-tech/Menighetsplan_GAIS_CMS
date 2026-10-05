@@ -44,8 +44,8 @@ export function upcomingPublicGatherings<T extends Gathering>(gatherings: T[], f
     .sort((a, b) => startOf(a) - startOf(b));
 }
 
-// A gathering that started less than four hours ago is still going on
-const ONGOING_MS = 4 * 60 * 60 * 1000;
+/** A gathering that started less than four hours ago is still going on. */
+export const ONGOING_MS = 4 * 60 * 60 * 1000;
 
 export interface Highlight {
   gathering: Gathering;

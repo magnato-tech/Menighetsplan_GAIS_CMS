@@ -8,6 +8,7 @@ export const COLLECTIONS = {
   ASSIGNMENTS: "assignments",
   GROUP_MESSAGES: "groupMessages",
   GATHERING_ATTENDANCES: "gatheringAttendances",
+  GATHERING_HEADCOUNTS: "gatheringHeadcounts",
   VOLUNTEER_ROLES: "volunteer_roles",
 } as const;
 

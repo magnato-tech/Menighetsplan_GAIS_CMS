@@ -24,6 +24,7 @@ import {
   Badge,
   Images,
   CircleHelp,
+  ChartColumnBig,
 } from "lucide-react";
 import { StudioData, StudioTab, countUrgentTasks } from "./studio";
 import { prefetchStudioTab } from "./studioTabLoaders";
@@ -436,6 +437,27 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--studio-surface)] text-[var(--studio-muted)]">
                 Firestore
               </span>
+            </button>
+          </div>
+
+          {/* Nav Section: Innsikt */}
+          <div className="space-y-1">
+            <div className="text-[10px] font-black uppercase tracking-wider text-[var(--studio-muted)] px-3 py-1">
+              Innsikt
+            </div>
+
+            <button
+              type="button"
+              {...tabPrefetchHandlers("analyse")}
+              onClick={() => onTabChange("analyse")}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                activeTab === "analyse"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-bg)]"
+              }`}
+            >
+              <ChartColumnBig className="w-4 h-4 text-[var(--studio-icon)]" />
+              <span>Analysebord</span>
             </button>
           </div>
         </div>

@@ -11,6 +11,7 @@ import {
 import { DEFAULT_VOLUNTEER_ROLE_NAMES } from "../../../data/defaultVolunteerRoles";
 import { ShowFeedback, StudioData } from "../studio";
 import { DatabaseTestdataTab } from "../../../components/admin/DatabaseTestdataTab";
+import { SimulationPanel } from "../../../components/admin/SimulationPanel";
 import {
   Database,
   RefreshCw,
@@ -664,6 +665,9 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
       </div>
     )}
   </section>
+
+      {/* Simulert historikk for Analysebord */}
+      <SimulationPanel showFeedback={showFeedback} />
 
       {/* Seksjon 3: Valgfrie Tilleggsmoduler (Kalender & Meldinger) */}
       <section className="p-5 sm:p-6 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-4">

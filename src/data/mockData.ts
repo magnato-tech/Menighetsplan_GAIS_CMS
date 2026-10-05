@@ -1,4 +1,13 @@
-import { Person, Group, Gathering, Task, Assignment, GroupMessage, GatheringAttendance } from "../types";
+import {
+  Person,
+  Group,
+  Gathering,
+  Task,
+  Assignment,
+  GroupMessage,
+  GatheringAttendance,
+  GatheringHeadcount,
+} from "../types";
 
 // Three of the four have a public profile with a registered consent. Ingrid has not
 // consented, so she is never named on the public website although she leads a group.
@@ -1342,4 +1351,50 @@ export const initialGatheringAttendances: GatheringAttendance[] = [
     updatedAt: "2026-09-01T11:00:00.000Z",
   },
   // person-1 (Kari Nordmann) has not responded yet (ikke svart)
+];
+
+// Counted on the day and registered afterwards. The family service on 27 September
+// has no count yet, so the analysis shows a gathering that is still missing one.
+export const initialGatheringHeadcounts: GatheringHeadcount[] = [
+  {
+    id: "headcount-gathering-aug-2",
+    gatheringId: "gathering-aug-2",
+    adults: 74,
+    children: 18,
+    registeredAt: "2026-08-30T14:05:00.000Z",
+    registeredBy: "person-1",
+  },
+  {
+    id: "headcount-gathering-1",
+    gatheringId: "gathering-1",
+    adults: 96,
+    children: 27,
+    note: "Dåp, mange besøkende fra familiene",
+    registeredAt: "2026-09-06T12:40:00.000Z",
+    registeredBy: "person-1",
+  },
+  {
+    id: "headcount-gathering-7",
+    gatheringId: "gathering-7",
+    adults: 5,
+    children: 23,
+    registeredAt: "2026-09-06T12:45:00.000Z",
+    registeredBy: "person-1",
+  },
+  {
+    id: "headcount-gathering-2",
+    gatheringId: "gathering-2",
+    adults: 31,
+    children: 0,
+    registeredAt: "2026-09-11T20:30:00.000Z",
+    registeredBy: "person-2",
+  },
+  {
+    id: "headcount-gathering-3",
+    gatheringId: "gathering-3",
+    adults: 88,
+    children: 21,
+    registeredAt: "2026-09-13T12:30:00.000Z",
+    registeredBy: "person-1",
+  },
 ];

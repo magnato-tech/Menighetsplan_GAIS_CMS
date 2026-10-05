@@ -6,6 +6,7 @@ import {
   Task,
   Assignment,
   GatheringAttendance,
+  GatheringHeadcount,
   GroupMessage,
   GroupCategory,
   MeetingSchedule,
@@ -15,6 +16,7 @@ import type { CmsMedia, CmsMediaVariants } from "./cmsData";
 import { newId } from "../utils/id";
 import { visibilityFields } from "../utils/visibility";
 import { isWorshipService } from "../utils/gatherings";
+import { headcountIdFor, type HeadcountInput } from "../utils/headcount";
 
 // Each new document is built here exactly once, so its id and its defaults are decided in one place.
 
@@ -163,6 +165,26 @@ export function buildAttendance(
     personId,
     status,
     updatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * The headcount registered for a gathering. The id is made from the gathering, so a
+ * corrected count replaces the first one instead of being counted twice.
+ */
+export function buildHeadcount(
+  gatheringId: string,
+  input: HeadcountInput,
+  registeredBy?: string
+): GatheringHeadcount {
+  return {
+    id: headcountIdFor(gatheringId),
+    gatheringId,
+    adults: input.adults,
+    children: input.children,
+    note: input.note?.trim() || undefined,
+    registeredAt: new Date().toISOString(),
+    registeredBy,
   };
 }
 

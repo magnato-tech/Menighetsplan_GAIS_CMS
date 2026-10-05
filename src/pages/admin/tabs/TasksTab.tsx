@@ -13,7 +13,7 @@ import {
   MessageSquare,
   Send,
 } from "lucide-react";
-import { StudioData, ShowFeedback, countUrgentTasks } from "../studio";
+import { StudioData, ShowFeedback, countUrgentTasks, isUrgentTask, stillToStaff } from "../studio";
 
 interface TasksTabProps {
   studio: StudioData;
@@ -23,7 +23,8 @@ interface TasksTabProps {
 export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
   const { allPersons, adminTasks, updateTask, assignTaskToPerson } = studio;
   const urgentTasksCount = countUrgentTasks(adminTasks);
-  const unassignedTasksCount = adminTasks.filter(
+  const upcomingTasks = stillToStaff(adminTasks);
+  const unassignedTasksCount = upcomingTasks.filter(
     (item) => item.availableSpots > 0 || !item.isFullyCovered
   ).length;
 
@@ -124,9 +125,9 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
         </div>
 
         <div className="space-y-3">
-          {adminTasks
+          {(taskFilter === "all" ? adminTasks : upcomingTasks)
             .filter((item) => {
-              if (taskFilter === "urgent") return item.taskStaffing.hasForfall || item.taskStaffing.color === "red" || item.task.status === "vacant";
+              if (taskFilter === "urgent") return isUrgentTask(item);
               if (taskFilter === "uncovered") return item.availableSpots > 0 || !item.isFullyCovered;
               return true;
             })

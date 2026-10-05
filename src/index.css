@@ -64,6 +64,16 @@
   --studio-accent-border: rgb(67 56 202 / 0.45);
   --studio-accent-text: #c7d2fe;
   --studio-icon: #818cf8;
+  /* Charts on the analysis board: two categorical slots, validated against the dark surface */
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-grid: rgb(71 85 105 / 0.45);
+  --viz-track: rgb(57 135 229 / 0.22);
+  --viz-missing: #64748b;
+  /* Status text, always paired with an icon and words */
+  --studio-good: #34d399;
+  --studio-warn: #fbbf24;
+  --studio-bad: #fb7185;
 }
 
 [data-studio-theme="light"] {
@@ -84,4 +94,12 @@
   --studio-accent-border: #c7d2fe;
   --studio-accent-text: #312e81;
   --studio-icon: #4f46e5;
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-grid: #e2e8f0;
+  --viz-track: #cde2fb;
+  --viz-missing: #94a3b8;
+  --studio-good: #047857;
+  --studio-warn: #b45309;
+  --studio-bad: #be123c;
 }

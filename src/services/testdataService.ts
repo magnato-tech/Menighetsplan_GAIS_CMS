@@ -9,7 +9,8 @@ import {
 } from "../data/mockDocuments";
 import { chunk } from "../utils/chunk";
 import { VOLUNTEER_ROLE_RECORD, volunteerRoleFields } from "./volunteerRoles";
-import type { VolunteerRole } from "../types";
+import { headcountFields, isHeadcountRecord } from "./headcounts";
+import type { GatheringHeadcount, VolunteerRole } from "../types";
 
 // Firestore støtter maksimalt 500 operasjoner per batch write
 const BATCH_SIZE = 400;
@@ -45,7 +46,7 @@ export interface ClearTestdataOptions {
   tasks?: boolean;
   /** Slett gruppemeldinger (standard: true) */
   groupMessages?: boolean;
-  /** Slett oppmøteregistreringer (standard: true) */
+  /** Slett svar på samlinger og registrerte oppmøtetall (standard: true) */
   attendance?: boolean;
   /**
    * Sikkerhetssperre: Bevar alltid CMS-innhold (sider, artikler, taler, offentlige profiler og innstillinger).
@@ -116,7 +117,10 @@ export async function clearTestdata(
   if (tasks) targetCollections.push(COLLECTIONS.TASKS);
   if (gatherings) targetCollections.push(COLLECTIONS.GATHERINGS);
   if (groupMessages) targetCollections.push(COLLECTIONS.GROUP_MESSAGES);
-  if (attendance) targetCollections.push(COLLECTIONS.GATHERING_ATTENDANCES);
+  if (attendance) {
+    targetCollections.push(COLLECTIONS.GATHERING_ATTENDANCES);
+    targetCollections.push(COLLECTIONS.GATHERING_HEADCOUNTS);
+  }
   if (volunteerRoles) targetCollections.push(COLLECTIONS.VOLUNTEER_ROLES);
 
   // Sikre at CMS-samlinger aldri slettes
@@ -127,18 +131,23 @@ export async function clearTestdata(
 
   for (const collectionName of safeCollections) {
     try {
-      if (collectionName === COLLECTIONS.VOLUNTEER_ROLES) {
+      if (collectionName === COLLECTIONS.VOLUNTEER_ROLES || collectionName === COLLECTIONS.GATHERING_HEADCOUNTS) {
+        // Both are stored in cms_settings, marked by recordType (see volunteerRoles.ts and headcounts.ts)
         const snap = await getDocs(collection(db, CMS_COLLECTIONS.SETTINGS));
-        const roleDocs = snap.docs.filter((d) => d.data().recordType === VOLUNTEER_ROLE_RECORD);
-        if (roleDocs.length > 0) {
-          for (const piece of chunk(roleDocs, BATCH_SIZE)) {
+        const markedDocs = snap.docs.filter((d) =>
+          collectionName === COLLECTIONS.VOLUNTEER_ROLES
+            ? d.data().recordType === VOLUNTEER_ROLE_RECORD
+            : isHeadcountRecord(d.data())
+        );
+        if (markedDocs.length > 0) {
+          for (const piece of chunk(markedDocs, BATCH_SIZE)) {
             const batch = writeBatch(db);
             for (const docSnap of piece) batch.delete(docSnap.ref);
             await batch.commit();
           }
         }
-        result.counts[collectionName] = roleDocs.length;
-        result.total += roleDocs.length;
+        result.counts[collectionName] = markedDocs.length;
+        result.total += markedDocs.length;
         continue;
       }
       const snap = await getDocs(collection(db, collectionName));
@@ -257,6 +266,11 @@ export async function generateTestdata(
             batch.set(
               doc(db, CMS_COLLECTIONS.SETTINGS, item.id),
               sanitizeForFirestore(volunteerRoleFields(item.data as VolunteerRole))
+            );
+          } else if (collectionName === COLLECTIONS.GATHERING_HEADCOUNTS) {
+            batch.set(
+              doc(db, CMS_COLLECTIONS.SETTINGS, item.id),
+              sanitizeForFirestore(headcountFields(item.data as GatheringHeadcount))
             );
           } else {
             batch.set(doc(db, collectionName, item.id), sanitizeForFirestore(item.data));

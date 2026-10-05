@@ -25,6 +25,7 @@ Koden har bare to roller på en person: `globalRole` er enten `member` eller `ad
 | 9, gruppekort `/admin/gruppe/:id` | Administrator | `AdminAccessRequired` hvis ikke administrator. Tekst: «denne admin-siden». | Stemmer med administrator. |
 | 10, fanen Personer | Administrator | Ingen sjekk på fanen. | Ja. |
 | 10, personkort `/admin/person/:id` | Administrator | `AdminAccessRequired` hvis ikke administrator. Tekst: «personkort i admin-flaten». | Stemmer med administrator. |
+| 11, fanen Analysebord | Administrator | Ingen sjekk på fanen. | Ja. Fanen viser navn på frivillige og personer uten gruppe, og bør ligge bak administrator når innlogging kommer. |
 | Inngang til hele studioet | Administrator | Lenken i toppfeltet vises bare når `globalRole === "admin"` (`src/components/Header.tsx`). Selve adressen `/admin` har ingen tilsvarende sperre. | Ja. Menyen skjuler inngangen, ruten gjør det ikke. |
 
 ---
@@ -226,7 +227,7 @@ Menypunktet heter **Sider & Innhold**. Overskriften på siden er **Sider & Innho
 - **Formål:** Se hvilke oppgaver som mangler folk, tildele en person, eller lage en påminnelsestekst.
 - **Hvor:** Sidemeny **Trenger oppfølging**. Overskrift: **Oppgaver & Frivilligoversikt**. Detalj: **Rediger**, merket **Oppgavekort**. Tilbake: **Tilbake til oppgaver**.
 - **Steg for steg:**
-  1. Filtrer med **Alle oppgaver**, **Trenger oppfølging / Vikar** eller **Venter på svar / Ubesatt**.
+  1. Filtrer med **Alle oppgaver**, **Trenger oppfølging / Vikar** eller **Venter på svar / Ubesatt**. De to siste viser bare samlinger som ikke er over (eller startet for under fire timer siden). **Alle oppgaver** viser også dem som er holdt.
   2. Trykk **Tildel** eller **Forespør** på en oppgave.
   3. Velg person. **Tildel direkte** setter personen som bekreftet. **Forespør** setter status til venter på svar.
   4. Bekreft med **Tildel oppgave (Bekreftet)** eller **Forespør frivillig (Venter på svar)**.
@@ -270,6 +271,27 @@ Menypunktet heter **Sider & Innhold**. Overskriften på siden er **Sider & Innho
 - **Rettigheter:** Fanen har ingen rollesjekk. Personkortet krever administrator. Uten den vises «Admin-tilgang kreves».
 - **Kilde:** `src/pages/admin/tabs/PersonsTab.tsx`, `src/pages/admin/tabs/persons/PersonsTable.tsx`, `src/pages/AdminPersonDetailPage.tsx`
 
+## Innsikt
+
+### 11. Analysebord (`#analysebord`)
+
+- **Formål:** Se menighetens liv i tall over en periode: oppmøte på gudstjenestene, frivillighet og bemanning, grupper og fellesskap, personregisteret og nettsiden. Hvert tall sammenlignes med perioden før.
+- **Hvor:** Sidemeny **Innsikt**, **Analysebord** (nederst i menyen). Overskrift: **Analysebord**.
+- **Steg for steg:**
+  1. Velg periode: **Siste 4 uker**, **Siste 3 måneder** eller **Siste 12 måneder**.
+  2. Under **Oppmøte**: trykk på en søyle, eller **Registrer** i listen **Mangler oppmøtetall**.
+  3. Fyll inn **Voksne** og **Barn**, og eventuelt **Merknad (valgfritt)**. Trykk **Lagre oppmøtetall**.
+  4. Bytt mellom **Gudstjenester** og **Alle arrangementer**, eller trykk **Vis som tabell**.
+  5. Trykk **Last ned CSV** for å hente oppmøtetallene til et regneark.
+  6. Les **Kan trenge avlastning** og **Ikke brukt i perioden** før neste vaktliste lages. Navnene åpner personkortet.
+  7. **Datagrunnlag** nederst sier hva tallene bygger på, og hva som ikke måles.
+- **Tekst i grensesnittet:** Vinduet heter **Registrer oppmøtetall** eller **Endre oppmøtetall**. Hjelpetekst: «Skriv inn hvor mange som var til stede, talt på dagen. Tell barn under konfirmasjonsalder som barn.» En samling uten tall vises i diagrammet som en lav grå strek, merket **Ikke registrert**. Et tall som mangler grunnlag vises som «–».
+- **Etter lagring:** «Oppmøtetallet for «[samling]» er lagret.» Ved **Fjern tellingen**: «Oppmøtetallet for «[samling]» er fjernet.» Søylen, snittet og nøkkeltallene oppdateres med en gang.
+- **Påkrevd og feil:** «Skriv inn hvor mange som var til stede.» når begge feltene er tomme eller null. «Voksne må være et helt tall (0 eller mer).» og tilsvarende for **Barn**. Bare samlinger som er holdt, ikke avlyst og ikke gruppesamlinger, kan telles.
+- **Prøve med historikk:** Under **Database og Testdata**, **Simuler menighetsliv**: velg 12, 26 eller 52 uker og trykk **Simuler menighetsliv**. **Fjern simulert historikk** tar bort bare det som ble simulert.
+- **Rettigheter:** Fanen har ingen rollesjekk.
+- **Kilde:** `src/pages/admin/tabs/AnalyticsTab.tsx`, `src/pages/admin/tabs/analytics/`, `src/utils/churchAnalytics.ts`, `src/components/admin/SimulationPanel.tsx`
+
 ---
 
 ## Skjermbilder i Hjelp-fanen
@@ -296,3 +318,4 @@ Listen under beskriver hva hvert bilde skal vise.
 | `hjelp-oppgaver.png` | **Tildel**, **Forespør** og **Purr** |
 | `hjelp-grupper.png` | Gruppekort med ledernavn og **Administrer gruppe** |
 | `hjelp-personer.png` | Tabellen i **Personregister** med **Åpne** |
+| `hjelp-analysebord.png` | Seksjonen **Oppmøte** med søylene, snittlinjen og **Mangler oppmøtetall** |

@@ -57,10 +57,11 @@ To små byggeklosser brukes på tvers: `useTimedMessage` (`src/hooks/`) er en me
 - **`src/services/firestore.ts`** inneholder alle lese- og skrivekall mot Firestore, uten React: én lytter per samling (`subscribeCollection`), tre generelle skrivinger (`createDocument`, `updateDocument`, `deleteDocument`) og de få som gjelder flere felt eller dokumenter.
 - **`FirebaseDataProvider`** (`src/context/FirebaseDataContext.tsx`) holder det lytterne leverer, og tilbyr oppslag og handlinger. Komponenter henter den med `useFirebase()`.
   - Alltid: `persons`, `groups`, `gatherings`.
-  - Bare på interne ruter: `tasks`, `assignments`, `groupMessages`, `gatheringAttendances`. En besøkende på den offentlige nettsiden får aldri disse.
+  - Bare på interne ruter: `tasks`, `assignments`, `groupMessages`, `gatheringAttendances`, tjenesteroller og oppmøtetall. En besøkende på den offentlige nettsiden får aldri disse.
+  - Tjenesteroller og oppmøtetall ligger i `cms_settings`, merket med `recordType`, fordi reglene i drift avviser nye samlinger (se Kjente avvik). Hvor de lagres, bestemmes ett sted: `src/services/volunteerRoles.ts` og `src/services/headcounts.ts`. Nettsiden leser bare dokumentet `cms_settings/global`, så den får dem ikke.
 - **`CmsProvider`** (`src/context/CmsContext.tsx`) lytter på `cms_pages`, `cms_news`, `cms_sermons`, `cms_staff` og `cms_settings`. Det siste som ble mottatt mellomlagres i `localStorage`, slik at nettsiden har innhold å vise før Firestore har svart, og beholder det når den åpnes uten nett. En lagring i CMS-et venter på svar fra serveren (i motsetning til planleggingsdataene), slik at redigeringsskjemaet kan bli stående åpent med teksten hvis lagringen feiler.
 - **Hooks per rolle** (`src/hooks/`: `memberHooks`, `leaderHooks`, `adminHooks`, `useHusfellesskap`) setter sammen rådataene til det hver side trenger.
-- **Rene funksjoner** (`src/utils/`) holder reglene, og testene i `tests/` (Vitest) kjører mot dem: `staffing`, `visibility`, `publicProfile`, `firestoreData`, `menu`, `groups` og `dates`.
+- **Rene funksjoner** (`src/utils/`) holder reglene, og testene i `tests/` (Vitest) kjører mot dem: `staffing`, `visibility`, `publicProfile`, `firestoreData`, `menu`, `groups`, `dates`, `headcount` og `churchAnalytics`.
 - **Sidetreet** (`src/utils/menu.ts`) er felles for den offentlige menyen og sidelisten i admin. Når en hovedfane slettes, flyttes underfanene opp til toppnivå i samme skriving.
 
 ### Skriving
@@ -87,6 +88,13 @@ Samlingsvisningen (`GatheringDetailView.tsx`) viser programmet og oppgavene på 
 - En oppgave utenfor programmet står på oppmøtetiden når instruksen åpner med den («Møt opp kl. 09:30 …»), ellers til slutt.
 
 Det finnes ennå ikke noe skjermbilde for å redigere programmet; bare demodataene har et.
+
+### Analysebordet
+- **`buildChurchAnalytics`** (`src/utils/churchAnalytics.ts`) regner ut alt bordet viser for en periode, fra rådataene: oppmøte, samlinger, frivillighet, grupper, personregisteret, nettsiden og datagrunnlaget. Den er en ren funksjon med `now` som argument, så den testes med faste datoer. Et tall uten grunnlag er `null`, og skjermen viser det som strek (`src/utils/analyticsFormat.ts`).
+- **`useAdminAnalytics`** (`src/hooks/adminHooks.ts`) henter planleggingsdata fra `useFirebase()` og innhold fra `useCms()`, og kaller funksjonen én gang. Fanen (`src/pages/admin/tabs/AnalyticsTab.tsx`) eier bare periodevalget og hvilken samling som telles. Delene ligger i `src/pages/admin/tabs/analytics/`, én fil per seksjon og dialog.
+- **Oppmøtetall** (`GatheringHeadcount`) har ID-en `headcount-<samling>`, slik at en ny telling erstatter den gamle. Hva som kan telles og hvordan skjemaet leses, står i `src/utils/headcount.ts`.
+- **Simulert menighetsliv** (`src/data/simulatedChurchLife.ts`) er en ren generator med fast frø: samme utgangspunkt gir samme historikk. Alt den lager har ID med `sim-` eller peker på en samling med `sim-`, og `isSimulatedDocument` kjenner det igjen. `src/services/simulationService.ts` skriver og fjerner det; en ny simulering fjerner den gamle først.
+- **Diagrammene** er tegnet med HTML og Tailwind, uten diagrambibliotek. Seriefargene (`--viz-1`, `--viz-2`) og statusfargene (`--studio-good`, `--studio-warn`, `--studio-bad`) er definert for lyst og mørkt innhold i `src/index.css`, og statusen vises alltid med ikon og ord.
 
 ### Testing av datalaget
 `tests/data-provider.test.tsx` og `tests/cms-provider.test.tsx` kjører `FirebaseDataProvider` og `CmsProvider` mot den ekte Firestore-klienten, koblet fra nettet (`tests/support/offlineFirestore.ts`). `tests/member-flow.test.tsx` gjør det samme med det et medlem ser og gjør: ta en oppgave, svare på en forespørsel, melde forfall. Testene ser dermed det samme som appen: en skriving når listene gjennom lytterne. Ingenting sendes til en server.
@@ -124,6 +132,7 @@ Tre regler avgjør hva en besøkende ser, og hver av dem ligger ett sted:
 |---|---|---|
 | Innlogging | Brukere logger inn; roller styrer tilgang | Ingen innlogging. Aktiv bruker velges i en testbryter, og `/admin` er åpen |
 | Sikkerhetsregler | Bare admin endrer offentlige profilfelt; medlemmer endrer bare sitt eget | Reglene tillater lesing av alt og skriving uten innlogging |
+| Regler i drift | Reglene i `firestore.rules` er de som gjelder | Reglene i drift er eldre og avviser nye samlinger (prøvd 5. oktober: `volunteer_roles` og `gatheringHeadcounts`). Tjenesteroller og oppmøtetall lagres i `cms_settings` til reglene er publisert. Da endres bare `volunteerRoles.ts` og `headcounts.ts` |
 | Personvern på nettsiden | Besøkende får bare offentlige data | Sidene viser bare personer med samtykke, og laster ikke oppgaver, tildelinger, meldinger eller oppmøte. Hele personregisteret lastes likevel til nettleseren; det kan først stenges med innlogging og strammere regler |
 | Bli med i en gruppe | En besøkende kan melde interesse for en gruppe | `/fellesskap` viser hvem man kan kontakte. Det finnes ikke noe skjema som lagrer en henvendelse; det krever en egen samling, regler og et sted lederen kan lese dem |
 | Bilder | Bilder ligger i en bildelagring | Et opplastet bilde lagres som tekst i sidedokumentet. Alle sider lastes til alle besøkende, og kopien i `localStorage` (ca. 5 MB) rekker bare til et titalls bilder |

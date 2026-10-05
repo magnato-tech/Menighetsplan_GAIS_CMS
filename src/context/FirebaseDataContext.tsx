@@ -1,5 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
-import { Person, Group, Gathering, Task, Assignment, GroupMessage, GatheringAttendance, VolunteerRole } from "../types";
+import {
+  Person,
+  Group,
+  Gathering,
+  Task,
+  Assignment,
+  GroupMessage,
+  GatheringAttendance,
+  GatheringHeadcount,
+  VolunteerRole,
+} from "../types";
 import { initialPersons } from "../data/mockData";
 import { CMS_COLLECTIONS, COLLECTIONS } from "../data/collections";
 import {
@@ -14,11 +24,13 @@ import {
   buildTask,
   buildAssignment,
   buildAttendance,
+  buildHeadcount,
   buildGroupMessage,
   buildVolunteerRole,
 } from "../data/newDocuments";
 import { testConnection } from "../firebase";
 import { subscribeVolunteerRoles } from "../services/volunteerRoles";
+import { deleteHeadcount, saveHeadcount, subscribeHeadcounts } from "../services/headcounts";
 import { reportWriteError } from "../services/writeErrors";
 import {
   subscribeCollection,
@@ -31,6 +43,7 @@ import {
   saveAssignmentChange,
 } from "../services/firestore";
 import { isInGroup } from "../utils/groups";
+import type { HeadcountInput } from "../utils/headcount";
 import { AssignmentChange, applyAssignmentChange, holdsSlot, isAcuteForfall, taskStatusFor } from "../utils/staffing";
 
 export interface ModuleConfig {
@@ -60,6 +73,8 @@ export interface FirebaseDataContextType {
   assignments: Assignment[];
   groupMessages: GroupMessage[];
   attendances: GatheringAttendance[];
+  /** Oppmøtetall: how many were actually there. Internal, like the responses. */
+  headcounts: GatheringHeadcount[];
   volunteerRoles: VolunteerRole[];
 
   // Module configuration
@@ -113,6 +128,9 @@ export interface FirebaseDataContextType {
   deleteGroupMessage: (messageId: string) => ActionResult;
   toggleGroupNotifications: (groupId: string, personId?: string, forceState?: boolean) => { success: boolean; enabled: boolean };
   respondToGathering: (gatheringId: string, personId: string, status: "attending" | "declined") => ActionResult;
+  /** Stores how many were there. A new count for the same gathering replaces the old one. */
+  registerHeadcount: (gatheringId: string, input: HeadcountInput) => ActionResult;
+  removeHeadcount: (gatheringId: string) => ActionResult;
   createVolunteerRole: (data: NewVolunteerRoleInput) => ActionResult & { role?: VolunteerRole };
   updateVolunteerRole: (roleId: string, updates: Partial<VolunteerRole>) => ActionResult;
   deleteVolunteerRole: (roleId: string) => ActionResult;
@@ -136,8 +154,8 @@ const byStart = (a: Gathering, b: Gathering) => new Date(a.startsAt).getTime() -
 interface FirebaseDataProviderProps {
   children: React.ReactNode;
   /**
-   * False on the public website. Tasks, assignments, chat messages and attendance
-   * are then never fetched, so a visitor's browser does not receive them.
+   * False on the public website. Tasks, assignments, chat messages, responses and
+   * headcounts are then never fetched, so a visitor's browser does not receive them.
    */
   internal?: boolean;
 }
@@ -153,6 +171,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [groupMessages, setGroupMessages] = useState<GroupMessage[]>([]);
   const [attendances, setAttendances] = useState<GatheringAttendance[]>([]);
+  const [headcounts, setHeadcounts] = useState<GatheringHeadcount[]>([]);
   const [volunteerRoles, setVolunteerRoles] = useState<VolunteerRole[]>([]);
   const [isFirestoreConnected, setIsFirestoreConnected] = useState<boolean>(false);
   const [currentUserId, setCurrentUserId] = useState<string>("person-1");
@@ -196,6 +215,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       subscribeCollection<Assignment>(COLLECTIONS.ASSIGNMENTS, setAssignments),
       subscribeCollection<GroupMessage>(COLLECTIONS.GROUP_MESSAGES, setGroupMessages),
       subscribeCollection<GatheringAttendance>(COLLECTIONS.GATHERING_ATTENDANCES, setAttendances),
+      subscribeHeadcounts(setHeadcounts),
       subscribeVolunteerRoles(setVolunteerRoles),
     ];
     return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
@@ -350,6 +370,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
         const attendance = buildAttendance(gatheringId, personId, status);
         return save("lagre svaret", () => createDocument(COLLECTIONS.GATHERING_ATTENDANCES, attendance));
       },
+      removeHeadcount: (gatheringId: string) => save("fjerne oppmøtetallet", () => deleteHeadcount(gatheringId)),
 
       createVolunteerRole: (data: NewVolunteerRoleInput) => {
         const role = buildVolunteerRole(data);
@@ -374,6 +395,14 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
   }, []);
 
   // Actions that also read the current data
+  const registerHeadcount = useCallback(
+    (gatheringId: string, input: HeadcountInput) => {
+      const headcount = buildHeadcount(gatheringId, input, currentUser.id);
+      return save("lagre oppmøtetallet", () => saveHeadcount(headcount));
+    },
+    [currentUser]
+  );
+
   const sendGroupMessage = useCallback(
     (groupId: string, content: string, imageUrl?: string) => {
       const message = buildGroupMessage(groupId, currentUser, content, imageUrl);
@@ -481,6 +510,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       assignments,
       groupMessages,
       attendances,
+      headcounts,
       volunteerRoles,
       moduleConfig,
       setModuleStatus,
@@ -495,6 +525,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       ...actions,
       ...staffingActions,
       sendGroupMessage,
+      registerHeadcount,
       toggleGroupNotifications,
     }),
     [
@@ -508,6 +539,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       assignments,
       groupMessages,
       attendances,
+      headcounts,
       volunteerRoles,
       moduleConfig,
       setModuleStatus,
@@ -522,6 +554,7 @@ export const FirebaseDataProvider: React.FC<FirebaseDataProviderProps> = ({ chil
       actions,
       staffingActions,
       sendGroupMessage,
+      registerHeadcount,
       toggleGroupNotifications,
     ]
   );

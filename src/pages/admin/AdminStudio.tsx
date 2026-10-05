@@ -26,6 +26,8 @@ import {
 
   LazyAdminCmsPanel,
 
+  LazyAnalyticsTab,
+
   LazyDashboardTab,
 
   LazyDatabaseTab,
@@ -479,6 +481,14 @@ function AdminStudioContent() {
         <StudioTabPanel tab="database-admin" activeTab={activeTab} visited={visitedTabs.includes("database-admin")}>
 
           <LazyDatabaseTab studio={studio} showFeedback={showFeedback} />
+
+        </StudioTabPanel>
+
+
+
+        <StudioTabPanel tab="analyse" activeTab={activeTab} visited={visitedTabs.includes("analyse")}>
+
+          <LazyAnalyticsTab showFeedback={showFeedback} onTabChange={handleTabChange} />
 
         </StudioTabPanel>
 

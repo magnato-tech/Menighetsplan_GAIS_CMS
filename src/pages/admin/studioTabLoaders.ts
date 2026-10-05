@@ -28,6 +28,7 @@ const TAB_LOADERS: Record<StudioTab, TabLoader> = {
   "planlegger-personer": namedTab(() => import("./tabs/PersonsTab"), "PersonsTab"),
   "planlegger-roller": namedTab(() => import("./tabs/RolesTab"), "RolesTab"),
   "database-admin": namedTab(() => import("./tabs/DatabaseTab"), "DatabaseTab"),
+  analyse: namedTab(() => import("./tabs/AnalyticsTab"), "AnalyticsTab"),
 };
 
 export function prefetchStudioTab(tab: StudioTab): void {
@@ -50,3 +51,4 @@ export const LazyGroupsTab = lazy(TAB_LOADERS["planlegger-grupper"]);
 export const LazyPersonsTab = lazy(TAB_LOADERS["planlegger-personer"]);
 export const LazyRolesTab = lazy(TAB_LOADERS["planlegger-roller"]);
 export const LazyDatabaseTab = lazy(TAB_LOADERS["database-admin"]);
+export const LazyAnalyticsTab = lazy(TAB_LOADERS.analyse);

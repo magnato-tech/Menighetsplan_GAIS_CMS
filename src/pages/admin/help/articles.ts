@@ -246,7 +246,7 @@ const oppgaver: HelpArticle = {
   formal: "Se hvilke oppgaver som mangler folk, tildele en person, eller lage en påminnelsestekst.",
   hvor: "Sidemeny Trenger oppfølging. Overskrift: Oppgaver & Frivilligoversikt. Detalj merkes Oppgavekort. Tilbake: Tilbake til oppgaver.",
   steg: [
-    "Filtrer med Alle oppgaver, Trenger oppfølging / Vikar eller Venter på svar / Ubesatt.",
+    "Filtrer med Alle oppgaver, Trenger oppfølging / Vikar eller Venter på svar / Ubesatt. De to siste viser bare samlinger som ikke er over. Alle oppgaver viser også dem som er holdt.",
     "Trykk Tildel eller Forespør på en oppgave.",
     "Velg person. Tildel direkte setter personen som bekreftet. Forespør setter status til venter på svar.",
     "Bekreft med Tildel oppgave (Bekreftet) eller Forespør frivillig (Venter på svar).",
@@ -297,6 +297,28 @@ const personer: HelpArticle = {
     "Fravær som legges til, bekreftes med «Fraværsperiode lagt til!» Offentlig visning krever at offentlig profil er slått på.",
 };
 
+const analysebord: HelpArticle = {
+  id: "analysebord",
+  title: "Analysebord",
+  layout: "wide",
+  formal:
+    "Se menighetens liv i tall over en periode: oppmøte på gudstjenestene, frivillighet og bemanning, grupper og fellesskap, personregisteret og nettsiden. Hvert tall sammenlignes med perioden før.",
+  hvor: "Sidemeny Innsikt, Analysebord. Overskrift: Analysebord.",
+  steg: [
+    "Velg periode: Siste 4 uker, Siste 3 måneder eller Siste 12 måneder.",
+    "Under Oppmøte: trykk på en søyle, eller Registrer i listen Mangler oppmøtetall, for å skrive inn hvor mange som var til stede.",
+    "Fyll inn Voksne og Barn, og eventuelt Merknad (valgfritt). Trykk Lagre oppmøtetall.",
+    "Bytt mellom Gudstjenester og Alle arrangementer, eller trykk Vis som tabell for å se tallene i en tabell.",
+    "Trykk Last ned CSV for å hente oppmøtetallene til et regneark, f.eks. til årsmeldingen.",
+    "Les Kan trenge avlastning og Ikke brukt i perioden før neste vaktliste lages. Navnene åpner personkortet.",
+    "Datagrunnlag nederst sier hva tallene bygger på, og hva som ikke er målt.",
+  ],
+  knapper:
+    "Siste 4 uker, Siste 3 måneder, Siste 12 måneder, Gudstjenester, Alle arrangementer, Vis som tabell, Vis som diagram, Last ned CSV, Registrer, Endre. I vinduet: Registrer oppmøtetall eller Endre oppmøtetall, Lagre oppmøtetall, Avbryt, Fjern tellingen. En samling uten tall vises som en lav grå strek merket Ikke registrert.",
+  etterLagring:
+    "«Oppmøtetallet for «[samling]» er lagret.» Søylen og snittet oppdateres med en gang. Ved fjerning: «Oppmøtetallet for «[samling]» er fjernet.» Uten tall: «Skriv inn hvor mange som var til stede.» Under Database og Testdata kan du simulere et halvår med menighetsliv for å prøve bordet.",
+};
+
 export const helpSections: HelpSection[] = [
   {
     title: "For nettsideredaktører",
@@ -321,6 +343,10 @@ export const helpSections: HelpSection[] = [
       { kind: "article", article: grupper },
       { kind: "article", article: personer },
     ],
+  },
+  {
+    title: "Innsikt",
+    items: [{ kind: "article", article: analysebord }],
   },
 ];
 

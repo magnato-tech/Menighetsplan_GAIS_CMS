@@ -1,6 +1,6 @@
 # Produktdokumentasjon: Menighetsplan
 
-> **Dokumentversjon:** 4.1 · **Sist oppdatert:** 2026-10-05
+> **Dokumentversjon:** 4.2 · **Sist oppdatert:** 2026-10-05
 > **Status:** Single Source of Truth (SSOT) for produktet. Dokumentet lever i kildekoden og oppdateres sammen med funksjonaliteten.
 > **Plattform:** React 19, TypeScript, Tailwind CSS 4, Cloud Firestore (`europe-west3`, Frankfurt), Express, PWA.
 > **Søsterdokumenter:** `ARKITEKTUR.md` (hvordan koden er bygget), `CLAUDE.md` (regler for kodeendringer), `INTEGRASJON-MENIGHETSPLAN.md` (kontrakten for det offentlige API-et).
@@ -83,7 +83,8 @@ Adminpanelet ligger på `/admin` og har én meny med to deler. Hver fane har sin
 | **Grupper & husfellesskap** | Oppretter grupper, setter leder og nestleder, kategori, møteplan og om gruppen vises på nettsiden | Levert |
 | **Personer & roller** | Holder personregisteret: kontaktinfo, rolle, politiattest, perioder personen er borte, og offentlig profil med samtykke | Levert |
 | Detaljsider | Samling med kjøreplan, oppgave, gruppe og person har hver sin side | Levert |
-| **Database & innstillinger** | Slår valgfrie moduler av og på, fyller databasen med demodata, sletter alt, tester API-et | Delvis: modulvalget lagres bare i nettleseren til den som endrer det |
+| **Database & innstillinger** | Slår valgfrie moduler av og på, fyller databasen med demodata, simulerer et halvår med menighetsliv, sletter alt, tester API-et | Delvis: modulvalget lagres bare i nettleseren til den som endrer det |
+| **Analysebord** (menyseksjonen Innsikt, nederst) | Ser menighetens liv i tall for en periode, sammenlignet med perioden før: oppmøte, frivillighet og bemanning, grupper, personregisteret og nettsiden. Registrerer oppmøtetall og laster dem ned som regneark | Levert 5. oktober (kapittel 2.4) |
 
 ### 2.2 Nettside & CMS – admin for nettsiden
 
@@ -102,6 +103,33 @@ Adminpanelet ligger på `/admin` og har én meny med to deler. Hver fane har sin
 * Panelet er responsivt: fast meny på PC, uttrekksmeny på mobil.
 * En handling bekreftes med en melding som forsvinner av seg selv. En lagring som feiler, vises i et rødt banner og blir ikke stående som om den var lagret.
 * **Planlagt:** innlogging. I dag er `/admin` åpen, og aktiv bruker velges i en testbryter (kapittel 10).
+
+### 2.4 Analysebord
+
+Analysebordet er siste fane i menyen, under **Innsikt**. Det samler det løsningen allerede vet om menighetens liv, slik at ledelsen kan se utviklingen og handle på den: hvem som trenger avlastning, hvilke roller som er vanskelige å bemanne, hvilke grupper som har stilnet, og hvor mange som kommer.
+
+**Prinsipper**
+
+* **Bare det som er lagret.** Hvert tall telles fra databasen. Mangler grunnlaget, vises en strek, aldri null eller et anslag. Feltet **Datagrunnlag** nederst sier hva tallene bygger på og hva som ikke måles.
+* **Perioden styrer alt.** Siste 4 uker, 3 måneder (standard) eller 12 måneder (52 hele uker). Hvert tall sammenlignes med like lang periode rett før. Det som er et øyeblikksbilde (tilhørighet, personregisteret), sammenlignes ikke.
+* **Svar er ikke oppmøte.** «Kommer» sier hvem som planla å komme. Oppmøtetallet sier hvem som kom. De vises hver for seg.
+* **Personer navngis bare der administratoren skal handle:** avlastning, ubrukte frivillige, personer uten gruppe og politiattester. Alt annet er tall.
+* **Ingen sporing av besøkende.** Besøk på nettsiden måles ikke, og det står på bordet.
+
+**Hva bordet viser**
+
+| Del | Innhold | Definisjon |
+|:---|:---|:---|
+| Nøkkeltall | Snitt på gudstjeneste, aktive frivillige, bemanningsgrad, andel med i en gruppe | Snittet regnes bare av gudstjenestene som er talt. Aktiv frivillig: har sagt ja til minst én oppgave på en samling som er holdt i perioden. Bemanningsgrad: bekreftede plasser delt på behovet, på holdte samlinger |
+| Oppmøte | Søyle per samling (voksne og barn), snittlinje, liste over samlinger som mangler tall, tabellvisning, CSV | En samling uten tall vises som en lav grå strek, aldri som lavt oppmøte. Gruppesamlinger telles ikke her; de følges med svarene |
+| Frivillighet og bemanning | Forfall (akutte under 48 timer), avslag, svartid (median), de neste fire ukene, hvor ofte hver har stått på, roller som er vanskeligst å bemanne, «Kan trenge avlastning», «Ikke brukt i perioden» | Avlastning: har stått på minst like mange samlinger som halvparten av ukene i perioden, og minst tre. Ikke brukt: medlem av en tjenestegruppe uten oppgave i perioden |
+| Grupper og fellesskap | Antall grupper per kategori, nye medlemskap, meldinger, samlinger og svar per gruppe, sist aktiv, personer uten gruppe | Stille gruppe: verken samling eller melding de siste 30 dagene |
+| Personregisteret | Personer, administratorer, stab, offentlige profiler med samtykke, borte i dag, politiattester som er utløpt eller går ut innen 60 dager | Øyeblikksbilde |
+| Nettsiden | Nyheter publisert, taler lagt ut (med opptak), sider publisert, kladder og planlagte | Besøk måles ikke |
+
+**Oppmøtetall.** Administratoren trykker på en søyle eller **Registrer** og skriver inn voksne, barn og en valgfri merknad. Ett tall per samling: en ny telling erstatter den gamle, og den kan fjernes. Bare samlinger som er holdt, ikke er avlyst og ikke er gruppesamlinger, kan telles. **Last ned CSV** gir dato, samling, type, voksne, barn, totalt og merknad, klar for årsmeldingen.
+
+**Simulert menighetsliv.** Under **Database og Testdata** kan administratoren fylle databasen med 12, 26 eller 52 uker tenkt historikk, bygget av personene, gruppene og rollene som finnes: gudstjenester med oppmøtetall, oppgaver med ja, nei og forfall, husfellesskap med svar, og meldinger. Alt er merket og fjernes med **Fjern simulert historikk** uten at noe annet berøres. En søndag som allerede har en gudstjeneste, får ikke en til.
 
 ---
 
@@ -233,6 +261,7 @@ Felles begrep for enhver samling: gudstjeneste, ungdomsmøte, bønnemøte, dugna
 |:---|:---|:---|
 | `GroupMessage` | `id`, `groupId`, `senderPersonId`, `senderName`, `content`, `imageUrl?`, `createdAt` | En beskjed i en gruppe, med valgfritt bilde |
 | `GatheringAttendance` | `id`, `gatheringId`, `personId`, `status` (`attending` / `declined`), `updatedAt?` | Svaret «Kommer» eller «Kommer ikke» på en samling |
+| `GatheringHeadcount` | `id` (`headcount-<samling>`), `gatheringId`, `adults`, `children`, `note?`, `registeredAt`, `registeredBy?` | Hvor mange som var til stede, talt på dagen. Ett per samling. Internt: lastes aldri av nettsiden. Lagres i dag i `cms_settings`, merket `recordType: "gatheringHeadcount"`, fordi reglene i drift ikke slipper inn nye samlinger (kapittel 13) |
 
 ### 5.7 Side (`CmsPage`)
 
@@ -514,6 +543,15 @@ De tre flatene, Firestore-databasen, bemanningsmotoren, husfellesskap, gruppemel
 | **Opprydding** | De største filene er delt i én fil per fane og dialog. Hardkodede demo-ID-er, datoer og steder er ute av logikken. Utviklerord er ute av skjermbildene |
 | **Ytelse** (5. oktober) | Code splitting: offentlige ruter lastes uten admin, Min side og CMS-panel. Admin-faner hentes ved behov, med forhåndshent ved peker over menyvalg. Firebase og React er egne Vite-biter. Ved utdatert chunk etter deploy: automatisk én gangs reload på ruter, manuell «Last på nytt» i admin-faner |
 
+### Analysebord (5. oktober 2026)
+
+| Område | Levert |
+|:---|:---|
+| **Analysebord** | Ny fane under Innsikt nederst i menyen (kapittel 2.4). Utregningene er rene funksjoner med tester (`src/utils/churchAnalytics.ts`) |
+| **Oppmøtetall** | Ny datatype `GatheringHeadcount`, registreres og rettes fra bordet. Prøvd mot databasen i drift: lagres, leses tilbake og fjernes |
+| **Simulert menighetsliv** | Historikk for å prøve bordet, under Database og Testdata. Prøvd mot databasen i drift: 862 dokumenter skrevet, ingen dobling ved ny kjøring, alt fjernet igjen |
+| **Trenger oppfølging** | En oppgave på en samling som er over, telles ikke lenger som ubesatt i menyen og vises ikke under «Trenger oppfølging» eller «Venter på svar». «Alle oppgaver» viser fortsatt alt |
+
 ---
 
 ## 13. Kjente mangler
@@ -535,6 +573,7 @@ Sortert etter hvor mye de betyr for en menighet som skal ta løsningen i bruk.
 | 11 | Et nytt gruppemedlem ser hele meldingshistorikken | Fase 3 |
 | 12 | Medlemmet kan ikke oppgi grunn for et forfall, og lederen ser den ikke | Fase 3 |
 | 13 | Firebase-klienten lastes på første nettsidebesøk (~1,3 MB JavaScript utover CSS). Admin og Min side er skilt ut, men Firestore er felles datakilde for alle flater | Fase 4 |
+| 14 | Reglene i databasen i drift er eldre enn `firestore.rules`, og avviser nye samlinger (prøvd 5. oktober: `volunteer_roles` og `gatheringHeadcounts`). Tjenesteroller og oppmøtetall lagres derfor i `cms_settings`, merket med `recordType` | Fase 1 |
 
 ---
 
@@ -585,6 +624,9 @@ Hver endring typesjekkes, testes og bygges før den regnes som ferdig. Regler fl
 | Varslingskanal | Bare pushvarsler i appen, eller push pluss SMS ved akutt forfall og påminnelse dagen før | Push pluss SMS. De som trenger varselet mest, har ofte ikke appen åpen |
 | Innloggingsmåter | Bare Google, eller Google pluss Vipps og passord | Start med Google. Legg til Vipps når menigheten ber om det |
 | Bildelagring | Firebase Storage, eller en ekstern bildetjeneste | Firebase Storage. Samme prosjekt, samme regler |
+| Hvem teller oppmøtet | Administrator i etterkant, eller en egen rolle «Teller» på gudstjenesten som registrerer fra Min side | Start med administrator. Legg til rollen når tellingen skal gjøres samme dag av den som står i døra |
+| Hvem er «barn» i tellingen | Under konfirmasjonsalder, under 18, eller egen telling for barnekirken | Under konfirmasjonsalder (det står i registreringsvinduet). Bestemmes før tallene brukes i årsmeldingen |
+| Besøk på nettsiden | Ingen måling, eller enkel telling uten informasjonskapsler og uten persondata | Ingen måling til innlogging og regler er på plass. Da kan en telling per side og uke vurderes |
 
 ---
 
@@ -599,6 +641,7 @@ Hver endring typesjekkes, testes og bygges før den regnes som ferdig. Regler fl
 | **Trenger oppfølging** | Oppgave, samling og dato, plasser (`1/2`), status (`Mangler 1`, `Akutt forfall`) | Tildel, forespør, åpne purretekst |
 | **Taler** | Tittel, dato, taler, serie, om det er lyd eller video | Rediger, legg til opptak |
 | **Personer & roller** | Navn, kontaktinfo, grupper og roller, politiattest, offentlig profil med samtykkestatus | Rediger, registrer samtykke, slett |
+| **Analysebord** | Hvert tall med periode, endring fra perioden før, og hva det bygger på. Et tall uten grunnlag vises som strek | Bytt periode, registrer og rett oppmøtetall, vis som tabell, last ned CSV |
 
 ### 15.2 Testscenarioer
 Scenarioene under er dekket av automatiske tester.
@@ -612,6 +655,8 @@ Scenarioene under er dekket av automatiske tester.
 * **G. Fremhevet samling.** Administrator fremhever en samling. Den står øverst på forsiden til den er passert eller avlyst. Da står neste gudstjeneste der.
 * **H. Planlagt publisering.** En side settes til publisering i morgen kl. 08:00. Den står ikke i menyen i dag, og er der i morgen etter kl. 08:00.
 * **I. Lagring som feiler.** Databasen avviser en endring. Brukeren får beskjed, og skjermen viser det som faktisk er lagret.
+* **J. Oppmøtetall.** Administrator registrerer 72 voksne og 15 barn på en gudstjeneste som mangler tall. Søylen viser 87, samlingen forsvinner fra «Mangler oppmøtetall», og snittet regnes på nytt. En telling uten noen til stede avvises. En ny telling erstatter den gamle.
+* **K. Ingen oppdiktede tall.** En tom database gir streker, ikke nuller, og datagrunnlaget sier at ingen gudstjenester er holdt.
 
 ---
 

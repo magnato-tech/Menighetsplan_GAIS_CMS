@@ -46,6 +46,9 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 | `src/components/cms/CmsContentRenderer.tsx` | Tolker innholdsblokkene på en CMS-side og tegner dem |
 | `src/services/writeErrors.ts` | Melder mislykkede skrivinger til `WriteErrorBanner` |
 | `src/services/databaseAdmin.ts` | Fyll databasen med demodata / slett alt |
+| `src/utils/churchAnalytics.ts` | Alt Analysebord regner ut for en periode. `useAdminAnalytics` i `adminHooks.ts` kaller den, fanen ligger i `src/pages/admin/tabs/AnalyticsTab.tsx` med delene i `tabs/analytics/` |
+| `src/utils/headcount.ts`, `src/services/headcounts.ts` | Oppmøtetall: hva som kan telles og hvordan skjemaet leses, og hvor tallene lagres |
+| `src/data/simulatedChurchLife.ts`, `src/services/simulationService.ts` | Simulert historikk for å prøve Analysebord, og skriving og fjerning av den |
 | `src/pages/admin/` | Admin Studio: `AdminStudio.tsx` er skallet, `StudioSidebar.tsx` menyen, og `tabs/` har én fil per fane |
 | `src/pages/myPage/` | Min side: `useMyPage.ts` regner ut alt som vises, resten er én fil per seksjon |
 | `src/pages/leaderGroup/` | Delene av gruppesiden (`LeaderGroupDetailPage.tsx`) |
@@ -63,7 +66,8 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 - **Listene endres bare av lytterne.** En handling i `FirebaseDataContext.tsx` sender skrivingen og lar lytteren vise resultatet. Legg aldri til en `setX((prev) => …)` ved siden av skrivingen; da kan skjermen vise noe som ikke er lagret.
 - **Ikke les før du skriver.** Lister og kart i et dokument endres med `arrayUnion`, `arrayRemove` eller feltsti, og det som hører sammen skrives i én `writeBatch`. Se `src/services/firestore.ts`.
 - **`undefined` før skriving.** Firestore avviser `undefined`. Et nytt dokument går gjennom `sanitizeForFirestore`, som fjerner slike felt. En oppdatering går gjennom `forUpdate`, som sletter feltet i databasen. Bruker du `sanitizeForFirestore` på en oppdatering, blir et tømt felt stående med gammel verdi.
-- **Nye samlinger** legges inn i `src/data/collections.ts` og får en regel i `firestore.rules`. En test feiler hvis regelen mangler.
+- **Nye samlinger** legges inn i `src/data/collections.ts` og får en regel i `firestore.rules`. En test feiler hvis regelen mangler. **Reglene i drift er eldre enn filen** og avviser nye samlinger til de publiseres. Prøv en skriving mot databasen før en funksjon bygges på en ny samling; tjenesteroller og oppmøtetall ligger derfor i `cms_settings` med `recordType`.
+- **Analysebordet anslår aldri.** Et tall uten grunnlag er `null` og vises som strek. Et svar («Kommer») er ikke oppmøte. Nye tall legges i `src/utils/churchAnalytics.ts` med test, og datagrunnlaget sier hva de bygger på.
 - **`visibility` er eneste bryter** for om en samling er offentlig. Les med `isPubliclyVisible` og skriv med `visibilityFields` fra `src/utils/visibility.ts`. `isPublic` lagres bare som et speil. Hva som er kommende, hva som er en gudstjeneste og hva forsiden løfter fram, hentes fra `src/utils/gatherings.ts`.
 - **En gruppe vises utad bare når `isGroupPublic` sier det.** Det gjelder nettsiden og `server/publicApi.ts`.
 - **Ikke dikt opp innhold.** Mangler noe i databasen, vises det som manglende: ingen standardprogram, ingen navn, ingen gruppe-ID-er eller datoer fra demodataene i koden. Kjøreplanen bygges av `buildRunSheet` i `src/utils/runSheet.ts`, og en samling uten sted vises med `locationOf` fra `src/utils/gatherings.ts`.
@@ -94,3 +98,4 @@ Disse er ikke løst ennå. Rekkefølgen de skal løses i står i kapittel 14 i `
 - En besøkende kan ikke melde interesse for en gruppe i appen; `/fellesskap` viser hvem man kan kontakte.
 - Innmeldingsdato i en gruppe lagres, men eldre meldinger skjules ikke for nye medlemmer.
 - Modulbryterne (kalender, meldinger) lagres bare i nettleseren til den som endrer dem.
+- Reglene i databasen i drift er eldre enn `firestore.rules`. Nye samlinger avvises der til reglene publiseres.

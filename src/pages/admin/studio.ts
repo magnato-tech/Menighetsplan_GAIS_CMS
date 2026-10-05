@@ -1,5 +1,6 @@
 import type { useAdminDashboard } from "../../hooks/useAppHooks";
 import { isPubliclyVisible } from "../../utils/visibility";
+import { ONGOING_MS } from "../../utils/gatherings";
 
 export const STUDIO_TABS = [
   "dashboard",
@@ -18,6 +19,7 @@ export const STUDIO_TABS = [
   "planlegger-personer",
   "planlegger-roller",
   "database-admin",
+  "analyse",
 ] as const;
 
 export type StudioTab = (typeof STUDIO_TABS)[number];
@@ -44,8 +46,18 @@ export function countPublicGatherings(items: StudioData["adminGatherings"]): num
   return items.filter((item) => isPubliclyVisible(item.gathering)).length;
 }
 
-export function countUrgentTasks(items: StudioData["adminTasks"]): number {
-  return items.filter(
-    (item) => item.taskStaffing.hasForfall || item.taskStaffing.color === "red" || item.task.status === "vacant"
-  ).length;
+/**
+ * Tasks that can still be staffed: the gathering lies ahead or is going on now. A task on
+ * a gathering that is over is history for the analysis board, not something to follow up.
+ */
+export function stillToStaff<T extends Pick<StudioData["adminTasks"][number], "gathering">>(items: T[], now = Date.now()): T[] {
+  return items.filter((item) => !item.gathering || new Date(item.gathering.startsAt).getTime() >= now - ONGOING_MS);
+}
+
+export function isUrgentTask(item: StudioData["adminTasks"][number]): boolean {
+  return item.taskStaffing.hasForfall || item.taskStaffing.color === "red" || item.task.status === "vacant";
+}
+
+export function countUrgentTasks(items: StudioData["adminTasks"], now = Date.now()): number {
+  return stillToStaff(items, now).filter(isUrgentTask).length;
 }
