@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useAdminDetailRoute } from "../utils/adminStudioRoutes";
 import {
   useAdminGroupDetail,
   GROUP_CATEGORIES,
@@ -11,17 +12,23 @@ import { GroupCategory } from "../types";
 import { isGroupPublic } from "../utils/visibility";
 import { useTimedMessage } from "../hooks/useTimedMessage";
 import { AdminAccessRequired } from "../components/AdminAccessRequired";
-import { UserQuickSwitcherBar } from "../components/UserSwitcher";
+import { StudioDetailShell, StudioDetailNotFound } from "./admin/StudioDetailShell";
 import {
-  ArrowLeft,
+  studioDetailCard,
+  studioDetailSection,
+  studioDetailInput,
+  studioDetailTitle,
+  studioDetailLink,
+  studioDetailRow,
+  studioPrimaryButton,
+} from "./admin/studioDetailTheme";
+import {
   Users,
   UserCheck,
   UserCog,
   Calendar,
   Clock,
   MapPin,
-  CheckCircle2,
-  AlertTriangle,
   FolderKanban,
   Save,
   Tag,
@@ -29,7 +36,8 @@ import {
 } from "lucide-react";
 
 export const AdminGroupDetailPage: React.FC = () => {
-  const { groupId } = useParams<{ groupId: string }>();
+  const detailRoute = useAdminDetailRoute();
+  const groupId = detailRoute?.kind === "group" ? detailRoute.id : "";
 
   const {
     isAdmin,
@@ -139,25 +147,13 @@ export const AdminGroupDetailPage: React.FC = () => {
     return <AdminAccessRequired target="denne admin-siden" />;
   }
 
-  // Not found
   if (!group) {
     return (
-      <div className="w-full max-w-md mx-auto bg-slate-50 min-h-screen shadow-md sm:my-4 sm:rounded-3xl sm:border sm:border-slate-200/80 overflow-hidden">
-        <UserQuickSwitcherBar />
-        <div className="p-6 text-center space-y-4">
-          <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
-            <FolderKanban className="w-6 h-6" />
-          </div>
-          <h3 className="text-base font-bold text-slate-800">Fant ikke gruppen</h3>
-          <Link
-            to="/admin"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Tilbake til Admin-oversikt
-          </Link>
-        </div>
-      </div>
+      <StudioDetailNotFound
+        backTab="planlegger-grupper"
+        backLabel="Tilbake til grupper"
+        title="Fant ikke gruppen"
+      />
     );
   }
 
@@ -166,52 +162,20 @@ export const AdminGroupDetailPage: React.FC = () => {
     "Tjenestegruppe";
 
   return (
-    <div className="w-full max-w-md mx-auto bg-slate-50 min-h-screen shadow-md sm:my-4 sm:rounded-3xl sm:border sm:border-slate-200/80 overflow-hidden">
-      {/* Quick Mock User Switcher Bar */}
-      <UserQuickSwitcherBar />
-
-      {/* Top Header */}
-      <div className="bg-white px-5 pt-3 pb-3 border-b border-slate-100 flex items-center justify-between">
-        <Link
-          to="/admin"
-          id="btn-back-to-admin"
-          className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 px-2 py-1 -ml-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Admin-oversikt
-        </Link>
-        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100">
-          Gruppeadministrasjon
-        </span>
-      </div>
-
-      {/* Feedback Toast */}
-      {feedback && (
-        <div
-          id="admin-group-feedback-toast"
-          className={`mx-5 mt-3 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200 ${
-            feedback.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-              : "bg-red-50 text-red-800 border border-red-200"
-          }`}
-        >
-          {feedback.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-          ) : (
-            <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
-          )}
-          <span>{feedback.text}</span>
-        </div>
-      )}
-
-      <div className="p-5 space-y-5">
+    <StudioDetailShell
+      backTab="planlegger-grupper"
+      backLabel="Tilbake til grupper"
+      badge="Gruppeadministrasjon"
+      feedback={feedback}
+    >
+      <div className="space-y-5">
         {/* Main Group Edit Card */}
         <form onSubmit={handleSave} className="space-y-4">
-          <div className="p-4 bg-white rounded-2xl border border-slate-200/80 space-y-4 shadow-xs">
+          <div className={studioDetailCard}>
             {/* Header info */}
-            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-start justify-between border-b border-[var(--studio-border)] pb-3">
               <div>
-                <h3 className="text-base font-bold text-slate-800">{group.name}</h3>
+                <h3 className={studioDetailTitle}>{group.name}</h3>
               </div>
               <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
                 {currentCategoryLabel}
@@ -222,7 +186,7 @@ export const AdminGroupDetailPage: React.FC = () => {
             <div className="space-y-1.5">
               <label
                 htmlFor="input-edit-group-name"
-                className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                className="text-xs font-bold text-[var(--studio-muted)] flex items-center gap-1.5"
               >
                 <FolderKanban className="w-3.5 h-3.5 text-indigo-600" />
                 Gruppenavn:
@@ -233,7 +197,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="F.eks. Lyd og bilde..."
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+                className={studioDetailInput}
               />
             </div>
 
@@ -241,7 +205,7 @@ export const AdminGroupDetailPage: React.FC = () => {
             <div className="space-y-1.5">
               <label
                 htmlFor="select-edit-group-category"
-                className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                className="text-xs font-bold text-[var(--studio-muted)] flex items-center gap-1.5"
               >
                 <Tag className="w-3.5 h-3.5 text-indigo-600" />
                 Gruppekategori:
@@ -250,7 +214,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                 id="select-edit-group-category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value as GroupCategory)}
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
+                className={studioDetailInput}
               >
                 {GROUP_CATEGORIES.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -264,7 +228,7 @@ export const AdminGroupDetailPage: React.FC = () => {
             <div className="space-y-1.5">
               <label
                 htmlFor="input-edit-group-tags"
-                className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                className="text-xs font-bold text-[var(--studio-muted)] flex items-center gap-1.5"
               >
                 <Tag className="w-3.5 h-3.5 text-indigo-600" />
                 Tagger (kommaseparert, f.eks. vekstgruppe, menighetsskole, bønn):
@@ -275,7 +239,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
                 placeholder="f.eks. vekstgruppe, menighetsskole, bønn"
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+                className={studioDetailInput}
               />
             </div>
 
@@ -283,7 +247,7 @@ export const AdminGroupDetailPage: React.FC = () => {
             <div className="space-y-1.5">
               <label
                 htmlFor="input-edit-group-description"
-                className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                className="text-xs font-bold text-[var(--studio-muted)] flex items-center gap-1.5"
               >
                 <FolderKanban className="w-3.5 h-3.5 text-indigo-600" />
                 Beskrivelse / formål:
@@ -294,14 +258,14 @@ export const AdminGroupDetailPage: React.FC = () => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Beskriv gruppens formål og målgruppe..."
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+                className={studioDetailInput}
               />
             </div>
 
             {/* Synlighet utad */}
             <label
               htmlFor="input-edit-group-public"
-              className="flex items-start gap-2.5 p-3 bg-slate-50 rounded-xl border border-slate-200/70 cursor-pointer"
+              className="flex items-start gap-2.5 p-3 bg-[var(--studio-row)] rounded-xl border border-[var(--studio-border)] cursor-pointer"
             >
               <input
                 type="checkbox"
@@ -311,20 +275,20 @@ export const AdminGroupDetailPage: React.FC = () => {
                 className="mt-0.5 w-4 h-4 rounded text-indigo-600 focus:ring-0"
               />
               <span className="text-xs">
-                <span className="font-bold text-slate-800 block">Vis gruppen på nettsiden</span>
-                <span className="text-[11px] text-slate-500">
+                <span className="font-bold text-[var(--studio-text)] block">Vis gruppen på nettsiden</span>
+                <span className="text-[11px] text-[var(--studio-muted)]">
                   Uten krysset vises gruppen bare i planleggeren, ikke på nettsiden og ikke for eksterne nettsider som henter grupper herfra.
                 </span>
               </span>
             </label>
 
             {/* 3. Leder & 4. Nestleder */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-100">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-[var(--studio-border)]">
               {/* Leder */}
               <div className="space-y-1.5">
                 <label
                   htmlFor="select-edit-group-leader"
-                  className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                  className="text-xs font-bold text-[var(--studio-muted)] flex items-center gap-1.5"
                 >
                   <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
                   Leder:
@@ -333,7 +297,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                   id="select-edit-group-leader"
                   value={selectedLeaderId}
                   onChange={(e) => setSelectedLeaderId(e.target.value)}
-                  className="w-full px-2.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
+                  className={studioDetailInput}
                 >
                   {/* Without this option the list would show the first member as leader of a group that has none */}
                   <option value="">
@@ -345,7 +309,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-[var(--studio-muted)]">
                   Styrer hvem som har lederadgang på /leder
                 </p>
               </div>
@@ -354,7 +318,7 @@ export const AdminGroupDetailPage: React.FC = () => {
               <div className="space-y-1.5">
                 <label
                   htmlFor="select-edit-group-deputy"
-                  className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                  className="text-xs font-bold text-[var(--studio-muted)] flex items-center gap-1.5"
                 >
                   <UserCog className="w-3.5 h-3.5 text-blue-600" />
                   Nestleder:
@@ -363,7 +327,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                   id="select-edit-group-deputy"
                   value={selectedDeputyId}
                   onChange={(e) => setSelectedDeputyId(e.target.value)}
-                  className="w-full px-2.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
+                  className={studioDetailInput}
                 >
                   <option value="">-- Ingen nestleder valgt --</option>
                   {members.map((member) => (
@@ -372,17 +336,17 @@ export const AdminGroupDetailPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-[var(--studio-muted)]">
                   Vises som nestleder for gruppen
                 </p>
               </div>
             </div>
 
             {/* 5. Møteplan */}
-            <div className="pt-2 border-t border-slate-100 space-y-3">
+            <div className="pt-2 border-t border-[var(--studio-border)] space-y-3">
               <label
                 htmlFor="input-edit-group-has-schedule"
-                className="text-xs font-bold text-slate-700 flex items-center gap-1.5 cursor-pointer"
+                className="text-xs font-bold text-[var(--studio-muted)] flex items-center gap-1.5 cursor-pointer"
               >
                 <input
                   type="checkbox"
@@ -402,7 +366,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                     <div className="space-y-1">
                       <label
                         htmlFor="select-schedule-weekday"
-                        className="text-[11px] font-semibold text-slate-600 block"
+                        className="text-[11px] font-semibold text-[var(--studio-muted)] block"
                       >
                         Ukedag:
                       </label>
@@ -410,7 +374,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                         id="select-schedule-weekday"
                         value={weekday}
                         onChange={(e) => setWeekday(e.target.value)}
-                        className="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
+                        className={studioDetailInput}
                       >
                         {WEEKDAYS.map((day) => (
                           <option key={day} value={day}>
@@ -424,7 +388,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                     <div className="space-y-1">
                       <label
                         htmlFor="input-schedule-time"
-                        className="text-[11px] font-semibold text-slate-600 block"
+                        className="text-[11px] font-semibold text-[var(--studio-muted)] block"
                       >
                         Klokkeslett:
                       </label>
@@ -434,7 +398,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                         value={time}
                         onChange={(e) => setTime(e.target.value)}
                         placeholder="19:00"
-                        className="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+                        className={studioDetailInput}
                       />
                     </div>
 
@@ -442,7 +406,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                     <div className="space-y-1">
                       <label
                         htmlFor="select-schedule-frequency"
-                        className="text-[11px] font-semibold text-slate-600 block"
+                        className="text-[11px] font-semibold text-[var(--studio-muted)] block"
                       >
                         Frekvens:
                       </label>
@@ -454,7 +418,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                             e.target.value as "hver uke" | "annenhver uke" | "hver måned"
                           )
                         }
-                        className="w-full px-2 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
+                        className={studioDetailInput}
                       >
                         {MEETING_FREQUENCIES.map((freq) => (
                           <option key={freq.id} value={freq.id}>
@@ -466,13 +430,13 @@ export const AdminGroupDetailPage: React.FC = () => {
                   </div>
 
                   {/* Formatted Meeting Plan Preview */}
-                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70 flex items-center gap-2 text-xs">
+                  <div className={studioDetailRow}>
                     <Clock className="w-4 h-4 text-indigo-600 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                      <span className="text-[10px] uppercase font-bold text-[var(--studio-muted)] block">
                         Aktiv møteplan:
                       </span>
-                      <p className="font-bold text-slate-800">
+                      <p className="font-bold text-[var(--studio-text)]">
                         {weekday} kl. {time}, {frequency}
                       </p>
                     </div>
@@ -486,7 +450,7 @@ export const AdminGroupDetailPage: React.FC = () => {
               <button
                 type="submit"
                 id="btn-save-group-detail"
-                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                className={studioPrimaryButton}
               >
                 <Save className="w-4 h-4" />
                 Lagre endringer for gruppen
@@ -498,11 +462,11 @@ export const AdminGroupDetailPage: React.FC = () => {
         {/* Medlemmer Section */}
         <section
           id="admin-group-members-section"
-          className="p-4 bg-white rounded-2xl border border-slate-200/80 space-y-3 shadow-xs"
+          className={studioDetailSection}
         >
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <Users className="w-4 h-4 text-slate-500" />
+          <div className="flex items-center justify-between border-b border-[var(--studio-border)] pb-2">
+            <span className="text-xs font-bold text-[var(--studio-text)] flex items-center gap-1.5">
+              <Users className="w-4 h-4 text-[var(--studio-muted)]" />
               Medlemmer i gruppen ({members.length})
             </span>
           </div>
@@ -516,12 +480,12 @@ export const AdminGroupDetailPage: React.FC = () => {
                 <div
                   key={member.id}
                   id={`group-member-row-${member.id}`}
-                  className="p-2.5 bg-slate-50/70 rounded-xl border border-slate-100 flex items-center justify-between text-xs"
+                  className={studioDetailRow}
                 >
                   <div>
                     <Link
                       to={`/admin/person/${member.id}`}
-                      className="font-bold text-slate-800 hover:text-indigo-600 transition-colors"
+                      className={`${studioDetailLink} transition-colors`}
                     >
                       {member.name}
                     </Link>
@@ -539,7 +503,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                       </span>
                     )}
                     {!isLeader && !isDeputy && (
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-200 text-slate-700">
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-200 text-[var(--studio-text)]">
                         Medlem
                       </span>
                     )}
@@ -548,7 +512,7 @@ export const AdminGroupDetailPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleRemoveMember(member.id, member.name)}
-                        className="text-[10px] text-slate-400 hover:text-red-600 px-1.5 py-0.5 rounded hover:bg-red-50 transition-colors cursor-pointer"
+                        className="text-[10px] text-[var(--studio-muted)] hover:text-red-600 px-1.5 py-0.5 rounded hover:bg-red-50 transition-colors cursor-pointer"
                         title="Fjern fra gruppe"
                       >
                         Fjern
@@ -562,12 +526,12 @@ export const AdminGroupDetailPage: React.FC = () => {
 
           {/* Add member selector */}
           {availablePersonsToAdd.length > 0 && (
-            <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+            <div className="pt-2 border-t border-[var(--studio-border)] flex items-center gap-2">
               <select
                 id="select-add-group-member"
                 value={selectedPersonToAdd}
                 onChange={(e) => setSelectedPersonToAdd(e.target.value)}
-                className="flex-1 px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800 cursor-pointer"
+                className={studioDetailInput}
               >
                 <option value="">-- Velg person å legge til --</option>
                 {availablePersonsToAdd.map((person) => (
@@ -592,22 +556,22 @@ export const AdminGroupDetailPage: React.FC = () => {
         {/* Konkrete kommende samlinger (Separate from meeting schedule) */}
         <section
           id="admin-group-gatherings-section"
-          className="p-4 bg-white rounded-2xl border border-slate-200/80 space-y-3 shadow-xs"
+          className={studioDetailSection}
         >
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+          <div className="flex items-center justify-between border-b border-[var(--studio-border)] pb-2">
+            <span className="text-xs font-bold text-[var(--studio-text)] flex items-center gap-1.5">
               <Calendar className="w-4 h-4 text-emerald-600" />
               Konkrete samlinger for gruppen ({groupGatherings.length})
             </span>
-            <span className="text-[10px] text-slate-400 font-medium">Eksisterende Gathering</span>
+            <span className="text-[10px] text-[var(--studio-muted)] font-medium">Eksisterende Gathering</span>
           </div>
 
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+          <p className="text-[11px] text-[var(--studio-muted)] leading-relaxed">
             Dette er faktiske, planlagte samlinger knyttet til gruppen (uavhengig av den generelle møteplanen over).
           </p>
 
           {groupGatherings.length === 0 ? (
-            <p className="text-xs text-slate-400 italic py-2">
+            <p className="text-xs text-[var(--studio-muted)] italic py-2">
               Ingen konkrete samlinger opprettet for denne gruppen ennå.
             </p>
           ) : (
@@ -616,19 +580,19 @@ export const AdminGroupDetailPage: React.FC = () => {
                 <div
                   key={gathering.id}
                   id={`group-gathering-card-${gathering.id}`}
-                  className="p-3 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-2"
+                  className="p-3 bg-[var(--studio-row)] rounded-xl border border-[var(--studio-border)] space-y-2"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h5 className="text-xs font-bold text-slate-800">{gathering.title}</h5>
-                      <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                      <h5 className="text-xs font-bold text-[var(--studio-text)]">{gathering.title}</h5>
+                      <div className="flex items-center gap-2 text-[11px] text-[var(--studio-muted)] mt-0.5">
                         <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-slate-400" />
+                          <Clock className="w-3 h-3 text-[var(--studio-muted)]" />
                           {formatNorwegianDateTime(gathering.startsAt)}
                         </span>
                         {gathering.location && (
                           <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-slate-400" />
+                            <MapPin className="w-3 h-3 text-[var(--studio-muted)]" />
                             {gathering.location}
                           </span>
                         )}
@@ -649,15 +613,15 @@ export const AdminGroupDetailPage: React.FC = () => {
                   </div>
 
                   {/* Task list preview */}
-                  <div className="pt-1.5 border-t border-slate-200/60 text-[11px] space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-slate-400 block">
+                  <div className="pt-1.5 border-t border-[var(--studio-border)]/60 text-[11px] space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-[var(--studio-muted)] block">
                       Tilknyttede oppgaver ({gTasks.length}):
                     </span>
                     {gTasks.map((task) => (
                       <div key={task.id} className="flex items-center justify-between py-0.5">
                         <Link
                           to={`/admin/oppgave/${task.id}`}
-                          className="text-slate-700 hover:text-indigo-600 font-medium transition-colors"
+                          className="text-[var(--studio-text)] hover:text-indigo-600 font-medium transition-colors"
                         >
                           {task.title}
                         </Link>
@@ -693,6 +657,6 @@ export const AdminGroupDetailPage: React.FC = () => {
           )}
         </section>
       </div>
-    </div>
+    </StudioDetailShell>
   );
 };

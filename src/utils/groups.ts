@@ -11,6 +11,11 @@ export function isInGroup(group: GroupRoles, personId: string): boolean {
   );
 }
 
+/** Whether the person leads the group as leader or deputy. Being an administrator does not count. */
+export function leadsGroup(group: GroupRoles, personId: string): boolean {
+  return group.leaderIds.includes(personId) || (group.deputyLeaderIds?.includes(personId) ?? false);
+}
+
 /** Everyone in the group, each person once, whatever their role. */
 export function allGroupPersonIds(group: GroupRoles): string[] {
   return Array.from(new Set([...group.memberIds, ...group.leaderIds, ...(group.deputyLeaderIds ?? [])]));

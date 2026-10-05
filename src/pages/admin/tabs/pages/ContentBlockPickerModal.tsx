@@ -124,7 +124,7 @@ export const CONTENT_BLOCKS: ContentBlockDefinition[] = [
     isDynamic: true,
     description: "Fremhevet invitasjonsbanner til å finne et lokalt husfellesskap og nære relasjoner.",
     dataSource: "Fellesskapsregisteret",
-    icon: <Users className="w-5 h-5 text-indigo-400" />,
+    icon: <Users className="w-5 h-5 text-[var(--studio-icon)]" />,
     template: `:::module-groups[banner]\n:::`,
     previewNode: (
       <div className="w-full p-2 rounded-lg bg-primary-900 text-white space-y-1 text-[10px]">
@@ -178,7 +178,7 @@ export const CONTENT_BLOCKS: ContentBlockDefinition[] = [
     category: "Media & Tekst",
     isDynamic: false,
     description: "Illustrasjonsbilde på venstre side med tilhørende overskrift og brødtekst til høyre.",
-    icon: <Image className="w-5 h-5 text-indigo-400" />,
+    icon: <Image className="w-5 h-5 text-[var(--studio-icon)]" />,
     template: `:::media-left[https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80]\n### Fellesskap for alle generasjoner\nVi tror på verdien av nære relasjoner der alle blir sett, inkludert og verdsatt. Hos oss er det rom for både store og små spørsmål.\n:::`,
     previewNode: (
       <div className="flex items-center gap-2.5 text-[10px] w-full p-2 rounded-lg bg-stone-100 border border-stone-300">
@@ -269,7 +269,7 @@ export const CONTENT_BLOCKS: ContentBlockDefinition[] = [
     isDynamic: true,
     description: "Viser alle ansatte i staben med bilde, stillingstittel, bio, telefon og e-post direkte fra registeret.",
     dataSource: "Personregisteret",
-    icon: <Briefcase className="w-5 h-5 text-indigo-400" />,
+    icon: <Briefcase className="w-5 h-5 text-[var(--studio-icon)]" />,
     template: `:::personer[stab]`,
     previewNode: (
       <div className="grid grid-cols-2 gap-2 text-[10px] w-full p-1.5 bg-stone-100 rounded-lg border border-stone-300">
@@ -291,7 +291,7 @@ export const CONTENT_BLOCKS: ContentBlockDefinition[] = [
     isDynamic: true,
     description: "Viser menighetsråd og valgt lederskap fra personregisteret.",
     dataSource: "Personregisteret",
-    icon: <Users className="w-5 h-5 text-indigo-400" />,
+    icon: <Users className="w-5 h-5 text-[var(--studio-icon)]" />,
     template: `:::personer[lederskap]`,
     previewNode: (
       <div className="w-full p-2 rounded-lg bg-white border border-stone-200 text-[10px]">
@@ -345,21 +345,21 @@ export const ContentBlockPickerModal: React.FC<ContentBlockPickerModalProps> = (
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4 sm:p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--studio-overlay)] backdrop-blur-xs p-4 sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label="Felles blokkbibliotek"
     >
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-[var(--studio-bg)] border border-[var(--studio-border)] rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/95 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--studio-border)] bg-[var(--studio-bg)]/95 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-indigo-950 border border-indigo-700/60 flex items-center justify-center text-indigo-400">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
+            <div className="w-8 h-8 rounded-xl bg-indigo-950 border border-indigo-700/60 flex items-center justify-center text-[var(--studio-icon)]">
+              <Sparkles className="w-4 h-4 text-[var(--studio-icon)]" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Felles blokkbibliotek</h3>
-              <p className="text-xs text-slate-400">
+              <h3 className="text-base font-bold text-[var(--studio-text)]">Felles blokkbibliotek</h3>
+              <p className="text-xs text-[var(--studio-muted)]">
                 Velg blant statiske innholdsformater eller dynamiske moduler som henter sanntidsdata.
               </p>
             </div>
@@ -367,7 +367,7 @@ export const ContentBlockPickerModal: React.FC<ContentBlockPickerModalProps> = (
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] transition-colors cursor-pointer"
             title="Lukk (Esc)"
           >
             <X className="w-5 h-5" />
@@ -375,14 +375,14 @@ export const ContentBlockPickerModal: React.FC<ContentBlockPickerModalProps> = (
         </div>
 
         {/* Tab Filters */}
-        <div className="px-6 py-2.5 bg-slate-950 border-b border-slate-800 flex items-center gap-2 shrink-0">
+        <div className="px-6 py-2.5 bg-[var(--studio-panel-bg)] border-b border-[var(--studio-border)] flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => setActiveTab("alle")}
             className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "alle"
                 ? "bg-indigo-600 text-white shadow-xs"
-                : "text-slate-400 hover:text-white hover:bg-slate-800"
+                : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-surface)]"
             }`}
           >
             Alle blokker ({CONTENT_BLOCKS.length})
@@ -393,10 +393,10 @@ export const ContentBlockPickerModal: React.FC<ContentBlockPickerModalProps> = (
             className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === "dynamisk"
                 ? "bg-indigo-600 text-white shadow-xs"
-                : "text-indigo-400 hover:text-white hover:bg-slate-800"
+                : "text-[var(--studio-icon)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-surface)]"
             }`}
           >
-            <Sparkles className="w-3 h-3 text-indigo-400" />
+            <Sparkles className="w-3 h-3 text-[var(--studio-icon)]" />
             <span>⚡ Dynamiske moduler ({CONTENT_BLOCKS.filter((b) => b.isDynamic).length})</span>
           </button>
           <button
@@ -405,7 +405,7 @@ export const ContentBlockPickerModal: React.FC<ContentBlockPickerModalProps> = (
             className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "statisk"
                 ? "bg-indigo-600 text-white shadow-xs"
-                : "text-slate-400 hover:text-white hover:bg-slate-800"
+                : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-surface)]"
             }`}
           >
             📝 Statisk innhold ({CONTENT_BLOCKS.filter((b) => !b.isDynamic).length})
@@ -420,22 +420,22 @@ export const ContentBlockPickerModal: React.FC<ContentBlockPickerModalProps> = (
                 key={block.id}
                 className={`p-4 rounded-xl border transition-all flex flex-col justify-between space-y-3 group ${
                   block.isDynamic
-                    ? "bg-slate-900/90 border-indigo-700/60 hover:border-indigo-400"
-                    : "bg-slate-850/80 border-slate-700/80 hover:border-slate-500"
+                    ? "bg-[var(--studio-input)] border-indigo-700/60 hover:border-indigo-400"
+                    : "bg-slate-850/80 border-[var(--studio-border)] hover:border-slate-500"
                 }`}
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-slate-800 border border-slate-700">
+                      <div className="p-1.5 rounded-lg bg-[var(--studio-surface)] border border-[var(--studio-border)]">
                         {block.icon}
                       </div>
                       <div>
-                        <h4 className="font-bold text-white text-sm">{block.title}</h4>
+                        <h4 className="font-bold text-[var(--studio-text)] text-sm">{block.title}</h4>
                         <div className="flex items-center gap-2 mt-0.5">
                           {block.isDynamic ? (
-                            <span className="text-[10px] font-bold text-indigo-300 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800 flex items-center gap-1">
-                              <Sparkles className="w-2.5 h-2.5 text-indigo-400" />
+                            <span className="text-[10px] font-bold text-[var(--studio-accent-text)] bg-indigo-950 px-2 py-0.5 rounded border border-[var(--studio-accent-border)] flex items-center gap-1">
+                              <Sparkles className="w-2.5 h-2.5 text-[var(--studio-icon)]" />
                               <span>⚡ Dynamisk modul</span>
                             </span>
                           ) : (
@@ -443,24 +443,24 @@ export const ContentBlockPickerModal: React.FC<ContentBlockPickerModalProps> = (
                               📝 Statisk innhold
                             </span>
                           )}
-                          <span className="text-[10px] text-slate-400">{block.category}</span>
+                          <span className="text-[10px] text-[var(--studio-muted)]">{block.category}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-300 leading-relaxed">
+                  <p className="text-xs text-[var(--studio-muted)] leading-relaxed">
                     {block.description}
                   </p>
 
                   {block.dataSource && (
-                    <div className="text-[11px] text-indigo-300 bg-slate-950 p-1.5 rounded border border-slate-800">
+                    <div className="text-[11px] text-[var(--studio-accent-text)] bg-[var(--studio-panel-bg)] p-1.5 rounded border border-[var(--studio-border)]">
                       <strong>Datakilde:</strong> {block.dataSource}
                     </div>
                   )}
 
                   {/* Visual mini-preview */}
-                  <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 pointer-events-none select-none">
+                  <div className="p-2.5 rounded-lg bg-[var(--studio-panel-bg)] border border-[var(--studio-border)] pointer-events-none select-none">
                     {block.previewNode}
                   </div>
                 </div>

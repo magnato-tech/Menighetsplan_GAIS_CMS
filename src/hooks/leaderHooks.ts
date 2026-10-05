@@ -2,7 +2,7 @@ import { useMemo, useCallback } from "react";
 import { useFirebase } from "../context/FirebaseDataContext";
 import { Task, Person, Group, Gathering, ProgramItem } from "../types";
 import { calculateTaskStaffingStatus, describeAssignments, StaffingStatusResult, getStaffingStatus } from "../utils/staffing";
-import { isInGroup } from "../utils/groups";
+import { isInGroup, leadsGroup } from "../utils/groups";
 
 export interface LeaderGatheringItem {
   gathering: Gathering;
@@ -24,15 +24,10 @@ export interface LeaderGroupData {
 export function useLeaderDashboard() {
   const { currentUser, groups, gatherings, tasks, assignments, allPersons, assignTaskToPerson } = useFirebase();
 
-  // Find groups where current user's ID exists in group.leaderIds OR group.deputyLeaderIds
+  // Groups the person leads or co-leads. Admin sees every group in Admin Studio, not here.
   const leaderGroups = useMemo(() => {
-    return groups.filter(
-      (g) =>
-        g.leaderIds.includes(currentUser.id) ||
-        (g.deputyLeaderIds && g.deputyLeaderIds.includes(currentUser.id)) ||
-        currentUser.globalRole === "admin"
-    );
-  }, [groups, currentUser.id, currentUser.globalRole]);
+    return groups.filter((g) => leadsGroup(g, currentUser.id));
+  }, [groups, currentUser.id]);
 
   const isLeader = leaderGroups.length > 0;
 

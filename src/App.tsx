@@ -45,19 +45,6 @@ const HusfellesskapPage = lazy(() =>
 const ModulePlaceholderPage = lazy(() =>
   import("./pages/ModulePlaceholderPage").then((m) => ({ default: m.ModulePlaceholderPage }))
 );
-const AdminGroupDetailPage = lazy(() =>
-  import("./pages/AdminGroupDetailPage").then((m) => ({ default: m.AdminGroupDetailPage }))
-);
-const AdminPersonDetailPage = lazy(() =>
-  import("./pages/AdminPersonDetailPage").then((m) => ({ default: m.AdminPersonDetailPage }))
-);
-const AdminGatheringDetailPage = lazy(() =>
-  import("./pages/AdminGatheringDetailPage").then((m) => ({ default: m.AdminGatheringDetailPage }))
-);
-const AdminTaskDetailPage = lazy(() =>
-  import("./pages/AdminTaskDetailPage").then((m) => ({ default: m.AdminTaskDetailPage }))
-);
-
 function LazyRouteFallback() {
   return <p className="p-6 text-sm text-slate-500">Laster…</p>;
 }
@@ -95,7 +82,9 @@ function AppContent() {
     return (
       <ChunkErrorBoundary>
         <Suspense fallback={<LazyRouteFallback />}>
-          <AdminStudio />
+          <Routes>
+            <Route path="/admin/*" element={<AdminStudio />} />
+          </Routes>
         </Suspense>
       </ChunkErrorBoundary>
     );
@@ -113,11 +102,6 @@ function AppContent() {
                 <Route path="/leder" element={<LeaderPage />} />
                 <Route path="/leder/gruppe/:groupId" element={<LeaderGroupDetailPage />} />
                 <Route path="/leder/samling/:gatheringId" element={<LeaderGatheringDetailPage />} />
-                <Route path="/admin/gruppe/:groupId" element={<AdminGroupDetailPage />} />
-                <Route path="/admin/person/:personId" element={<AdminPersonDetailPage />} />
-                <Route path="/admin/samling/:gatheringId" element={<AdminGatheringDetailPage />} />
-                <Route path="/admin/oppgave/:taskId" element={<AdminTaskDetailPage />} />
-                <Route path="/admin/settings" element={<Navigate to="/admin?tab=database-admin" replace />} />
                 <Route path="/oppgave/:taskId" element={<TaskDetailPage />} />
                 <Route path="/gruppe/:groupId" element={<LeaderGroupDetailPage />} />
                 <Route path="/samling/:gatheringId" element={<LeaderGatheringDetailPage />} />

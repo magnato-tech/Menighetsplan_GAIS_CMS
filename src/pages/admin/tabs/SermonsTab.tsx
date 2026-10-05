@@ -62,10 +62,10 @@ export const SermonsTab: React.FC<SermonsTabProps> = ({ studio, showFeedback }) 
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--studio-border)] pb-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-white">Taler & Prekenarkiv</h2>
-          <p className="text-xs text-slate-400">
+          <h2 className="text-xl sm:text-2xl font-black text-[var(--studio-text)]">Taler & Prekenarkiv</h2>
+          <p className="text-xs text-[var(--studio-muted)]">
             Last opp eller lenk opptak fra søndagens gudstjenester med taler, bibeltekst og serie.
           </p>
         </div>
@@ -81,105 +81,105 @@ export const SermonsTab: React.FC<SermonsTabProps> = ({ studio, showFeedback }) 
 
       {/* Sermon Editor Form */}
       {editingSermon && (
-        <form onSubmit={handleSaveSermon} className="p-6 rounded-2xl bg-slate-800 border border-amber-500/80 shadow-2xl space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-700 pb-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+        <form onSubmit={handleSaveSermon} className="p-6 rounded-2xl bg-[var(--studio-surface)] border border-amber-500/80 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-[var(--studio-border)] pb-3">
+            <h3 className="text-sm font-bold text-[var(--studio-text)] flex items-center gap-2">
               <Headphones className="w-4 h-4 text-amber-400" />
               <span>{isNewSermon ? "Legg til ny tale" : `Rediger tale: ${editingSermon.title}`}</span>
             </h3>
-            <button type="button" onClick={() => setEditingSermon(null)} className="text-slate-400 hover:text-white">
+            <button type="button" onClick={() => setEditingSermon(null)} className="text-[var(--studio-muted)] hover:text-[var(--studio-text)]">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div className="space-y-1">
-              <label className="font-semibold text-slate-300">Tittel på talen</label>
+              <label className="font-semibold text-[var(--studio-muted)]">Tittel på talen</label>
               <input
                 type="text"
                 value={editingSermon.title || ""}
                 onChange={(e) => setEditingSermon({ ...editingSermon, title: e.target.value })}
                 placeholder="f.eks. Guds rike er kommet nær"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--studio-input)] border border-[var(--studio-border)] text-[var(--studio-input-text)]"
                 required
               />
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-slate-300">Taler</label>
+              <label className="font-semibold text-[var(--studio-muted)]">Taler</label>
               <input
                 type="text"
                 value={editingSermon.speaker || ""}
                 onChange={(e) => setEditingSermon({ ...editingSermon, speaker: e.target.value })}
                 placeholder="f.eks. Pastor Kari Nordmann"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--studio-input)] border border-[var(--studio-border)] text-[var(--studio-input-text)]"
                 required
               />
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-slate-300">Bibeltekst</label>
+              <label className="font-semibold text-[var(--studio-muted)]">Bibeltekst</label>
               <input
                 type="text"
                 value={editingSermon.bibleText || ""}
                 onChange={(e) => setEditingSermon({ ...editingSermon, bibleText: e.target.value })}
                 placeholder="f.eks. Markus 1,14–15"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--studio-input)] border border-[var(--studio-border)] text-[var(--studio-input-text)]"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-slate-300">Taleserie (valgfritt)</label>
+              <label className="font-semibold text-[var(--studio-muted)]">Taleserie (valgfritt)</label>
               <input
                 type="text"
                 value={editingSermon.series || ""}
                 onChange={(e) => setEditingSermon({ ...editingSermon, series: e.target.value })}
                 placeholder="f.eks. Vandring gjennom Markus"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--studio-input)] border border-[var(--studio-border)] text-[var(--studio-input-text)]"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-slate-300">Spotify-lenke (Episode eller Podkast)</label>
+              <label className="font-semibold text-[var(--studio-muted)]">Spotify-lenke (Episode eller Podkast)</label>
               <input
                 type="url"
                 value={editingSermon.spotifyUrl || ""}
                 onChange={(e) => setEditingSermon({ ...editingSermon, spotifyUrl: e.target.value })}
                 placeholder="https://open.spotify.com/episode/..."
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-emerald-400 font-mono text-xs"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-emerald-400 font-mono text-xs"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="font-semibold text-slate-300">Lydfil (MP3)</label>
+              <label className="font-semibold text-[var(--studio-muted)]">Lydfil (MP3)</label>
               <input
                 type="url"
                 value={editingSermon.audioUrl || ""}
                 onChange={(e) => setEditingSermon({ ...editingSermon, audioUrl: e.target.value })}
                 placeholder="https://.../tale.mp3"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-xs"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] font-mono text-xs"
               />
             </div>
 
             <div className="space-y-1 md:col-span-2">
-              <label className="font-semibold text-slate-300">Videoadresse (YouTube/Vimeo)</label>
+              <label className="font-semibold text-[var(--studio-muted)]">Videoadresse (YouTube/Vimeo)</label>
               <input
                 type="url"
                 value={editingSermon.videoUrl || ""}
                 onChange={(e) => setEditingSermon({ ...editingSermon, videoUrl: e.target.value })}
                 placeholder="https://youtube.com/watch?v=..."
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-xs"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] font-mono text-xs"
               />
             </div>
           </div>
 
           <div className="space-y-1 text-xs">
-            <label className="font-semibold text-slate-300">Kort sammendrag av talen</label>
+            <label className="font-semibold text-[var(--studio-muted)]">Kort sammendrag av talen</label>
             <textarea
               rows={3}
               value={editingSermon.summary || ""}
               onChange={(e) => setEditingSermon({ ...editingSermon, summary: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs"
             />
           </div>
 
@@ -187,7 +187,7 @@ export const SermonsTab: React.FC<SermonsTabProps> = ({ studio, showFeedback }) 
             <button
               type="button"
               onClick={() => setEditingSermon(null)}
-              className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold"
+              className="px-4 py-2 rounded-xl bg-[var(--studio-hover)] hover:bg-[var(--studio-border)] text-[var(--studio-text)] text-xs font-semibold"
             >
               Avbryt
             </button>
@@ -206,19 +206,19 @@ export const SermonsTab: React.FC<SermonsTabProps> = ({ studio, showFeedback }) 
         {sermons.map((s) => (
           <div
             key={s.id}
-            className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+            className="p-5 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
           >
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="font-bold text-white text-base">{s.title}</h3>
+                <h3 className="font-bold text-[var(--studio-text)] text-base">{s.title}</h3>
                 {s.series && (
                   <span className="text-[10px] font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded">
                     {s.series}
                   </span>
                 )}
                 {s.videoUrl && (
-                  <span className="text-[10px] font-bold text-indigo-300 bg-indigo-950/80 border border-indigo-800 px-2 py-0.5 rounded flex items-center gap-1">
-                    <Play className="w-3 h-3 text-indigo-400" />
+                  <span className="text-[10px] font-bold text-[var(--studio-accent-text)] bg-[var(--studio-accent-bg)] border border-[var(--studio-accent-border)] px-2 py-0.5 rounded flex items-center gap-1">
+                    <Play className="w-3 h-3 text-[var(--studio-icon)]" />
                     Video (nocookie)
                   </span>
                 )}
@@ -229,12 +229,12 @@ export const SermonsTab: React.FC<SermonsTabProps> = ({ studio, showFeedback }) 
                   </span>
                 )}
                 {!s.videoUrl && !s.audioUrl && (
-                  <span className="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded">
+                  <span className="text-[10px] text-[var(--studio-muted)] bg-[var(--studio-bg)] px-2 py-0.5 rounded">
                     Kun notat
                   </span>
                 )}
               </div>
-              <div className="text-xs text-slate-400 flex flex-wrap gap-3">
+              <div className="text-xs text-[var(--studio-muted)] flex flex-wrap gap-3">
                 <span>Taler: <strong className="text-slate-200">{s.speaker || s.guestSpeakerName || "Ikke oppgitt"}</strong></span>
                 {s.bibleText && <span>Bibel: {s.bibleText}</span>}
                 <span>Dato: {new Date(s.date).toLocaleDateString("no-NO")}</span>
@@ -245,7 +245,7 @@ export const SermonsTab: React.FC<SermonsTabProps> = ({ studio, showFeedback }) 
               <Link
                 to="/taler"
                 target="_blank"
-                className="p-2 rounded-lg bg-slate-900 hover:bg-slate-700 text-slate-300 hover:text-white"
+                className="p-2 rounded-lg bg-[var(--studio-bg)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] hover:text-[var(--studio-text)]"
                 title="Hør i arkiv"
               >
                 <ExternalLink className="w-4 h-4" />
@@ -265,7 +265,7 @@ export const SermonsTab: React.FC<SermonsTabProps> = ({ studio, showFeedback }) 
                     if (await deleteSermon(s.id)) showFeedback("Talen ble slettet");
                   }
                 }}
-                className="p-2 rounded-lg bg-slate-900 hover:bg-red-950 text-slate-400 hover:text-red-400"
+                className="p-2 rounded-lg bg-[var(--studio-bg)] hover:bg-red-950 text-[var(--studio-muted)] hover:text-red-400"
                 title="Slett tale"
               >
                 <Trash2 className="w-4 h-4" />

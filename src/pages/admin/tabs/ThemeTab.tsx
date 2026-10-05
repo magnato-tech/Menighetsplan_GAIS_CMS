@@ -87,13 +87,13 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--studio-border)] pb-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5">
-            <Palette className="w-6 h-6 text-indigo-400" />
+          <h2 className="text-xl sm:text-2xl font-black text-[var(--studio-text)] flex items-center gap-2.5">
+            <Palette className="w-6 h-6 text-[var(--studio-icon)]" />
             <span>Tema & Designsystem</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[var(--studio-muted)] mt-1">
             Farger, skrift, bakgrunn og hjørneavrunding for hele nettsiden. Det du lagrer her,
             gjelder alle offentlige sider med en gang.
           </p>
@@ -103,7 +103,7 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
           <button
             type="button"
             onClick={handleReset}
-            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
             title="Gjenopprett opprinnelig standardtema"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -138,11 +138,11 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
       {/* Seksjon 1: Forhåndsdefinerte Kuraterte Temaer */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-bold text-[var(--studio-text)] uppercase tracking-wider flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-amber-400" />
             <span>Kuraterte Menighetstemaer</span>
           </h3>
-          <span className="text-xs text-slate-400">Klikk for å laste ferdig palett</span>
+          <span className="text-xs text-[var(--studio-muted)]">Klikk for å laste ferdig palett</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -159,13 +159,13 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
                 onClick={() => handleApplyPreset(preset.id)}
                 className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative flex flex-col justify-between space-y-3 ${
                   isSelected
-                    ? "bg-indigo-950/40 border-indigo-500 shadow-md ring-1 ring-indigo-500"
-                    : "bg-slate-850/80 border-slate-700/80 hover:border-slate-600 hover:bg-slate-800"
+                    ? "bg-[var(--studio-accent-bg)] border-indigo-500 shadow-md ring-1 ring-indigo-500"
+                    : "bg-slate-850/80 border-[var(--studio-border)] hover:border-[var(--studio-border)] hover:bg-[var(--studio-surface)]"
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="font-bold text-white text-sm">{preset.name}</span>
+                    <span className="font-bold text-[var(--studio-text)] text-sm">{preset.name}</span>
                     {isSelected && (
                       <span className="px-2 py-0.5 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center gap-1">
                         <Check className="w-3 h-3" />
@@ -173,12 +173,12 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-[var(--studio-muted)] line-clamp-2 leading-relaxed">
                     {preset.description}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 pt-1 border-t border-slate-700/40">
+                <div className="flex items-center gap-2 pt-1 border-t border-[var(--studio-border)]/40">
                   <div className="flex items-center gap-1.5">
                     <div
                       className="w-5 h-5 rounded-full border border-white/20 shadow-xs"
@@ -191,7 +191,7 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
                       title={`Aksent: ${preset.theme.accentColor}`}
                     />
                   </div>
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] text-[var(--studio-muted)]">
                     {preset.theme.headingFont === "serif" ? "Klassisk serif" : "Moderne sans"} ·{" "}
                     {{ sharp: "skarpe hjørner", medium: "balanserte hjørner", smooth: "myke hjørner" }[preset.theme.borderRadius]}
                   </span>
@@ -207,11 +207,11 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
         {/* Venstre kolonne: Farger & Overflater */}
         <div className="space-y-6">
           {/* Primærfarge */}
-          <div className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-4">
+          <div className="p-5 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-sm font-bold text-white">Primærfarge (Hovedprofil)</h4>
-                <p className="text-xs text-slate-400">
+                <h4 className="text-sm font-bold text-[var(--studio-text)]">Primærfarge (Hovedprofil)</h4>
+                <p className="text-xs text-[var(--studio-muted)]">
                   Brukes til knapper, lenker, menyen, fremhevede bokser og de mørke flatene på forsiden.
                 </p>
               </div>
@@ -226,20 +226,20 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
                 type="color"
                 value={theme.primaryColor}
                 onChange={(e) => setTheme({ ...theme, primaryColor: e.target.value })}
-                className="w-10 h-10 rounded-xl cursor-pointer bg-slate-900 border border-slate-700 p-1 shrink-0"
+                className="w-10 h-10 rounded-xl cursor-pointer bg-[var(--studio-bg)] border border-[var(--studio-border)] p-1 shrink-0"
               />
               <input
                 type="text"
                 value={theme.primaryColor}
                 onChange={(e) => setTheme({ ...theme, primaryColor: e.target.value })}
-                className="w-32 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-xs uppercase"
+                className="w-32 px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] font-mono text-xs uppercase"
                 placeholder="#1e3a8a"
               />
             </div>
 
             {/* Hurtigvalg for primærfarge */}
             <div className="space-y-1.5 pt-1">
-              <span className="text-[11px] text-slate-400 font-semibold block">Anbefalte toner:</span>
+              <span className="text-[11px] text-[var(--studio-muted)] font-semibold block">Anbefalte toner:</span>
               <div className="flex flex-wrap gap-2">
                 {PRIMARY_SWATCHES.map((swatch) => (
                   <button
@@ -248,8 +248,8 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
                     onClick={() => setTheme({ ...theme, primaryColor: swatch.hex })}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                       theme.primaryColor.toLowerCase() === swatch.hex.toLowerCase()
-                        ? "bg-slate-700 text-white ring-1 ring-white/50"
-                        : "bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-700"
+                        ? "bg-[var(--studio-hover)] text-[var(--studio-text)] ring-1 ring-[var(--studio-accent-border)]"
+                        : "bg-[var(--studio-bg)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-hover)]"
                     }`}
                   >
                     <span
@@ -264,11 +264,11 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
           </div>
 
           {/* Aksentfarge */}
-          <div className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-4">
+          <div className="p-5 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-sm font-bold text-white">Aksentfarge (Detaljer & Kontraster)</h4>
-                <p className="text-xs text-slate-400">
+                <h4 className="text-sm font-bold text-[var(--studio-text)]">Aksentfarge (Detaljer & Kontraster)</h4>
+                <p className="text-xs text-[var(--studio-muted)]">
                   Brukes til handlingsknapper, merker og ikoner på mørk bakgrunn.
                 </p>
               </div>
@@ -283,20 +283,20 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
                 type="color"
                 value={theme.accentColor}
                 onChange={(e) => setTheme({ ...theme, accentColor: e.target.value })}
-                className="w-10 h-10 rounded-xl cursor-pointer bg-slate-900 border border-slate-700 p-1 shrink-0"
+                className="w-10 h-10 rounded-xl cursor-pointer bg-[var(--studio-bg)] border border-[var(--studio-border)] p-1 shrink-0"
               />
               <input
                 type="text"
                 value={theme.accentColor}
                 onChange={(e) => setTheme({ ...theme, accentColor: e.target.value })}
-                className="w-32 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-xs uppercase"
+                className="w-32 px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] font-mono text-xs uppercase"
                 placeholder="#d97706"
               />
             </div>
 
             {/* Hurtigvalg for aksentfarge */}
             <div className="space-y-1.5 pt-1">
-              <span className="text-[11px] text-slate-400 font-semibold block">Anbefalte toner:</span>
+              <span className="text-[11px] text-[var(--studio-muted)] font-semibold block">Anbefalte toner:</span>
               <div className="flex flex-wrap gap-2">
                 {ACCENT_SWATCHES.map((swatch) => (
                   <button
@@ -305,8 +305,8 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
                     onClick={() => setTheme({ ...theme, accentColor: swatch.hex })}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                       theme.accentColor.toLowerCase() === swatch.hex.toLowerCase()
-                        ? "bg-slate-700 text-white ring-1 ring-white/50"
-                        : "bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-700"
+                        ? "bg-[var(--studio-hover)] text-[var(--studio-text)] ring-1 ring-[var(--studio-accent-border)]"
+                        : "bg-[var(--studio-bg)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-hover)]"
                     }`}
                   >
                     <span
@@ -321,9 +321,9 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
           </div>
 
           {/* Bakgrunnstone */}
-          <div className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-3">
-            <h4 className="text-sm font-bold text-white flex items-center gap-2">
-              <LayoutTemplate className="w-4 h-4 text-indigo-400" />
+          <div className="p-5 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-3">
+            <h4 className="text-sm font-bold text-[var(--studio-text)] flex items-center gap-2">
+              <LayoutTemplate className="w-4 h-4 text-[var(--studio-icon)]" />
               <span>Bakgrunnstone på offentlige sider</span>
             </h4>
             <div className="grid grid-cols-2 gap-2.5 text-xs">
@@ -339,12 +339,12 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
                   onClick={() => setTheme({ ...theme, backgroundTone: bg.id as any })}
                   className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                     theme.backgroundTone === bg.id
-                      ? "bg-indigo-950/60 border-indigo-500 text-white shadow-xs"
-                      : "bg-slate-900 border-slate-700/80 text-slate-300 hover:text-white hover:border-slate-600"
+                      ? "bg-[var(--studio-accent-bg)] border-[var(--studio-accent-border)] text-[var(--studio-accent-text)] shadow-xs"
+                      : "bg-[var(--studio-bg)] border-[var(--studio-border)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:border-[var(--studio-border)]"
                   }`}
                 >
                   <div className="font-bold">{bg.label}</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">{bg.desc}</div>
+                  <div className="text-[10px] text-[var(--studio-muted)] mt-0.5">{bg.desc}</div>
                 </button>
               ))}
             </div>
@@ -354,19 +354,19 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
         {/* Høyre kolonne: Typografi, Hjørner & Sanntids Forhåndsvisningskort */}
         <div className="space-y-6">
           {/* Typografi & Avrunding */}
-          <div className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-4">
-            <h4 className="text-sm font-bold text-white flex items-center gap-2">
-              <Type className="w-4 h-4 text-indigo-400" />
+          <div className="p-5 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-4">
+            <h4 className="text-sm font-bold text-[var(--studio-text)] flex items-center gap-2">
+              <Type className="w-4 h-4 text-[var(--studio-icon)]" />
               <span>Typografi & Skrifttyper</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Overskrifter</label>
+                <label className="font-semibold text-[var(--studio-muted)] block">Overskrifter</label>
                 <select
                   value={theme.headingFont}
                   onChange={(e) => setTheme({ ...theme, headingFont: e.target.value as any })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white font-semibold cursor-pointer"
+                  className="w-full px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] font-semibold cursor-pointer"
                 >
                   <option value="sans">Moderne Sans-serif (Ren og tydelig)</option>
                   <option value="serif">Klassisk Serif (Høytidelig og tradisjonsrik)</option>
@@ -374,11 +374,11 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-semibold text-slate-300 block">Brødtekst</label>
+                <label className="font-semibold text-[var(--studio-muted)] block">Brødtekst</label>
                 <select
                   value={theme.bodyFont}
                   onChange={(e) => setTheme({ ...theme, bodyFont: e.target.value as any })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white font-semibold cursor-pointer"
+                  className="w-full px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] font-semibold cursor-pointer"
                 >
                   <option value="sans">Sans-serif (Enkelt og universelt lesbart)</option>
                   <option value="serif">Serif (Klassisk trykksak-følelse)</option>
@@ -387,9 +387,9 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
             </div>
 
             {/* Hjørneavrunding */}
-            <div className="space-y-2 pt-2 border-t border-slate-700/60">
-              <label className="font-semibold text-slate-300 text-xs flex items-center gap-2">
-                <Layers className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="space-y-2 pt-2 border-t border-[var(--studio-border)]">
+              <label className="font-semibold text-[var(--studio-muted)] text-xs flex items-center gap-2">
+                <Layers className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
                 <span>Hjørneavrunding på kort og bokser</span>
               </label>
               <div className="grid grid-cols-3 gap-2 text-xs">
@@ -405,7 +405,7 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
                     className={`py-2 px-3 border text-center transition-all cursor-pointer ${r.radius} ${
                       theme.borderRadius === r.id
                         ? "bg-indigo-600 text-white border-indigo-500 font-bold shadow-xs"
-                        : "bg-slate-900 text-slate-300 border-slate-700 hover:text-white"
+                        : "bg-[var(--studio-bg)] text-[var(--studio-muted)] border-[var(--studio-border)] hover:text-[var(--studio-text)]"
                     }`}
                   >
                     {r.label}
@@ -416,9 +416,9 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
           </div>
 
           {/* Sanntids demonstrasjonskort */}
-          <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+          <div className="p-5 rounded-2xl bg-[var(--studio-panel-bg)] border border-[var(--studio-border)] space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              <span className="text-xs font-bold text-[var(--studio-muted)] uppercase tracking-wider">
                 Forhåndsvisning
               </span>
               <span className="text-[10px] text-emerald-400">Slik blir nettsiden</span>
@@ -471,7 +471,7 @@ export const ThemeTab: React.FC<ThemeTabProps> = ({ showFeedback }) => {
       </div>
 
       {/* Lagreknapp i bunnen */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--studio-border)]">
         <button
           type="button"
           onClick={() => handleSaveTheme()}

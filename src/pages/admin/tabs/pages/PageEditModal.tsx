@@ -349,24 +349,24 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
   const renderLiveFrontendPreview = () => {
 
     return (
-      <div className="flex flex-col h-full bg-slate-900 border border-slate-700/80 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="flex flex-col h-full bg-[var(--studio-bg)] border border-[var(--studio-border)] rounded-2xl overflow-hidden shadow-2xl">
         {/* Preview Sub-Toolbar */}
-        <div className="px-4 py-2.5 bg-slate-950 border-b border-slate-700/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="px-4 py-2.5 bg-[var(--studio-panel-bg)] border-b border-[var(--studio-border)] flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-bold text-white">Ekte nettside-rendering</span>
-            <span className="text-slate-400 hidden xl:inline">· 1:1 produksjonslayout & tema</span>
+            <span className="font-bold text-[var(--studio-text)]">Ekte nettside-rendering</span>
+            <span className="text-[var(--studio-muted)] hidden xl:inline">· 1:1 produksjonslayout & tema</span>
           </div>
 
           {/* Enhetsvelger: Desktop (Full) | Nettbrett | Mobil */}
-          <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded-lg border border-slate-800">
+          <div className="flex items-center gap-1 bg-[var(--studio-bg)] p-0.5 rounded-lg border border-[var(--studio-border)]">
             <button
               type="button"
               onClick={() => setPreviewDevice("desktop")}
               className={`px-2.5 py-1 rounded text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                 previewDevice === "desktop"
                   ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                  : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-surface)]"
               }`}
               title="Full bredde desktop-layout (tilpasser seg skjermen)"
             >
@@ -379,7 +379,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               className={`px-2.5 py-1 rounded text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                 previewDevice === "tablet"
                   ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                  : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-surface)]"
               }`}
               title="Nettbrett-format (768px bredde)"
             >
@@ -392,7 +392,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               className={`px-2.5 py-1 rounded text-[11px] font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                 previewDevice === "mobile"
                   ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                  : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-surface)]"
               }`}
               title="Mobil-format (390px bredde)"
             >
@@ -402,7 +402,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-700 hidden sm:inline">
+            <span className="text-[11px] text-[var(--studio-muted)] font-mono bg-[var(--studio-bg)] px-2 py-0.5 rounded border border-[var(--studio-border)] hidden sm:inline">
               {previewLocationPath || targetPath}
             </span>
             {previewBlockedNotice && (
@@ -415,10 +415,10 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               target="_blank"
               rel="noopener noreferrer"
               onClick={handleSaveActiveDraftToStorage}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white border border-slate-700 text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-accent-text)] hover:text-[var(--studio-text)] border border-[var(--studio-border)] text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
               title="Åpne forhåndsvisningen i egen full nettleserfane"
             >
-              <ExternalLink className="w-3.5 h-3.5 text-indigo-400" />
+              <ExternalLink className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
               <span className="hidden sm:inline">Ny fane</span>
             </a>
           </div>
@@ -426,7 +426,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
 
         <div
           ref={previewScrollRef}
-          className="cms-preview-scroll-root flex-1 overflow-y-auto bg-slate-950/60 p-2 sm:p-4 max-h-[82vh] flex justify-center items-start"
+          className="cms-preview-scroll-root flex-1 overflow-y-auto bg-[var(--studio-overlay)] p-2 sm:p-4 max-h-[82vh] flex justify-center items-start"
         >
           <style>{`
             .cms-preview-scroll-root iframe[data-cms-preview-focused="true"] {
@@ -438,8 +438,8 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               previewDevice === "desktop"
                 ? "w-full rounded-xl shadow-lg border border-stone-200/40"
                 : previewDevice === "tablet"
-                ? "w-[768px] max-w-full rounded-2xl shadow-2xl border-4 border-slate-700"
-                : "w-[390px] max-w-full rounded-3xl shadow-2xl border-8 border-slate-700"
+                ? "w-[768px] max-w-full rounded-2xl shadow-2xl border-4 border-[var(--studio-border)]"
+                : "w-[390px] max-w-full rounded-3xl shadow-2xl border-8 border-[var(--studio-border)]"
             }`}
           >
             <iframe
@@ -464,37 +464,37 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Tittel */}
         <div className="space-y-1">
-          <label className="text-xs font-semibold text-slate-300 block">Sidetittel (Vises i meny og header)</label>
+          <label className="text-xs font-semibold text-[var(--studio-muted)] block">Sidetittel (Vises i meny og header)</label>
           <input
             type="text"
             required
             value={editingPage.title || ""}
             onChange={(e) => onUpdate({ ...editingPage, title: e.target.value })}
             placeholder="f.eks. Om oss, Barn & Unge, Kontakt"
-            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500"
+            className="w-full px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs focus:outline-hidden focus:border-indigo-500"
           />
         </div>
 
         {/* URL Slug */}
         <div className="space-y-1">
-          <label className="text-xs font-semibold text-slate-300 block">Adresse (f.eks. om-oss)</label>
+          <label className="text-xs font-semibold text-[var(--studio-muted)] block">Adresse (f.eks. om-oss)</label>
           <input
             type="text"
             value={editingPage.slug || ""}
             onChange={(e) => onUpdate({ ...editingPage, slug: e.target.value })}
             placeholder="om-oss (eller genereres automatisk fra tittel)"
-            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-hidden focus:border-indigo-500"
+            className="w-full px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs font-mono focus:outline-hidden focus:border-indigo-500"
           />
         </div>
       </div>
 
       {/* Ekstern eller overstyrt intern lenke */}
-      <div className="space-y-1 bg-slate-900/50 p-3 rounded-xl border border-slate-700/60">
+      <div className="space-y-1 bg-[var(--studio-row)] p-3 rounded-xl border border-[var(--studio-border)]">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-semibold text-slate-300 block">
+          <label className="text-xs font-semibold text-[var(--studio-muted)] block">
             Overstyr lenkeadresse (valgfritt)
           </label>
-          <span className="text-[10px] text-slate-400">
+          <span className="text-[10px] text-[var(--studio-muted)]">
             Peker menyvalget til en innebygd side som /hva-skjer, /fellesskap eller /taler, eller til en full nettadresse
           </span>
         </div>
@@ -508,16 +508,16 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
       </div>
 
       {/* Hovedmeny-hierarki og Rekkefølge */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-700/80">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[var(--studio-row)] p-4 rounded-xl border border-[var(--studio-border)]">
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-white flex items-center gap-1.5">
-            <FolderTree className="w-3.5 h-3.5 text-indigo-400" />
+          <label className="text-xs font-bold text-[var(--studio-text)] flex items-center gap-1.5">
+            <FolderTree className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
             <span>Hovedfane / Forelder</span>
           </label>
           <select
             value={currentParentId || ""}
             onChange={(e) => handleParentChange(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500 cursor-pointer"
+            className="w-full px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs focus:outline-hidden focus:border-indigo-500 cursor-pointer"
           >
             <option value="">Ingen (Dette er en topp-nivå hovedfane)</option>
             {availableParentPages.map((parent) => (
@@ -526,13 +526,13 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               </option>
             ))}
           </select>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-[var(--studio-muted)]">
             Velg hvilken hovedside denne siden hører under for å bygge nedtrekksmeny.
           </p>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-white flex items-center gap-1.5">
+          <label className="text-xs font-bold text-[var(--studio-text)] flex items-center gap-1.5">
             <span>Rekkefølge i meny</span>
           </label>
           <input
@@ -540,9 +540,9 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             min="1"
             value={currentOrder}
             onChange={(e) => handleOrderChange(parseInt(e.target.value) || 1)}
-            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500"
+            className="w-full px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs focus:outline-hidden focus:border-indigo-500"
           />
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-[var(--studio-muted)]">
             Lavere tall vises først i toppmenyen eller underfanelisten.
           </p>
         </div>
@@ -557,7 +557,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
           if (e.key === "Enter" || e.key === " ") setFocusedPreviewTarget(CMS_PREVIEW_TARGET_HERO);
         }}
         data-cms-editor-target={CMS_PREVIEW_TARGET_HERO}
-        className={`bg-slate-900/90 border rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm cursor-pointer transition-all ${
+        className={`bg-[var(--studio-input)] border rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm cursor-pointer transition-all ${
           focusedPreviewTarget === CMS_PREVIEW_TARGET_HERO
             ? "border-indigo-400 ring-2 ring-indigo-500/60"
             : "border-indigo-700/80"
@@ -566,35 +566,35 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-950 pb-2.5">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-xs font-bold text-[var(--studio-text)] uppercase tracking-wider flex items-center gap-2">
               <span>📌 Hero / Toppbanner</span>
-              <span className="text-[10px] text-indigo-300 font-normal bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800">
+              <span className="text-[10px] text-[var(--studio-accent-text)] font-normal bg-indigo-950 px-2 py-0.5 rounded border border-[var(--studio-accent-border)]">
                 Fast toppramme
               </span>
             </h4>
           </div>
-          <span className="text-[11px] font-semibold text-indigo-200">
+          <span className="text-[11px] font-semibold text-[var(--studio-accent-text)]">
             Låst øverst · Kan ikke flyttes eller slettes
           </span>
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-semibold text-slate-300 block">Tittel i Hero</label>
+          <label className="text-xs font-semibold text-[var(--studio-muted)] block">Tittel i Hero</label>
           <input
             type="text"
             value={editingPage.heroTitle || ""}
             onChange={(e) => onUpdate({ ...editingPage, heroTitle: e.target.value })}
             placeholder={isHomePage ? settings.welcomeHeadline || "Velkommen til menigheten" : editingPage.title || "Overskrift i toppbanneret"}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500"
+            className="w-full px-3 py-2 rounded-xl bg-[var(--studio-panel-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs focus:outline-hidden focus:border-indigo-500"
           />
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-[var(--studio-muted)]">
             Sidetittelen over styrer menyen. Dette feltet er overskriften i toppbanneret.
           </p>
         </div>
 
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-slate-300 block">
+            <label className="text-xs font-semibold text-[var(--studio-muted)] block">
               Ingress / Undertittel
             </label>
             {editingPage.summary && (
@@ -607,7 +607,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
                   });
                   showCopiedIngress(true);
                 }}
-                className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer transition-colors"
+                className="text-[10px] text-[var(--studio-icon)] hover:text-[var(--studio-accent-text)] flex items-center gap-1 cursor-pointer transition-colors"
                 title="Kopier denne ingressen til meta-beskrivelsen for søkemotorer og sosiale medier"
               >
                 {copiedIngress ? (
@@ -629,12 +629,12 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             value={editingPage.summary || ""}
             onChange={(e) => onUpdate({ ...editingPage, summary: e.target.value })}
             placeholder="En engasjerende setning eller to som oppsummerer sidens budskap..."
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500 resize-y"
+            className="w-full px-3 py-2 rounded-xl bg-[var(--studio-panel-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs focus:outline-hidden focus:border-indigo-500 resize-y"
           />
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-semibold text-slate-300 block">
+          <label className="text-xs font-semibold text-[var(--studio-muted)] block">
             Bakgrunnsbilde
           </label>
           <CmsMediaPicker
@@ -652,14 +652,14 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
-              <label className="text-xs font-semibold text-slate-300 block">Primærknapp</label>
-              <label className="flex items-center gap-2 cursor-pointer text-[11px] font-semibold text-slate-300 shrink-0">
+              <label className="text-xs font-semibold text-[var(--studio-muted)] block">Primærknapp</label>
+              <label className="flex items-center gap-2 cursor-pointer text-[11px] font-semibold text-[var(--studio-muted)] shrink-0">
                 <input
                   type="checkbox"
                   checked={editingPage.showHeroPrimaryCta !== false}
                   onChange={(e) => onUpdate({ showHeroPrimaryCta: e.target.checked })}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-4 h-4 rounded text-indigo-600 bg-slate-950 border-slate-700 cursor-pointer"
+                  className="w-4 h-4 rounded text-indigo-600 bg-[var(--studio-panel-bg)] border-[var(--studio-border)] cursor-pointer"
                 />
                 <span>Vis på siden</span>
               </label>
@@ -669,7 +669,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               value={editingPage.heroCtaText || ""}
               onChange={(e) => onUpdate({ ...editingPage, heroCtaText: e.target.value })}
               placeholder={isHomePage ? "Se hva som skjer" : "Knappetekst"}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--studio-panel-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs focus:outline-hidden focus:border-indigo-500"
             />
             <CmsLinkPicker
               value={editingPage.heroCtaLink || ""}
@@ -681,14 +681,14 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
-              <label className="text-xs font-semibold text-slate-300 block">Sekundærknapp</label>
-              <label className="flex items-center gap-2 cursor-pointer text-[11px] font-semibold text-slate-300 shrink-0">
+              <label className="text-xs font-semibold text-[var(--studio-muted)] block">Sekundærknapp</label>
+              <label className="flex items-center gap-2 cursor-pointer text-[11px] font-semibold text-[var(--studio-muted)] shrink-0">
                 <input
                   type="checkbox"
                   checked={editingPage.showHeroSecondaryCta !== false}
                   onChange={(e) => onUpdate({ showHeroSecondaryCta: e.target.checked })}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-4 h-4 rounded text-indigo-600 bg-slate-950 border-slate-700 cursor-pointer"
+                  className="w-4 h-4 rounded text-indigo-600 bg-[var(--studio-panel-bg)] border-[var(--studio-border)] cursor-pointer"
                 />
                 <span>Vis på siden</span>
               </label>
@@ -698,7 +698,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               value={editingPage.heroCtaSecondaryText || ""}
               onChange={(e) => onUpdate({ ...editingPage, heroCtaSecondaryText: e.target.value })}
               placeholder={isHomePage ? "Bli kjent med oss" : "Knappetekst"}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--studio-panel-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs focus:outline-hidden focus:border-indigo-500"
             />
             <CmsLinkPicker
               value={editingPage.heroCtaSecondaryLink || ""}
@@ -714,13 +714,13 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
       </div>
 
       {/* Visuell Blokkbygger & Modulstyring */}
-      <div className="space-y-3 bg-slate-900/60 p-4 sm:p-5 rounded-2xl border border-slate-700/80">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+      <div className="space-y-3 bg-[var(--studio-row)] p-4 sm:p-5 rounded-2xl border border-[var(--studio-border)]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--studio-border)] pb-3">
           <div>
-            <label className="text-xs font-bold text-white uppercase tracking-wider block">
+            <label className="text-xs font-bold text-[var(--studio-text)] uppercase tracking-wider block">
               Innholdsblokker & Moduler
             </label>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-[var(--studio-muted)]">
               Flytt kort opp eller ned, skjul dem, eller velg en layout. Innholdet i dynamiske moduler hentes av systemet.
             </p>
           </div>
@@ -737,35 +737,35 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
       </div>
 
       {/* SEO & Deling i sosiale medier */}
-      <div className="rounded-xl border border-slate-700/80 bg-slate-900/40 overflow-hidden">
+      <div className="rounded-xl border border-[var(--studio-border)] bg-[var(--studio-bg)]/40 overflow-hidden">
         <button
           type="button"
           onClick={() => setShowSeoDetails(!showSeoDetails)}
-          className="w-full p-3.5 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors cursor-pointer"
+          className="w-full p-3.5 flex items-center justify-between text-left hover:bg-[var(--studio-surface)]/50 transition-colors cursor-pointer"
         >
           <div className="flex items-center gap-2.5">
-            <Globe className="w-4 h-4 text-indigo-400" />
+            <Globe className="w-4 h-4 text-[var(--studio-icon)]" />
             <div>
-              <span className="text-xs font-bold text-white block">
+              <span className="text-xs font-bold text-[var(--studio-text)] block">
                 Søkemotoroptimalisering (SEO) & Delingskort
               </span>
-              <span className="text-[11px] text-slate-400 block">
+              <span className="text-[11px] text-[var(--studio-muted)] block">
                 Tilpass hvordan siden vises på Google, Facebook og andre sosiale medier.
               </span>
             </div>
           </div>
           {showSeoDetails ? (
-            <ChevronUp className="w-4 h-4 text-slate-400" />
+            <ChevronUp className="w-4 h-4 text-[var(--studio-muted)]" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <ChevronDown className="w-4 h-4 text-[var(--studio-muted)]" />
           )}
         </button>
 
         {showSeoDetails && (
-          <div className="p-4 pt-2 border-t border-slate-700/70 space-y-4 bg-slate-950/40">
+          <div className="p-4 pt-2 border-t border-[var(--studio-border)]/70 space-y-4 bg-[var(--studio-panel-bg)]/40">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300 block">
+                <label className="text-xs font-semibold text-[var(--studio-muted)] block">
                   Meta-beskrivelse for søkemotorer
                 </label>
                 <textarea
@@ -773,7 +773,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
                   value={editingPage.metaDescription || ""}
                   onChange={(e) => onUpdate({ ...editingPage, metaDescription: e.target.value })}
                   placeholder="Kort beskrivelse (ca. 150-160 tegn) som Google viser under sidetittelen..."
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500 resize-y"
+                  className="w-full px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs focus:outline-hidden focus:border-indigo-500 resize-y"
                 />
               </div>
 
@@ -803,12 +803,12 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             </div>
 
             {/* Social Share Card Preview */}
-            <div className="p-3 rounded-xl bg-slate-900 border border-slate-700 text-white space-y-2">
-              <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                <Share2 className="w-3 h-3 text-indigo-400" />
+            <div className="p-3 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] space-y-2">
+              <div className="flex items-center gap-1.5 text-[11px] text-[var(--studio-muted)]">
+                <Share2 className="w-3 h-3 text-[var(--studio-icon)]" />
                 <span>Forhåndsvisning av delebilde på sosiale medier</span>
               </div>
-              <div className="rounded-xl overflow-hidden border border-slate-700 bg-slate-800">
+              <div className="rounded-xl overflow-hidden border border-[var(--studio-border)] bg-[var(--studio-surface)]">
                 {shareImage ? (
                   <img
                     src={shareImage}
@@ -816,17 +816,17 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
                     className="w-full h-36 object-cover"
                   />
                 ) : (
-                  <div className="w-full h-24 bg-slate-800/80 flex items-center justify-center text-slate-400 text-xs gap-1.5">
-                    <ImageIcon className="w-4 h-4 text-slate-500" />
+                  <div className="w-full h-24 bg-[var(--studio-surface)] flex items-center justify-center text-[var(--studio-muted)] text-xs gap-1.5">
+                    <ImageIcon className="w-4 h-4 text-[var(--studio-muted)]" />
                     <span>Intet bilde valgt (standard logo/toppbanner benyttes)</span>
                   </div>
                 )}
-                <div className="p-3 space-y-1 bg-slate-900/90">
-                  <div className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider">
+                <div className="p-3 space-y-1 bg-[var(--studio-input)]">
+                  <div className="text-[10px] font-semibold text-[var(--studio-icon)] uppercase tracking-wider">
                     {siteHost}
                   </div>
-                  <h4 className="text-xs font-bold text-white truncate">{previewTitle}</h4>
-                  <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">{previewDescription}</p>
+                  <h4 className="text-xs font-bold text-[var(--studio-text)] truncate">{previewTitle}</h4>
+                  <p className="text-[11px] text-[var(--studio-muted)] line-clamp-2 leading-relaxed">{previewDescription}</p>
                 </div>
               </div>
             </div>
@@ -835,13 +835,13 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
       </div>
 
       {/* Publisering & Synlighet */}
-      <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-700/80 space-y-4">
-        <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+      <div className="p-4 rounded-xl bg-[var(--studio-row)] border border-[var(--studio-border)] space-y-4">
+        <h4 className="text-xs font-bold text-[var(--studio-text)] uppercase tracking-wider">
           Publisering & Synlighet
         </h4>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <label className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-900 border border-slate-700/60 cursor-pointer hover:border-slate-600 transition-colors">
+          <label className="flex items-start gap-2.5 p-3 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] cursor-pointer hover:border-[var(--studio-border)] transition-colors">
             <input
               type="checkbox"
               checked={editingPage.isPublished !== false}
@@ -849,14 +849,14 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               className="w-4 h-4 mt-0.5 rounded text-indigo-600 focus:ring-0"
             />
             <div>
-              <span className="font-semibold block text-white text-xs">Aktiver publisering</span>
-              <span className="text-[11px] text-slate-400 block leading-tight mt-0.5">
+              <span className="font-semibold block text-[var(--studio-text)] text-xs">Aktiver publisering</span>
+              <span className="text-[11px] text-[var(--studio-muted)] block leading-tight mt-0.5">
                 Når aktivert, vil siden være synlig for publikum (eller automatisk fra planlagt dato).
               </span>
             </div>
           </label>
 
-          <label className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-900 border border-slate-700/60 cursor-pointer hover:border-slate-600 transition-colors">
+          <label className="flex items-start gap-2.5 p-3 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] cursor-pointer hover:border-[var(--studio-border)] transition-colors">
             <input
               type="checkbox"
               checked={editingPage.inNavMenu !== false}
@@ -864,8 +864,8 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               className="w-4 h-4 mt-0.5 rounded text-indigo-600 focus:ring-0"
             />
             <div>
-              <span className="font-semibold block text-white text-xs">Vis i offentlig meny</span>
-              <span className="text-[11px] text-slate-400 block leading-tight mt-0.5">
+              <span className="font-semibold block text-[var(--studio-text)] text-xs">Vis i offentlig meny</span>
+              <span className="text-[11px] text-[var(--studio-muted)] block leading-tight mt-0.5">
                 Vises i toppmenyen eller nedtrekksmenyen. Slått av er siden bare tilgjengelig via direkte lenke.
               </span>
             </div>
@@ -873,10 +873,10 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
         </div>
 
         {/* 'Publiseringsdato'-velger (Planlagt publisering) */}
-        <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
+        <div className="p-3.5 rounded-xl bg-[var(--studio-overlay)] border border-[var(--studio-border)] space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
             <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-indigo-400" />
+              <Clock className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
               <span>Publiseringsdato & tidspunkt (Planlegging)</span>
             </label>
             {editingPage.publishAt && (
@@ -904,7 +904,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
                 type="datetime-local"
                 value={toDatetimeLocal(editingPage.publishAt)}
                 onChange={(e) => handlePublishDateChange(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-hidden focus:border-indigo-500"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs font-mono focus:outline-hidden focus:border-indigo-500"
               />
             </div>
 
@@ -913,7 +913,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               <button
                 type="button"
                 onClick={() => handlePublishDateChange(getPresetDate("tomorrow"))}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium transition-colors cursor-pointer"
+                className="px-2.5 py-1.5 rounded-lg bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] text-[11px] font-medium transition-colors cursor-pointer"
                 title="Sett publisering til i morgen kl. 09:00"
               >
                 I morgen 09:00
@@ -921,7 +921,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               <button
                 type="button"
                 onClick={() => handlePublishDateChange(getPresetDate("sunday"))}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium transition-colors cursor-pointer"
+                className="px-2.5 py-1.5 rounded-lg bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] text-[11px] font-medium transition-colors cursor-pointer"
                 title="Sett publisering til kommende søndag kl. 08:00"
               >
                 Søndag 08:00
@@ -929,7 +929,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               <button
                 type="button"
                 onClick={() => handlePublishDateChange(getPresetDate("monday"))}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium transition-colors cursor-pointer"
+                className="px-2.5 py-1.5 rounded-lg bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] text-[11px] font-medium transition-colors cursor-pointer"
                 title="Sett publisering til neste mandag kl. 09:00"
               >
                 Mandag 09:00
@@ -948,7 +948,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
                   </span>
                   <p className="text-[11px] text-blue-300/90 leading-relaxed">
                     Siden holdes automatisk som en skjult kladd for publikum frem til{" "}
-                    <strong className="text-white font-semibold">
+                    <strong className="text-[var(--studio-text)] font-semibold">
                       {formatNorwegianDateTime(editingPage.publishAt)}
                     </strong>
                     . Da går siden automatisk over til statusen «Publisert» uten manuell handling.
@@ -964,7 +964,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
               </div>
             )
           ) : (
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-[var(--studio-muted)]">
               💡 La feltet stå tomt hvis du vil publisere siden umiddelbart ved lagring.
             </p>
           )}
@@ -976,7 +976,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
   return (
     <form
       onSubmit={onSave}
-      className={`p-4 sm:p-6 rounded-2xl bg-slate-800 border border-indigo-500/80 shadow-2xl space-y-5 transition-all ${
+      className={`p-4 sm:p-6 rounded-2xl bg-[var(--studio-surface)] border border-indigo-500/80 shadow-2xl space-y-5 transition-all ${
         viewMode === "split"
           ? "w-full max-w-none"
           : viewMode === "preview"
@@ -984,9 +984,9 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
           : "max-w-4xl mx-auto w-full"
       }`}
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700 pb-3">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <Edit3 className="w-4 h-4 text-indigo-400" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--studio-border)] pb-3">
+        <h3 className="text-sm font-bold text-[var(--studio-text)] flex items-center gap-2">
+          <Edit3 className="w-4 h-4 text-[var(--studio-icon)]" />
           <span>
             {isNewPage
               ? currentParentId
@@ -997,14 +997,14 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
         </h3>
 
         {/* Modus-velger: Rediger | Splitt | Forhåndsvis */}
-        <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-700/80">
+        <div className="flex items-center gap-1 bg-[var(--studio-input)] p-1 rounded-xl border border-[var(--studio-border)]">
           <button
             type="button"
             onClick={() => setViewMode("edit")}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               viewMode === "edit"
                 ? "bg-indigo-600 text-white shadow-xs"
-                : "text-slate-400 hover:text-white hover:bg-slate-800"
+                : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-surface)]"
             }`}
           >
             <Edit3 className="w-3.5 h-3.5" />
@@ -1016,7 +1016,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               viewMode === "split"
                 ? "bg-indigo-600 text-white shadow-xs"
-                : "text-slate-400 hover:text-white hover:bg-slate-800"
+                : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-surface)]"
             }`}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
@@ -1028,7 +1028,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               viewMode === "preview"
                 ? "bg-indigo-600 text-white shadow-xs"
-                : "text-slate-400 hover:text-white hover:bg-slate-800"
+                : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-surface)]"
             }`}
           >
             <Eye className="w-3.5 h-3.5" />
@@ -1042,10 +1042,10 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             onClick={handleSaveActiveDraftToStorage}
-            className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-950 text-indigo-300 hover:text-white border border-indigo-700/60 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+            className="px-3 py-1.5 rounded-xl bg-[var(--studio-bg)] hover:bg-[var(--studio-panel-bg)] text-[var(--studio-accent-text)] hover:text-[var(--studio-text)] border border-indigo-700/60 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
             title="Åpne en ekte forhåndsvisning av dette utkastet i en ny nettleserfane"
           >
-            <ExternalLink className="w-3.5 h-3.5 text-indigo-400" />
+            <ExternalLink className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
             <span className="hidden sm:inline">Forhåndsvis i ny fane</span>
             <span className="sm:hidden">Ny fane</span>
           </a>
@@ -1053,7 +1053,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 cursor-pointer transition-colors"
+            className="p-1.5 rounded-lg text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-hover)] cursor-pointer transition-colors"
             aria-label="Lukk"
           >
             <X className="w-5 h-5" />
@@ -1080,17 +1080,17 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-700/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-[var(--studio-border)]">
         <div className="flex items-center gap-2">
           <a
             href={previewUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={handleSaveActiveDraftToStorage}
-            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-950 text-indigo-300 hover:text-white border border-indigo-700/60 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+            className="px-4 py-2 rounded-xl bg-[var(--studio-bg)] hover:bg-[var(--studio-panel-bg)] text-[var(--studio-accent-text)] hover:text-[var(--studio-text)] border border-indigo-700/60 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs"
             title="Åpne en ekte forhåndsvisning av dette utkastet i en ny nettleserfane"
           >
-            <ExternalLink className="w-4 h-4 text-indigo-400" />
+            <ExternalLink className="w-4 h-4 text-[var(--studio-icon)]" />
             <span>Forhåndsvis i ny fane</span>
           </a>
           {onPreview && (
@@ -1107,7 +1107,7 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold cursor-pointer transition-colors"
+            className="px-4 py-2 rounded-xl bg-[var(--studio-hover)] hover:bg-[var(--studio-border)] text-[var(--studio-text)] text-xs font-semibold cursor-pointer transition-colors"
           >
             Avbryt
           </button>

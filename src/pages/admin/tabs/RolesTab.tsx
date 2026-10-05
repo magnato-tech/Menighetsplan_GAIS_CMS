@@ -137,15 +137,15 @@ export const RolesTab: React.FC<RolesTabProps> = ({ studio, showFeedback }) => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--studio-border)] pb-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-black text-[var(--studio-text)] flex items-center gap-2">
             <span>Roller</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-normal">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--studio-surface)] text-[var(--studio-muted)] font-normal">
               {adminVolunteerRoles.length} roller
             </span>
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[var(--studio-muted)] mt-1">
             Tjenesteroller med instruks for gudstjeneste og arrangementer.
           </p>
         </div>
@@ -161,12 +161,12 @@ export const RolesTab: React.FC<RolesTabProps> = ({ studio, showFeedback }) => {
       </div>
 
       {adminVolunteerRoles.length === 0 && (
-        <div className="p-4 rounded-2xl bg-indigo-950/60 border border-indigo-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="p-4 rounded-2xl bg-[var(--studio-accent-bg)] border border-[var(--studio-accent-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-start gap-2.5">
-            <Sparkles className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+            <Sparkles className="w-5 h-5 text-[var(--studio-icon)] shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-white">Legg inn standardroller</p>
-              <p className="text-slate-300">
+              <p className="font-bold text-[var(--studio-text)]">Legg inn standardroller</p>
+              <p className="text-[var(--studio-muted)]">
                 Starter med {DEFAULT_VOLUNTEER_ROLE_NAMES.length} roller som Baking, Lyd, Lovsang og Møteleder.
               </p>
             </div>
@@ -184,9 +184,9 @@ export const RolesTab: React.FC<RolesTabProps> = ({ studio, showFeedback }) => {
       )}
 
       {isCreating && (
-        <form onSubmit={handleCreateRole} className="p-5 rounded-2xl bg-slate-800 border border-slate-700 space-y-3">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <Plus className="w-4 h-4 text-indigo-400" />
+        <form onSubmit={handleCreateRole} className="p-5 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-3">
+          <h3 className="text-sm font-bold text-[var(--studio-text)] flex items-center gap-2">
+            <Plus className="w-4 h-4 text-[var(--studio-icon)]" />
             <span>Opprett ny rolle</span>
           </h3>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -195,13 +195,13 @@ export const RolesTab: React.FC<RolesTabProps> = ({ studio, showFeedback }) => {
               value={newRoleName}
               onChange={(e) => setNewRoleName(e.target.value)}
               placeholder="f.eks. Teknikk eller Vertskap"
-              className="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs"
+              className="flex-1 px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs"
               required
             />
             <select
               value={newRoleGroupId}
               onChange={(e) => setNewRoleGroupId(e.target.value)}
-              className="sm:w-48 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs cursor-pointer"
+              className="sm:w-48 px-3 py-2 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs cursor-pointer"
             >
               <option value="">Uten team</option>
               {adminGroups.map((g) => (
@@ -223,19 +223,19 @@ export const RolesTab: React.FC<RolesTabProps> = ({ studio, showFeedback }) => {
             onChange={(e) => setNewRoleInstruction(e.target.value)}
             rows={4}
             placeholder="Instruks for rollen (valgfritt) — hva personen skal gjøre og når de møter opp"
-            className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs leading-relaxed resize-y"
+            className="w-full px-3 py-2.5 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs leading-relaxed resize-y"
           />
         </form>
       )}
 
       <div className="relative">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <Search className="w-4 h-4 text-[var(--studio-muted)] absolute left-3.5 top-1/2 -translate-y-1/2" />
         <input
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Søk i roller..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-hidden focus:border-indigo-500"
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--studio-surface)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs placeholder:text-[var(--studio-muted)] focus:outline-hidden focus:border-indigo-500"
         />
       </div>
 
@@ -243,36 +243,36 @@ export const RolesTab: React.FC<RolesTabProps> = ({ studio, showFeedback }) => {
         {filteredRoles.map((role) => (
           <div
             key={role.id}
-            className="p-4 rounded-2xl bg-slate-800/90 border border-indigo-800/50 hover:border-indigo-600/70 transition-colors flex flex-col min-h-[120px]"
+            className="p-4 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] hover:border-[var(--studio-accent-border)] shadow-xs transition-colors flex flex-col min-h-[120px]"
           >
             <div className="flex items-start justify-between gap-2">
-              <div className="w-9 h-9 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center shrink-0">
-                <FileText className="w-4 h-4 text-indigo-300" />
+              <div className="w-9 h-9 rounded-lg bg-[var(--studio-bg)] border border-[var(--studio-border)] flex items-center justify-center shrink-0">
+                <FileText className="w-4 h-4 text-[var(--studio-accent-text)]" />
               </div>
               <button
                 type="button"
                 onClick={() => handleDeleteRole(role)}
-                className="p-1.5 rounded-lg text-slate-500 hover:text-rose-300 hover:bg-rose-950/40 cursor-pointer"
+                className="p-1.5 rounded-lg text-[var(--studio-muted)] hover:text-rose-300 hover:bg-rose-950/40 cursor-pointer"
                 title="Slett rolle"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <h3 className="font-bold text-white text-sm mt-3 flex-1">{role.name}</h3>
+            <h3 className="font-bold text-[var(--studio-text)] text-sm mt-3 flex-1">{role.name}</h3>
             {groupName(role.groupId) && (
-              <p className="text-[10px] text-slate-400 mt-1">{groupName(role.groupId)}</p>
+              <p className="text-[10px] text-[var(--studio-muted)] mt-1">{groupName(role.groupId)}</p>
             )}
 
-            <div className="flex items-center justify-end mt-4 pt-3 border-t border-slate-700/80">
+            <div className="flex items-center justify-end mt-4 pt-3 border-t border-[var(--studio-border)]">
               <button
                 type="button"
                 onClick={() => openInstructionEditor(role)}
-                className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 hover:text-indigo-200 flex items-center gap-1.5 cursor-pointer"
+                className="text-[10px] font-bold uppercase tracking-wider text-[var(--studio-link)] hover:text-[var(--studio-link-hover)] flex items-center gap-1.5 cursor-pointer"
               >
                 <ClipboardList className="w-3.5 h-3.5" />
                 <span>Instruks</span>
-                {!role.instruction && <span className="text-slate-500 font-normal normal-case">(tom)</span>}
+                {!role.instruction && <span className="text-[var(--studio-muted)] font-normal normal-case">(tom)</span>}
               </button>
             </div>
           </div>
@@ -280,33 +280,33 @@ export const RolesTab: React.FC<RolesTabProps> = ({ studio, showFeedback }) => {
       </div>
 
       {filteredRoles.length === 0 && adminVolunteerRoles.length > 0 && (
-        <p className="text-xs text-slate-500 text-center py-8">Ingen roller matcher søket.</p>
+        <p className="text-xs text-[var(--studio-muted)] text-center py-8">Ingen roller matcher søket.</p>
       )}
 
       {editingRole && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--studio-overlay)]"
           onClick={closeInstructionEditor}
         >
           <div
-            className="w-full max-w-lg rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl"
+            className="w-full max-w-lg rounded-2xl bg-[var(--studio-bg)] border border-[var(--studio-border)] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-labelledby="role-instruction-title"
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--studio-border)]">
               <div>
-                <h3 id="role-instruction-title" className="text-sm font-bold text-white">
+                <h3 id="role-instruction-title" className="text-sm font-bold text-[var(--studio-text)]">
                   Instruks: {editingRole.name}
                 </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-[var(--studio-muted)] mt-0.5">
                   Vises for frivillige som får denne rollen på en samling.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={closeInstructionEditor}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                className="p-1.5 rounded-lg text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-surface)] cursor-pointer"
                 aria-label="Lukk"
               >
                 <X className="w-4 h-4" />
@@ -315,11 +315,11 @@ export const RolesTab: React.FC<RolesTabProps> = ({ studio, showFeedback }) => {
 
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-[11px] font-bold text-slate-400 mb-1.5">Tjenesteteam (valgfritt)</label>
+                <label className="block text-[11px] font-bold text-[var(--studio-muted)] mb-1.5">Tjenesteteam (valgfritt)</label>
                 <select
                   value={teamDraft}
                   onChange={(e) => setTeamDraft(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs cursor-pointer"
+                  className="w-full px-3 py-2 rounded-xl bg-[var(--studio-overlay)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs cursor-pointer"
                 >
                   <option value="">Uten team</option>
                   {adminGroups.map((g) => (
@@ -335,14 +335,14 @@ export const RolesTab: React.FC<RolesTabProps> = ({ studio, showFeedback }) => {
                 onChange={(e) => setInstructionDraft(e.target.value)}
                 rows={8}
                 placeholder="Skriv hva personen i rollen skal gjøre, når de møter opp, og hva de trenger å vite..."
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs leading-relaxed resize-y min-h-[160px]"
+                className="w-full px-3 py-2.5 rounded-xl bg-[var(--studio-overlay)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs leading-relaxed resize-y min-h-[160px]"
               />
 
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={closeInstructionEditor}
-                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-slate-200 text-xs font-semibold cursor-pointer"
                 >
                   Avbryt
                 </button>

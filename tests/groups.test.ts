@@ -1,6 +1,6 @@
 import { describe } from "vitest";
 import { assert } from "./assert";
-import { isInGroup, allGroupPersonIds } from "../src/utils/groups";
+import { isInGroup, allGroupPersonIds, leadsGroup } from "../src/utils/groups";
 
 describe("Hvem som er med i en gruppe", () => {
   const group = { memberIds: ["medlem", "leder"], leaderIds: ["leder"], deputyLeaderIds: ["nestleder"] };
@@ -10,6 +10,11 @@ describe("Hvem som er med i en gruppe", () => {
   assert(isInGroup(group, "nestleder"), "En nestleder er med, også uten å stå som medlem");
   assert(!isInGroup(group, "utenfor"), "En som ikke står noe sted er ikke med");
   assert(!isInGroup({ memberIds: [], leaderIds: [] }, "medlem"), "En gruppe uten nestleder-liste tåles");
+
+  assert(leadsGroup(group, "leder"), "En leder har ansvar for gruppen");
+  assert(leadsGroup(group, "nestleder"), "En nestleder har medansvar");
+  assert(!leadsGroup(group, "medlem"), "Et vanlig medlem leder ikke gruppen");
+  assert(!leadsGroup({ memberIds: ["admin"], leaderIds: [] }, "admin"), "Admin-rollen alene gir ikke lederansvar");
 
   assert(
     allGroupPersonIds(group).join(",") === "medlem,leder,nestleder",

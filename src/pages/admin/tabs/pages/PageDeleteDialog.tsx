@@ -17,13 +17,13 @@ export const PageDeleteDialog: React.FC<PageDeleteDialogProps> = ({
   if (!pageId) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
-        <h3 className="text-base font-bold text-white flex items-center gap-2">
+    <div className="fixed inset-0 bg-[var(--studio-overlay)] backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div className="bg-[var(--studio-bg)] border border-[var(--studio-border)] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+        <h3 className="text-base font-bold text-[var(--studio-text)] flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-rose-500" />
           <span>Slette side permanent?</span>
         </h3>
-        <p className="text-xs text-slate-300 leading-relaxed">
+        <p className="text-xs text-[var(--studio-muted)] leading-relaxed">
           Er du sikker på at du vil slette denne siden fra nettsiden? Denne handlingen kan ikke angres.
         </p>
         {subPagesCount > 0 && (
@@ -37,7 +37,7 @@ export const PageDeleteDialog: React.FC<PageDeleteDialogProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 cursor-pointer transition-colors"
+            className="px-4 py-2 rounded-xl bg-[var(--studio-surface)] text-[var(--studio-muted)] text-xs font-semibold hover:bg-[var(--studio-hover)] cursor-pointer transition-colors"
           >
             Avbryt
           </button>

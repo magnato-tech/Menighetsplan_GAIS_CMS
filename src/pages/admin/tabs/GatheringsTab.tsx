@@ -117,17 +117,17 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
   return (
     <>
       <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--studio-border)] pb-4">
           <div>
-            <h2 className="text-xl sm:text-2xl font-black text-white">Gudstjenester & Møter</h2>
-            <p className="text-xs text-slate-400">
+            <h2 className="text-xl sm:text-2xl font-black text-[var(--studio-text)]">Gudstjenester & Møter</h2>
+            <p className="text-xs text-[var(--studio-muted)]">
               Full oversikt over menighetens samlinger. Opprett nye og administrer oppgaver.
             </p>
           </div>
         </div>
 
         {/* Quick Create Gathering Form */}
-        <form onSubmit={handleCreateGathering} className="p-5 rounded-2xl bg-slate-800/90 border border-slate-700/80 space-y-3">
+        <form onSubmit={handleCreateGathering} className="p-5 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
             <Plus className="w-3.5 h-3.5" />
             <span>Opprett ny samling</span>
@@ -139,7 +139,7 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
                 value={newGatheringTitle}
                 onChange={(e) => setNewGatheringTitle(e.target.value)}
                 placeholder="Tittel, f.eks. Søndagsgudstjeneste & dåp"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--studio-input)] border border-[var(--studio-border)] text-[var(--studio-input-text)]"
                 required
               />
             </div>
@@ -148,7 +148,7 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
                 type="date"
                 value={newGatheringDate}
                 onChange={(e) => setNewGatheringDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--studio-input)] border border-[var(--studio-border)] text-[var(--studio-input-text)]"
                 required
               />
             </div>
@@ -157,7 +157,7 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
                 type="time"
                 value={newGatheringTime}
                 onChange={(e) => setNewGatheringTime(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--studio-input)] border border-[var(--studio-border)] text-[var(--studio-input-text)]"
                 required
               />
             </div>
@@ -169,7 +169,7 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
                 value={newGatheringTheme}
                 onChange={(e) => setNewGatheringTheme(e.target.value)}
                 placeholder="Valgfritt tema..."
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--studio-input)] border border-[var(--studio-border)] text-[var(--studio-input-text)]"
               />
             </div>
             <div className="sm:col-span-2">
@@ -177,7 +177,7 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
                 value={responsibleGroupId}
                 onChange={(e) => setNewGatheringGroupId(e.target.value)}
                 aria-label="Ansvarlig gruppe"
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-[var(--studio-input)] border border-[var(--studio-border)] text-[var(--studio-input-text)]"
               >
                 {adminGroups.length === 0 && <option value="">Ingen grupper finnes ennå</option>}
                 {adminGroups.map(({ group }) => (
@@ -189,7 +189,7 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-[var(--studio-muted)] cursor-pointer">
               <input
                 type="checkbox"
                 checked={newGatheringIsWorship}
@@ -216,13 +216,13 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
             return (
               <div
                 key={g.id}
-                className="p-5 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="p-5 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-bold text-white text-base">{g.title}</h3>
+                    <h3 className="font-bold text-[var(--studio-text)] text-base">{g.title}</h3>
                     {isWorshipService(g) && (
-                      <span className="text-[10px] font-bold text-indigo-300 bg-indigo-950/80 px-2 py-0.5 rounded">
+                      <span className="text-[10px] font-bold text-[var(--studio-accent-text)] bg-[var(--studio-accent-bg)] px-2 py-0.5 rounded">
                         Gudstjeneste
                       </span>
                     )}
@@ -247,7 +247,7 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-[var(--studio-muted)]">
                     {formatNorwegianDateTime(g.startsAt)} · {locationOf(g)}
                     {g.theme && ` · Tema: ${g.theme}`}
                   </p>
@@ -263,10 +263,10 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
                       setNextGatheringTime(parseIsoToDateAndTime(g.startsAt).time);
                       setNextGatheringLocation(g.location || "");
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-700"
+                    className="px-3 py-1.5 rounded-lg bg-[var(--studio-bg)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-[var(--studio-border)]"
                     title="Opprett neste arrangement og klon oppgaver med tom personliste"
                   >
-                    <CalendarPlus className="w-3.5 h-3.5 text-indigo-400" />
+                    <CalendarPlus className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
                     <span>Lag neste arrangement</span>
                   </button>
 
@@ -288,32 +288,32 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
       {/* MODAL 1: LAG NESTE ARRANGEMENT (KLON OPPGAVER)            */}
       {/* ========================================================= */}
       {nextGatheringSource && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-lg w-full space-y-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 bg-[var(--studio-overlay)] backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-[var(--studio-bg)] border border-[var(--studio-border)] rounded-2xl p-6 max-w-lg w-full space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--studio-border)] pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-indigo-950/80 border border-indigo-700/80 flex items-center justify-center text-indigo-400">
+                <div className="w-8 h-8 rounded-lg bg-[var(--studio-accent-bg)] border border-indigo-700/80 flex items-center justify-center text-[var(--studio-icon)]">
                   <CalendarPlus className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Lag neste arrangement</h3>
-                  <p className="text-[11px] text-slate-400">Kloner oppgaver og bemanningsbehov</p>
+                  <h3 className="text-base font-bold text-[var(--studio-text)]">Lag neste arrangement</h3>
+                  <p className="text-[11px] text-[var(--studio-muted)]">Kloner oppgaver og bemanningsbehov</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setNextGatheringSource(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-[var(--studio-muted)] hover:text-[var(--studio-text)]"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-slate-300 space-y-1.5">
-              <p className="font-semibold text-white">
+            <div className="p-3.5 rounded-xl bg-[var(--studio-surface)] border border-[var(--studio-border)] text-xs text-[var(--studio-muted)] space-y-1.5">
+              <p className="font-semibold text-[var(--studio-text)]">
                 Kilde: {nextGatheringSource.gathering.title}
               </p>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-[var(--studio-muted)]">
                 Systemet oppretter et nytt arrangement og kopierer over alle {nextGatheringSource.tasks.length} oppgaver med antallet hver av dem trenger. Personlisten etterlates tom slik at frivillige kan tildeles eller inviteres på nytt.
               </p>
             </div>
@@ -321,35 +321,35 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
             <form onSubmit={handleCreateNextGathering} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-300">Dato for nytt arrangement *</label>
+                  <label className="font-semibold text-[var(--studio-muted)]">Dato for nytt arrangement *</label>
                   <input
                     type="date"
                     value={nextGatheringDate}
                     onChange={(e) => setNextGatheringDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-hidden focus:border-indigo-500 font-mono text-xs"
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--studio-panel-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] focus:outline-hidden focus:border-indigo-500 font-mono text-xs"
                     required
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-300">Klokkeslett *</label>
+                  <label className="font-semibold text-[var(--studio-muted)]">Klokkeslett *</label>
                   <input
                     type="time"
                     value={nextGatheringTime}
                     onChange={(e) => setNextGatheringTime(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-hidden focus:border-indigo-500 font-mono text-xs"
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--studio-panel-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] focus:outline-hidden focus:border-indigo-500 font-mono text-xs"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-300">Lokasjon</label>
+                <label className="font-semibold text-[var(--studio-muted)]">Lokasjon</label>
                 <input
                   type="text"
                   value={nextGatheringLocation}
                   onChange={(e) => setNextGatheringLocation(e.target.value)}
                   placeholder={`Tomt felt betyr ${DEFAULT_LOCATION}`}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-hidden focus:border-indigo-500 text-xs"
+                  className="w-full px-3 py-2 rounded-xl bg-[var(--studio-panel-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] focus:outline-hidden focus:border-indigo-500 text-xs"
                 />
               </div>
 
@@ -357,7 +357,7 @@ export const GatheringsTab: React.FC<GatheringsTabProps> = ({ studio, showFeedba
                 <button
                   type="button"
                   onClick={() => setNextGatheringSource(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] text-xs font-semibold cursor-pointer"
                 >
                   Avbryt
                 </button>

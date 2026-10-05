@@ -7,9 +7,11 @@ import { MyGroupsSection } from "./myPage/MyGroupsSection";
 import { NextChurchEventSection } from "./myPage/NextChurchEventSection";
 import { NextForYouSection } from "./myPage/NextForYouSection";
 import { MyTasksModal } from "./myPage/MyTasksModal";
+import { MyCalendarPanel } from "./myPage/MyCalendarPanel";
 import { AttentionModal } from "./myPage/AttentionModal";
 import { MobileBottomNav } from "./myPage/MobileBottomNav";
 import {
+  Calendar,
   CheckCircle2,
   Info,
   ListTodo,
@@ -26,6 +28,7 @@ export const MyPage: React.FC = () => {
     searchParams.get("view") === "oppgaver"
   );
   const [showAttentionModal, setShowAttentionModal] = useState(false);
+  const [showCalendarPanel, setShowCalendarPanel] = useState(false);
 
   return (
     <div className="w-full max-w-md mx-auto bg-slate-50 min-h-screen shadow-md sm:my-4 sm:rounded-3xl sm:border sm:border-slate-200/80 overflow-hidden pb-20 sm:pb-8">
@@ -69,9 +72,19 @@ export const MyPage: React.FC = () => {
               Oversikt for {currentUser.name}
             </p>
           </div>
-          <span className="text-[11px] font-semibold text-slate-600 bg-white border border-slate-200/80 px-2.5 py-1 rounded-full shadow-2xs">
-            {myGroups.length} {myGroups.length === 1 ? "gruppe" : "grupper"}
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowCalendarPanel(true)}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200/80 bg-white text-slate-600 hover:text-emerald-700 hover:border-emerald-200 shadow-2xs cursor-pointer"
+              aria-label="Åpne Min kalender"
+            >
+              <Calendar className="w-4 h-4" />
+            </button>
+            <span className="text-[11px] font-semibold text-slate-600 bg-white border border-slate-200/80 px-2.5 py-1 rounded-full shadow-2xs">
+              {myGroups.length} {myGroups.length === 1 ? "gruppe" : "grupper"}
+            </span>
+          </div>
         </div>
 
         {/* =========================================================================
@@ -125,6 +138,8 @@ export const MyPage: React.FC = () => {
           TASKS MODAL / DRAWER (for viewing task details without cluttering dashboard)
          ========================================================================= */}
       {showTasksModal && <MyTasksModal page={page} onClose={() => setShowTasksModal(false)} />}
+
+      {showCalendarPanel && <MyCalendarPanel onClose={() => setShowCalendarPanel(false)} />}
 
       {/* =========================================================================
           ATTENTION MODAL / DRAWER (for viewing & handling 3+ pending actions)

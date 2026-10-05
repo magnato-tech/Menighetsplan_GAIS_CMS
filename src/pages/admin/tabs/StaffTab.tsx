@@ -104,13 +104,13 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--studio-border)] pb-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5">
+          <h2 className="text-xl sm:text-2xl font-black text-[var(--studio-text)] flex items-center gap-2.5">
             <Users className="w-6 h-6 text-emerald-400" />
             <span>Lederskap & Stab</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs text-[var(--studio-muted)] mt-1 max-w-2xl leading-relaxed">
             Her administreres menighetens ansatte (stab) og valgte lederskap (menighetsråd). Dataene hentes direkte fra
             personregisteret og gruppene, slik at du slipper dobbeltarbeid.
           </p>
@@ -126,7 +126,7 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
             {isPopulating ? (
               <Loader2 className="w-4 h-4 animate-spin text-white" />
             ) : (
-              <Database className="w-4 h-4 text-indigo-300" />
+              <Database className="w-4 h-4 text-[var(--studio-accent-text)]" />
             )}
             <span>{isPopulating ? "Fyller testdata..." : "Populer testdata (32 personer)"}</span>
           </button>
@@ -143,12 +143,12 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
       </div>
 
       {staffPersons.length < 3 && (
-        <div className="p-4 rounded-2xl bg-indigo-950/60 border border-indigo-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="p-4 rounded-2xl bg-[var(--studio-accent-bg)] border border-[var(--studio-accent-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-start gap-2.5">
-            <Sparkles className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+            <Sparkles className="w-5 h-5 text-[var(--studio-icon)] shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-white">Trenger du flere personer i stab, lederskap og grupper?</p>
-              <p className="text-slate-300">
+              <p className="font-bold text-[var(--studio-text)]">Trenger du flere personer i stab, lederskap og grupper?</p>
+              <p className="text-[var(--studio-muted)]">
                 Klikk på «Populer testdata» for å fylle databasen med 32 personer: pastorer, menighetsråd, diakoni, lovsangsteam og aktive medlemmer.
               </p>
             </div>
@@ -166,25 +166,25 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
 
       {/* Seksjon 1: Ansatte i staben */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+        <div className="flex items-center justify-between border-b border-[var(--studio-border)] pb-2">
           <div className="flex items-center gap-2">
-            <Briefcase className="w-4 h-4 text-indigo-400" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+            <Briefcase className="w-4 h-4 text-[var(--studio-icon)]" />
+            <h3 className="text-sm font-bold text-[var(--studio-text)] uppercase tracking-wider">
               Ansatte i staben ({staffPersons.length})
             </h3>
           </div>
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[11px] text-[var(--studio-muted)]">
             Definert av rolle/ansettelse på personkortet
           </span>
         </div>
 
         {staffPersons.length === 0 ? (
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-2">
-            <p className="text-xs text-slate-400">Ingen personer er registrert som ansatt i staben ennå.</p>
+          <div className="p-6 rounded-2xl bg-[var(--studio-row)] border border-[var(--studio-border)] text-center space-y-2">
+            <p className="text-xs text-[var(--studio-muted)]">Ingen personer er registrert som ansatt i staben ennå.</p>
             <button
               type="button"
               onClick={() => setShowAddStaffModal(true)}
-              className="text-xs text-indigo-400 font-bold hover:underline"
+              className="text-xs text-[var(--studio-icon)] font-bold hover:underline"
             >
               + Merk en person fra registeret som stab
             </button>
@@ -196,7 +196,7 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
               return (
                 <div
                   key={person.id}
-                  className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex flex-col justify-between space-y-3"
+                  className="p-4 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] flex flex-col justify-between space-y-3"
                 >
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
@@ -204,16 +204,16 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
                         <img
                           src={person.avatarUrl}
                           alt={person.name}
-                          className="w-12 h-12 rounded-xl object-cover border border-slate-600 shrink-0"
+                          className="w-12 h-12 rounded-xl object-cover border border-[var(--studio-border)] shrink-0"
                         />
                       ) : (
-                        <div className="w-12 h-12 rounded-xl bg-slate-700 text-indigo-300 font-black text-base flex items-center justify-center shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-[var(--studio-hover)] text-[var(--studio-accent-text)] font-black text-base flex items-center justify-center shrink-0">
                           {person.name.charAt(0)}
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <h4 className="font-bold text-white text-sm truncate">{person.name}</h4>
-                        <p className="text-xs text-indigo-400 font-semibold truncate">
+                        <h4 className="font-bold text-[var(--studio-text)] text-sm truncate">{person.name}</h4>
+                        <p className="text-xs text-[var(--studio-icon)] font-semibold truncate">
                           {person.staffRole || person.publicTitle || "Stabsmedlem"}
                         </p>
                         <div className="pt-1 flex items-center gap-1.5 text-[10px]">
@@ -233,34 +233,34 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
                     </div>
 
                     {person.staffBio && (
-                      <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">
+                      <p className="text-[11px] text-[var(--studio-muted)] line-clamp-2 leading-relaxed">
                         {person.staffBio}
                       </p>
                     )}
 
-                    <div className="text-[11px] text-slate-400 space-y-0.5 pt-1 border-t border-slate-700/60">
+                    <div className="text-[11px] text-[var(--studio-muted)] space-y-0.5 pt-1 border-t border-[var(--studio-border)]">
                       {person.publicPhone && (
                         <div className="flex items-center gap-1.5 truncate">
-                          <Phone className="w-3 h-3 text-slate-500" />
+                          <Phone className="w-3 h-3 text-[var(--studio-muted)]" />
                           <span>{person.publicPhone}</span>
                         </div>
                       )}
                       {person.publicEmail && (
                         <div className="flex items-center gap-1.5 truncate">
-                          <Mail className="w-3 h-3 text-slate-500" />
+                          <Mail className="w-3 h-3 text-[var(--studio-muted)]" />
                           <span className="truncate">{person.publicEmail}</span>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-700/60 flex items-center justify-between text-xs">
-                    <span className="text-[10px] text-slate-500 uppercase font-mono">
+                  <div className="pt-2 border-t border-[var(--studio-border)] flex items-center justify-between text-xs">
+                    <span className="text-[10px] text-[var(--studio-muted)] uppercase font-mono">
                       {person.staffCategory || "stab"}
                     </span>
                     <Link
                       to={`/admin/person/${person.id}`}
-                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 text-white font-semibold flex items-center gap-1 transition-colors"
+                      className="px-2.5 py-1 rounded-lg bg-[var(--studio-bg)] hover:bg-[var(--studio-hover)] text-[var(--studio-text)] font-semibold flex items-center gap-1 transition-colors"
                     >
                       <Edit2 className="w-3 h-3" />
                       <span>Rediger personkort</span>
@@ -275,17 +275,17 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
 
       {/* Seksjon 2: Lederskap (Menighetsråd) */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+        <div className="flex items-center justify-between border-b border-[var(--studio-border)] pb-2">
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-amber-400" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+            <h3 className="text-sm font-bold text-[var(--studio-text)] uppercase tracking-wider">
               Valgt Lederskap / Menighetsråd ({leadershipPersons.length})
             </h3>
           </div>
           {leadershipGroup && (
             <Link
               to="/admin?tab=planlegger-grupper"
-              className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
+              className="text-[11px] text-[var(--studio-icon)] hover:text-[var(--studio-accent-text)] font-semibold flex items-center gap-1"
             >
               <span>Administrer lederskapsgruppen</span>
               <ExternalLink className="w-3 h-3" />
@@ -294,9 +294,9 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
         </div>
 
         {leadershipPersons.length === 0 ? (
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-1">
-            <p className="text-xs text-slate-400">Ingen medlemmer funnet i lederskapsgruppen.</p>
-            <Link to="/admin?tab=planlegger-grupper" className="text-xs text-indigo-400 font-bold hover:underline">
+          <div className="p-6 rounded-2xl bg-[var(--studio-row)] border border-[var(--studio-border)] text-center space-y-1">
+            <p className="text-xs text-[var(--studio-muted)]">Ingen medlemmer funnet i lederskapsgruppen.</p>
+            <Link to="/admin?tab=planlegger-grupper" className="text-xs text-[var(--studio-icon)] font-bold hover:underline">
               Gå til Grupper & Husfellesskap for å legge til medlemmer
             </Link>
           </div>
@@ -305,14 +305,14 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
             {leadershipPersons.map((member) => (
               <div
                 key={member.id}
-                className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex flex-col justify-between space-y-3"
+                className="p-4 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] flex flex-col justify-between space-y-3"
               >
                 <div className="flex items-start gap-3">
                   {member.avatarUrl ? (
                     <img
                       src={member.avatarUrl}
                       alt={member.name}
-                      className="w-10 h-10 rounded-xl object-cover border border-slate-600 shrink-0"
+                      className="w-10 h-10 rounded-xl object-cover border border-[var(--studio-border)] shrink-0"
                     />
                   ) : (
                     <div className="w-10 h-10 rounded-xl bg-amber-950/80 text-amber-400 font-black text-sm flex items-center justify-center shrink-0 border border-amber-900/60">
@@ -320,16 +320,16 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-white text-sm truncate">{member.name}</h4>
+                    <h4 className="font-bold text-[var(--studio-text)] text-sm truncate">{member.name}</h4>
                     <p className="text-xs text-amber-300 font-medium truncate">{member.roleInGroup}</p>
-                    {member.email && <p className="text-[11px] text-slate-400 truncate mt-1">{member.email}</p>}
+                    {member.email && <p className="text-[11px] text-[var(--studio-muted)] truncate mt-1">{member.email}</p>}
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-700/60 flex items-center justify-end text-xs">
+                <div className="pt-2 border-t border-[var(--studio-border)] flex items-center justify-end text-xs">
                   <Link
                     to={`/admin/person/${member.id}`}
-                    className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 text-white font-semibold flex items-center gap-1 transition-colors"
+                    className="px-2.5 py-1 rounded-lg bg-[var(--studio-bg)] hover:bg-[var(--studio-hover)] text-[var(--studio-text)] font-semibold flex items-center gap-1 transition-colors"
                   >
                     <Edit2 className="w-3 h-3" />
                     <span>Rediger profil</span>
@@ -342,64 +342,64 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
       </section>
 
       {/* Seksjon 3: Innholdsblokker for nettsiden */}
-      <section className="p-5 rounded-2xl bg-indigo-950/30 border border-indigo-900/60 space-y-3">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <Copy className="w-4 h-4 text-indigo-400" />
+      <section className="p-5 rounded-2xl bg-[var(--studio-accent-bg)] border border-[var(--studio-accent-border)] space-y-3">
+        <h3 className="text-sm font-bold text-[var(--studio-text)] flex items-center gap-2">
+          <Copy className="w-4 h-4 text-[var(--studio-icon)]" />
           <span>Slik setter du inn stab og lederskap på CMS-sider</span>
         </h3>
-        <p className="text-xs text-slate-300 leading-relaxed">
+        <p className="text-xs text-[var(--studio-muted)] leading-relaxed">
           Når du redigerer en side under <strong>Sider & Innhold</strong> (f.eks. «Stab» eller «Om oss»), kan du klikke{" "}
           <strong>+ Sett inn innholdsblokk</strong> og velge en av personblokkene. Du kan også lime inn disse kodene
           direkte i teksten:
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5 flex flex-col justify-between">
+          <div className="p-3 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] space-y-1.5 flex flex-col justify-between">
             <div>
-              <div className="text-[11px] font-bold text-white">Hele staben</div>
-              <code className="text-xs font-mono text-indigo-300 bg-slate-950 px-1.5 py-0.5 rounded block my-1">
+              <div className="text-[11px] font-bold text-[var(--studio-text)]">Hele staben</div>
+              <code className="text-xs font-mono text-[var(--studio-accent-text)] bg-[var(--studio-panel-bg)] px-1.5 py-0.5 rounded block my-1">
                 :::personer[stab]
               </code>
-              <p className="text-[10px] text-slate-400">Brukes f.eks. på siden «Stab» under Om menigheten.</p>
+              <p className="text-[10px] text-[var(--studio-muted)]">Brukes f.eks. på siden «Stab» under Om menigheten.</p>
             </div>
             <button
               type="button"
               onClick={() => handleCopy(":::personer[stab]")}
-              className="mt-2 w-full py-1 text-[11px] font-bold rounded bg-slate-800 hover:bg-slate-700 text-white transition-colors cursor-pointer"
+              className="mt-2 w-full py-1 text-[11px] font-bold rounded bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-text)] transition-colors cursor-pointer"
             >
               {copiedSnippet === ":::personer[stab]" ? "Kopiert!" : "Kopier kode"}
             </button>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5 flex flex-col justify-between">
+          <div className="p-3 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] space-y-1.5 flex flex-col justify-between">
             <div>
-              <div className="text-[11px] font-bold text-white">Kun Pastor</div>
-              <code className="text-xs font-mono text-emerald-300 bg-slate-950 px-1.5 py-0.5 rounded block my-1">
+              <div className="text-[11px] font-bold text-[var(--studio-text)]">Kun Pastor</div>
+              <code className="text-xs font-mono text-emerald-300 bg-[var(--studio-panel-bg)] px-1.5 py-0.5 rounded block my-1">
                 :::personer[pastor]
               </code>
-              <p className="text-[10px] text-slate-400">Brukes f.eks. på Om oss-siden eller forsiden.</p>
+              <p className="text-[10px] text-[var(--studio-muted)]">Brukes f.eks. på Om oss-siden eller forsiden.</p>
             </div>
             <button
               type="button"
               onClick={() => handleCopy(":::personer[pastor]")}
-              className="mt-2 w-full py-1 text-[11px] font-bold rounded bg-slate-800 hover:bg-slate-700 text-white transition-colors cursor-pointer"
+              className="mt-2 w-full py-1 text-[11px] font-bold rounded bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-text)] transition-colors cursor-pointer"
             >
               {copiedSnippet === ":::personer[pastor]" ? "Kopiert!" : "Kopier kode"}
             </button>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1.5 flex flex-col justify-between">
+          <div className="p-3 rounded-xl bg-[var(--studio-bg)] border border-[var(--studio-border)] space-y-1.5 flex flex-col justify-between">
             <div>
-              <div className="text-[11px] font-bold text-white">Valgt Lederskap</div>
-              <code className="text-xs font-mono text-amber-300 bg-slate-950 px-1.5 py-0.5 rounded block my-1">
+              <div className="text-[11px] font-bold text-[var(--studio-text)]">Valgt Lederskap</div>
+              <code className="text-xs font-mono text-amber-300 bg-[var(--studio-panel-bg)] px-1.5 py-0.5 rounded block my-1">
                 :::personer[lederskap]
               </code>
-              <p className="text-[10px] text-slate-400">Brukes f.eks. på siden «Lederskap» for menighetsrådet.</p>
+              <p className="text-[10px] text-[var(--studio-muted)]">Brukes f.eks. på siden «Lederskap» for menighetsrådet.</p>
             </div>
             <button
               type="button"
               onClick={() => handleCopy(":::personer[lederskap]")}
-              className="mt-2 w-full py-1 text-[11px] font-bold rounded bg-slate-800 hover:bg-slate-700 text-white transition-colors cursor-pointer"
+              className="mt-2 w-full py-1 text-[11px] font-bold rounded bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-text)] transition-colors cursor-pointer"
             >
               {copiedSnippet === ":::personer[lederskap]" ? "Kopiert!" : "Kopier kode"}
             </button>
@@ -410,29 +410,29 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
       {/* Modal: Velg person fra registeret og merk som stab */}
       {showAddStaffModal && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <div className="bg-[var(--studio-bg)] border border-[var(--studio-border)] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--studio-border)] pb-3">
+              <h3 className="text-sm font-bold text-[var(--studio-text)] flex items-center gap-2">
                 <UserCheck className="w-4 h-4 text-emerald-400" />
                 <span>Legg til person i staben</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setShowAddStaffModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-[var(--studio-muted)] hover:text-[var(--studio-text)]"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-slate-300">
+            <p className="text-xs text-[var(--studio-muted)]">
               Velg en person fra personregisteret for å registrere vedkommende som ansatt i staben:
             </p>
 
             <select
               value={selectedPersonIdToAdd}
               onChange={(e) => setSelectedPersonIdToAdd(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 text-white text-xs rounded-xl"
+              className="w-full px-3 py-2 bg-[var(--studio-surface)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs rounded-xl"
             >
               <option value="">-- Velg person --</option>
               {availableNonStaffPersons.map((p) => (
@@ -446,7 +446,7 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
               <button
                 type="button"
                 onClick={() => setShowAddStaffModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs"
+                className="px-4 py-2 rounded-xl bg-[var(--studio-surface)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] text-xs"
               >
                 Avbryt
               </button>

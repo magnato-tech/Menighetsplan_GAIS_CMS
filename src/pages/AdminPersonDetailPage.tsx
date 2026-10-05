@@ -1,22 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useAdminDetailRoute } from "../utils/adminStudioRoutes";
 import { useAdminPersonDetail } from "../hooks/useAppHooks";
 import { AdminAccessRequired } from "../components/AdminAccessRequired";
-import { UserQuickSwitcherBar } from "../components/UserSwitcher";
+import { StudioDetailShell, StudioDetailNotFound } from "./admin/StudioDetailShell";
+import {
+  studioDetailCard,
+  studioDetailSection,
+  studioDetailInput,
+  studioDetailMuted,
+  studioDetailTitle,
+  studioDetailLink,
+  studioDetailRow,
+  studioPrimaryButton,
+} from "./admin/studioDetailTheme";
 import { useTimedMessage } from "../hooks/useTimedMessage";
 import { toPublicProfile, publicProfileFields } from "../utils/publicProfile";
 import { compressImageFile } from "../utils/imageUpload";
 import {
   Globe,
-  ArrowLeft,
   User,
   Phone,
   Mail,
   Users,
   UserCheck,
   UserCog,
-  CheckCircle2,
-  AlertTriangle,
   Save,
   CheckSquare,
   BadgeCheck,
@@ -29,7 +37,8 @@ import {
 } from "lucide-react";
 
 export const AdminPersonDetailPage: React.FC = () => {
-  const { personId } = useParams<{ personId: string }>();
+  const detailRoute = useAdminDetailRoute();
+  const personId = detailRoute?.kind === "person" ? detailRoute.id : "";
 
   const {
     isAdmin,
@@ -166,73 +175,29 @@ export const AdminPersonDetailPage: React.FC = () => {
     return <AdminAccessRequired target="personkort i admin-flaten" />;
   }
 
-  // Not found
   if (!person) {
     return (
-      <div className="w-full max-w-md mx-auto bg-slate-50 min-h-screen shadow-md sm:my-4 sm:rounded-3xl sm:border sm:border-slate-200/80 overflow-hidden">
-        <UserQuickSwitcherBar />
-        <div className="p-6 text-center space-y-4">
-          <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
-            <User className="w-6 h-6" />
-          </div>
-          <h3 className="text-base font-bold text-slate-800">Fant ikke personen</h3>
-          <Link
-            to="/admin"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Tilbake til Admin-oversikt
-          </Link>
-        </div>
-      </div>
+      <StudioDetailNotFound
+        backTab="planlegger-personer"
+        backLabel="Tilbake til personregister"
+        title="Fant ikke personen"
+      />
     );
   }
 
   return (
-    <div className="w-full max-w-md mx-auto bg-slate-50 min-h-screen shadow-md sm:my-4 sm:rounded-3xl sm:border sm:border-slate-200/80 overflow-hidden">
-      {/* Quick Mock User Switcher Bar */}
-      <UserQuickSwitcherBar />
-
-      {/* Top Header */}
-      <div className="bg-white px-5 pt-3 pb-3 border-b border-slate-100 flex items-center justify-between">
-        <Link
-          to="/admin"
-          id="btn-back-to-admin"
-          className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 px-2 py-1 -ml-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Admin-oversikt
-        </Link>
-        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100">
-          Personkort
-        </span>
-      </div>
-
-      {/* Feedback Toast */}
-      {feedback && (
-        <div
-          id="admin-person-feedback-toast"
-          className={`mx-5 mt-3 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200 ${
-            feedback.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-              : "bg-red-50 text-red-800 border border-red-200"
-          }`}
-        >
-          {feedback.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-          ) : (
-            <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
-          )}
-          <span>{feedback.text}</span>
-        </div>
-      )}
-
-      <div className="p-5 space-y-5">
+    <StudioDetailShell
+      backTab="planlegger-personer"
+      backLabel="Tilbake til personregister"
+      badge="Personkort"
+      feedback={feedback}
+    >
+      <div className="space-y-5">
         {/* Main Person Edit Card */}
         <form onSubmit={handleSave} className="space-y-4">
-          <div className="p-4 bg-white rounded-2xl border border-slate-200/80 space-y-4 shadow-xs">
+          <div className={studioDetailCard}>
             {/* Header info with Avatar */}
-            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-start justify-between border-b border-[var(--studio-border)] pb-3">
               <div className="flex items-center gap-3">
                 <div className="relative group">
                   {avatarUrl ? (
@@ -242,7 +207,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                       className="w-12 h-12 rounded-full object-cover border-2 border-indigo-200 shadow-2xs"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-base">
+                    <div className="w-12 h-12 rounded-full bg-[var(--studio-accent-bg)] border border-[var(--studio-accent-border)] flex items-center justify-center text-indigo-700 font-bold text-base">
                       {person.name.charAt(0)}
                     </div>
                   )}
@@ -262,8 +227,8 @@ export const AdminPersonDetailPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-800">{person.name}</h3>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                  <h3 className={studioDetailTitle}>{person.name}</h3>
+                  <div className="flex items-center gap-2 text-[11px] text-[var(--studio-muted)]">
                     {staffRole ? (
                       <span className="font-semibold text-indigo-600">{staffRole}</span>
                     ) : (
@@ -276,7 +241,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                 className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${
                   person.globalRole === "admin"
                     ? "bg-indigo-100 text-indigo-800 border border-indigo-200"
-                    : "bg-slate-100 text-slate-700 border border-slate-200"
+                    : "bg-slate-100 text-[var(--studio-text)] border border-[var(--studio-border)]"
                 }`}
               >
                 {person.globalRole === "admin" ? "Global Admin" : "Medlem (member)"}
@@ -287,7 +252,7 @@ export const AdminPersonDetailPage: React.FC = () => {
             <div className="space-y-1.5">
               <label
                 htmlFor="input-edit-person-name"
-                className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                className="text-xs font-bold text-[var(--studio-muted)] flex items-center gap-1.5"
               >
                 <User className="w-3.5 h-3.5 text-indigo-600" />
                 Fullt navn:
@@ -298,7 +263,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="F.eks. Kari Nordmann..."
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+                className={studioDetailInput}
               />
             </div>
 
@@ -306,7 +271,7 @@ export const AdminPersonDetailPage: React.FC = () => {
             <div className="space-y-1.5">
               <label
                 htmlFor="input-edit-person-phone"
-                className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                className="text-xs font-bold text-[var(--studio-muted)] flex items-center gap-1.5"
               >
                 <Phone className="w-3.5 h-3.5 text-indigo-600" />
                 Mobilnummer:
@@ -317,7 +282,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="F.eks. 912 34 567"
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+                className={studioDetailInput}
               />
             </div>
 
@@ -325,7 +290,7 @@ export const AdminPersonDetailPage: React.FC = () => {
             <div className="space-y-1.5">
               <label
                 htmlFor="input-edit-person-email"
-                className="text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                className="text-xs font-bold text-[var(--studio-muted)] flex items-center gap-1.5"
               >
                 <Mail className="w-3.5 h-3.5 text-indigo-600" />
                 E-postadresse:
@@ -336,21 +301,21 @@ export const AdminPersonDetailPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="F.eks. kari@eksempel.no"
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+                className={studioDetailInput}
               />
             </div>
 
             {/* 4. Global Rolle (Sikrer støtte for flere co-admins) */}
-            <div className="space-y-1.5 pt-1 border-t border-slate-100">
+            <div className="space-y-1.5 pt-1 border-t border-[var(--studio-border)]">
               <label
                 htmlFor="select-edit-person-role"
-                className="text-xs font-bold text-slate-700 flex items-center justify-between"
+                className="text-xs font-bold text-[var(--studio-muted)] flex items-center justify-between"
               >
                 <span className="flex items-center gap-1.5">
                   <Shield className="w-3.5 h-3.5 text-indigo-600" />
                   Global systemrolle:
                 </span>
-                <span className="text-[10px] text-slate-400 font-normal">
+                <span className="text-[10px] text-[var(--studio-muted)] font-normal">
                   (Muliggjør 2+ likestilte administratorer)
                 </span>
               </label>
@@ -358,7 +323,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                 id="select-edit-person-role"
                 value={globalRole}
                 onChange={(e) => setGlobalRole(e.target.value as "member" | "admin")}
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+                className={studioDetailInput}
               >
                 <option value="member">Medlem / Frivillig (standard tilgang)</option>
                 <option value="admin">Administrator (full tilgang til Admin Studio & CMS)</option>
@@ -366,10 +331,10 @@ export const AdminPersonDetailPage: React.FC = () => {
             </div>
 
             {/* 5. Politiattest for barne- og ungdomsarbeid */}
-            <div className="space-y-1.5 pt-1 border-t border-slate-100">
+            <div className="space-y-1.5 pt-1 border-t border-[var(--studio-border)]">
               <label
                 htmlFor="input-edit-person-police"
-                className="text-xs font-bold text-slate-700 flex items-center justify-between"
+                className="text-xs font-bold text-[var(--studio-muted)] flex items-center justify-between"
               >
                 <span className="flex items-center gap-1.5">
                   <BadgeCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -380,7 +345,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                     Registrert ({policeCert})
                   </span>
                 ) : (
-                  <span className="text-[10px] text-slate-400 font-normal">Ikke registrert</span>
+                  <span className="text-[10px] text-[var(--studio-muted)] font-normal">Ikke registrert</span>
                 )}
               </label>
               <input
@@ -388,37 +353,37 @@ export const AdminPersonDetailPage: React.FC = () => {
                 id="input-edit-person-police"
                 value={policeCert}
                 onChange={(e) => setPoliceCert(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-800"
+                className={studioDetailInput}
               />
-              <p className="text-[10px] text-slate-500">
+              <p className={studioDetailMuted}>
                 Påkrevd for frivillige som arbeider med mindreårige (søndagsskole og barneleir).
               </p>
             </div>
 
             {/* 6. Utilgjengelighetskalender ("Borte fra–til") */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
+            <div className="space-y-2 pt-2 border-t border-[var(--studio-border)]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <span className="text-xs font-bold text-[var(--studio-muted)] flex items-center gap-1.5">
                   <CalendarX className="w-3.5 h-3.5 text-amber-600" />
                   Utilgjengelig / Bortreist:
                 </span>
-                <span className="text-[10px] text-slate-400">
+                <span className="text-[10px] text-[var(--studio-muted)]">
                   {unavailablePeriods.length} perioder registrert
                 </span>
               </div>
 
               {unavailablePeriods.length > 0 && (
-                <div className="space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <div className="space-y-1.5 bg-[var(--studio-row)] p-2.5 rounded-xl border border-[var(--studio-border)]">
                   {unavailablePeriods.map((p, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between text-xs py-1 px-2 bg-white rounded-lg border border-slate-200/60"
+                      className="flex items-center justify-between text-xs py-1 px-2 bg-[var(--studio-row)] rounded-lg border border-[var(--studio-border)] text-slate-200"
                     >
                       <div>
-                        <strong className="text-slate-800">
+                        <strong className="text-white">
                           {p.from} til {p.to}
                         </strong>
-                        {p.reason && <span className="text-slate-500 ml-1.5">({p.reason})</span>}
+                        {p.reason && <span className="text-[var(--studio-muted)] ml-1.5">({p.reason})</span>}
                       </div>
                       <button
                         type="button"
@@ -440,14 +405,14 @@ export const AdminPersonDetailPage: React.FC = () => {
                   value={newUnavailFrom}
                   onChange={(e) => setNewUnavailFrom(e.target.value)}
                   placeholder="Fra dato"
-                  className="px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs"
+                  className={studioDetailInput}
                 />
                 <input
                   type="date"
                   value={newUnavailTo}
                   onChange={(e) => setNewUnavailTo(e.target.value)}
                   placeholder="Til dato"
-                  className="px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs"
+                  className={studioDetailInput}
                 />
                 <div className="flex gap-1">
                   <input
@@ -455,12 +420,12 @@ export const AdminPersonDetailPage: React.FC = () => {
                     value={newUnavailReason}
                     onChange={(e) => setNewUnavailReason(e.target.value)}
                     placeholder="Årsak (f.eks. Ferie)"
-                    className="w-full px-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs"
+                    className="w-full className={studioDetailInput}"
                   />
                   <button
                     type="button"
                     onClick={handleAddUnavailablePeriod}
-                    className="px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg shrink-0 cursor-pointer"
+                    className="px-2 py-1.5 bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-white rounded-lg shrink-0 cursor-pointer"
                     title="Legg til fravær"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -470,9 +435,9 @@ export const AdminPersonDetailPage: React.FC = () => {
             </div>
 
             {/* 7. Stab & Ansettelse */}
-            <div className="space-y-3 pt-3 border-t border-slate-100 bg-indigo-50/40 p-3.5 rounded-2xl border border-indigo-100/80">
+            <div className="space-y-3 pt-3 border-t border-[var(--studio-border)] bg-[var(--studio-accent-bg)] p-3.5 rounded-2xl border border-[var(--studio-accent-border)]/50">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <span className="text-xs font-bold text-[var(--studio-text)] flex items-center gap-1.5">
                   <Briefcase className="w-3.5 h-3.5 text-indigo-600" />
                   Stab & Ansettelse:
                 </span>
@@ -481,7 +446,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                     Ansatt i staben
                   </span>
                 ) : (
-                  <span className="text-[10px] text-slate-400 font-normal">Frivillig / Ikke stab</span>
+                  <span className="text-[10px] text-[var(--studio-muted)] font-normal">Frivillig / Ikke stab</span>
                 )}
               </div>
 
@@ -498,7 +463,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                   }}
                   className="w-4 h-4 mt-0.5 border border-slate-300 rounded-md cursor-pointer accent-indigo-600"
                 />
-                <span className="text-[11px] font-semibold text-slate-800">
+                <span className="text-[11px] font-semibold text-slate-200">
                   Personen er ansatt i staben og kan vises i stabsseksjoner på nettsiden
                 </span>
               </label>
@@ -507,7 +472,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                 <div className="space-y-2.5 pt-1">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--studio-muted)]">
                         Stillingstittel utad
                       </label>
                       <input
@@ -515,17 +480,17 @@ export const AdminPersonDetailPage: React.FC = () => {
                         value={staffRole}
                         onChange={(e) => setStaffRole(e.target.value)}
                         placeholder="f.eks. Hovedpastor, Daglig leder..."
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-medium"
+                        className={studioDetailInput}
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--studio-muted)]">
                         Kategori
                       </label>
                       <select
                         value={staffCategory}
                         onChange={(e) => setStaffCategory(e.target.value as any)}
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                        className={studioDetailInput}
                       >
                         <option value="pastor">Pastor / Forkynner</option>
                         <option value="stab">Administrasjon & Ledelse</option>
@@ -537,7 +502,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--studio-muted)]">
                       Kort bio / introduksjon for nettsiden
                     </label>
                     <textarea
@@ -545,12 +510,12 @@ export const AdminPersonDetailPage: React.FC = () => {
                       value={staffBio}
                       onChange={(e) => setStaffBio(e.target.value)}
                       placeholder="Skriv 1-3 setninger om personens ansvarsområde eller bakgrunn..."
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                      className={studioDetailInput}
                     />
                   </div>
 
                   <div className="flex items-center gap-2 pt-1 text-xs">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 shrink-0">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-[var(--studio-muted)] shrink-0">
                       Bilde-URL:
                     </label>
                     <input
@@ -558,7 +523,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                       value={avatarUrl}
                       onChange={(e) => setAvatarUrl(e.target.value)}
                       placeholder="https://... eller bruk kamerasymbolet øverst"
-                      className="flex-1 px-2 py-1 bg-white border border-slate-300 rounded-lg text-xs"
+                      className={studioDetailInput}
                     />
                     {avatarUrl && (
                       <button
@@ -576,9 +541,9 @@ export const AdminPersonDetailPage: React.FC = () => {
             </div>
 
             {/* 8. Offentlig profil på nettsiden (krever samtykke) */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
+            <div className="space-y-2 pt-2 border-t border-[var(--studio-border)]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <span className="text-xs font-bold text-[var(--studio-muted)] flex items-center gap-1.5">
                   <Globe className="w-3.5 h-3.5 text-indigo-600" />
                   Offentlig profil på nettsiden:
                 </span>
@@ -587,7 +552,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                     Vises offentlig
                   </span>
                 ) : (
-                  <span className="text-[10px] text-slate-400 font-normal">Vises ikke</span>
+                  <span className="text-[10px] text-[var(--studio-muted)] font-normal">Vises ikke</span>
                 )}
               </div>
 
@@ -599,19 +564,19 @@ export const AdminPersonDetailPage: React.FC = () => {
                   onChange={(e) => setIsPublicProfile(e.target.checked)}
                   className="w-4 h-4 mt-0.5 border border-slate-300 rounded-md cursor-pointer"
                 />
-                <span className="text-[11px] font-semibold text-slate-700">
+                <span className="text-[11px] font-semibold text-[var(--studio-muted)]">
                   Personen har samtykket til å stå med navn på den offentlige nettsiden
                 </span>
               </label>
 
               {person.consentToPublishGivenAt && (
-                <p className="text-[10px] text-slate-500">
+                <p className={studioDetailMuted}>
                   Samtykke registrert {new Date(person.consentToPublishGivenAt).toLocaleDateString("no-NO")}.
                 </p>
               )}
 
               {isPublicProfile && (
-                <div className="space-y-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                <div className="space-y-2 bg-[var(--studio-row)] p-2.5 rounded-xl border border-[var(--studio-border)]">
                   <input
                     type="text"
                     id="input-edit-person-public-title"
@@ -619,7 +584,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                     value={publicTitle}
                     onChange={(e) => setPublicTitle(e.target.value)}
                     placeholder="Tittel utad, f.eks. Hovedpastor"
-                    className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                    className={studioDetailInput}
                   />
                   <input
                     type="tel"
@@ -628,7 +593,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                     value={publicPhone}
                     onChange={(e) => setPublicPhone(e.target.value)}
                     placeholder="Telefon utad (valgfritt)"
-                    className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                    className={studioDetailInput}
                   />
                   <input
                     type="email"
@@ -637,9 +602,9 @@ export const AdminPersonDetailPage: React.FC = () => {
                     value={publicEmail}
                     onChange={(e) => setPublicEmail(e.target.value)}
                     placeholder="E-post utad (valgfritt)"
-                    className="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                    className={studioDetailInput}
                   />
-                  <p className="text-[10px] text-slate-500">
+                  <p className={studioDetailMuted}>
                     Bare navnet og disse feltene vises utad. Privat mobilnummer og e-postadresse publiseres aldri.
                   </p>
                 </div>
@@ -651,7 +616,7 @@ export const AdminPersonDetailPage: React.FC = () => {
               <button
                 type="submit"
                 id="btn-save-person-detail"
-                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                className={studioPrimaryButton}
               >
                 <Save className="w-4 h-4" />
                 Lagre alle personopplysninger & tilganger
@@ -663,17 +628,17 @@ export const AdminPersonDetailPage: React.FC = () => {
         {/* Roles and Group Memberships */}
         <section
           id="person-groups-section"
-          className="p-4 bg-white rounded-2xl border border-slate-200/80 space-y-3 shadow-xs"
+          className={studioDetailSection}
         >
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <Users className="w-4 h-4 text-slate-500" />
+          <div className="flex items-center justify-between border-b border-[var(--studio-border)] pb-2">
+            <span className="text-xs font-bold text-[var(--studio-text)] flex items-center gap-1.5">
+              <Users className="w-4 h-4 text-[var(--studio-muted)]" />
               Gruppetilhørighet ({personGroups.length})
             </span>
           </div>
 
           {personGroups.length === 0 ? (
-            <p className="text-xs text-slate-400 italic py-2">
+            <p className="text-xs text-[var(--studio-muted)] italic py-2">
               Personen er ikke medlem av noen grupper ennå.
             </p>
           ) : (
@@ -685,12 +650,12 @@ export const AdminPersonDetailPage: React.FC = () => {
                 return (
                   <div
                     key={group.id}
-                    className="p-2.5 bg-slate-50/80 rounded-xl border border-slate-200/70 flex items-center justify-between text-xs"
+                    className={studioDetailRow}
                   >
                     <div>
                       <Link
                         to={`/admin/gruppe/${group.id}`}
-                        className="font-bold text-slate-800 hover:text-indigo-600 transition-colors"
+                        className={`${studioDetailLink} transition-colors`}
                       >
                         {group.name}
                       </Link>
@@ -710,7 +675,7 @@ export const AdminPersonDetailPage: React.FC = () => {
                         </span>
                       )}
                       {!isLeader && !isDeputy && (
-                        <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-200 text-slate-700">
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-200 text-[var(--studio-text)]">
                           Medlem
                         </span>
                       )}
@@ -725,18 +690,18 @@ export const AdminPersonDetailPage: React.FC = () => {
         {/* Assigned Tasks Summary */}
         <section
           id="person-tasks-section"
-          className="p-4 bg-white rounded-2xl border border-slate-200/80 space-y-2 shadow-xs"
+          className={studioDetailSection}
         >
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+          <div className="flex items-center justify-between border-b border-[var(--studio-border)] pb-2">
+            <span className="text-xs font-bold text-[var(--studio-text)] flex items-center gap-1.5">
               <CheckSquare className="w-4 h-4 text-emerald-600" />
               Tildelte oppgaver ({personTasks.length})
             </span>
-            <span className="text-[10px] text-slate-400 font-medium">Assignment</span>
+            <span className="text-[10px] text-[var(--studio-muted)] font-medium">Assignment</span>
           </div>
 
           {personTasks.length === 0 ? (
-            <p className="text-xs text-slate-400 italic py-1">
+            <p className="text-xs text-[var(--studio-muted)] italic py-1">
               Ingen aktive oppgaver tildelt denne personen for øyeblikket.
             </p>
           ) : (
@@ -744,9 +709,9 @@ export const AdminPersonDetailPage: React.FC = () => {
               {personTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="p-2 bg-slate-50/70 rounded-lg border border-slate-100 flex items-center justify-between text-xs"
+                  className={studioDetailRow}
                 >
-                  <span className="text-slate-700 font-medium">{task.title}</span>
+                  <span className="text-slate-200 font-medium">{task.title}</span>
                   <span
                     className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
                       task.status === "confirmed"
@@ -764,6 +729,6 @@ export const AdminPersonDetailPage: React.FC = () => {
           )}
         </section>
       </div>
-    </div>
+    </StudioDetailShell>
   );
 };

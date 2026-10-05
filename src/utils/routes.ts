@@ -7,12 +7,10 @@ export const MIN_SIDE_SECTIONS = ["/minside", "/leder", "/oppgave", "/gruppe", "
 // Whole path segments only: "/leder" must not claim the public page "/lederskap"
 const isUnder = (pathname: string, section: string) => pathname === section || pathname.startsWith(`${section}/`);
 
-/** The admin panel itself. Its detail pages (/admin/person/…) use the Min side layout. */
-export const isAdminStudioPath = (pathname: string) => pathname === "/admin";
+export { isAdminStudioPath } from "./adminStudioRoutes";
 
 export function isMinSidePath(pathname: string): boolean {
-  const isAdminSubpage = pathname.startsWith("/admin/") && !pathname.startsWith("/admin/cms");
-  return isAdminSubpage || MIN_SIDE_SECTIONS.some((section) => isUnder(pathname, section));
+  return MIN_SIDE_SECTIONS.some((section) => isUnder(pathname, section));
 }
 
 /** Whether the address is part of the website visitors see, and not of Min side, admin or the API. */

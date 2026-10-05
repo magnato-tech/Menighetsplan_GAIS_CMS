@@ -278,9 +278,9 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
     <div className="space-y-4">
       {/* Hierarchy toolbar with Collapse/Expand All controls */}
       {hierarchicalPages.some((n) => n.children.length > 0) && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 py-1 text-xs border-b border-slate-800 pb-2">
-          <div className="flex items-center gap-2 text-slate-400">
-            <span className="text-[11px] font-medium text-slate-400">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 py-1 text-xs border-b border-[var(--studio-border)] pb-2">
+          <div className="flex items-center gap-2 text-[var(--studio-muted)]">
+            <span className="text-[11px] font-medium text-[var(--studio-muted)]">
               Fold inn underfaner med vinkelpilen foran mappen eller ved dobbeltklikk på boksen. Dra eller bruk piler for å sortere.
             </span>
           </div>
@@ -288,19 +288,19 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
             <button
               type="button"
               onClick={handleCollapseAll}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] border border-[var(--studio-border)] text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
               title="Kollaps alle underfaner"
             >
-              <ChevronsDownUp className="w-3.5 h-3.5 text-indigo-400" />
+              <ChevronsDownUp className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
               <span>Kollaps alle</span>
             </button>
             <button
               type="button"
               onClick={handleExpandAll}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] border border-[var(--studio-border)] text-[11px] font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
               title="Utvid alle underfaner"
             >
-              <ChevronsUpDown className="w-3.5 h-3.5 text-indigo-400" />
+              <ChevronsUpDown className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
               <span>Utvid alle</span>
             </button>
           </div>
@@ -334,11 +334,11 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                 ? "opacity-40 border-dashed border-indigo-400 bg-slate-850 shadow-inner"
                 : isDragOver
                 ? dropPosition === "before"
-                  ? "border-t-4 border-t-indigo-400 border-slate-700 bg-slate-800 ring-2 ring-indigo-500/40"
-                  : "border-b-4 border-b-indigo-400 border-slate-700 bg-slate-800 ring-2 ring-indigo-500/40"
+                  ? "border-t-4 border-t-indigo-400 border-[var(--studio-border)] bg-[var(--studio-surface)] ring-2 ring-indigo-500/40"
+                  : "border-b-4 border-b-indigo-400 border-[var(--studio-border)] bg-[var(--studio-surface)] ring-2 ring-indigo-500/40"
                 : parent.isPublished === false
                 ? "border-amber-600/60 bg-slate-850/95 shadow-xs hover:border-amber-500 ring-1 ring-amber-500/15"
-                : "border-slate-700/80 bg-slate-800/90 shadow-xs hover:border-slate-600"
+                : "border-[var(--studio-border)] bg-[var(--studio-surface)] shadow-xs hover:border-[var(--studio-border)]"
             }`}
           >
             {/* Top Level Main Tab Row */}
@@ -350,7 +350,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                   onDragStart={(e) => handleDragStartTop(e, parent.id)}
                   onDragEnd={handleDragEnd}
                   onDoubleClick={(e) => e.stopPropagation()}
-                  className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-slate-700/60 transition-colors shrink-0"
+                  className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg text-[var(--studio-muted)] hover:text-[var(--studio-icon)] hover:bg-[var(--studio-hover)]/60 transition-colors shrink-0"
                   title="Dra og slipp for å endre rekkefølge på toppmenyen"
                 >
                   <GripVertical className="w-4 h-4" />
@@ -370,8 +370,8 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                     }}
                     className={`p-0.5 rounded transition-colors ${
                       topIdx === 0
-                        ? "text-slate-600 cursor-not-allowed"
-                        : "text-slate-400 hover:text-indigo-300 hover:bg-slate-700 cursor-pointer"
+                        ? "text-[var(--studio-muted)] cursor-not-allowed"
+                        : "text-[var(--studio-muted)] hover:text-[var(--studio-accent-text)] hover:bg-[var(--studio-hover)] cursor-pointer"
                     }`}
                     title="Flytt opp i menyen"
                     aria-label="Flytt opp"
@@ -387,8 +387,8 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                     }}
                     className={`p-0.5 rounded transition-colors ${
                       topIdx === topLevelPages.length - 1
-                        ? "text-slate-600 cursor-not-allowed"
-                        : "text-slate-400 hover:text-indigo-300 hover:bg-slate-700 cursor-pointer"
+                        ? "text-[var(--studio-muted)] cursor-not-allowed"
+                        : "text-[var(--studio-muted)] hover:text-[var(--studio-accent-text)] hover:bg-[var(--studio-hover)] cursor-pointer"
                     }`}
                     title="Flytt ned i menyen"
                     aria-label="Flytt ned"
@@ -400,7 +400,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                 <div className="space-y-1.5 flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span
-                      className="w-6 h-6 rounded-lg bg-indigo-950 border border-indigo-700/60 text-indigo-300 text-[11px] font-mono font-bold flex items-center justify-center shrink-0"
+                      className="w-6 h-6 rounded-lg bg-indigo-950 border border-indigo-700/60 text-[var(--studio-accent-text)] text-[11px] font-mono font-bold flex items-center justify-center shrink-0"
                       title="Menyrekkefølge"
                       onDoubleClick={(e) => e.stopPropagation()}
                     >
@@ -419,7 +419,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                           e.stopPropagation();
                           toggleCollapse(parent.id);
                         }}
-                        className="px-1.5 py-1 -ml-1 rounded-lg text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-700/80 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs group"
+                        className="px-1.5 py-1 -ml-1 rounded-lg text-[var(--studio-muted)] hover:text-[var(--studio-text)] bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] border border-[var(--studio-border)] transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs group"
                         title={
                           isCollapsed
                             ? "Vis underfaner (klikk eller dobbeltklikk på boksen)"
@@ -429,9 +429,9 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                         aria-expanded={!isCollapsed}
                       >
                         {isCollapsed ? (
-                          <ChevronRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                          <ChevronRight className="w-4 h-4 text-[var(--studio-icon)] group-hover:translate-x-0.5 transition-transform shrink-0" />
                         ) : (
-                          <ChevronDown className="w-4 h-4 text-indigo-400 group-hover:translate-y-0.5 transition-transform shrink-0" />
+                          <ChevronDown className="w-4 h-4 text-[var(--studio-icon)] group-hover:translate-y-0.5 transition-transform shrink-0" />
                         )}
                         {isCollapsed ? (
                           <Folder className="w-4 h-4 text-amber-400 shrink-0" />
@@ -446,8 +446,8 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                     )}
 
                     <h3
-                      className={`font-bold text-white text-base truncate ${
-                        hasChildren ? "hover:text-indigo-200 transition-colors cursor-pointer" : ""
+                      className={`font-bold text-[var(--studio-text)] text-base truncate ${
+                        hasChildren ? "hover:text-[var(--studio-accent-text)] transition-colors cursor-pointer" : ""
                       }`}
                       title={
                         hasChildren
@@ -459,7 +459,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                     >
                       {parent.title}
                     </h3>
-                    <span className="text-xs font-mono text-indigo-400 bg-slate-900 px-2 py-0.5 rounded">
+                    <span className="text-xs font-mono text-[var(--studio-icon)] bg-[var(--studio-bg)] px-2 py-0.5 rounded">
                       {targetUrl}
                     </span>
 
@@ -469,11 +469,11 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                     </div>
 
                     {parent.inNavMenu !== false ? (
-                      <span className="text-[10px] font-bold text-indigo-300 bg-indigo-950/60 border border-indigo-800/60 px-2 py-0.5 rounded">
+                      <span className="text-[10px] font-bold text-[var(--studio-accent-text)] bg-[var(--studio-accent-bg)] border border-[var(--studio-accent-border)]/60 px-2 py-0.5 rounded">
                         I toppmeny
                       </span>
                     ) : (
-                      <span className="text-[10px] font-bold text-stone-400 bg-slate-900 border border-slate-700 px-2 py-0.5 rounded">
+                      <span className="text-[10px] font-bold text-stone-400 bg-[var(--studio-bg)] border border-[var(--studio-border)] px-2 py-0.5 rounded">
                         Skjult fra meny
                       </span>
                     )}
@@ -531,7 +531,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                   </div>
 
                   {parent.summary && (
-                    <p className="text-xs text-slate-400 line-clamp-1 pl-1">{parent.summary}</p>
+                    <p className="text-xs text-[var(--studio-muted)] line-clamp-1 pl-1">{parent.summary}</p>
                   )}
                 </div>
               </div>
@@ -544,7 +544,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenNewPage(parent.id)}
-                  className="px-2.5 py-1.5 rounded-lg bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/60 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                  className="px-2.5 py-1.5 rounded-lg bg-indigo-950/90 hover:bg-indigo-900 text-[var(--studio-accent-text)] border border-[var(--studio-accent-border)]/60 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
                   title="Opprett ny underfane som legger seg under denne fanen"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -557,16 +557,16 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                   onClick={() => {
                     if (onPreviewPage) onPreviewPage(parent);
                   }}
-                  className="p-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-800/60 transition-colors"
+                  className="p-1.5 rounded-lg bg-[var(--studio-accent-bg)] hover:bg-indigo-900 text-[var(--studio-accent-text)] hover:text-[var(--studio-text)] border border-[var(--studio-accent-border)]/60 transition-colors"
                   title="Forhåndsvis side i ny fane med ekte offentlig styling"
                   aria-label="Forhåndsvis side"
                 >
-                  <Eye className="w-4 h-4 text-indigo-400" />
+                  <Eye className="w-4 h-4 text-[var(--studio-icon)]" />
                 </a>
                 <Link
                   to={targetUrl}
                   target="_blank"
-                  className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                  className="p-1.5 rounded-lg bg-[var(--studio-bg)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] transition-colors"
                   title="Åpne i ny fane"
                 >
                   <ExternalLink className="w-4 h-4" />
@@ -574,7 +574,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenEditPage(parent)}
-                  className="px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                  className="px-2.5 py-1.5 rounded-lg bg-[var(--studio-hover)] hover:bg-[var(--studio-border)] text-[var(--studio-text)] font-semibold flex items-center gap-1 cursor-pointer transition-colors"
                 >
                   <Edit2 className="w-3.5 h-3.5" />
                   <span>Rediger</span>
@@ -582,7 +582,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                 <button
                   type="button"
                   onClick={() => onRequestDelete(parent.id)}
-                  className="p-1.5 rounded-lg bg-slate-900 hover:bg-red-950 text-slate-400 hover:text-red-400 cursor-pointer transition-colors"
+                  className="p-1.5 rounded-lg bg-[var(--studio-bg)] hover:bg-red-950 text-[var(--studio-muted)] hover:text-red-400 cursor-pointer transition-colors"
                   title="Slett fane"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -610,14 +610,14 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                       onDrop={(e) => handleDropSub(e, child.id, parent.id, item.children)}
                       className={`p-3 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 relative before:absolute before:-left-3 sm:before:-left-6 before:top-1/2 before:w-3 sm:before:w-6 before:h-0.5 before:bg-indigo-500/30 ${
                         isSubDragged
-                          ? "opacity-40 border-dashed border-indigo-400 bg-slate-950"
+                          ? "opacity-40 border-dashed border-indigo-400 bg-[var(--studio-panel-bg)]"
                           : isSubOver
                           ? dropPosition === "before"
-                            ? "border-t-2 border-t-indigo-400 border-slate-700 ring-1 ring-indigo-500/40"
-                            : "border-b-2 border-b-indigo-400 border-slate-700 ring-1 ring-indigo-500/40"
+                            ? "border-t-2 border-t-indigo-400 border-[var(--studio-border)] ring-1 ring-indigo-500/40"
+                            : "border-b-2 border-b-indigo-400 border-[var(--studio-border)] ring-1 ring-indigo-500/40"
                           : child.isPublished === false
-                          ? "border-amber-700/50 bg-slate-900/95 hover:border-amber-600/60 ring-1 ring-amber-500/10"
-                          : "border-slate-800 bg-slate-900/80 hover:border-slate-700"
+                          ? "border-amber-700/50 bg-[var(--studio-bg)]/95 hover:border-amber-600/60 ring-1 ring-amber-500/10"
+                          : "border-[var(--studio-border)] bg-[var(--studio-row)] hover:border-[var(--studio-border)]"
                       }`}
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -626,7 +626,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                           draggable
                           onDragStart={(e) => handleDragStartSub(e, child.id, parent.id)}
                           onDragEnd={handleDragEnd}
-                          className="cursor-grab active:cursor-grabbing p-1 rounded text-slate-500 hover:text-indigo-400 hover:bg-slate-800 transition-colors shrink-0"
+                          className="cursor-grab active:cursor-grabbing p-1 rounded text-[var(--studio-muted)] hover:text-[var(--studio-icon)] hover:bg-[var(--studio-surface)] transition-colors shrink-0"
                           title="Dra og slipp for å endre rekkefølge blant underfanene"
                         >
                           <GripVertical className="w-3.5 h-3.5" />
@@ -640,8 +640,8 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                             onClick={() => handleMoveStep(item.children, child.id, "up")}
                             className={`p-0.5 rounded transition-colors ${
                               cIdx === 0
-                                ? "text-slate-700 cursor-not-allowed"
-                                : "text-slate-400 hover:text-indigo-300 hover:bg-slate-800 cursor-pointer"
+                                ? "text-[var(--studio-text)] cursor-not-allowed"
+                                : "text-[var(--studio-muted)] hover:text-[var(--studio-accent-text)] hover:bg-[var(--studio-surface)] cursor-pointer"
                             }`}
                             title="Flytt underfane opp"
                             aria-label="Flytt underfane opp"
@@ -654,8 +654,8 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                             onClick={() => handleMoveStep(item.children, child.id, "down")}
                             className={`p-0.5 rounded transition-colors ${
                               cIdx === item.children.length - 1
-                                ? "text-slate-700 cursor-not-allowed"
-                                : "text-slate-400 hover:text-indigo-300 hover:bg-slate-800 cursor-pointer"
+                                ? "text-[var(--studio-text)] cursor-not-allowed"
+                                : "text-[var(--studio-muted)] hover:text-[var(--studio-accent-text)] hover:bg-[var(--studio-surface)] cursor-pointer"
                             }`}
                             title="Flytt underfane ned"
                             aria-label="Flytt underfane ned"
@@ -666,13 +666,13 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
 
                         <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <CornerDownRight className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                            <span className="w-5 h-5 rounded bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-mono font-bold flex items-center justify-center shrink-0">
+                            <CornerDownRight className="w-3.5 h-3.5 text-[var(--studio-icon)] shrink-0" />
+                            <span className="w-5 h-5 rounded bg-[var(--studio-surface)] border border-[var(--studio-border)] text-[var(--studio-muted)] text-[10px] font-mono font-bold flex items-center justify-center shrink-0">
                               #{childOrder ?? cIdx + 1}
                             </span>
-                            <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <h4 className="font-semibold text-white text-sm truncate">{child.title}</h4>
-                            <span className="text-[11px] font-mono text-indigo-400 bg-slate-950 px-2 py-0.5 rounded">
+                            <FileText className="w-3.5 h-3.5 text-[var(--studio-muted)] shrink-0" />
+                            <h4 className="font-semibold text-[var(--studio-text)] text-sm truncate">{child.title}</h4>
+                            <span className="text-[11px] font-mono text-[var(--studio-icon)] bg-[var(--studio-panel-bg)] px-2 py-0.5 rounded">
                               /{child.slug}
                             </span>
 
@@ -680,11 +680,11 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                             {renderStatusIndicator(child, true)}
 
                             {child.inNavMenu !== false ? (
-                              <span className="text-[10px] font-semibold text-indigo-300 bg-indigo-950/40 px-1.5 py-0.5 rounded">
+                              <span className="text-[10px] font-semibold text-[var(--studio-accent-text)] bg-[var(--studio-accent-bg)] px-1.5 py-0.5 rounded">
                                 I meny
                               </span>
                             ) : (
-                              <span className="text-[10px] font-semibold text-stone-400 bg-slate-950 px-1.5 py-0.5 rounded">
+                              <span className="text-[10px] font-semibold text-stone-400 bg-[var(--studio-panel-bg)] px-1.5 py-0.5 rounded">
                                 Skjult
                               </span>
                             )}
@@ -710,7 +710,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                             )}
                           </div>
                           {child.summary && (
-                            <p className="text-xs text-slate-400 line-clamp-1 pl-1">{child.summary}</p>
+                            <p className="text-xs text-[var(--studio-muted)] line-clamp-1 pl-1">{child.summary}</p>
                           )}
                         </div>
                       </div>
@@ -723,16 +723,16 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                           onClick={() => {
                             if (onPreviewPage) onPreviewPage(child);
                           }}
-                          className="p-1.5 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-800/40 transition-colors"
+                          className="p-1.5 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 text-[var(--studio-accent-text)] hover:text-[var(--studio-text)] border border-[var(--studio-accent-border)]/40 transition-colors"
                           title="Forhåndsvis underside i ny fane med ekte offentlig styling"
                           aria-label="Forhåndsvis underside"
                         >
-                          <Eye className="w-3.5 h-3.5 text-indigo-400" />
+                          <Eye className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
                         </a>
                         <Link
                           to={childUrl}
                           target="_blank"
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                          className="p-1.5 rounded-lg bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] transition-colors"
                           title="Åpne i ny fane"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
@@ -740,7 +740,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenEditPage(child)}
-                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold flex items-center gap-1 text-[11px] cursor-pointer transition-colors"
+                          className="px-2.5 py-1 rounded-lg bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-text)] font-semibold flex items-center gap-1 text-[11px] cursor-pointer transition-colors"
                         >
                           <Edit2 className="w-3 h-3" />
                           <span>Rediger</span>
@@ -748,7 +748,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                         <button
                           type="button"
                           onClick={() => onRequestDelete(child.id)}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-950 text-slate-400 hover:text-red-400 cursor-pointer transition-colors"
+                          className="p-1.5 rounded-lg bg-[var(--studio-surface)] hover:bg-red-950 text-[var(--studio-muted)] hover:text-red-400 cursor-pointer transition-colors"
                           title="Slett underside"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -766,10 +766,10 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                   e.stopPropagation();
                   toggleCollapse(parent.id);
                 }}
-                className="ml-3 sm:ml-6 pl-3 sm:pl-6 py-2 text-xs text-slate-400 hover:text-indigo-300 cursor-pointer flex items-center gap-2 transition-colors border-l-2 border-indigo-500/20 group"
+                className="ml-3 sm:ml-6 pl-3 sm:pl-6 py-2 text-xs text-[var(--studio-muted)] hover:text-[var(--studio-accent-text)] cursor-pointer flex items-center gap-2 transition-colors border-l-2 border-indigo-500/20 group"
                 title="Klikk eller dobbeltklikk for å vise underfaner"
               >
-                <ChevronRight className="w-3.5 h-3.5 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight className="w-3.5 h-3.5 text-[var(--studio-icon)] group-hover:translate-x-0.5 transition-transform" />
                 <span className="font-medium">
                   {item.children.length} underfane{item.children.length > 1 ? "r" : ""} er skjult – klikk eller dobbeltklikk for å utvide
                 </span>
@@ -781,7 +781,7 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
 
       {/* Orphan Pages if any */}
       {orphanPages.length > 0 && (
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-amber-900/50 space-y-3 mt-6">
+        <div className="p-5 rounded-2xl bg-[var(--studio-input)] border border-amber-900/50 space-y-3 mt-6">
           <h3 className="text-sm font-bold text-amber-300 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-400" />
             <span>Frittstående sider uten tilordnet overordnet fane</span>
@@ -792,14 +792,14 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                 key={op.id}
                 className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-xs transition-colors ${
                   op.isPublished === false
-                    ? "border-amber-700/50 bg-slate-800/95 ring-1 ring-amber-500/10"
-                    : "border-slate-700/80 bg-slate-800"
+                    ? "border-amber-700/50 bg-[var(--studio-surface)]/95 ring-1 ring-amber-500/10"
+                    : "border-[var(--studio-border)] bg-[var(--studio-surface)]"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <FileText className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="font-semibold text-white">{op.title}</span>
-                  <span className="font-mono text-indigo-400">/{op.slug}</span>
+                  <FileText className="w-3.5 h-3.5 text-[var(--studio-muted)]" />
+                  <span className="font-semibold text-[var(--studio-text)]">{op.title}</span>
+                  <span className="font-mono text-[var(--studio-icon)]">/{op.slug}</span>
                   {renderStatusIndicator(op, true)}
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -807,11 +807,11 @@ export const PageTreeList: React.FC<PageTreeListProps> = ({
                     href={`/${op.slug}?preview=true`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-800/40 transition-colors"
+                    className="p-1.5 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 text-[var(--studio-accent-text)] hover:text-[var(--studio-text)] border border-[var(--studio-accent-border)]/40 transition-colors"
                     title="Forhåndsvis side i ny fane"
                     aria-label="Forhåndsvis side"
                   >
-                    <Eye className="w-3.5 h-3.5 text-indigo-400" />
+                    <Eye className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
                   </a>
                   <button
                     type="button"

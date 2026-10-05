@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useAdminDetailRoute } from "../utils/adminStudioRoutes";
 import {
   useAdminTaskDetail,
   formatNorwegianDateTime,
   GROUP_CATEGORIES,
 } from "../hooks/useAppHooks";
 import { AdminAccessRequired } from "../components/AdminAccessRequired";
-import { UserQuickSwitcherBar } from "../components/UserSwitcher";
+import { StudioDetailShell, StudioDetailNotFound } from "./admin/StudioDetailShell";
+import {
+  studioDetailCard,
+  studioDetailSection,
+  studioDetailInput,
+  studioDetailTitle,
+  studioDetailLink,
+  studioDetailRow,
+} from "./admin/studioDetailTheme";
 import { useTimedMessage } from "../hooks/useTimedMessage";
 import {
-  ArrowLeft,
-  ListTodo,
   Calendar,
   MapPin,
   Users,
@@ -18,8 +25,6 @@ import {
   Mail,
   FileText,
   Save,
-  CheckCircle2,
-  AlertTriangle,
   Info,
   ChevronRight,
   Sparkles,
@@ -28,7 +33,8 @@ import {
 } from "lucide-react";
 
 export const AdminTaskDetailPage: React.FC = () => {
-  const { taskId } = useParams<{ taskId: string }>();
+  const detailRoute = useAdminDetailRoute();
+  const taskId = detailRoute?.kind === "task" ? detailRoute.id : "";
 
   const {
     isAdmin,
@@ -103,26 +109,14 @@ export const AdminTaskDetailPage: React.FC = () => {
     return <AdminAccessRequired target="oppgavekortet i admin-flaten" />;
   }
 
-  // Not found
   if (!task) {
     return (
-      <div className="w-full max-w-md mx-auto bg-slate-50 min-h-screen shadow-md sm:my-4 sm:rounded-3xl sm:border sm:border-slate-200/80 overflow-hidden">
-        <UserQuickSwitcherBar />
-        <div className="p-6 text-center space-y-4">
-          <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
-            <ListTodo className="w-6 h-6" />
-          </div>
-          <h3 className="text-base font-bold text-slate-800">Fant ikke oppgaven</h3>
-          <p className="text-xs text-slate-500">Oppgaven kan være slettet eller ID-en er ugyldig.</p>
-          <Link
-            to="/admin"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Tilbake til Admin-oversikt
-          </Link>
-        </div>
-      </div>
+      <StudioDetailNotFound
+        backTab="planlegger-oppgaver"
+        backLabel="Tilbake til oppgaver"
+        title="Fant ikke oppgaven"
+        description="Oppgaven kan være slettet eller ID-en er ugyldig."
+      />
     );
   }
 
@@ -133,51 +127,19 @@ export const AdminTaskDetailPage: React.FC = () => {
   const formattedDate = gathering ? formatNorwegianDateTime(gathering.startsAt) : "Tidspunkt ikke oppgitt";
 
   return (
-    <div className="w-full max-w-md mx-auto bg-slate-50 min-h-screen shadow-md sm:my-4 sm:rounded-3xl sm:border sm:border-slate-200/80 overflow-hidden">
-      {/* Quick Mock User Switcher Bar */}
-      <UserQuickSwitcherBar />
-
-      {/* Top Header */}
-      <div className="bg-white px-5 pt-3 pb-3 border-b border-slate-100 flex items-center justify-between">
-        <Link
-          to="/admin"
-          id="btn-back-to-admin-from-task"
-          className="inline-flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 px-2 py-1 -ml-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Admin-oversikt
-        </Link>
-        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100">
-          Oppgavekort
-        </span>
-      </div>
-
-      {/* Feedback Toast */}
-      {feedback && (
-        <div
-          id="admin-task-feedback-toast"
-          className={`mx-5 mt-3 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200 ${
-            feedback.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-              : "bg-red-50 text-red-800 border border-red-200"
-          }`}
-        >
-          {feedback.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-          ) : (
-            <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
-          )}
-          <span>{feedback.text}</span>
-        </div>
-      )}
-
-      <div className="p-5 space-y-4">
+    <StudioDetailShell
+      backTab="planlegger-oppgaver"
+      backLabel="Tilbake til oppgaver"
+      badge="Oppgavekort"
+      feedback={feedback}
+    >
+      <div className="space-y-4">
         {/* Main Task Overview Card */}
-        <div className="p-4 bg-white rounded-2xl border border-slate-200/80 space-y-4 shadow-xs">
+        <div className={studioDetailCard}>
           {/* Header & Status */}
-          <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+          <div className="flex items-start justify-between gap-2 border-b border-[var(--studio-border)] pb-3">
             <div>
-              <h1 className="text-base font-bold text-slate-800 leading-snug">{task.title}</h1>
+              <h1 className={studioDetailTitle + " leading-snug"}>{task.title}</h1>
             </div>
 
             <span
@@ -203,28 +165,28 @@ export const AdminTaskDetailPage: React.FC = () => {
 
           {/* Samling Details */}
           <div className="space-y-1.5 text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--studio-muted)] flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5 text-indigo-600" />
               Samling
             </span>
-            <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+            <div className={studioDetailRow + " space-y-1"}>
               {gathering ? (
                 <Link
-                  to={`/admin/samling/${gathering.id}`}
-                  className="font-bold text-slate-800 hover:text-indigo-600 transition-colors flex items-center justify-between"
+                  to={"/admin/samling/" + gathering.id}
+                  className={studioDetailLink + " transition-colors flex items-center justify-between"}
                 >
                   <span>{gathering.title}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-[var(--studio-muted)]" />
                 </Link>
               ) : (
-                <p className="font-bold text-slate-800">Ukjent samling</p>
+                <p className="font-bold text-[var(--studio-text)]">Ukjent samling</p>
               )}
-              <div className="text-[11px] text-slate-600 flex items-center gap-1.5 font-medium">
+              <div className="text-[11px] text-[var(--studio-muted)] flex items-center gap-1.5 font-medium">
                 <span>{formattedDate}</span>
               </div>
               {gathering?.location && (
-                <div className="text-[11px] text-slate-500 flex items-center gap-1">
-                  <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                <div className="text-[11px] text-[var(--studio-muted)] flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-[var(--studio-muted)] shrink-0" />
                   <span>{gathering.location}</span>
                 </div>
               )}
@@ -233,23 +195,23 @@ export const AdminTaskDetailPage: React.FC = () => {
 
           {/* Gruppe Details */}
           <div className="space-y-1.5 text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-              <Users className="w-3.5 h-3.5 text-slate-500" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--studio-muted)] flex items-center gap-1">
+              <Users className="w-3.5 h-3.5 text-[var(--studio-muted)]" />
               Gruppe
             </span>
-            <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+            <div className={studioDetailRow + " flex items-center justify-between"}>
               <div>
                 {group ? (
                   <Link
-                    to={`/admin/gruppe/${group.id}`}
+                    to={"/admin/gruppe/" + group.id}
                     id="link-task-group"
-                    className="font-bold text-slate-800 hover:text-indigo-600 transition-colors flex items-center gap-1"
+                    className={studioDetailLink + " transition-colors flex items-center gap-1"}
                   >
                     {group.name}
-                    <ChevronRight className="w-3 h-3 text-slate-400" />
+                    <ChevronRight className="w-3 h-3 text-[var(--studio-muted)]" />
                   </Link>
                 ) : (
-                  <span className="font-bold text-slate-800">Ukjent gruppe</span>
+                  <span className="font-bold text-[var(--studio-text)]">Ukjent gruppe</span>
                 )}
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
@@ -259,13 +221,13 @@ export const AdminTaskDetailPage: React.FC = () => {
           </div>
 
           {/* Bemanningsbehov Section */}
-          <div className="space-y-2 text-xs border-t border-slate-100 pt-3">
+          <div className="space-y-2 text-xs border-t border-[var(--studio-border)] pt-3">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--studio-muted)] flex items-center gap-1">
                 <Hash className="w-3.5 h-3.5 text-indigo-600" />
                 Bemanningsbehov
               </span>
-              <span className="text-[11px] font-bold text-slate-700">
+              <span className="text-[11px] font-bold text-[var(--studio-text)]">
                 {task.neededCount !== undefined ? `${task.neededCount} personer` : "Behov ikke satt"}
               </span>
             </div>
@@ -277,11 +239,11 @@ export const AdminTaskDetailPage: React.FC = () => {
                 value={neededCountInput}
                 onChange={(e) => setNeededCountInput(e.target.value)}
                 placeholder="F.eks. 2 (eller tomt for 'ikke satt')"
-                className="flex-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
+                className={studioDetailInput}
               />
               <button
                 type="submit"
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                className="px-3 py-1.5 bg-[var(--studio-surface)] hover:bg-[var(--studio-bg)] text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
               >
                 Oppdater behov
               </button>
@@ -289,19 +251,19 @@ export const AdminTaskDetailPage: React.FC = () => {
           </div>
 
           {/* Personstatus for oppgaven */}
-          <div className="space-y-2 text-xs border-t border-slate-100 pt-3">
+          <div className="space-y-2 text-xs border-t border-[var(--studio-border)] pt-3">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--studio-muted)] flex items-center gap-1">
                 <Users2 className="w-3.5 h-3.5 text-emerald-600" />
                 Personstatus for oppgaven ({allAssignedPersonsWithStatus.length})
               </span>
-              <span className="text-[10px] font-semibold text-slate-500">
+              <span className="text-[10px] font-semibold text-[var(--studio-muted)]">
                 {confirmedCount} bekreftet
               </span>
             </div>
 
             {allAssignedPersonsWithStatus.length === 0 ? (
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-400 italic text-xs">
+              <div className="p-3 bg-[var(--studio-row)] rounded-xl border border-[var(--studio-border)] text-[var(--studio-muted)] italic text-xs">
                 Ingen personer er tilknyttet eller forespurt for denne oppgaven ennå.
               </div>
             ) : (
@@ -309,31 +271,31 @@ export const AdminTaskDetailPage: React.FC = () => {
                 {allAssignedPersonsWithStatus.map(({ person, assignment, response }) => (
                   <div
                     key={assignment.id}
-                    className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-start justify-between gap-2"
+                    className={studioDetailRow + " flex items-start justify-between gap-2"}
                   >
                     <div className="space-y-0.5">
                       {person ? (
                         <Link
-                          to={`/admin/person/${person.id}`}
-                          className="font-bold text-slate-800 hover:text-indigo-600 transition-colors inline-flex items-center gap-1"
+                          to={"/admin/person/" + person.id}
+                          className={studioDetailLink + " transition-colors inline-flex items-center gap-1"}
                         >
                           {person.name}
-                          <ChevronRight className="w-3 h-3 text-slate-400" />
+                          <ChevronRight className="w-3 h-3 text-[var(--studio-muted)]" />
                         </Link>
                       ) : (
-                        <span className="font-bold text-slate-800">Ukjent person</span>
+                        <span className="font-bold text-[var(--studio-text)]">Ukjent person</span>
                       )}
 
-                      <div className="flex items-center gap-3 text-[11px] text-slate-500 pt-0.5">
+                      <div className="flex items-center gap-3 text-[11px] text-[var(--studio-muted)] pt-0.5">
                         {person?.phone && (
                           <span className="flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-slate-400" />
+                            <Phone className="w-3 h-3 text-[var(--studio-muted)]" />
                             {person.phone}
                           </span>
                         )}
                         {person?.email && (
                           <span className="flex items-center gap-1">
-                            <Mail className="w-3 h-3 text-slate-400" />
+                            <Mail className="w-3 h-3 text-[var(--studio-muted)]" />
                             {person.email}
                           </span>
                         )}
@@ -346,7 +308,7 @@ export const AdminTaskDetailPage: React.FC = () => {
                           response === "withdrawn"
                             ? "bg-red-100 text-red-700 border border-red-200"
                             : response === "declined"
-                            ? "bg-slate-200 text-slate-700"
+                            ? "bg-slate-200 text-[var(--studio-text)]"
                             : "bg-amber-100 text-amber-800 border border-amber-200"
                         }`}
                       >
@@ -366,10 +328,10 @@ export const AdminTaskDetailPage: React.FC = () => {
         <form onSubmit={handleSaveInstruction} className="space-y-3">
           <section
             id="admin-task-instruction-section"
-            className="p-4 bg-white rounded-2xl border border-slate-200/80 space-y-3 shadow-xs"
+            className={studioDetailSection}
           >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+            <div className="flex items-center justify-between border-b border-[var(--studio-border)] pb-2">
+              <span className="text-xs font-bold text-[var(--studio-text)] flex items-center gap-1.5">
                 <FileText className="w-4 h-4 text-indigo-600" />
                 Instruks for rollen
               </span>
@@ -390,7 +352,7 @@ export const AdminTaskDetailPage: React.FC = () => {
             <div className="space-y-1.5">
               <label
                 htmlFor="textarea-task-instruction"
-                className="text-xs font-bold text-slate-700 block"
+                className="text-xs font-bold text-[var(--studio-muted)] block"
               >
                 Rediger instruks:
               </label>
@@ -400,7 +362,7 @@ export const AdminTaskDetailPage: React.FC = () => {
                 value={instruction}
                 onChange={(e) => setInstruction(e.target.value)}
                 placeholder="Skriv inn en detaljert instruks for hva personen som har denne rollen skal gjøre..."
-                className="w-full px-3 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-normal text-slate-800 leading-relaxed resize-y"
+                className={studioDetailInput}
               />
             </div>
 
@@ -420,17 +382,17 @@ export const AdminTaskDetailPage: React.FC = () => {
         </form>
 
         {/* Member View Link for comparison */}
-        <div className="p-3 bg-slate-100/80 rounded-2xl border border-slate-200 text-center">
+        <div className="p-3 bg-[var(--studio-row)] rounded-2xl border border-[var(--studio-border)] text-center">
           <Link
             to={`/oppgave/${task.id}`}
             id="link-view-task-as-member"
-            className="text-xs font-semibold text-slate-600 hover:text-indigo-700 inline-flex items-center gap-1 transition-colors"
+            className="text-xs font-semibold text-[var(--studio-muted)] hover:text-[var(--studio-accent-text)] inline-flex items-center gap-1 transition-colors"
           >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+            <Sparkles className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
             Se oppgaven slik frivillige ser den (/oppgave/{task.id})
           </Link>
         </div>
       </div>
-    </div>
+    </StudioDetailShell>
   );
 };

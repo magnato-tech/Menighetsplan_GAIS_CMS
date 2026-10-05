@@ -277,20 +277,20 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--studio-border)] pb-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5">
-            <Database className="w-6 h-6 text-indigo-400" />
+          <h2 className="text-xl sm:text-2xl font-black text-[var(--studio-text)] flex items-center gap-2.5">
+            <Database className="w-6 h-6 text-[var(--studio-icon)]" />
             <span>Database og Testdata</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs text-[var(--studio-muted)] mt-1 max-w-2xl leading-relaxed">
             Administrer Firestore-databasen, fyll inn testdata for menigheten med egne glidebrytere eller ferdige pakker, styr moduler og
             overvåk sanntidsstatus.
           </p>
         </div>
 
         {/* Live Firestore Connection Status */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/80 shrink-0 self-start sm:self-auto">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--studio-surface)] border border-[var(--studio-border)] shrink-0 self-start sm:self-auto">
           <span
             className={`w-2 h-2 rounded-full ${
               isFirestoreConnected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
@@ -305,72 +305,72 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
       {/* Seksjon 1: Live Status og Tellere */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+          <h3 className="text-xs font-bold text-[var(--studio-muted)] uppercase tracking-wider">
             Gjeldende innhold i databasen ({totalDocuments} dokumenter)
           </h3>
-          <span className="text-[11px] text-slate-400">Sanntidssynkronisert med Firestore</span>
+          <span className="text-[11px] text-[var(--studio-muted)]">Sanntidssynkronisert med Firestore</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-indigo-950/80 text-indigo-400 shrink-0">
+          <div className="p-3.5 rounded-xl bg-[var(--studio-surface)] border border-[var(--studio-border)] flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-[var(--studio-accent-bg)] text-[var(--studio-icon)] shrink-0">
               <Users className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-lg font-bold text-white font-mono tabular-nums">{allPersons.length}</div>
-              <div className="text-[11px] text-slate-400">Personer</div>
+              <div className="text-lg font-bold text-[var(--studio-text)] font-mono tabular-nums">{allPersons.length}</div>
+              <div className="text-[11px] text-[var(--studio-muted)]">Personer</div>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center gap-3">
+          <div className="p-3.5 rounded-xl bg-[var(--studio-surface)] border border-[var(--studio-border)] flex items-center gap-3">
             <div className="p-2 rounded-lg bg-emerald-950/80 text-emerald-400 shrink-0">
               <FolderKanban className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-lg font-bold text-white font-mono tabular-nums">{groups.length}</div>
-              <div className="text-[11px] text-slate-400">Grupper</div>
+              <div className="text-lg font-bold text-[var(--studio-text)] font-mono tabular-nums">{groups.length}</div>
+              <div className="text-[11px] text-[var(--studio-muted)]">Grupper</div>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center gap-3">
+          <div className="p-3.5 rounded-xl bg-[var(--studio-surface)] border border-[var(--studio-border)] flex items-center gap-3">
             <div className="p-2 rounded-lg bg-amber-950/80 text-amber-400 shrink-0">
               <Calendar className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-lg font-bold text-white font-mono tabular-nums">{gatherings.length}</div>
-              <div className="text-[11px] text-slate-400">Samlinger</div>
+              <div className="text-lg font-bold text-[var(--studio-text)] font-mono tabular-nums">{gatherings.length}</div>
+              <div className="text-[11px] text-[var(--studio-muted)]">Samlinger</div>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center gap-3">
+          <div className="p-3.5 rounded-xl bg-[var(--studio-surface)] border border-[var(--studio-border)] flex items-center gap-3">
             <div className="p-2 rounded-lg bg-sky-950/80 text-sky-400 shrink-0">
               <ListTodo className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-lg font-bold text-white font-mono tabular-nums">{tasks.length}</div>
-              <div className="text-[11px] text-slate-400">Oppgaver</div>
+              <div className="text-lg font-bold text-[var(--studio-text)] font-mono tabular-nums">{tasks.length}</div>
+              <div className="text-[11px] text-[var(--studio-muted)]">Oppgaver</div>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center gap-3">
+          <div className="p-3.5 rounded-xl bg-[var(--studio-surface)] border border-[var(--studio-border)] flex items-center gap-3">
             <div className="p-2 rounded-lg bg-purple-950/80 text-purple-400 shrink-0">
               <Radio className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-lg font-bold text-white font-mono tabular-nums">{assignments.length}</div>
-              <div className="text-[11px] text-slate-400">Tildelinger</div>
+              <div className="text-lg font-bold text-[var(--studio-text)] font-mono tabular-nums">{assignments.length}</div>
+              <div className="text-[11px] text-[var(--studio-muted)]">Tildelinger</div>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center gap-3">
+          <div className="p-3.5 rounded-xl bg-[var(--studio-surface)] border border-[var(--studio-border)] flex items-center gap-3">
             <div className="p-2 rounded-lg bg-rose-950/80 text-rose-400 shrink-0">
               <FileText className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-lg font-bold text-white font-mono tabular-nums">
+              <div className="text-lg font-bold text-[var(--studio-text)] font-mono tabular-nums">
                 {pages.length + news.length + sermons.length + staff.length}
               </div>
-              <div className="text-[11px] text-slate-400">CMS & Innhold</div>
+              <div className="text-[11px] text-[var(--studio-muted)]">CMS & Innhold</div>
             </div>
           </div>
         </div>
@@ -379,14 +379,14 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
       {/* Seksjon 2: Populeringsvelger */}
       <section className="space-y-4">
         {/* Modus-velger */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-3">
+        <div className="flex flex-wrap items-center gap-2 border-b border-[var(--studio-border)] pb-3">
           <button
             type="button"
             onClick={() => setGeneratorMode("standard")}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               generatorMode === "standard"
                 ? "bg-indigo-600 text-white shadow-sm"
-                : "bg-slate-800/80 text-slate-400 hover:text-white"
+                : "bg-[var(--studio-surface)] text-[var(--studio-muted)] hover:text-[var(--studio-text)]"
             }`}
           >
             Hurtiggenerator (Datatyper & slider 1-100)
@@ -397,7 +397,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               generatorMode === "advanced"
                 ? "bg-indigo-600 text-white shadow-sm"
-                : "bg-slate-800/80 text-slate-400 hover:text-white"
+                : "bg-[var(--studio-surface)] text-[var(--studio-muted)] hover:text-[var(--studio-text)]"
             }`}
           >
             Avansert planlegger-oppsett (Pakker & detaljglidere)
@@ -405,23 +405,23 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
         </div>
 
         {generatorMode === "standard" ? (
-          <div className="p-5 sm:p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80">
+          <div className="p-5 sm:p-6 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)]">
             <DatabaseTestdataTab showFeedback={showFeedback} />
           </div>
         ) : (
-          <div className="p-5 sm:p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-700/60 pb-4">
+          <div className="p-5 sm:p-6 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--studio-border)] pb-4">
               <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <h3 className="text-base font-bold text-[var(--studio-text)] flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-400" />
                   <span>Generer og populer testdata</span>
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-[var(--studio-muted)] mt-0.5">
                   Velg en ferdig pakke eller finjuster glidebryterne for nøyaktig antall personer, grupper, samlinger og oppgaver.
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-indigo-300 font-semibold bg-indigo-950/80 border border-indigo-800/80 px-2.5 py-1 rounded-lg">
+                <span className="text-[11px] text-[var(--studio-accent-text)] font-semibold bg-[var(--studio-accent-bg)] border border-[var(--studio-accent-border)] px-2.5 py-1 rounded-lg">
                   Maks oppsett: 32 personer / 14 grupper
                 </span>
               </div>
@@ -429,7 +429,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
 
         {/* 1. Pakkevelgere */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-300">Velg en forhåndsdefinert pakke:</label>
+          <label className="text-xs font-bold text-[var(--studio-muted)]">Velg en forhåndsdefinert pakke:</label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {PRESET_PACKAGES.map((preset) => {
               const isSelected = activePreset === preset.id;
@@ -440,27 +440,27 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
                   onClick={() => applyPreset(preset)}
                   className={`p-4 rounded-xl text-left border transition-all cursor-pointer flex flex-col justify-between space-y-2 ${
                     isSelected
-                      ? "bg-indigo-950/60 border-indigo-500 shadow-md ring-1 ring-indigo-500/50"
-                      : "bg-slate-900/60 border-slate-700 hover:border-slate-600 hover:bg-slate-900"
+                      ? "bg-[var(--studio-accent-bg)] border-indigo-500 shadow-md ring-1 ring-indigo-500/50"
+                      : "bg-[var(--studio-row)] border-[var(--studio-border)] hover:border-[var(--studio-border)] hover:bg-[var(--studio-bg)]"
                   }`}
                 >
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-white text-sm">{preset.name}</span>
+                      <span className="font-bold text-[var(--studio-text)] text-sm">{preset.name}</span>
                       {isSelected ? (
                         <span className="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center">
                           <Check className="w-3 h-3" />
                         </span>
                       ) : (
-                        <span className="text-[10px] font-semibold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] font-semibold text-[var(--studio-muted)] bg-[var(--studio-surface)] px-1.5 py-0.5 rounded">
                           {preset.tag}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-400 leading-relaxed">{preset.description}</p>
+                    <p className="text-xs text-[var(--studio-muted)] leading-relaxed">{preset.description}</p>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-800/80 text-[11px] text-slate-300 font-mono flex items-center justify-between">
+                  <div className="pt-2 border-t border-[var(--studio-border)] text-[11px] text-[var(--studio-muted)] font-mono flex items-center justify-between">
                     <span>{preset.persons} personer</span>
                     <span>{preset.groups} grupper</span>
                     <span>{preset.gatherings} samlinger</span>
@@ -472,10 +472,10 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
         </div>
 
         {/* 2. Glidebrytere for finjustering */}
-        <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-700/60 space-y-4">
+        <div className="p-4 rounded-xl bg-[var(--studio-row)] border border-[var(--studio-border)] space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-              <Sliders className="w-3.5 h-3.5 text-indigo-400" />
+              <Sliders className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
               <span>Finjuster antall elementer for populering</span>
             </span>
             {activePreset === "custom" && (
@@ -489,8 +489,8 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             {/* Personer */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-300 font-semibold">Personer:</span>
-                <span className="font-mono font-bold text-indigo-400 text-sm">{personCount} av 32</span>
+                <span className="text-[var(--studio-muted)] font-semibold">Personer:</span>
+                <span className="font-mono font-bold text-[var(--studio-icon)] text-sm">{personCount} av 32</span>
               </div>
               <input
                 type="range"
@@ -500,7 +500,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
                 onChange={(e) => handleCustomChange(setPersonCount, Number(e.target.value))}
                 className="w-full accent-indigo-500 cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+              <div className="flex justify-between text-[10px] text-[var(--studio-muted)] font-mono">
                 <span>4 (Minimum)</span>
                 <span>16</span>
                 <span>32 (Maks)</span>
@@ -510,7 +510,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             {/* Grupper */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-300 font-semibold">Grupper & Husfellesskap:</span>
+                <span className="text-[var(--studio-muted)] font-semibold">Grupper & Husfellesskap:</span>
                 <span className="font-mono font-bold text-emerald-400 text-sm">{groupCount} av 14</span>
               </div>
               <input
@@ -521,7 +521,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
                 onChange={(e) => handleCustomChange(setGroupCount, Number(e.target.value))}
                 className="w-full accent-emerald-500 cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+              <div className="flex justify-between text-[10px] text-[var(--studio-muted)] font-mono">
                 <span>2 (Kjerne)</span>
                 <span>6</span>
                 <span>12 (Maks)</span>
@@ -531,7 +531,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             {/* Samlinger */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-300 font-semibold">Samlinger & Gudstjenester:</span>
+                <span className="text-[var(--studio-muted)] font-semibold">Samlinger & Gudstjenester:</span>
                 <span className="font-mono font-bold text-amber-400 text-sm">{gatheringCount} av 19</span>
               </div>
               <input
@@ -542,7 +542,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
                 onChange={(e) => handleCustomChange(setGatheringCount, Number(e.target.value))}
                 className="w-full accent-amber-500 cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+              <div className="flex justify-between text-[10px] text-[var(--studio-muted)] font-mono">
                 <span>2</span>
                 <span>10</span>
                 <span>19 (Maks)</span>
@@ -552,7 +552,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             {/* Oppgaver */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-300 font-semibold">Bemanningsoppgaver:</span>
+                <span className="text-[var(--studio-muted)] font-semibold">Bemanningsoppgaver:</span>
                 <span className="font-mono font-bold text-sky-400 text-sm">{taskCount} av 21</span>
               </div>
               <input
@@ -563,7 +563,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
                 onChange={(e) => handleCustomChange(setTaskCount, Number(e.target.value))}
                 className="w-full accent-sky-500 cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+              <div className="flex justify-between text-[10px] text-[var(--studio-muted)] font-mono">
                 <span>2</span>
                 <span>11</span>
                 <span>21 (Maks)</span>
@@ -573,12 +573,12 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
         </div>
 
         {/* Dynamisk oppsummering av hva som inkluderes */}
-        <div className="p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-900/50 text-xs text-slate-300 space-y-1">
-          <div className="font-bold text-indigo-300 flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />
+        <div className="p-3.5 rounded-xl bg-[var(--studio-accent-bg)] border border-[var(--studio-accent-border)] text-xs text-[var(--studio-muted)] space-y-1">
+          <div className="font-bold text-[var(--studio-accent-text)] flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
             <span>Hva inkluderes med {personCount} personer og {groupCount} grupper:</span>
           </div>
-          <p className="text-slate-400 text-[11px] leading-relaxed">
+          <p className="text-[var(--studio-muted)] text-[11px] leading-relaxed">
             {personCount >= 32
               ? "Alle 3 pastorer (Hovedpastor, Ungdomspastor, Barne- og familiepastor), hele menighetsrådet (7 personer), hele staben (diakon, musikk, teknikk), samtlige frivillige teamledere og 4 husfellesskap (Sentrum, Havna, Borkedalen, Ung Voksen)."
               : personCount >= 16
@@ -590,13 +590,13 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
         </div>
 
         {/* 3. Avkrysningsboks for selektiv tømming før populering */}
-        <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-700/80 flex items-start gap-3">
+        <div className="p-3.5 rounded-xl bg-[var(--studio-input)] border border-[var(--studio-border)] flex items-start gap-3">
           <input
             id="clear-before-populate-checkbox"
             type="checkbox"
             checked={clearBeforePopulate}
             onChange={(e) => setClearBeforePopulate(e.target.checked)}
-            className="mt-0.5 w-4 h-4 rounded border-slate-600 bg-slate-800 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900 cursor-pointer accent-indigo-600"
+            className="mt-0.5 w-4 h-4 rounded border-[var(--studio-border)] bg-[var(--studio-surface)] text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900 cursor-pointer accent-indigo-600"
           />
           <label htmlFor="clear-before-populate-checkbox" className="text-xs space-y-0.5 cursor-pointer">
             <div className="font-bold text-slate-200 flex items-center gap-1.5">
@@ -605,7 +605,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
                 Standard / Anbefalt
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
+            <p className="text-[11px] text-[var(--studio-muted)] leading-relaxed">
               Fjerner tidligere testpersoner, grupper, samlinger og oppgaver i planleggeren før nye data legges inn, slik at databasen forblir ren og fri for duplikater.
               <span className="text-emerald-300 font-medium ml-1">
                 CMS-sider, artikler, taler og nettstedsinnstillinger bevares trygt intakt.
@@ -616,14 +616,14 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
 
         {/* Hovedhandlinger for populering */}
         <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="text-xs text-slate-400">
+          <div className="text-xs text-[var(--studio-muted)]">
             {clearBeforePopulate ? (
               <span className="text-amber-300/90 flex items-center gap-1.5">
                 <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
                 Tømmer eksisterende planleggerdata før fylling
               </span>
             ) : (
-              <span className="text-slate-400">
+              <span className="text-[var(--studio-muted)]">
                 Overskriver eksisterende dokumenter med samme ID (uten sletting)
               </span>
             )}
@@ -635,7 +635,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
               type="button"
               onClick={handleQuickPopulate32}
               disabled={isWorking}
-              className="px-4 py-2.5 rounded-xl bg-indigo-950/80 hover:bg-indigo-900/80 border border-indigo-700/70 text-indigo-200 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+              className="px-4 py-2.5 rounded-xl bg-[var(--studio-accent-bg)] hover:bg-indigo-900/80 border border-indigo-700/70 text-[var(--studio-accent-text)] text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-50"
             >
               <Sparkles className="w-4 h-4 text-amber-400" />
               <span>Populer 32 testpersoner</span>
@@ -666,34 +666,34 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
   </section>
 
       {/* Seksjon 3: Valgfrie Tilleggsmoduler (Kalender & Meldinger) */}
-      <section className="p-5 sm:p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-4">
+      <section className="p-5 sm:p-6 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-4">
         <div>
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <h3 className="text-base font-bold text-[var(--studio-text)] flex items-center gap-2">
             <CalendarDays className="w-4 h-4 text-emerald-400" />
             <span>Valgfrie tilleggsmoduler</span>
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[var(--studio-muted)] mt-0.5">
             Aktiver eller deaktiver tilleggsfunksjoner for menighetsplanleggeren.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
           {/* Kalendermodul */}
-          <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-700/60 flex items-center justify-between gap-4">
+          <div className="p-4 rounded-xl bg-[var(--studio-row)] border border-[var(--studio-border)] flex items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-white text-sm">Kalendermodul</span>
+                <span className="font-bold text-[var(--studio-text)] text-sm">Kalendermodul</span>
                 <span
                   className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
                     moduleConfig.kalender === "on"
                       ? "bg-emerald-950/80 text-emerald-400 border border-emerald-800/80"
-                      : "bg-slate-800 text-slate-400"
+                      : "bg-[var(--studio-surface)] text-[var(--studio-muted)]"
                   }`}
                 >
                   {moduleConfig.kalender === "on" ? "PÅ" : "AV"}
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--studio-muted)]">
                 Felles kalenderoversikt for menighetens gudstjenester og aktiviteter.
               </p>
             </div>
@@ -704,7 +704,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${
                 moduleConfig.kalender === "on"
                   ? "bg-emerald-600 hover:bg-emerald-500 text-white"
-                  : "bg-slate-800 hover:bg-slate-700 text-slate-300"
+                  : "bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)]"
               }`}
             >
               {moduleConfig.kalender === "on" ? "Slå av" : "Slå på"}
@@ -712,21 +712,21 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
           </div>
 
           {/* Meldingsmodul */}
-          <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-700/60 flex items-center justify-between gap-4">
+          <div className="p-4 rounded-xl bg-[var(--studio-row)] border border-[var(--studio-border)] flex items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-white text-sm">Meldingsmodul</span>
+                <span className="font-bold text-[var(--studio-text)] text-sm">Meldingsmodul</span>
                 <span
                   className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
                     moduleConfig.meldinger === "on"
-                      ? "bg-indigo-950/80 text-indigo-400 border border-indigo-800/80"
-                      : "bg-slate-800 text-slate-400"
+                      ? "bg-[var(--studio-accent-bg)] text-[var(--studio-icon)] border border-[var(--studio-accent-border)]"
+                      : "bg-[var(--studio-surface)] text-[var(--studio-muted)]"
                   }`}
                 >
                   {moduleConfig.meldinger === "on" ? "PÅ" : "AV"}
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--studio-muted)]">
                 Intern meldingsflyt og kunngjøringer til frivillige team.
               </p>
             </div>
@@ -737,7 +737,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${
                 moduleConfig.meldinger === "on"
                   ? "bg-indigo-600 hover:bg-indigo-500 text-white"
-                  : "bg-slate-800 hover:bg-slate-700 text-slate-300"
+                  : "bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)]"
               }`}
             >
               {moduleConfig.meldinger === "on" ? "Slå av" : "Slå på"}
@@ -747,24 +747,24 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
       </section>
 
       {/* Seksjon 4: Offentlig API-endepunkt & Integrasjon */}
-      <section className="p-5 sm:p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80 space-y-4">
+      <section className="p-5 sm:p-6 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-4">
         <div>
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <h3 className="text-base font-bold text-[var(--studio-text)] flex items-center gap-2">
             <Radio className="w-4 h-4 text-sky-400" />
             <span>Offentlig Nettside & CMS-integrasjon</span>
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[var(--studio-muted)] mt-0.5">
             Nettside-CMS-et henter offentlige samlinger og gudstjenester direkte fra Menighetsplan.
           </p>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-4 rounded-xl bg-[var(--studio-row)] border border-[var(--studio-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-bold text-sky-300">GET /api/public/gatherings</span>
-              <span className="text-[10px] text-slate-400">JSON API</span>
+              <span className="text-[10px] text-[var(--studio-muted)]">JSON API</span>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[var(--studio-muted)]">
               Leverer sanitert JSON-format i henhold til API-kontrakten. Kun samlinger merket som offentlige deles.
             </p>
             {apiTestResponse && (
@@ -809,13 +809,13 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
           {/* Valg 1: Tøm kun testdata */}
-          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-700/80 flex flex-col justify-between space-y-3">
+          <div className="p-4 rounded-xl bg-[var(--studio-row)] border border-[var(--studio-border)] flex flex-col justify-between space-y-3">
             <div className="space-y-1">
-              <span className="font-bold text-white text-xs flex items-center gap-1.5">
+              <span className="font-bold text-[var(--studio-text)] text-xs flex items-center gap-1.5">
                 <Trash2 className="w-3.5 h-3.5 text-amber-400" />
                 <span>Tøm kun testdata (Personer & Planlegger)</span>
               </span>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
+              <p className="text-[11px] text-[var(--studio-muted)] leading-relaxed">
                 Fjerner alle testpersoner, grupper, samlinger og oppgaver.{" "}
                 <strong className="text-emerald-400 font-semibold">CMS-sider og nyheter forblir uberørt.</strong>
               </p>
@@ -832,13 +832,13 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
           </div>
 
           {/* Valg 2: Gjenopprett demo-data */}
-          <div className="p-4 rounded-xl bg-indigo-950/40 border border-indigo-900/60 flex flex-col justify-between space-y-3">
+          <div className="p-4 rounded-xl bg-[var(--studio-accent-bg)] border border-[var(--studio-accent-border)] flex flex-col justify-between space-y-3">
             <div className="space-y-1">
               <span className="font-bold text-indigo-100 text-xs flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
+                <Sparkles className="w-3.5 h-3.5 text-[var(--studio-accent-text)]" />
                 <span>Legg inn demo-data på nytt</span>
               </span>
-              <p className="text-[11px] text-indigo-200/80 leading-relaxed">
+              <p className="text-[11px] text-[var(--studio-accent-text)]/80 leading-relaxed">
                 Fyller databasen med 32 personer, grupper, samlinger, oppgaver og alle{" "}
                 {DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller fra rollebiblioteket.
               </p>
@@ -881,22 +881,22 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
       {/* Bekreftelsesdialog for tømming av kun planlegger-data */}
       {confirmClearPlannerDialog && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--studio-overlay)] backdrop-blur-xs p-4"
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-slate-900 border border-amber-800/80 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-[var(--studio-bg)] border border-amber-800/80 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3 text-amber-400">
               <div className="w-10 h-10 rounded-xl bg-amber-950 border border-amber-800 flex items-center justify-center shrink-0">
                 <AlertCircle className="w-5 h-5 text-amber-400" />
               </div>
               <div>
-                <h4 className="text-base font-bold text-white">Tømme testpersoner og planleggerdata?</h4>
+                <h4 className="text-base font-bold text-[var(--studio-text)]">Tømme testpersoner og planleggerdata?</h4>
                 <p className="text-xs text-amber-300">CMS-sider og nyheter bevares.</p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-[var(--studio-muted)] leading-relaxed">
               Dette sletter alle dokumenter i samlingene for personer ({allPersons.length}), grupper ({groups.length}), samlinger ({gatherings.length}) og oppgaver ({tasks.length}). CMS-sider og nyhetsartikler forblir urørt.
             </p>
 
@@ -905,7 +905,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
                 type="button"
                 onClick={() => setConfirmClearPlannerDialog(false)}
                 disabled={isWorking}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] text-xs font-semibold cursor-pointer"
               >
                 Avbryt
               </button>
@@ -926,22 +926,22 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
       {/* Bekreftelsesdialog for full sletting */}
       {confirmDeleteDialog && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--studio-overlay)] backdrop-blur-xs p-4"
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-slate-900 border border-red-800/80 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-[var(--studio-bg)] border border-red-800/80 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3 text-red-400">
               <div className="w-10 h-10 rounded-xl bg-red-950 border border-red-800 flex items-center justify-center shrink-0">
                 <AlertCircle className="w-5 h-5 text-red-400" />
               </div>
               <div>
-                <h4 className="text-base font-bold text-white">Slette absolutt alle data i databasen?</h4>
+                <h4 className="text-base font-bold text-[var(--studio-text)]">Slette absolutt alle data i databasen?</h4>
                 <p className="text-xs text-red-300">Dette kan ikke angres.</p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-[var(--studio-muted)] leading-relaxed">
               Dette vil permanent slette <strong>{totalDocuments} dokumenter</strong> fra Firestore for alle brukere
               (personer, grupper, samlinger, oppgaver, meldinger og CMS-innhold som sider og nyheter).
             </p>
@@ -951,7 +951,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
                 type="button"
                 onClick={() => setConfirmDeleteDialog(false)}
                 disabled={isWorking}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] text-xs font-semibold cursor-pointer"
               >
                 Avbryt
               </button>

@@ -84,9 +84,9 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
   return (
     <>
       <div className="max-w-5xl mx-auto space-y-6">
-        <div className="border-b border-slate-800 pb-4">
-          <h2 className="text-xl sm:text-2xl font-black text-white">Oppgaver & Frivilligoversikt</h2>
-          <p className="text-xs text-slate-400">
+        <div className="border-b border-[var(--studio-border)] pb-4">
+          <h2 className="text-xl sm:text-2xl font-black text-[var(--studio-text)]">Oppgaver & Frivilligoversikt</h2>
+          <p className="text-xs text-[var(--studio-muted)]">
             Se status for alle tildelte oppgaver, vikar-varsler og bekreftelser for menighetens samlinger.
           </p>
         </div>
@@ -97,7 +97,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
             type="button"
             onClick={() => setTaskFilter("all")}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              taskFilter === "all" ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+              taskFilter === "all" ? "bg-indigo-600 text-white" : "bg-[var(--studio-surface)] text-[var(--studio-muted)] hover:bg-[var(--studio-hover)]"
             }`}
           >
             Alle oppgaver ({adminTasks.length})
@@ -106,7 +106,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
             type="button"
             onClick={() => setTaskFilter("urgent")}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              taskFilter === "urgent" ? "bg-rose-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+              taskFilter === "urgent" ? "bg-rose-600 text-white" : "bg-[var(--studio-surface)] text-[var(--studio-muted)] hover:bg-[var(--studio-hover)]"
             }`}
           >
             <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
@@ -116,7 +116,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
             type="button"
             onClick={() => setTaskFilter("uncovered")}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              taskFilter === "uncovered" ? "bg-amber-600 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+              taskFilter === "uncovered" ? "bg-amber-600 text-white" : "bg-[var(--studio-surface)] text-[var(--studio-muted)] hover:bg-[var(--studio-hover)]"
             }`}
           >
             Venter på svar / Ubesatt ({unassignedTasksCount})
@@ -143,16 +143,16 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
                     isAcute
                       ? "bg-rose-950/30 border-rose-600/80 shadow-md"
                       : staffing.color === "red"
-                      ? "bg-slate-800/90 border-rose-900/60"
+                      ? "bg-[var(--studio-surface)] border-rose-900/60"
                       : staffing.color === "yellow"
-                      ? "bg-slate-800/80 border-amber-900/60"
-                      : "bg-slate-800/80 border-slate-700/80"
+                      ? "bg-[var(--studio-surface)] border-amber-900/60"
+                      : "bg-[var(--studio-surface)] border-[var(--studio-border)]"
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-bold text-white text-base">{task.title}</h3>
+                        <h3 className="font-bold text-[var(--studio-text)] text-base">{task.title}</h3>
 
                         {isAcute && (
                           <span className="text-[10px] font-black text-rose-300 bg-rose-950 border border-rose-600 px-2 py-0.5 rounded animate-pulse flex items-center gap-1">
@@ -181,21 +181,21 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
                           </span>
                         )}
 
-                        <span className="text-[10px] text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">
+                        <span className="text-[10px] text-[var(--studio-muted)] bg-[var(--studio-bg)] border border-[var(--studio-border)] px-2 py-0.5 rounded">
                           {item.availableSpots} ledig(e) plass(er)
                         </span>
                       </div>
 
-                      <p className="text-xs text-slate-300">
-                        Arrangement: <strong className="text-white">{g?.title || "Uten tilknyttet samling"}</strong>
+                      <p className="text-xs text-[var(--studio-muted)]">
+                        Arrangement: <strong className="text-[var(--studio-text)]">{g?.title || "Uten tilknyttet samling"}</strong>
                         {g?.startsAt && ` · ${formatNorwegianDateTime(g.startsAt)}`}
                       </p>
 
                       {/* Assigned persons list */}
                       <div className="pt-1.5 flex flex-wrap items-center gap-2 text-xs">
-                        <span className="text-slate-400 font-semibold text-[11px]">Tildelt:</span>
+                        <span className="text-[var(--studio-muted)] font-semibold text-[11px]">Tildelt:</span>
                         {item.assignedPersonsList.length === 0 ? (
-                          <span className="text-slate-500 italic text-[11px]">Ingen personer tildelt ennå</span>
+                          <span className="text-[var(--studio-muted)] italic text-[11px]">Ingen personer tildelt ennå</span>
                         ) : (
                           item.assignedPersonsList.map((ap) => (
                             <span
@@ -252,16 +252,16 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
                       <button
                         type="button"
                         onClick={() => handleOpenReminderModal(item)}
-                        className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold flex items-center gap-1.5 border border-slate-700 cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg bg-[var(--studio-bg)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] font-semibold flex items-center gap-1.5 border border-[var(--studio-border)] cursor-pointer"
                         title="Purr / generer SMS- og Messenger-tekst"
                       >
-                        <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
+                        <MessageSquare className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
                         <span>Purr</span>
                       </button>
 
                       <Link
                         to={`/admin/oppgave/${task.id}`}
-                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium"
+                        className="px-3 py-1.5 rounded-lg bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] font-medium"
                       >
                         Rediger
                       </Link>
@@ -277,9 +277,9 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
       {/* MODAL 2: TILDEL ELLER FORESPØR FRIVILLIG                  */}
       {/* ========================================================= */}
       {assigningTaskItem && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 bg-[var(--studio-overlay)] backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-[var(--studio-bg)] border border-[var(--studio-border)] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--studio-border)] pb-3">
               <div className="flex items-center gap-2">
                 <div
                   className={`w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -295,10 +295,10 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">
+                  <h3 className="text-base font-bold text-[var(--studio-text)]">
                     {assignMode === "confirmed" ? "Tildel oppgave (Bekreftet)" : "Forespør frivillig (Venter på svar)"}
                   </h3>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-[var(--studio-muted)]">
                     {assigningTaskItem.task.title}
                   </p>
                 </div>
@@ -306,21 +306,21 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
               <button
                 type="button"
                 onClick={() => setAssigningTaskItem(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-[var(--studio-muted)] hover:text-[var(--studio-text)]"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Toggle switch between Tildel vs Forespør */}
-            <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+            <div className="grid grid-cols-2 p-1 rounded-xl bg-[var(--studio-panel-bg)] border border-[var(--studio-border)] text-xs">
               <button
                 type="button"
                 onClick={() => setAssignMode("confirmed")}
                 className={`py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   assignMode === "confirmed"
                     ? "bg-emerald-600 text-white shadow-xs"
-                    : "text-slate-400 hover:text-white"
+                    : "text-[var(--studio-muted)] hover:text-[var(--studio-text)]"
                 }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -332,7 +332,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
                 className={`py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   assignMode === "pending"
                     ? "bg-amber-600 text-white shadow-xs"
-                    : "text-slate-400 hover:text-white"
+                    : "text-[var(--studio-muted)] hover:text-[var(--studio-text)]"
                 }`}
               >
                 <Send className="w-3.5 h-3.5" />
@@ -340,23 +340,23 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
               </button>
             </div>
 
-            <div className="text-xs text-slate-400 space-y-1">
+            <div className="text-xs text-[var(--studio-muted)] space-y-1">
               <p>
                 {assignMode === "confirmed"
                   ? "Setter status umiddelbart til Bekreftet. Brukes når du allerede har avtalt vakten muntlig med personen."
                   : "Setter status til Venter på svar og sender en forespørsel til personen."}
               </p>
-              <p className="text-[11px] text-slate-500 font-mono">
+              <p className="text-[11px] text-[var(--studio-muted)] font-mono">
                 Ledige plasser på oppgaven: {assigningTaskItem.availableSpots} av {assigningTaskItem.neededCount}
               </p>
             </div>
 
             <div className="space-y-1.5 text-xs">
-              <label className="font-semibold text-slate-300">Velg person fra medlemsregisteret</label>
+              <label className="font-semibold text-[var(--studio-muted)]">Velg person fra medlemsregisteret</label>
               <select
                 value={selectedPersonIdToAssign}
                 onChange={(e) => setSelectedPersonIdToAssign(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-hidden focus:border-indigo-500 text-xs cursor-pointer"
+                className="w-full px-3 py-2.5 rounded-xl bg-[var(--studio-panel-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] focus:outline-hidden focus:border-indigo-500 text-xs cursor-pointer"
               >
                 <option value="">-- Velg person --</option>
                 {allPersons.map((p) => {
@@ -381,7 +381,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
               <button
                 type="button"
                 onClick={() => setAssigningTaskItem(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] text-xs font-semibold cursor-pointer"
               >
                 Avbryt
               </button>
@@ -391,7 +391,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
                 disabled={!selectedPersonIdToAssign}
                 className={`px-4 py-2 rounded-xl text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-all ${
                   !selectedPersonIdToAssign
-                    ? "opacity-50 cursor-not-allowed bg-slate-700"
+                    ? "opacity-50 cursor-not-allowed bg-[var(--studio-hover)]"
                     : assignMode === "confirmed"
                     ? "bg-emerald-600 hover:bg-emerald-500"
                     : "bg-amber-600 hover:bg-amber-500"
@@ -418,16 +418,16 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
       {/* MODAL 3: PURR / SEND PÅMINNELSE (SMS/MESSENGER)           */}
       {/* ========================================================= */}
       {reminderTaskItem && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-lg w-full space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 bg-[var(--studio-overlay)] backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-[var(--studio-bg)] border border-[var(--studio-border)] rounded-2xl p-6 max-w-lg w-full space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--studio-border)] pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-indigo-950/80 border border-indigo-700/80 flex items-center justify-center text-indigo-400">
+                <div className="w-8 h-8 rounded-lg bg-[var(--studio-accent-bg)] border border-indigo-700/80 flex items-center justify-center text-[var(--studio-icon)]">
                   <MessageSquare className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Purr / Send påminnelse</h3>
-                  <p className="text-[11px] text-slate-400">
+                  <h3 className="text-base font-bold text-[var(--studio-text)]">Purr / Send påminnelse</h3>
+                  <p className="text-[11px] text-[var(--studio-muted)]">
                     Oppgave: {reminderTaskItem.task.title}
                   </p>
                 </div>
@@ -435,26 +435,26 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
               <button
                 type="button"
                 onClick={() => setReminderTaskItem(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-[var(--studio-muted)] hover:text-[var(--studio-text)]"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-1.5 text-xs">
-              <label className="font-semibold text-slate-300">
+              <label className="font-semibold text-[var(--studio-muted)]">
                 Ferdigformatert melding (klar til sending via SMS, Messenger eller Spond)
               </label>
               <textarea
                 readOnly
                 rows={4}
                 value={reminderText}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-slate-200 text-xs focus:outline-hidden leading-relaxed select-all font-mono"
+                className="w-full px-3 py-2.5 rounded-xl bg-[var(--studio-panel-bg)] border border-[var(--studio-border)] text-slate-200 text-xs focus:outline-hidden leading-relaxed select-all font-mono"
               />
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-[11px] text-slate-400 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-indigo-400 shrink-0" />
+            <div className="p-3 rounded-xl bg-[var(--studio-surface)] border border-[var(--studio-border)] text-[11px] text-[var(--studio-muted)] flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[var(--studio-icon)] shrink-0" />
               <span>
                 Når du åpner purringen loggføres tidsstempel (lastReminded) i databasen, slik at lederteamet ser når frivillig sist ble kontaktet.
               </span>
@@ -464,7 +464,7 @@ export const TasksTab: React.FC<TasksTabProps> = ({ studio, showFeedback }) => {
               <button
                 type="button"
                 onClick={() => setReminderTaskItem(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)] text-xs font-semibold cursor-pointer"
               >
                 Lukk
               </button>

@@ -195,14 +195,14 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
       case "module-sermon":
         return <Headphones className="w-4 h-4 text-pink-400" />;
       case "module-groups":
-        return <Users className="w-4 h-4 text-indigo-400" />;
+        return <Users className="w-4 h-4 text-[var(--studio-icon)]" />;
       case "module-giving":
         return <Heart className="w-4 h-4 text-rose-400" />;
       case "grid":
         return <LayoutGrid className="w-4 h-4 text-emerald-400" />;
       case "media-left":
       case "media-right":
-        return <Image className="w-4 h-4 text-indigo-400" />;
+        return <Image className="w-4 h-4 text-[var(--studio-icon)]" />;
       case "quote":
         return <Quote className="w-4 h-4 text-amber-400" />;
       case "callout":
@@ -210,7 +210,7 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
       case "person-grid":
         return <Users className="w-4 h-4 text-primary-400" />;
       default:
-        return <FileText className="w-4 h-4 text-slate-300" />;
+        return <FileText className="w-4 h-4 text-[var(--studio-muted)]" />;
     }
   };
 
@@ -218,12 +218,12 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
     <div className="space-y-3" data-cms-surface="editor">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-indigo-400" />
-          <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+          <Layers className="w-4 h-4 text-[var(--studio-icon)]" />
+          <h4 className="text-xs font-bold text-[var(--studio-text)] uppercase tracking-wider">
             Innholdsblokker & Moduler på siden
           </h4>
         </div>
-        <div className="flex items-center gap-3 text-[11px] text-slate-400">
+        <div className="flex items-center gap-3 text-[11px] text-[var(--studio-muted)]">
           <span>⠿ Dra & slipp for å endre rekkefølge</span>
           <span>·</span>
           <span>
@@ -263,20 +263,20 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
               data-cms-editor-target={block.id}
               className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
                 isSelected ? "ring-2 ring-indigo-400 border-indigo-500" : ""
-              } ${isDragTarget ? "border-indigo-400 ring-2 ring-indigo-500/50 bg-slate-800" : ""} ${
+              } ${isDragTarget ? "border-indigo-400 ring-2 ring-indigo-500/50 bg-[var(--studio-surface)]" : ""} ${
                 isBeingDragged ? "opacity-40" : ""
               } ${
                 isHidden
-                  ? "bg-slate-950/70 border-dashed border-slate-700 opacity-60"
+                  ? "bg-[var(--studio-panel-bg)]/70 border-dashed border-[var(--studio-border)] opacity-60"
                   : isDynamic
-                  ? "bg-slate-900/90 border-indigo-700/60 hover:border-indigo-500 shadow-sm"
-                  : "bg-slate-900/70 border-slate-700 hover:border-slate-600"
+                  ? "bg-[var(--studio-input)] border-indigo-700/60 hover:border-indigo-500 shadow-sm"
+                  : "bg-[var(--studio-row)] border-[var(--studio-border)] hover:border-[var(--studio-border)]"
               }`}
             >
               <div className="space-y-3">
                 <div className="flex items-start gap-2.5 min-w-0">
                   <div
-                    className="p-1 cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 mt-1 shrink-0"
+                    className="p-1 cursor-grab active:cursor-grabbing text-[var(--studio-muted)] hover:text-[var(--studio-muted)] mt-1 shrink-0"
                     title="Klikk og dra for å flytte blokk"
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -286,8 +286,8 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
                       isDynamic
-                        ? "bg-indigo-950/80 border border-indigo-800"
-                        : "bg-slate-800 border border-slate-700"
+                        ? "bg-[var(--studio-accent-bg)] border border-[var(--studio-accent-border)]"
+                        : "bg-[var(--studio-surface)] border border-[var(--studio-border)]"
                     }`}
                   >
                     {getModuleIcon(block.type)}
@@ -296,7 +296,7 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`font-bold text-xs ${isHidden ? "line-through text-slate-400" : "text-white"}`}
+                        className={`font-bold text-xs ${isHidden ? "line-through text-[var(--studio-muted)]" : "text-[var(--studio-text)]"}`}
                         title={block.title}
                       >
                         {displayTitle}
@@ -310,18 +310,18 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                       )}
 
                       {isDynamic ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-950 border border-indigo-700 text-indigo-300 flex items-center gap-1">
-                          <Sparkles className="w-2.5 h-2.5 text-indigo-400" />
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-950 border border-indigo-700 text-[var(--studio-accent-text)] flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5 text-[var(--studio-icon)]" />
                           <span>⚡ Dynamisk modul</span>
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 border border-slate-700 text-emerald-300">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[var(--studio-surface)] border border-[var(--studio-border)] text-emerald-300">
                           📝 Statisk innhold
                         </span>
                       )}
                     </div>
 
-                    <p className="text-[11px] text-slate-400 leading-snug line-clamp-2">
+                    <p className="text-[11px] text-[var(--studio-muted)] leading-snug line-clamp-2">
                       {isDynamic && dynamicMeta
                         ? `Datakilde: ${dynamicMeta.dataSource}`
                         : block.type === "person-grid"
@@ -334,16 +334,16 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                 <div className="flex flex-wrap items-center gap-2 pl-9">
                   {/* Layout variant dropdown for dynamic modules */}
                   {isDynamic && (dynamicMeta?.supportedVariants || block.type === "person-grid") && (
-                    <div className="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
-                      <span className="text-[10px] text-slate-400 hidden xl:inline">Visning:</span>
+                    <div className="flex items-center gap-1.5 bg-[var(--studio-panel-bg)] px-2 py-1 rounded-lg border border-[var(--studio-border)]">
+                      <span className="text-[10px] text-[var(--studio-muted)] hidden xl:inline">Visning:</span>
                       <select
                         value={block.variant || (dynamicMeta?.supportedVariants || personVariants(block.variant))[0].id}
                         onChange={(e) => handleVariantChange(index, e.target.value)}
-                        className="bg-transparent text-indigo-300 text-xs font-semibold focus:outline-hidden cursor-pointer"
+                        className="bg-transparent text-[var(--studio-accent-text)] text-xs font-semibold focus:outline-hidden cursor-pointer"
                         title="Velg godkjent layoutvariant for denne modulen"
                       >
                         {(dynamicMeta?.supportedVariants || personVariants(block.variant)).map((v) => (
-                          <option key={v.id} value={v.id} className="bg-slate-900 text-white">
+                          <option key={v.id} value={v.id} className="bg-[var(--studio-bg)] text-[var(--studio-input-text)]">
                             {v.label}
                           </option>
                         ))}
@@ -363,7 +363,7 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                       className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border ${
                         isEditing
                           ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500"
-                          : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700"
+                          : "bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-slate-200 border-[var(--studio-border)]"
                       }`}
                       title={isEditing ? "Ferdig med redigering" : "Rediger innhold"}
                     >
@@ -374,7 +374,7 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                         </>
                       ) : (
                         <>
-                          <Edit3 className="w-3.5 h-3.5 text-slate-400" />
+                          <Edit3 className="w-3.5 h-3.5 text-[var(--studio-muted)]" />
                           <span>Rediger innhold</span>
                         </>
                       )}
@@ -388,7 +388,7 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                     className={`p-1.5 rounded-lg transition-colors cursor-pointer border ${
                       isHidden
                         ? "bg-amber-950/70 border-amber-700 text-amber-300 hover:bg-amber-900"
-                        : "bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700"
+                        : "bg-[var(--studio-surface)] border-[var(--studio-border)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-hover)]"
                     }`}
                     title={isHidden ? "Gjør blokken synlig på nettsiden" : "Skjul blokken midlertidig"}
                     aria-label={isHidden ? "Vis blokk" : "Skjul blokk"}
@@ -401,7 +401,7 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                     type="button"
                     disabled={index === 0}
                     onClick={() => handleMoveUp(index)}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] disabled:opacity-30 disabled:hover:bg-[var(--studio-surface)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] transition-colors cursor-pointer"
                     title="Flytt opp"
                     aria-label="Flytt opp"
                   >
@@ -413,7 +413,7 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                     type="button"
                     disabled={index === blocks.length - 1}
                     onClick={() => handleMoveDown(index)}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] disabled:opacity-30 disabled:hover:bg-[var(--studio-surface)] text-[var(--studio-muted)] hover:text-[var(--studio-text)] transition-colors cursor-pointer"
                     title="Flytt ned"
                     aria-label="Flytt ned"
                   >
@@ -424,7 +424,7 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
                   <button
                     type="button"
                     onClick={() => handleDelete(index)}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-950 text-slate-400 hover:text-rose-400 border border-transparent hover:border-rose-800/80 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg bg-[var(--studio-surface)] hover:bg-rose-950 text-[var(--studio-muted)] hover:text-rose-400 border border-transparent hover:border-rose-800/80 transition-colors cursor-pointer"
                     title="Fjern blokk permanent fra siden"
                     aria-label="Fjern blokk"
                   >
@@ -472,9 +472,9 @@ export const VisualBlockManager: React.FC<VisualBlockManagerProps> = ({
       <button
         type="button"
         onClick={onOpenBlockPicker}
-        className="w-full py-3 px-4 rounded-xl border border-dashed border-indigo-700/80 hover:border-indigo-500 bg-indigo-950/30 hover:bg-indigo-950/60 text-indigo-300 hover:text-white text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+        className="w-full py-3 px-4 rounded-xl border border-dashed border-indigo-700/80 hover:border-indigo-500 bg-[var(--studio-accent-bg)] hover:bg-[var(--studio-accent-bg)] text-[var(--studio-accent-text)] hover:text-[var(--studio-text)] text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
       >
-        <Plus className="w-4 h-4 text-indigo-400" />
+        <Plus className="w-4 h-4 text-[var(--studio-icon)]" />
         <span>Legg til blokk eller modul</span>
       </button>
     </div>
@@ -489,7 +489,7 @@ function personVariants(current?: string) {
 }
 
 const fieldClass =
-  "w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:outline-hidden focus:border-indigo-500";
+  "w-full px-3 py-2 rounded-lg bg-[var(--studio-panel-bg)] border border-[var(--studio-border)] text-[var(--studio-input-text)] text-xs focus:outline-hidden focus:border-indigo-500";
 
 function StaticBlockEditor({
   block,
@@ -507,13 +507,13 @@ function StaticBlockEditor({
   const set = (patch: Partial<StaticBlockFields>) => onChange({ ...fields, ...patch });
 
   return (
-    <div className="mt-3 pt-3 border-t border-slate-800 space-y-3">
+    <div className="mt-3 pt-3 border-t border-[var(--studio-border)] space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold text-slate-300">Rediger innhold</span>
+        <span className="text-[11px] font-semibold text-[var(--studio-muted)]">Rediger innhold</span>
         <button
           type="button"
           onClick={onSave}
-          className="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium cursor-pointer"
+          className="text-[11px] text-[var(--studio-icon)] hover:text-[var(--studio-accent-text)] font-medium cursor-pointer"
         >
           Bruk endringer
         </button>
@@ -522,11 +522,11 @@ function StaticBlockEditor({
       {block.type === "cta" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <label className="space-y-1 block">
-            <span className="text-[10px] font-semibold text-slate-400">Knappetekst</span>
+            <span className="text-[10px] font-semibold text-[var(--studio-muted)]">Knappetekst</span>
             <input className={fieldClass} value={fields.ctaLabel} onChange={(e) => set({ ctaLabel: e.target.value })} />
           </label>
           <div className="space-y-1">
-            <span className="text-[10px] font-semibold text-slate-400 block">Lenke</span>
+            <span className="text-[10px] font-semibold text-[var(--studio-muted)] block">Lenke</span>
             <CmsLinkPicker
               value={fields.ctaUrl}
               onChange={(ctaUrl) => set({ ctaUrl })}
@@ -539,20 +539,20 @@ function StaticBlockEditor({
       ) : block.type === "quote" ? (
         <div className="space-y-2">
           <label className="space-y-1 block">
-            <span className="text-[10px] font-semibold text-slate-400">Sitat</span>
+            <span className="text-[10px] font-semibold text-[var(--studio-muted)]">Sitat</span>
             <textarea rows={3} className={fieldClass} value={fields.body} onChange={(e) => set({ body: e.target.value })} />
           </label>
           <label className="space-y-1 block">
-            <span className="text-[10px] font-semibold text-slate-400">Kilde</span>
+            <span className="text-[10px] font-semibold text-[var(--studio-muted)]">Kilde</span>
             <input className={fieldClass} value={fields.author} onChange={(e) => set({ author: e.target.value })} />
           </label>
         </div>
       ) : block.type === "grid" ? (
         <div className="space-y-2">
           {fields.cards.map((card, cardIndex) => (
-            <div key={cardIndex} className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 rounded-lg border border-slate-800">
+            <div key={cardIndex} className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 rounded-lg border border-[var(--studio-border)]">
               <label className="space-y-1 block">
-                <span className="text-[10px] font-semibold text-slate-400">Kort {cardIndex + 1}: tittel</span>
+                <span className="text-[10px] font-semibold text-[var(--studio-muted)]">Kort {cardIndex + 1}: tittel</span>
                 <input
                   className={fieldClass}
                   value={card.title}
@@ -563,7 +563,7 @@ function StaticBlockEditor({
                 />
               </label>
               <label className="space-y-1 block">
-                <span className="text-[10px] font-semibold text-slate-400">Tekst</span>
+                <span className="text-[10px] font-semibold text-[var(--studio-muted)]">Tekst</span>
                 <textarea
                   rows={2}
                   className={fieldClass}
@@ -579,7 +579,7 @@ function StaticBlockEditor({
           <button
             type="button"
             onClick={() => set({ cards: [...fields.cards, { title: "", body: "" }] })}
-            className="text-[11px] font-semibold text-indigo-300 hover:text-white cursor-pointer"
+            className="text-[11px] font-semibold text-[var(--studio-accent-text)] hover:text-[var(--studio-text)] cursor-pointer"
           >
             Legg til kort
           </button>
@@ -594,7 +594,7 @@ function StaticBlockEditor({
                 onChange={(url) => set({ imageUrl: url })}
               />
               <label className="space-y-1 block">
-                <span className="text-[10px] font-semibold text-slate-400">
+                <span className="text-[10px] font-semibold text-[var(--studio-muted)]">
                   Alt-tekst (valgfri overstyring)
                 </span>
                 <input
@@ -608,7 +608,7 @@ function StaticBlockEditor({
           )}
           {block.type === "callout" && (
             <label className="space-y-1 block">
-              <span className="text-[10px] font-semibold text-slate-400">Type</span>
+              <span className="text-[10px] font-semibold text-[var(--studio-muted)]">Type</span>
               <select className={fieldClass} value={fields.tone} onChange={(e) => set({ tone: e.target.value })}>
                 <option value="info">Informasjon</option>
                 <option value="warning">Viktig</option>
@@ -618,11 +618,11 @@ function StaticBlockEditor({
             </label>
           )}
           <label className="space-y-1 block">
-            <span className="text-[10px] font-semibold text-slate-400">Tittel</span>
+            <span className="text-[10px] font-semibold text-[var(--studio-muted)]">Tittel</span>
             <input className={fieldClass} value={fields.title} onChange={(e) => set({ title: e.target.value })} />
           </label>
           <label className="space-y-1 block">
-            <span className="text-[10px] font-semibold text-slate-400">Tekst</span>
+            <span className="text-[10px] font-semibold text-[var(--studio-muted)]">Tekst</span>
             <textarea rows={4} className={fieldClass} value={fields.body} onChange={(e) => set({ body: e.target.value })} />
           </label>
         </div>
