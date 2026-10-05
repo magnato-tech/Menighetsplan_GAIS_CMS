@@ -88,9 +88,12 @@ describe("Simulering av menighetsliv i databasen", () => {
     // The hand-made service on 27 September is not doubled
     expect(ids(COLLECTIONS.GATHERINGS)).not.toContain("sim-gathering-2026-09-27");
 
-    const after = ids(COLLECTIONS.GATHERINGS).length;
-    await simulateChurchLife(input);
-    expect(ids(COLLECTIONS.GATHERINGS)).toHaveLength(after);
+    // Run again the way the panel does: with every stored gathering, the simulated ones included
+    const sizes = () => [COLLECTIONS.GATHERINGS, COLLECTIONS.TASKS, COLLECTIONS.ASSIGNMENTS, CMS_COLLECTIONS.SETTINGS].map((name) => ids(name).length);
+    const after = sizes();
+    const stored = [...(store.get(COLLECTIONS.GATHERINGS)?.values() ?? [])] as unknown as Gathering[];
+    await simulateChurchLife({ ...input, gatherings: stored });
+    expect(sizes()).toEqual(after);
   });
 
   test("fjerning tar bare det simulerte", async () => {

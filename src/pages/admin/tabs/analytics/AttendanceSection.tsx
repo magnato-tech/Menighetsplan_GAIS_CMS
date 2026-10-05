@@ -39,9 +39,7 @@ export const AttendanceSection: React.FC<AttendanceSectionProps> = ({ period, at
   const [scope, setScope] = useState<Scope>("gudstjenester");
   const [view, setView] = useState<"diagram" | "tabell">("diagram");
   const rows = scope === "gudstjenester" ? attendance.worship : attendance.gatherings;
-  const countedRows = rows.filter((row) => row.total !== undefined);
-  const scopeAverage =
-    countedRows.length > 0 ? Math.round(countedRows.reduce((sum, row) => sum + (row.total ?? 0), 0) / countedRows.length) : null;
+  const scopeAverage = scope === "gudstjenester" ? attendance.averageWorship : attendance.averageAll;
 
   return (
     <AnalyticsSection
@@ -154,7 +152,7 @@ export const AttendanceSection: React.FC<AttendanceSectionProps> = ({ period, at
           </ul>
           {attendance.missing.length > 6 && (
             <p className="text-[11px] text-[var(--studio-muted)]">
-              Og {attendance.missing.length - 6} til. Alle står i tabellvisningen.
+              Og {attendance.missing.length - 6} til. Velg Alle arrangementer og Vis som tabell for å se alle.
             </p>
           )}
         </div>

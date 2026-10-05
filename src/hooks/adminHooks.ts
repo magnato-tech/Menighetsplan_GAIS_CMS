@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect, useState } from "react";
 import { useFirebase } from "../context/FirebaseDataContext";
 import { useCms } from "../context/CmsContext";
 import { AnalyticsPeriodId, buildChurchAnalytics } from "../utils/churchAnalytics";
@@ -386,6 +386,8 @@ export function useAdminTaskDetail(taskId: string) {
   };
 }
 
+const ANALYTICS_CLOCK_MS = 5 * 60 * 1000;
+
 // 14. Hook: useAdminAnalytics
 /**
  * Everything the analysis board shows for the chosen period, worked out from the
@@ -407,6 +409,15 @@ export function useAdminAnalytics(periodId: AnalyticsPeriodId) {
   } = useFirebase();
   const { pages, news, sermons } = useCms();
 
+  // The tab stays mounted once visited, so the clock is moved on every few minutes:
+  // a service that has just ended then shows up as missing a count without a reload.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), ANALYTICS_CLOCK_MS);
+    return () => clearInterval(timer);
+  }, [periodId]);
+
   const analytics = useMemo(
     () =>
       buildChurchAnalytics(
@@ -425,9 +436,9 @@ export function useAdminAnalytics(periodId: AnalyticsPeriodId) {
           sermons,
         },
         periodId,
-        Date.now()
+        now
       ),
-    [allPersons, groups, gatherings, tasks, assignments, attendances, headcounts, groupMessages, volunteerRoles, pages, news, sermons, periodId]
+    [allPersons, groups, gatherings, tasks, assignments, attendances, headcounts, groupMessages, volunteerRoles, pages, news, sermons, periodId, now]
   );
 
   return { analytics, registerHeadcount, removeHeadcount };

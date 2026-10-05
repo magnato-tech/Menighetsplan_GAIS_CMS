@@ -122,7 +122,11 @@ export const AttendanceChart: React.FC<AttendanceChartProps> = ({ rows, average,
                       <span className="text-[10px] font-bold text-[var(--studio-text)] text-center tabular-nums">{row.total}</span>
                     )}
                     {children > 0 && (
-                      <span className="block w-full rounded-t-[4px] bg-[var(--viz-2)]" style={{ height: heightOf(children) }} />
+                      <span
+                        className="block w-full rounded-t-[4px] bg-[var(--viz-2)]"
+                        // The 2px gap between the segments comes out of this one, so the top stays level with the grid
+                        style={{ height: Math.max(1, heightOf(children) - (adults > 0 ? 2 : 0)) }}
+                      />
                     )}
                     {adults > 0 && (
                       <span

@@ -32,7 +32,14 @@ export function subscribeHeadcounts(onChange: (counts: GatheringHeadcount[]) => 
     (snapshot) => {
       const counts = snapshot.docs
         .map((d) => ({ id: d.id, ...d.data() }) as GatheringHeadcount & { recordType?: string })
-        .filter((count) => isHeadcountRecord(count) && typeof count.gatheringId === "string")
+        // A document without both numbers cannot be counted; it would make the sums wrong
+        .filter(
+          (count) =>
+            isHeadcountRecord(count) &&
+            typeof count.gatheringId === "string" &&
+            Number.isFinite(count.adults) &&
+            Number.isFinite(count.children)
+        )
         .map(({ recordType: _recordType, ...count }) => count);
       onChange(counts);
     },

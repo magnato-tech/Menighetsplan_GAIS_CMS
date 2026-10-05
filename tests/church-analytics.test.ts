@@ -48,7 +48,8 @@ describe("Analysebord", () => {
       category: "husgruppe",
       memberIds: ["p4", "p5"],
       leaderIds: ["p2"],
-      memberJoinedAt: { p4: "2026-01-01T10:00:00.000Z", p5: "2026-09-20T10:00:00.000Z" },
+      // p6 joined in the period but has left again; the join date stays in the document
+      memberJoinedAt: { p4: "2026-01-01T10:00:00.000Z", p5: "2026-09-20T10:00:00.000Z", p6: "2026-09-21T10:00:00.000Z" },
     },
     { id: "g-stille", name: "Turgruppa", category: "interessegruppe", memberIds: ["p3"], leaderIds: [] },
   ];
@@ -101,6 +102,7 @@ describe("Analysebord", () => {
   const attendances: GatheringAttendance[] = [
     { id: "att-1", gatheringId: "h1", personId: "p4", status: "attending" },
     { id: "att-2", gatheringId: "h1", personId: "p5", status: "declined" },
+    { id: "att-3", gatheringId: "h1", personId: "p6", status: "attending" },
   ];
   const messages: GroupMessage[] = [
     { id: "m1", groupId: "g-team", senderPersonId: "p1", senderName: "Anne Admin", content: "Hei", createdAt: "2026-09-15T08:00:00.000Z" },
@@ -164,6 +166,7 @@ describe("Analysebord", () => {
   assert(ids(attendance.gatherings) === "w1,w2,e1,w3", "Gruppesamlinger telles ikke som oppmøte; et arrangement gjør det");
   assert(attendance.worshipCounted === 2, "To av tre gudstjenester har oppmøtetall");
   assert(attendance.averageWorship === 90, "Snittet regnes bare av gudstjenestene som er talt (100 og 80)");
+  assert(attendance.averageAll === 73, "Snittet for alle arrangementer tar med konserten (100, 40 og 80)");
   assert(attendance.averageWorshipChildren === 15, "Snittet for barn regnes på samme måte");
   assert(attendance.previousAverageWorship === 75 && attendance.previousWorshipCounted === 1, "Forrige periode sammenlignes for seg");
   assert(attendance.highestWorship?.gathering.id === "w1", "Den best besøkte gudstjenesten finnes");
@@ -208,9 +211,9 @@ describe("Analysebord", () => {
   assert(team.members === 3 && !team.quiet && team.lastActivityAt === "2026-09-27T09:00:00.000Z", "Ledere telles som medlemmer; siste samling er aktivitet");
   assert(
     hus.meetings === 1 && hus.responses.attending === 1 && hus.responses.declined === 1 && hus.responses.possible === 3,
-    "Svar på gruppens samlinger telles"
+    "Svar på gruppens samlinger telles, men ikke fra en som har gått ut av gruppen"
   );
-  assert(hus.newMembers === 1 && hus.messages === 1, "Nye medlemmer og meldinger i perioden");
+  assert(hus.newMembers === 1 && hus.messages === 1, "Nye medlemmer og meldinger i perioden; en som har gått ut, telles ikke som ny");
   assert(stille.quiet && stille.lastActivityAt === null, "En gruppe uten samlinger og meldinger er stille");
   assert(groupSummary.personsInGroups === 5 && groupSummary.belongingRate === 5 / 6, "Tilhørighet: fem av seks er med i en gruppe");
   assert(groupSummary.withoutGroup.map((p) => p.id).join(",") === "p6", "Personer uten gruppe listes");
@@ -254,7 +257,11 @@ describe("Analysebord", () => {
   );
   assert(
     empty.attendance.averageWorship === null &&
+      empty.attendance.averageAll === null &&
       empty.volunteers.fillRate === null &&
+      empty.volunteers.activeVolunteers === null &&
+      empty.volunteers.withdrawals === null &&
+      empty.volunteers.declines === null &&
       empty.volunteers.medianResponseHours === null &&
       empty.groups.belongingRate === null &&
       empty.volunteers.shareOfRegister === null,
@@ -268,4 +275,16 @@ describe("Analysebord", () => {
   assert(csv.length === 5, "Én linje per samling");
   assert(csv.some((line) => line.includes(';"Konsert; høst";Arrangement;40;0;40;')), "En tittel med semikolon settes i anførselstegn");
   assert(csv.some((line) => /;Gudstjeneste;;;;$/.test(line)), "En samling uten telling har tomme tall, ikke null");
+  const formula = headcountCsv([
+    {
+      gathering: { ...gatherings[1], title: "=HYPERLINK(\"x\")" },
+      isWorship: true,
+      headcount: { id: "h", gatheringId: "w1", adults: 1, children: 0, note: "+47 999", registeredAt: "2026-09-13T12:00:00.000Z" },
+      total: 1,
+    },
+  ]);
+  assert(
+    formula.includes(`;"'=HYPERLINK(""x"")";`) && formula.endsWith(";'+47 999"),
+    "Tekst som ser ut som en formel, åpnes som tekst i regnearket"
+  );
 });

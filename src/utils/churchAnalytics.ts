@@ -13,7 +13,7 @@ import type {
 import type { CmsNewsArticle, CmsPage, CmsSermon } from "../data/cmsData";
 import { isGroupGathering, isWorshipService } from "./gatherings";
 import { allGroupPersonIds } from "./groups";
-import { headcountTotal } from "./headcount";
+import { canRegisterHeadcount, headcountTotal } from "./headcount";
 import { isPagePublished } from "./menu";
 import { countSlots, isAcuteForfall } from "./staffing";
 import { parseIsoToDateAndTime } from "./dates";
@@ -122,6 +122,8 @@ export interface AttendanceSummary {
   worshipCounted: number;
   /** Average of the worship services that have a count. Null when none has. */
   averageWorship: number | null;
+  /** Average of every church-wide gathering that has a count, worship or not. */
+  averageAll: number | null;
   averageWorshipChildren: number | null;
   previousAverageWorship: number | null;
   previousWorshipCounted: number;
@@ -132,9 +134,14 @@ export interface AttendanceSummary {
   missing: CountedGathering[];
 }
 
-function countedGatherings(held: Gathering[], headcountByGathering: Map<string, GatheringHeadcount>): CountedGathering[] {
+/** The held gatherings that can have a count (see canRegisterHeadcount), each with its count if registered. */
+function countedGatherings(
+  held: Gathering[],
+  headcountByGathering: Map<string, GatheringHeadcount>,
+  now: number
+): CountedGathering[] {
   return held
-    .filter((g) => !isGroupGathering(g))
+    .filter((g) => canRegisterHeadcount(g, now))
     .map((gathering) => {
       const headcount = headcountByGathering.get(gathering.id);
       return {
@@ -148,8 +155,12 @@ function countedGatherings(held: Gathering[], headcountByGathering: Map<string, 
 
 export function summarizeAttendance(data: Pick<ChurchData, "gatherings" | "headcounts">, period: AnalyticsPeriod): AttendanceSummary {
   const headcountByGathering = new Map(data.headcounts.map((h) => [h.gatheringId, h]));
-  const gatherings = countedGatherings(heldIn(data.gatherings, period.from, period.to), headcountByGathering);
-  const previous = countedGatherings(heldIn(data.gatherings, period.previousFrom, period.from, false), headcountByGathering);
+  const gatherings = countedGatherings(heldIn(data.gatherings, period.from, period.to), headcountByGathering, period.to);
+  const previous = countedGatherings(
+    heldIn(data.gatherings, period.previousFrom, period.from, false),
+    headcountByGathering,
+    period.to
+  );
 
   const worship = gatherings.filter((g) => g.isWorship);
   const countedWorship = worship.filter((g) => g.total !== undefined);
@@ -165,6 +176,7 @@ export function summarizeAttendance(data: Pick<ChurchData, "gatherings" | "headc
     worship,
     worshipCounted: countedWorship.length,
     averageWorship: average(countedWorship.map((g) => g.total ?? 0)),
+    averageAll: average(gatherings.filter((g) => g.total !== undefined).map((g) => g.total ?? 0)),
     averageWorshipChildren: average(countedWorship.map((g) => g.headcount?.children ?? 0)),
     previousAverageWorship: average(previousCountedWorship.map((g) => g.total ?? 0)),
     previousWorshipCounted: previousCountedWorship.length,
@@ -235,13 +247,17 @@ export interface VolunteerSummary {
   slotsFilled: number;
   fillRate: number | null;
   previousFillRate: number | null;
-  activeVolunteers: number;
-  previousActiveVolunteers: number;
+  /**
+   * The counts below are null when no gathering in the period had tasks to staff:
+   * then nobody could have served, and a zero would say something the data does not.
+   */
+  activeVolunteers: number | null;
+  previousActiveVolunteers: number | null;
   /** Active volunteers as a share of everyone in the person register. */
   shareOfRegister: number | null;
-  withdrawals: number;
-  acuteWithdrawals: number;
-  declines: number;
+  withdrawals: number | null;
+  acuteWithdrawals: number | null;
+  declines: number | null;
   /** Median time from being asked to answering, in hours. Null without answered requests. */
   medianResponseHours: number | null;
   load: LoadBucket[];
@@ -365,17 +381,19 @@ export function summarizeVolunteers(
     .filter((p): p is Person => p !== undefined)
     .sort((a, b) => a.name.localeCompare(b.name, "nb"));
 
+  const staffed = current.slotsNeeded > 0;
+  const whenStaffed = (value: number) => (staffed ? value : null);
   return {
     slotsNeeded: current.slotsNeeded,
     slotsFilled: current.slotsFilled,
     fillRate: current.fillRate,
     previousFillRate: previous.fillRate,
-    activeVolunteers: current.volunteers.size,
-    previousActiveVolunteers: previous.volunteers.size,
-    shareOfRegister: share(current.volunteers.size, data.persons.length),
-    withdrawals,
-    acuteWithdrawals,
-    declines,
+    activeVolunteers: whenStaffed(current.volunteers.size),
+    previousActiveVolunteers: previous.slotsNeeded > 0 ? previous.volunteers.size : null,
+    shareOfRegister: staffed ? share(current.volunteers.size, data.persons.length) : null,
+    withdrawals: whenStaffed(withdrawals),
+    acuteWithdrawals: whenStaffed(acuteWithdrawals),
+    declines: whenStaffed(declines),
     medianResponseHours: median(responseHours),
     load,
     highLoadThreshold: threshold,
@@ -442,12 +460,18 @@ export function summarizeGroups(
 
   const groups: GroupActivity[] = data.groups.map((group) => {
     const memberIds = allGroupPersonIds(group);
-    const newMembers = Object.values(group.memberJoinedAt ?? {}).filter((at) => within(timeOf(at), period.from, period.to)).length;
+    const current = new Set(memberIds);
+    // Someone who has left keeps their join date in the document; they are not counted
+    const newMembers = Object.entries(group.memberJoinedAt ?? {}).filter(
+      ([personId, at]) => current.has(personId) && within(timeOf(at), period.from, period.to)
+    ).length;
     const meetings = held.filter((g) => g.groupId === group.id && isGroupGathering(g));
     let attending = 0;
     let declined = 0;
     for (const meeting of meetings) {
       for (const a of attendancesByGathering.get(meeting.id) ?? []) {
+        // Answers from people who have since left are not part of the group's share
+        if (!current.has(a.personId)) continue;
         if (a.status === "attending") attending++;
         else declined++;
       }
@@ -669,7 +693,9 @@ export function buildChurchAnalytics(data: ChurchData, periodId: AnalyticsPeriod
 // ============================================================================
 
 function csvCell(value: string | number | undefined): string {
-  const text = value === undefined ? "" : String(value);
+  let text = value === undefined ? "" : String(value);
+  // A spreadsheet runs text that starts like a formula; an apostrophe keeps it text
+  if (typeof value === "string" && /^[=+\-@]/.test(text)) text = `'${text}`;
   return /[";\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 

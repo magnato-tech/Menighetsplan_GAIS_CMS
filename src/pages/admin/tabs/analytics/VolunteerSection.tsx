@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, HandHeart, HeartHandshake } from "lucide-react";
 import type { AnalyticsPeriod, VolunteerSummary } from "../../../../utils/churchAnalytics";
-import { formatHours, formatPercent } from "../../../../utils/analyticsFormat";
+import { formatCount, formatHours, formatPercent } from "../../../../utils/analyticsFormat";
 import { AnalyticsSection, MiniStat } from "./AnalyticsSection";
 
 interface VolunteerSectionProps {
@@ -52,12 +52,14 @@ export const VolunteerSection: React.FC<VolunteerSectionProps> = ({ period, volu
       icon={<HandHeart className="w-5 h-5" />}
     >
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <MiniStat label="Forfall" value={String(volunteers.withdrawals)}>
-          {volunteers.acuteWithdrawals > 0
-            ? `hvorav ${volunteers.acuteWithdrawals} akutt (under 48 timer før)`
-            : "ingen akutte"}
+        <MiniStat label="Forfall" value={formatCount(volunteers.withdrawals)}>
+          {volunteers.acuteWithdrawals === null
+            ? "ingen oppgaver i perioden"
+            : volunteers.acuteWithdrawals > 0
+              ? `hvorav ${volunteers.acuteWithdrawals} akutt (under 48 timer før)`
+              : "ingen akutte"}
         </MiniStat>
-        <MiniStat label="Avslag på forespørsler" value={String(volunteers.declines)} />
+        <MiniStat label="Avslag på forespørsler" value={formatCount(volunteers.declines)} />
         <MiniStat label="Svartid på forespørsler" value={formatHours(volunteers.medianResponseHours)}>
           {volunteers.medianResponseHours === null ? "ingen besvarte forespørsler" : "median fra forespurt til svar"}
         </MiniStat>
@@ -76,7 +78,7 @@ export const VolunteerSection: React.FC<VolunteerSectionProps> = ({ period, volu
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-3">
           <h3 className="text-xs font-bold text-[var(--studio-text)]">Hvor ofte de frivillige har stått på</h3>
-          {volunteers.activeVolunteers === 0 ? (
+          {!volunteers.activeVolunteers ? (
             <p className="text-xs text-[var(--studio-muted)]">Ingen har tjenestegjort på samlinger i perioden.</p>
           ) : (
             <LoadBars load={volunteers.load} />

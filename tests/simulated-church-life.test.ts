@@ -96,6 +96,11 @@ describe("Simulert menighetsliv", () => {
 
   // 4. Same input, same history
   assert(JSON.stringify(buildSimulatedChurchLife(input)) === JSON.stringify(docs), "Samme utgangspunkt gir samme historikk");
+  // The panel passes every gathering in the database, the simulated ones from last time included
+  assert(
+    JSON.stringify(buildSimulatedChurchLife({ ...input, gatherings: [...input.gatherings, ...gatherings] })) === JSON.stringify(docs),
+    "En ny simulering lar seg ikke stoppe av dagene den forrige simuleringen fylte"
+  );
   assert(buildSimulatedChurchLife({ ...input, persons: [] }).length === 0, "Uten personer simuleres ingenting");
 
   // 5. The analysis board has something to show

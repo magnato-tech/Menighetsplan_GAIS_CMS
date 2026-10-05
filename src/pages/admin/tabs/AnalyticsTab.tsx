@@ -74,16 +74,16 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ showFeedback, onTabC
         </KpiTile>
         <KpiTile
           label="Aktive frivillige"
-          value={String(volunteers.activeVolunteers)}
+          value={formatCount(volunteers.activeVolunteers)}
           icon={<HandHeart className="w-4 h-4" />}
-          change={
-            volunteers.previousFillRate !== null
-              ? describeChange(volunteers.activeVolunteers, volunteers.previousActiveVolunteers)
-              : null
-          }
+          change={describeChange(volunteers.activeVolunteers, volunteers.previousActiveVolunteers)}
           previousLabel={period.previousLabel}
         >
-          <p>{formatPercent(volunteers.shareOfRegister)} av personregisteret har stått på</p>
+          <p>
+            {volunteers.shareOfRegister === null
+              ? "Ingen oppgaver på samlingene i perioden"
+              : `${formatPercent(volunteers.shareOfRegister)} av personregisteret har stått på`}
+          </p>
         </KpiTile>
         <KpiTile
           label="Bemanningsgrad"

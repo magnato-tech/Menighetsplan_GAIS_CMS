@@ -34,7 +34,7 @@ export interface SimulationInput {
   persons: Person[];
   groups: Group[];
   volunteerRoles: VolunteerRole[];
-  /** Gatherings already in the database. A day that already has a service is left alone. */
+  /** Gatherings already in the database. A day that already has a service is left alone; simulated ones are ignored. */
   gatherings: Gathering[];
   seed?: number;
 }
@@ -163,8 +163,10 @@ export function buildSimulatedChurchLife(input: SimulationInput): MockDocument[]
   const firstName = (id: string) => (personById.get(id)?.name ?? "").split(" ")[0];
   const built: Built = { gatherings: [], tasks: [], assignments: [], attendances: [], headcounts: [], messages: [] };
 
+  // An earlier simulation is replaced, so its gatherings neither block a day nor pick the group
+  const realGatherings = input.gatherings.filter((g) => !isSimulatedDocument(g.id, {}));
   const takenDays = new Map<string, Set<string>>();
-  for (const g of input.gatherings) {
+  for (const g of realGatherings) {
     const key = isGroupGathering(g) ? g.groupId : isWorshipService(g) ? "gudstjeneste" : "arrangement";
     const set = takenDays.get(key) ?? new Set<string>();
     set.add(dayKey(new Date(g.startsAt).getTime()));
@@ -174,7 +176,7 @@ export function buildSimulatedChurchLife(input: SimulationInput): MockDocument[]
 
   // The group that usually answers for the services, or else the first service team
   const serviceGroupCounts = new Map<string, number>();
-  for (const g of input.gatherings) {
+  for (const g of realGatherings) {
     if (isWorshipService(g)) serviceGroupCounts.set(g.groupId, (serviceGroupCounts.get(g.groupId) ?? 0) + 1);
   }
   const groupIds = new Set(groups.map((g) => g.id));
