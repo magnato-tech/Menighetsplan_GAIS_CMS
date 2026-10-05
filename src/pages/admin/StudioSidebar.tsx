@@ -25,6 +25,15 @@ import {
   Images,
 } from "lucide-react";
 import { StudioData, StudioTab, countUrgentTasks } from "./studio";
+import { prefetchStudioTab } from "./studioTabLoaders";
+
+function tabPrefetchHandlers(tab: StudioTab) {
+  return {
+    onMouseEnter: () => prefetchStudioTab(tab),
+    onFocus: () => prefetchStudioTab(tab),
+    onTouchStart: () => prefetchStudioTab(tab),
+  };
+}
 
 interface StudioSidebarProps {
   studio: StudioData;
@@ -88,6 +97,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
           <div className="space-y-1">
             <button
               type="button"
+              {...tabPrefetchHandlers("dashboard")}
               onClick={() => onTabChange("dashboard")}
               className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "dashboard"
@@ -135,6 +145,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("cms-sider")}
               onClick={() => onTabChange("cms-sider")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "cms-sider"
@@ -153,6 +164,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("cms-medier")}
               onClick={() => onTabChange("cms-medier")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "cms-medier"
@@ -171,6 +183,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("cms-nyheter")}
               onClick={() => onTabChange("cms-nyheter")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "cms-nyheter"
@@ -189,6 +202,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("cms-taler")}
               onClick={() => onTabChange("cms-taler")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "cms-taler"
@@ -207,6 +221,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("cms-stab")}
               onClick={() => onTabChange("cms-stab")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "cms-stab"
@@ -225,6 +240,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("cms-design")}
               onClick={() => onTabChange("cms-design")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "cms-design"
@@ -240,6 +256,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("cms-innstillinger")}
               onClick={() => onTabChange("cms-innstillinger")}
               className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "cms-innstillinger"
@@ -253,6 +270,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("cms-overstyringer")}
               onClick={() => onTabChange("cms-overstyringer")}
               className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "cms-overstyringer"
@@ -273,6 +291,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("planlegger-samlinger")}
               onClick={() => onTabChange("planlegger-samlinger")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "planlegger-samlinger"
@@ -291,6 +310,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("planlegger-oppgaver")}
               onClick={() => onTabChange("planlegger-oppgaver")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "planlegger-oppgaver"
@@ -315,6 +335,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("planlegger-grupper")}
               onClick={() => onTabChange("planlegger-grupper")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "planlegger-grupper"
@@ -333,6 +354,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("planlegger-personer")}
               onClick={() => onTabChange("planlegger-personer")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "planlegger-personer"
@@ -351,6 +373,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("planlegger-roller")}
               onClick={() => onTabChange("planlegger-roller")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "planlegger-roller"
@@ -376,6 +399,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
 
             <button
               type="button"
+              {...tabPrefetchHandlers("database-admin")}
               onClick={() => onTabChange("database-admin")}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                 activeTab === "database-admin"

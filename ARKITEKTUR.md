@@ -1,5 +1,5 @@
 # Arkitektur – Menighetsplan med innebygd CMS (Lillesand Misjonskirke)
-*Sist oppdatert: 2026-10-03 – beskriver koden slik den faktisk er i dette repoet.*
+*Sist oppdatert: 2026-10-05 – beskriver koden slik den faktisk er i dette repoet.*
 
 ## Kort fortalt
 Menighetsplan er ett adminpanel som styrer to ting i samme kodebase: webappen for frivillige og ledere, og den offentlige nettsiden. Alt leser og skriver til samme Firestore-database. En liten Express-server leverer appen og et offentlig JSON-API for eksterne nettsider. Hva produktet skal være, og hva som er levert og planlagt, står i `PRODUKTDOKUMENTASJON.md`.
@@ -20,6 +20,13 @@ Menighetsplan er ett adminpanel som styrer to ting i samme kodebase: webappen fo
 | Server | Express (`server.ts`), kjøres med `tsx` |
 | Hosting | Google AI Studio / Cloud Run, port 3000 |
 | PWA | `public/sw.js` og `public/manifest.webmanifest` |
+
+## Bygg og lasting
+Vite bygger klienten med `manualChunks` for `firebase` og `react-vendor`. Offentlige sider importeres statisk i `src/App.tsx`; admin, Min side og admin-detaljsider lastes med `React.lazy` og `Suspense` bare på de grenene. Hver admin-fane har sin egen lazy-import i `src/pages/admin/studioTabLoaders.ts`, med forhåndshent ved hover, fokus og touch fra `StudioSidebar.tsx`.
+
+En besøkende på nettsiden laster fortsatt Firebase-klienten (~710 KB) fordi både `CmsProvider` og `FirebaseDataProvider` lytter på Firestore. Admin- og Min-side-kode (inkludert CMS-panelet på ~110 KB) kommer ikke med i det første besøket.
+
+Ved utdatert JavaScript etter deploy: `ChunkErrorBoundary` prøver én automatisk reload på rute-nivå (`src/utils/lazyImport.ts`). I admin-faner viser `StudioTabErrorBoundary` en manuell «Last på nytt»-knapp, slik at et utkast i en annen fane ikke forsvinner.
 
 ## De tre flatene
 `src/App.tsx` velger layout ut fra adressen:
@@ -125,6 +132,6 @@ Tre regler avgjør hva en besøkende ser, og hver av dem ligger ett sted:
 | Forsiden | Alt innhold kommer fra CMS-et | Tre infobokser, fellesskapsseksjonen og gaveteksten står i `PublicHomePage.tsx`, og menighetens navn står skrevet flere steder i koden |
 | Forfall med grunn | Medlemmet skriver en grunn, lederen ser den | Datalaget lagrer `withdrawalReason`, men ingen skjerm skriver eller viser den |
 | Filstørrelse | Én komponent per fane/modal | Gjort for alle sidene over 1 000 linjer. Størst nå er redigeringsskjemaet for sider (`PageEditModal.tsx`, ca. 750 linjer) og gruppekortet i admin (`AdminGroupDetailPage.tsx`, ca. 650) |
-| Lasting | Admin og CMS lastes først når de åpnes | Alt ligger i én fil på 1,6 MB |
+| Lasting | Admin og CMS lastes først når de åpnes | Offentlige ruter er statiske; admin, Min side og faner lastes ved behov. Firebase-klienten lastes på alle besøk (~710 KB) |
 | Gruppemeldinger | Testverktøyet på husfellesskapssiden sier at et nytt medlem ikke skal se eldre meldinger | Innmeldingsdato lagres (`memberJoinedAt`), men brukes ikke: et medlem ser alle meldingene i gruppen |
 | Modulbrytere | Kalender og meldinger slås av og på for hele menigheten | Valget lagres bare i nettleseren til den som endrer det |

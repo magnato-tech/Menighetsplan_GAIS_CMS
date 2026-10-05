@@ -1,5 +1,5 @@
 # Prosjektdokument: Menighetsplan med innebygd CMS (Lillesand Misjonskirke)
-*Sist oppdatert: 2026-10-03*
+*Sist oppdatert: 2026-10-05*
 
 > **Ny økt? Start her.** Produktet, hva som er levert og planen videre står i `PRODUKTDOKUMENTASJON.md`. Oppbygningen står i `ARKITEKTUR.md`.
 

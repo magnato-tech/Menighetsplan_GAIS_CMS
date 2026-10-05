@@ -1,6 +1,6 @@
 # Produktdokumentasjon: Menighetsplan
 
-> **Dokumentversjon:** 4.0 · **Sist oppdatert:** 2026-10-03
+> **Dokumentversjon:** 4.1 · **Sist oppdatert:** 2026-10-05
 > **Status:** Single Source of Truth (SSOT) for produktet. Dokumentet lever i kildekoden og oppdateres sammen med funksjonaliteten.
 > **Plattform:** React 19, TypeScript, Tailwind CSS 4, Cloud Firestore (`europe-west3`, Frankfurt), Express, PWA.
 > **Søsterdokumenter:** `ARKITEKTUR.md` (hvordan koden er bygget), `CLAUDE.md` (regler for kodeendringer), `INTEGRASJON-MENIGHETSPLAN.md` (kontrakten for det offentlige API-et).
@@ -512,6 +512,7 @@ De tre flatene, Firestore-databasen, bemanningsmotoren, husfellesskap, gruppemel
 | **Design** (3. oktober) | Temaet som velges i admin, styrer hele nettsiden: farger, bakgrunn, skrift og avrunding. Lesbarheten er sikret for alle fargevalg |
 | **Søk og deling** (3. oktober) | Hver adresse har egen tittel, beskrivelse og delingskort i siden slik serveren sender den. Ukjente adresser og kladder svarer «ikke funnet» |
 | **Opprydding** | De største filene er delt i én fil per fane og dialog. Hardkodede demo-ID-er, datoer og steder er ute av logikken. Utviklerord er ute av skjermbildene |
+| **Ytelse** (5. oktober) | Code splitting: offentlige ruter lastes uten admin, Min side og CMS-panel. Admin-faner hentes ved behov, med forhåndshent ved peker over menyvalg. Firebase og React er egne Vite-biter. Ved utdatert chunk etter deploy: automatisk én gangs reload på ruter, manuell «Last på nytt» i admin-faner |
 
 ---
 
@@ -533,7 +534,7 @@ Sortert etter hvor mye de betyr for en menighet som skal ta løsningen i bruk.
 | 10 | En besøkende kan ikke melde interesse for en gruppe i løsningen | Fase 3 |
 | 11 | Et nytt gruppemedlem ser hele meldingshistorikken | Fase 3 |
 | 12 | Medlemmet kan ikke oppgi grunn for et forfall, og lederen ser den ikke | Fase 3 |
-| 13 | Hele løsningen lastes på første besøk (1,6 MB) | Fase 4 |
+| 13 | Firebase-klienten lastes på første nettsidebesøk (~1,3 MB JavaScript utover CSS). Admin og Min side er skilt ut, men Firestore er felles datakilde for alle flater | Fase 4 |
 
 ---
 
@@ -569,10 +570,11 @@ Rekkefølgen innen hver fase er prioritert. Fase 1 er forutsetningen for ekte da
 8. Omsorgsvarsel når samme person settes opp ofte, og varsel før en politiattest går ut.
 
 ### Fase 4 – Ytelse og drift
-1. Adminpanelet og CMS-et lastes først når de åpnes.
-2. Avgrenset mellomlagring i den installerte appen.
-3. Én felles dialogkomponent med tastaturstøtte, i stedet for at hver dialog er laget for hånd.
-4. Sikkerhetskopi av databasen, feillogg, og Firebase-prosjektet eid av menighetens egen konto.
+1. ~~**Adminpanelet og CMS-et lastes først når de åpnes.**~~ **Levert 5. oktober.** Offentlige sider laster ikke admin, Min side eller CMS-panel. Faner i admin hentes ved behov, med forhåndshent ved hover. Ved utdatert chunk etter deploy lastes siden én gang på nytt (ruter) eller vises en «Last på nytt»-knapp (admin-faner).
+2. Mindre førstebesøk på nettsiden: vurdere offentlig lesing via API, eller lazy-innlasting av deler av Firebase (Auth, Storage).
+3. Avgrenset mellomlagring i den installerte appen.
+4. Én felles dialogkomponent med tastaturstøtte, i stedet for at hver dialog er laget for hånd.
+5. Sikkerhetskopi av databasen, feillogg, og Firebase-prosjektet eid av menighetens egen konto.
 
 ### Løpende – kodekvalitet
 Hver endring typesjekkes, testes og bygges før den regnes som ferdig. Regler flyttes til rene funksjoner med tester. Dokumentene oppdateres i samme endring.
