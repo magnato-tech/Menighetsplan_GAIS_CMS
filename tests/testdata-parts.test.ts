@@ -36,8 +36,8 @@ vi.mock("firebase/firestore", () => {
 import { CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID, COLLECTIONS } from "../src/data/collections";
 import { initialCmsPages } from "../src/data/cmsData";
 import { initialGatherings } from "../src/data/mockData";
-import { populateDemoPersons, populateDemoWebsite, populateWithMockData, restoreFullMockDatabase } from "../src/services/databaseAdmin";
-import { clearTestdata, deleteGroupsTestdata, generateTestdata } from "../src/services/testdataService";
+import { populateDemoPersons, populateWithMockData, restoreFullMockDatabase } from "../src/services/databaseAdmin";
+import { clearTestdata, deleteGroupsTestdata, generateDemoWebsite, generateTestdata } from "../src/services/testdataService";
 
 const ids = (name: string) => [...(store.get(name)?.keys() ?? [])].sort();
 const count = (name: string) => store.get(name)?.size ?? 0;
@@ -102,7 +102,7 @@ describe("Testdata fyller planleggeren og lar nettsiden være", () => {
 
   test("demo-nettsiden legges inn for seg, og rører ikke planleggeren", async () => {
     const planner = snapshotOf([COLLECTIONS.PERSONS, COLLECTIONS.GROUPS, COLLECTIONS.GATHERINGS, COLLECTIONS.TASKS]);
-    const result = await populateDemoWebsite();
+    const result = await generateDemoWebsite();
 
     expect(result.failures).toEqual([]);
     expect(count(CMS_COLLECTIONS.PAGES)).toBe(initialCmsPages.length + 1);

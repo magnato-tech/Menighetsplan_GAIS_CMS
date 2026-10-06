@@ -2,6 +2,7 @@ import { collection, getDocs, writeBatch } from "firebase/firestore";
 import { db } from "../firebase";
 import { ALL_COLLECTIONS } from "../data/collections";
 import { chunk } from "../utils/chunk";
+import { ensureDeletionAllowed } from "./operatingMode";
 import {
   clearTestdata,
   clearPlannerTestData,
@@ -62,11 +63,6 @@ export async function populateDemoPersons(): Promise<DatabaseAdminResult> {
   return generateTestdata({ personCount: 32, groupCount: 14, roleCount: 14 });
 }
 
-/** The demo website: pages, news, sermons, staff and settings. Nothing in the planner. */
-export async function populateDemoWebsite(): Promise<DatabaseAdminResult> {
-  return generateDemoWebsite();
-}
-
 /**
  * Writes the full mock data set, planner and website both. Documents with the same id are overwritten;
  * other documents are left as they are. If clearPlannerFirst is set to true, planner test data is cleared first.
@@ -90,9 +86,10 @@ export async function restoreFullMockDatabase(): Promise<DatabaseAdminResult> {
 
 /**
  * Permanently deletes every document in every collection the app uses.
- * There is no undo.
+ * There is no undo. Throws when the app is in production (see operatingMode.ts).
  */
 export async function deleteAllData(): Promise<DatabaseAdminResult> {
+  await ensureDeletionAllowed();
   const result = emptyResult();
 
   for (const collectionName of ALL_COLLECTIONS) {

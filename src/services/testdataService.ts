@@ -15,6 +15,7 @@ import { calendarGroupIds, isWebsiteGathering } from "../utils/dataParts";
 import type { DatasetDocument } from "../utils/dataset";
 import { VOLUNTEER_ROLE_RECORD, volunteerRoleFields } from "./volunteerRoles";
 import { headcountFields, isHeadcountRecord } from "./headcounts";
+import { ensureDeletionAllowed } from "./operatingMode";
 import type { GatheringHeadcount, VolunteerRole } from "../types";
 
 // Firestore støtter maksimalt 500 operasjoner per batch write
@@ -140,6 +141,8 @@ function recordFailure(
 export async function clearTestdata(
   options: ClearTestdataOptions = {}
 ): Promise<TestdataServiceResult> {
+  // Kaster når appen står i produksjon: da tømmes ingenting (se operatingMode.ts)
+  await ensureDeletionAllowed();
   const startTime = Date.now();
   const result = createEmptyResult();
 

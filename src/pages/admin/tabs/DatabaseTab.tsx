@@ -13,7 +13,9 @@ import { ShowFeedback, StudioData } from "../studio";
 import { DatabaseTestdataTab } from "../../../components/admin/DatabaseTestdataTab";
 import { SimulationPanel } from "../../../components/admin/SimulationPanel";
 import { DatasetPanel } from "../../../components/admin/DatasetPanel";
-import { DemoWebsiteCard } from "../../../components/admin/DemoWebsiteCard";
+import { ChurchPickerPanel } from "../../../components/admin/ChurchPickerPanel";
+import { OperatingModePanel } from "../../../components/admin/OperatingModePanel";
+import { useOperatingMode } from "../../../hooks/useOperatingMode";
 import {
   Database,
   RefreshCw,
@@ -98,6 +100,11 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
   } = useFirebase();
 
   const { pages, news, sermons, staff } = useCms();
+
+  // In production nothing can be emptied from this tab. The services refuse on their own; the
+  // buttons that only delete are also locked here, so the lock is seen before it is met.
+  const operatingMode = useOperatingMode();
+  const deletionLocked = operatingMode !== "demo";
 
   // Custom counts state
   const [personCount, setPersonCount] = useState<number>(32);
@@ -380,6 +387,12 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
           </div>
         </div>
       </section>
+
+      {/* Demo eller produksjon: i produksjon kan ingenting tømmes herfra */}
+      <OperatingModePanel mode={operatingMode} showFeedback={showFeedback} />
+
+      {/* Velg menighet: bytt nettsiden til en annen menighets, for demonstrasjon */}
+      <ChurchPickerPanel mode={operatingMode} showFeedback={showFeedback} />
 
       {/* Datasett: last ned alt innholdet som én fil, eller hent inn en slik fil */}
       <DatasetPanel showFeedback={showFeedback} />
@@ -819,7 +832,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
           {/* Valg 1: Tøm kun testdata */}
           <div className="p-4 rounded-xl bg-[var(--studio-row)] border border-[var(--studio-border)] flex flex-col justify-between space-y-3">
             <div className="space-y-1">
@@ -837,7 +850,8 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             <button
               type="button"
               onClick={() => setConfirmClearPlannerDialog(true)}
-              disabled={isWorking}
+              disabled={isWorking || deletionLocked}
+              title={deletionLocked ? "Appen står i produksjon. Sett den i demo under Driftsmodus først." : undefined}
               className="px-3.5 py-2 rounded-lg bg-amber-950/80 hover:bg-amber-900 border border-amber-800 text-amber-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer self-start"
             >
               <Trash2 className="w-3.5 h-3.5 text-amber-300" />
@@ -855,7 +869,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
               <p className="text-[11px] text-[var(--studio-accent-text)]/80 leading-relaxed">
                 Fyller planleggeren med 32 personer, grupper, demo-samlinger, oppgaver og alle{" "}
                 {DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller fra rollebiblioteket. Sidene, nyhetene og talene på
-                nettsiden røres ikke.
+                nettsiden røres ikke. Demo-nettsiden velges under «Velg menighet».
               </p>
             </div>
             <button
@@ -869,10 +883,9 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             </button>
           </div>
 
-          {/* Valg 3: Demo-nettsiden, for seg */}
-          <DemoWebsiteCard showFeedback={showFeedback} disabled={isWorking} />
+          
 
-          {/* Valg 4: Komplett sletting av alt */}
+          {/* Valg 3: Komplett sletting av alt */}
           <div className="p-4 rounded-xl bg-red-950/40 border border-red-900/60 flex flex-col justify-between space-y-3">
             <div className="space-y-1">
               <span className="font-bold text-red-200 text-xs flex items-center gap-1.5">
@@ -886,7 +899,8 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             <button
               type="button"
               onClick={() => setConfirmDeleteDialog(true)}
-              disabled={isWorking}
+              disabled={isWorking || deletionLocked}
+              title={deletionLocked ? "Appen står i produksjon. Sett den i demo under Driftsmodus først." : undefined}
               className="px-3.5 py-2 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer self-start shadow-xs"
             >
               <Trash2 className="w-3.5 h-3.5" />

@@ -6,6 +6,7 @@ import { DATA_PARTS, documentsToDelete, keepParts, type DataPart } from "../util
 import { buildDataset, type Dataset, type DatasetDocument } from "../utils/dataset";
 import { sanitizeForFirestore } from "../utils/firestoreData";
 import { HEADCOUNT_RECORD } from "./headcounts";
+import { OPERATING_MODE_RECORD, ensureDeletionAllowed } from "./operatingMode";
 import type { TestdataServiceResult } from "./testdataService";
 import { VOLUNTEER_ROLE_RECORD } from "./volunteerRoles";
 
@@ -64,6 +65,8 @@ async function readDatabase(): Promise<DatabaseContents> {
     }
     for (const docSnap of snapshot.docs) {
       const { recordType, ...fields } = docSnap.data();
+      // Whether the app is in demo or production is not content: it is neither downloaded nor emptied
+      if (collectionName === CMS_COLLECTIONS.SETTINGS && recordType === OPERATING_MODE_RECORD) continue;
       const kept = collectionName === CMS_COLLECTIONS.SETTINGS ? collectionOfMark(recordType) : undefined;
       if (kept) add(kept, { ...fields, id: docSnap.id });
       else add(collectionName, { ...docSnap.data(), id: docSnap.id });
@@ -161,9 +164,12 @@ export interface ClearedDatabase {
  *
  * If the database cannot be read in full, nothing is deleted: which documents belong to which
  * part is only known when all of them are seen. A collection the rules in force turn away is
- * passed over, as in exportDataset: the app cannot have stored anything there.
+  * passed over, as in exportDataset: the app cannot have stored anything there.
+ *
+ * Throws when the app is in production (see operatingMode.ts): nothing is emptied then.
  */
 export async function clearDatabase(parts: readonly DataPart[] = DATA_PARTS): Promise<ClearedDatabase> {
+  await ensureDeletionAllowed();
   const cleared: ClearedDatabase = { deleted: 0, failures: [] };
   let contents: DatabaseContents;
   try {
