@@ -7,8 +7,6 @@ export interface CalendarMonthCell {
   events: Gathering[];
 }
 
-const MS_DAY = 24 * 60 * 60 * 1000;
-
 function startOfDay(d: Date): Date {
   const copy = new Date(d);
   copy.setHours(0, 0, 0, 0);
@@ -34,9 +32,11 @@ export function buildMonthGrid(
   const cells: CalendarMonthCell[] = [];
 
   for (let i = 0; i < 42; i++) {
-    const date = new Date(gridStart.getTime() + i * MS_DAY);
-    const dayStart = startOfDay(date).getTime();
-    const dayEnd = dayStart + MS_DAY - 1;
+    // Counted in calendar days. A day is 23 or 25 hours when the clocks change, so stepping
+    // 24 hours at a time shows one date twice in October and skips one in March.
+    const date = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i);
+    const dayStart = date.getTime();
+    const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).getTime() - 1;
     const dayEvents = events.filter((g) => {
       const t = new Date(g.startsAt).getTime();
       return t >= dayStart && t <= dayEnd;

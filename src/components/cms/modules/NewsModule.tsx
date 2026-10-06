@@ -8,6 +8,8 @@ import {
   presentationText,
 } from "../../../utils/modulePresentation";
 import { PresentationSection } from "../PresentationSection";
+import { useMediaMap } from "../../../hooks/useMediaMap";
+import { resolveMediaUrl } from "../../../utils/media";
 import { ChevronRight, ArrowRight } from "lucide-react";
 
 export interface NewsModuleProps {
@@ -22,6 +24,7 @@ export const NewsModule: React.FC<NewsModuleProps> = ({
   presentation,
 }) => {
   const { news } = useCms();
+  const mediaById = useMediaMap();
   const config = presentation || MODULE_PRESENTATION_DEFAULTS["module-news"];
   const defaults = MODULE_PRESENTATION_DEFAULTS["module-news"];
 
@@ -105,13 +108,21 @@ export const NewsModule: React.FC<NewsModuleProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {publishedNews.map((article) => (
+            {publishedNews.map((article) => {
+              const image = resolveMediaUrl(article.imageUrl, mediaById, "web");
+              return (
               <Link
                 key={article.id}
                 to={`/artikkel/${article.id}`}
-                className="bg-white rounded-2xl border border-stone-200/80 p-5 hover:border-primary-300 hover:shadow-md transition-all flex flex-col justify-between group"
+                className="bg-white rounded-2xl border border-stone-200/80 p-5 hover:border-primary-300 hover:shadow-md transition-all flex flex-col justify-between group overflow-hidden"
               >
                 <div className="space-y-2">
+                  {image && (
+                    // The title right below says what the article is; the picture is not described twice
+                    <div className="-mx-5 -mt-5 mb-4 h-40 bg-stone-200">
+                      <img src={image} alt="" loading="lazy" className="w-full h-full object-cover" />
+                    </div>
+                  )}
                   <div className="text-[10px] font-bold uppercase tracking-wider text-primary-700">
                     {article.category || "Aktuelt"}
                   </div>
@@ -131,7 +142,8 @@ export const NewsModule: React.FC<NewsModuleProps> = ({
                   </span>
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

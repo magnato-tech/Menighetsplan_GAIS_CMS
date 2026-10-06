@@ -167,15 +167,16 @@ export function parseCmsContent(rawContent: string): ParsedBlock[] {
         bodyLines = mediaBodyLines.slice(1);
       }
 
-      // If first line in body is a heading (### Tittel), extract it for cleaner display
+      // If first line in body is a heading (### Tittel), extract it for cleaner display.
+      // The heading is looked for after the alt comment: the editor writes the comment first.
       let title = inlineTitle;
       let bodyContent = bodyLines;
-      if (!title && mediaBodyLines.length > 0 && mediaBodyLines[0].trim().startsWith("### ")) {
-        title = mediaBodyLines[0].trim().replace("### ", "");
-        bodyContent = mediaBodyLines.slice(1);
-      } else if (!title && mediaBodyLines.length > 0 && mediaBodyLines[0].trim().startsWith("## ")) {
-        title = mediaBodyLines[0].trim().replace("## ", "");
-        bodyContent = mediaBodyLines.slice(1);
+      if (!title && bodyLines.length > 0 && bodyLines[0].trim().startsWith("### ")) {
+        title = bodyLines[0].trim().replace("### ", "");
+        bodyContent = bodyLines.slice(1);
+      } else if (!title && bodyLines.length > 0 && bodyLines[0].trim().startsWith("## ")) {
+        title = bodyLines[0].trim().replace("## ", "");
+        bodyContent = bodyLines.slice(1);
       }
 
       blocks.push({

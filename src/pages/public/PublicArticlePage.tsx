@@ -1,6 +1,8 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
+import { CmsContentRenderer } from "../../components/cms/CmsContentRenderer";
+import { useResolvedMediaUrl } from "../../hooks/useMediaMap";
 import {
   ArrowLeft,
   User,
@@ -13,6 +15,7 @@ export const PublicArticlePage: React.FC = () => {
   // A draft is not there for a visitor, also when they have the address
   const found = id ? (getNewsById(id) || getNewsBySlug(id)) : undefined;
   const article = found && found.isPublished !== false ? found : undefined;
+  const image = useResolvedMediaUrl(article?.imageUrl);
 
   const formatDate = (dateStr: string) => {
     try {
@@ -92,9 +95,18 @@ export const PublicArticlePage: React.FC = () => {
         </div>
       </header>
 
-      {/* Article Body */}
-      <article className="prose prose-stone prose-lg max-w-none text-stone-800 leading-relaxed space-y-4 whitespace-pre-line text-sm sm:text-base">
-        {article.content}
+      {image && (
+        // The headline above says what the article is; the picture is not described twice
+        <img
+          src={image}
+          alt=""
+          className="w-full max-h-[28rem] object-cover rounded-2xl border border-stone-200"
+        />
+      )}
+
+      {/* Article Body: drawn like a page, so links, buttons and headings work here too */}
+      <article className="text-sm sm:text-base">
+        <CmsContentRenderer content={article.content} />
       </article>
 
       {/* Share / Back footer */}
