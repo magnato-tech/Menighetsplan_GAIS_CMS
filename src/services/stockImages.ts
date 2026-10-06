@@ -17,7 +17,7 @@ export interface StockImage {
   thumb: string;
   width: number;
   height: number;
-  /** The photographer, as named where the image was found. */
+  /** The photographer, as named where the image was found. Empty for an own image nobody is named for. */
   credit: string;
   /** Where the image is from: «Pixabay», «Unsplash» or «Egne bilder». */
   source: string;

@@ -110,7 +110,9 @@ export const StockImageGrid: React.FC<StockImageGridProps> = ({ onSelect, select
                       Foto: {image.credit} / {image.source}
                     </a>
                   ) : (
-                    <span className="text-[10px] text-slate-500 truncate block">Foto: {image.credit}</span>
+                    <span className="text-[10px] text-slate-500 truncate block">
+                      {image.credit ? `Foto: ${image.credit}` : image.source}
+                    </span>
                   )}
                 </div>
               </li>

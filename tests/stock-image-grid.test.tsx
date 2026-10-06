@@ -60,6 +60,15 @@ describe("Bildene som følger med, i admin", () => {
     expect(screen.queryByRole("link")).toBeNull();
   });
 
+  test("et eget bilde uten oppgitt fotograf sier bare at det er et eget bilde", async () => {
+    const own = { ...images[0], id: "eget", title: "Åpen bibel", credit: "", source: "Egne bilder", sourceUrl: undefined };
+    vi.mocked(listStockImages).mockResolvedValue([own]);
+    render(<StockImageGrid />);
+
+    expect(await screen.findByText("Egne bilder")).toBeTruthy();
+    expect(screen.queryByText(/^Foto:/)).toBeNull();
+  });
+
   test("søket snevrer inn, og sier fra når ingenting passer", async () => {
     vi.mocked(listStockImages).mockResolvedValue(images);
     render(<StockImageGrid />);

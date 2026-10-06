@@ -418,5 +418,133 @@
     "credit": "Noah Benjamin",
     "source": "Unsplash",
     "sourceUrl": "https://unsplash.com/photos/F4sfBneAKiM"
+  },
+  {
+    "id": "pixabay-1407844",
+    "title": "Stille skogsvann",
+    "altText": "Et stille vann omgitt av granskog, med siv i forgrunnen og skyer på himmelen.",
+    "tags": [
+      "natur",
+      "vann",
+      "skog",
+      "stillhet",
+      "sommer"
+    ],
+    "file": "pixabay-1407844.jpg",
+    "thumb": "pixabay-1407844-liten.jpg",
+    "width": 1280,
+    "height": 853,
+    "credit": "fractals99",
+    "source": "Pixabay",
+    "sourceUrl": "https://pixabay.com/photos/lake-1407844/"
+  },
+  {
+    "id": "eget-apen-bibel",
+    "title": "Åpen bibel",
+    "altText": "En åpen bibel med understrekninger som ligger på et trebord.",
+    "tags": [
+      "bibel",
+      "bibellesning",
+      "undervisning",
+      "tro"
+    ],
+    "file": "eget-apen-bibel.jpg",
+    "thumb": "eget-apen-bibel-liten.jpg",
+    "width": 1600,
+    "height": 1200,
+    "credit": "",
+    "source": "Egne bilder",
+    "sourceFile": "IMG_3184.jpeg"
+  },
+  {
+    "id": "pixabay-10253363",
+    "title": "Barn som leker i gresset",
+    "altText": "To barn som ler og tumler på en gressplen under et stort tre.",
+    "tags": [
+      "barn",
+      "lek",
+      "glede",
+      "familie",
+      "søndagsskole"
+    ],
+    "file": "pixabay-10253363.jpg",
+    "thumb": "pixabay-10253363-liten.jpg",
+    "width": 1600,
+    "height": 1067,
+    "credit": "koknia",
+    "source": "Pixabay",
+    "sourceUrl": "https://pixabay.com/photos/children-10253363/"
+  },
+  {
+    "id": "eget-velkommen-til-gudstjeneste",
+    "title": "Velkommen til gudstjeneste",
+    "altText": "Plakat med teksten «Velkommen til gudstjeneste» over et stille vann med skog og tåke, med logoen til Lillesand misjonskirke.",
+    "tags": [
+      "gudstjeneste",
+      "velkommen",
+      "plakat",
+      "Lillesand"
+    ],
+    "file": "eget-velkommen-til-gudstjeneste.jpg",
+    "thumb": "eget-velkommen-til-gudstjeneste-liten.jpg",
+    "width": 1600,
+    "height": 900,
+    "credit": "",
+    "source": "Egne bilder",
+    "sourceFile": "Kopi av Kopi av Velkommen til pinsegudstjeneste (1).png"
+  },
+  {
+    "id": "eget-landevei-host",
+    "title": "Landevei om høsten",
+    "altText": "En svingete landevei mellom trær i høstfarger, med åser og lave skyer bak.",
+    "tags": [
+      "høst",
+      "vei",
+      "natur",
+      "reise"
+    ],
+    "file": "eget-landevei-host.jpg",
+    "thumb": "eget-landevei-host-liten.jpg",
+    "width": 1600,
+    "height": 1200,
+    "credit": "",
+    "source": "Egne bilder",
+    "sourceFile": "landevei_høst.jpeg"
+  },
+  {
+    "id": "pixabay-178320",
+    "title": "Brød i kurv",
+    "altText": "To avlange, nybakte brød i en flettet kurv.",
+    "tags": [
+      "brød",
+      "nattverd",
+      "måltid",
+      "mat"
+    ],
+    "file": "pixabay-178320.jpg",
+    "thumb": "pixabay-178320-liten.jpg",
+    "width": 1600,
+    "height": 1063,
+    "credit": "qrione",
+    "source": "Pixabay",
+    "sourceUrl": "https://pixabay.com/photos/homemade-bread-178320/"
+  },
+  {
+    "id": "eget-traer-skyer",
+    "title": "Høsttrær og skyer",
+    "altText": "En grønn eng med en rekke trær i høstfarger under blå himmel og drivende skyer.",
+    "tags": [
+      "høst",
+      "natur",
+      "himmel",
+      "landskap"
+    ],
+    "file": "eget-traer-skyer.jpg",
+    "thumb": "eget-traer-skyer-liten.jpg",
+    "width": 1600,
+    "height": 1200,
+    "credit": "",
+    "source": "Egne bilder",
+    "sourceFile": "trær_skyer.jpg"
   }
 ]

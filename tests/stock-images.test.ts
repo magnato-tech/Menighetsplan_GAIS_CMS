@@ -30,11 +30,15 @@ describe("Bildene som følger med appen", () => {
     expect(image.altText.trim().length).toBeGreaterThan(20);
     expect(image.altText).not.toBe(image.title);
     expect(image.tags.length).toBeGreaterThan(1);
-    expect(image.credit.trim()).not.toBe("");
-    // An archive image links to where it was found. One of the congregation's own names only its photographer.
+    // An archive image names its photographer and links to where it was found. One of the
+    // congregation's own has no link, and names a photographer only when one is given.
     expect(["Pixabay", "Unsplash", "Egne bilder"]).toContain(image.source);
-    if (image.source === "Egne bilder") expect(image.sourceUrl).toBeUndefined();
-    else expect(image.sourceUrl).toMatch(/^https:\/\/(pixabay\.com|unsplash\.com)\//);
+    if (image.source === "Egne bilder") {
+      expect(image.sourceUrl).toBeUndefined();
+    } else {
+      expect(image.credit.trim()).not.toBe("");
+      expect(image.sourceUrl).toMatch(/^https:\/\/(pixabay\.com|unsplash\.com)\//);
+    }
     expect(image.width).toBeLessThanOrEqual(1600);
     expect(image.height).toBeGreaterThan(0);
   });
@@ -85,6 +89,11 @@ describe("Listen over bildene", () => {
     expect(found("bord")).toEqual(["a"]);
     expect(found("smågruppe kaffe")).toEqual(["a"]);
     expect(found("smågruppe dåp")).toEqual([]);
+  });
+
+  test("både arkivbilder og egne bilder ligger inne", () => {
+    const sources = new Set(index.map((image) => image.source));
+    expect([...sources].sort()).toEqual(["Egne bilder", "Pixabay", "Unsplash"]);
   });
 
   test("bildene som ligger inne nå, kan finnes på det en menighet leter etter", () => {
