@@ -118,3 +118,25 @@
     animation: none;
   }
 }
+
+/* Cards in a list fade in and rise a little as they scroll into view (see useRevealChildren.ts). */
+/* They are only held back once the hook has taken hold of the list, so a list is never left invisible. */
+@keyframes reveal-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.reveal-children[data-reveal-ready] > :not([data-revealed]) {
+  opacity: 0;
+}
+/* Fills backwards only: when the card has arrived, its own hover effects are free again. */
+.reveal-children > [data-revealed] {
+  animation: reveal-rise 0.6s ease-out backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-children[data-reveal-ready] > :not([data-revealed]) {
+    opacity: 1;
+  }
+  .reveal-children > [data-revealed] {
+    animation: none;
+  }
+}

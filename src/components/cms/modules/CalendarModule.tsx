@@ -8,6 +8,7 @@ import {
   presentationText,
 } from "../../../utils/modulePresentation";
 import { PresentationSection } from "../PresentationSection";
+import { useRevealChildren } from "../../../hooks/useRevealChildren";
 import { Clock, MapPin } from "lucide-react";
 
 export interface CalendarModuleProps {
@@ -24,6 +25,7 @@ export const CalendarModule: React.FC<CalendarModuleProps> = ({ presentation }) 
     () => upcomingPublicGatherings(gatherings, Date.now()).slice(0, 4),
     [gatherings]
   );
+  const cards = useRevealChildren<HTMLDivElement>(upcomingEvents.length);
 
   const title = presentationText(config, "title", `Hva skjer i ${settings.churchName}`);
 
@@ -64,7 +66,7 @@ export const CalendarModule: React.FC<CalendarModuleProps> = ({ presentation }) 
           Ingen kommende arrangementer registrert for øyeblikket.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div ref={cards} className="reveal-children grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {upcomingEvents.map((item) => (
             <div
               key={item.id}

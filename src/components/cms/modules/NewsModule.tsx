@@ -10,6 +10,7 @@ import {
 import { PresentationSection } from "../PresentationSection";
 import { useMediaMap } from "../../../hooks/useMediaMap";
 import { resolveMediaUrl } from "../../../utils/media";
+import { useRevealChildren } from "../../../hooks/useRevealChildren";
 import { ChevronRight, ArrowRight } from "lucide-react";
 
 export interface NewsModuleProps {
@@ -18,6 +19,10 @@ export interface NewsModuleProps {
   presentation?: ModulePresentationConfig;
 }
 
+/** How many news cards the module shows. The reveal follows the cards as they arrive. */
+const publishedNewsCount = (news: { isPublished?: boolean }[] | undefined, limit: number): number =>
+  Math.min(limit, (news ?? []).filter((n) => n.isPublished !== false).length);
+
 export const NewsModule: React.FC<NewsModuleProps> = ({
   variant = "grid",
   limit = 3,
@@ -25,6 +30,7 @@ export const NewsModule: React.FC<NewsModuleProps> = ({
 }) => {
   const { news } = useCms();
   const mediaById = useMediaMap();
+  const cards = useRevealChildren<HTMLDivElement>(publishedNewsCount(news, limit));
   const config = presentation || MODULE_PRESENTATION_DEFAULTS["module-news"];
   const defaults = MODULE_PRESENTATION_DEFAULTS["module-news"];
 
@@ -107,7 +113,7 @@ export const NewsModule: React.FC<NewsModuleProps> = ({
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div ref={cards} className="reveal-children grid grid-cols-1 md:grid-cols-3 gap-5">
             {publishedNews.map((article) => {
               const image = resolveMediaUrl(article.imageUrl, mediaById, "web");
               return (
