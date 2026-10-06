@@ -13,6 +13,7 @@ import { ShowFeedback, StudioData } from "../studio";
 import { DatabaseTestdataTab } from "../../../components/admin/DatabaseTestdataTab";
 import { SimulationPanel } from "../../../components/admin/SimulationPanel";
 import { DatasetPanel } from "../../../components/admin/DatasetPanel";
+import { DemoWebsiteCard } from "../../../components/admin/DemoWebsiteCard";
 import {
   Database,
   RefreshCw,
@@ -200,7 +201,9 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
       if (result.failures.length > 0) {
         showFeedback(`Kunne ikke tømme alle samlinger: ${result.failures[0].message}`, "error");
       } else {
-        showFeedback("Testpersoner, grupper og planlegger-data er nå tømt. CMS-sider og nyheter ble bevart.");
+        showFeedback(
+          `Testpersoner, grupper og planlegger-data er tømt (${result.total} dokumenter). Nettsiden og de offentlige arrangementene er bevart.`
+        );
       }
     } catch (err) {
       showFeedback(err instanceof Error ? err.message : "Kunne ikke tømme testdata.", "error");
@@ -219,7 +222,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
         showFeedback(`Gjenoppretting fullført med feil: ${result.failures[0].message}`, "error");
       } else {
         showFeedback(
-          `Demo-databasen er lagt inn på nytt: 32 personer, 14 grupper, samlinger, oppgaver og ${DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller.`
+          `Demo-planleggeren er lagt inn på nytt: 32 personer, 14 grupper, samlinger, oppgaver og ${DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller. Sidene på nettsiden er ikke rørt.`
         );
       }
     } catch (err) {
@@ -611,9 +614,10 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
               </span>
             </div>
             <p className="text-[11px] text-[var(--studio-muted)] leading-relaxed">
-              Fjerner tidligere testpersoner, grupper, samlinger og oppgaver i planleggeren før nye data legges inn, slik at databasen forblir ren og fri for duplikater.
+              Fjerner tidligere testpersoner, grupper, interne samlinger og oppgaver i planleggeren før nye data legges inn, slik at databasen forblir ren og fri for duplikater.
               <span className="text-emerald-300 font-medium ml-1">
-                CMS-sider, artikler, taler og nettstedsinnstillinger bevares trygt intakt.
+                Sider, nyheter, taler og innstillinger blir stående, og det gjør også offentlige arrangementer som er
+                hentet inn med et datasett.
               </span>
             </p>
           </label>
@@ -807,7 +811,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
               <span>Tilbakestilling & Sletting</span>
             </h3>
             <p className="text-xs text-red-300/80 mt-0.5">
-              Tøm kun testpersoner og planlegger-data, eller foreta en fullstendig tilbakestilling av databasen.
+              Tøm kun testpersoner og planlegger-data, legg demo-innholdet inn på nytt, eller slett alt i databasen.
             </p>
           </div>
           <span className="text-xs font-mono font-bold text-red-300 bg-red-950/80 border border-red-800/80 px-2 py-0.5 rounded self-start sm:self-auto">
@@ -815,7 +819,7 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
           {/* Valg 1: Tøm kun testdata */}
           <div className="p-4 rounded-xl bg-[var(--studio-row)] border border-[var(--studio-border)] flex flex-col justify-between space-y-3">
             <div className="space-y-1">
@@ -824,8 +828,10 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
                 <span>Tøm kun testdata (Personer & Planlegger)</span>
               </span>
               <p className="text-[11px] text-[var(--studio-muted)] leading-relaxed">
-                Fjerner alle testpersoner, grupper, samlinger og oppgaver.{" "}
-                <strong className="text-emerald-400 font-semibold">CMS-sider og nyheter forblir uberørt.</strong>
+                Fjerner alle testpersoner, grupper, interne samlinger, demo-samlinger og oppgaver.{" "}
+                <strong className="text-emerald-400 font-semibold">
+                  Nettsiden og offentlige arrangementer som er hentet inn, blir stående.
+                </strong>
               </p>
             </div>
             <button
@@ -844,11 +850,12 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             <div className="space-y-1">
               <span className="font-bold text-indigo-100 text-xs flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-[var(--studio-accent-text)]" />
-                <span>Legg inn demo-data på nytt</span>
+                <span>Legg inn demo-planleggeren på nytt</span>
               </span>
               <p className="text-[11px] text-[var(--studio-accent-text)]/80 leading-relaxed">
-                Fyller databasen med 32 personer, grupper, samlinger, oppgaver og alle{" "}
-                {DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller fra rollebiblioteket.
+                Fyller planleggeren med 32 personer, grupper, demo-samlinger, oppgaver og alle{" "}
+                {DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller fra rollebiblioteket. Sidene, nyhetene og talene på
+                nettsiden røres ikke.
               </p>
             </div>
             <button
@@ -858,11 +865,14 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
               className="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer self-start"
             >
               {isWorking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-              <span>Fyll inn alt på nytt</span>
+              <span>Fyll planleggeren på nytt</span>
             </button>
           </div>
 
-          {/* Valg 3: Komplett sletting av alt */}
+          {/* Valg 3: Demo-nettsiden, for seg */}
+          <DemoWebsiteCard showFeedback={showFeedback} disabled={isWorking} />
+
+          {/* Valg 4: Komplett sletting av alt */}
           <div className="p-4 rounded-xl bg-red-950/40 border border-red-900/60 flex flex-col justify-between space-y-3">
             <div className="space-y-1">
               <span className="font-bold text-red-200 text-xs flex items-center gap-1.5">
@@ -900,12 +910,12 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
               </div>
               <div>
                 <h4 className="text-base font-bold text-[var(--studio-text)]">Tømme testpersoner og planleggerdata?</h4>
-                <p className="text-xs text-amber-300">CMS-sider og nyheter bevares.</p>
+                <p className="text-xs text-amber-300">Nettsiden og offentlige arrangementer bevares.</p>
               </div>
             </div>
 
             <p className="text-xs text-[var(--studio-muted)] leading-relaxed">
-              Dette sletter alle dokumenter i samlingene for personer ({allPersons.length}), grupper ({groups.length}), samlinger ({gatherings.length}) og oppgaver ({tasks.length}). CMS-sider og nyhetsartikler forblir urørt.
+              Dette sletter personene ({allPersons.length}), gruppene, de interne samlingene, demo-samlingene og oppgavene ({tasks.length}), med meldinger og oppmøte. Sider, nyheter, taler og innstillinger blir stående. Det gjør også offentlige arrangementer som er hentet inn med et datasett, og kalendergruppen som eier dem.
             </p>
 
             <div className="pt-2 flex items-center justify-end gap-2.5">

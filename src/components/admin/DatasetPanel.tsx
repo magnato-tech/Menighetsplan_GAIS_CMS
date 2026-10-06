@@ -2,8 +2,10 @@ import React, { useRef, useState } from "react";
 import { AlertTriangle, Download, FileUp, Loader2, Package, Upload } from "lucide-react";
 import { useCms } from "../../context/CmsContext";
 import { clearDatabase, databaseHasContent, exportDataset, importDataset } from "../../services/datasetService";
+import { DATA_PARTS, DATA_PART_CONTENTS, DATA_PART_LABELS, countByPart, keepParts, type DataPart } from "../../utils/dataParts";
 import {
   collectionLabel,
+  countDataset,
   datasetFileName,
   parseDataset,
   serializeDataset,
@@ -36,14 +38,24 @@ const madeOn = (isoString: string): string => {
   return isNaN(date.getTime()) ? "" : date.toLocaleDateString("nb-NO", { day: "numeric", month: "long", year: "numeric" });
 };
 
+/** «nettsiden» or «planleggeren» when one part is chosen, otherwise «databasen». */
+const scopeOf = (parts: readonly DataPart[]): string =>
+  parts.length === 1 ? DATA_PART_LABELS[parts[0]].toLowerCase() : "databasen";
+const capitalized = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+const checkboxClass =
+  "w-4 h-4 rounded text-indigo-600 bg-[var(--studio-panel-bg)] border-[var(--studio-border)] cursor-pointer disabled:cursor-not-allowed";
+
 /**
- * Downloads everything in the database as one file, and brings such a file in again.
- * This is how the content on the website and in the app is swapped: the demo content
- * for a congregation's own, or one installation's content into another.
+ * Downloads the database as one file, and brings such a file in again: all of it, or only the
+ * website or only the planner (see utils/dataParts.ts). This is how the content is swapped,
+ * for instance the demo website for a congregation's own while the test persons stay.
  */
 export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
   const { settings } = useCms();
   const [name, setName] = useState("");
+  const [exportParts, setExportParts] = useState<DataPart[]>([...DATA_PARTS]);
+  const [importParts, setImportParts] = useState<DataPart[]>([...DATA_PARTS]);
   const [working, setWorking] = useState<"export" | "check" | "import" | "replace" | null>(null);
   const [asking, setAsking] = useState(false);
   // What the replace is doing right now, shown in the dialog while it runs
@@ -51,13 +63,16 @@ export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
   const [chosen, setChosen] = useState<{ fileName: string; parsed: ParsedDataset } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
+  const toggle = (parts: DataPart[], part: DataPart): DataPart[] =>
+    DATA_PARTS.filter((p) => (p === part ? !parts.includes(p) : parts.includes(p)));
+
   const handleExport = async () => {
     setWorking("export");
     try {
-      const { dataset, unreadable } = await exportDataset(name.trim() || settings.churchName);
+      const { dataset, unreadable } = await exportDataset(name.trim() || settings.churchName, "", new Date(), exportParts);
       const total = totalDocuments(dataset);
       if (total === 0) {
-        showFeedback("Databasen er tom. Det er ingenting å laste ned.", "error");
+        showFeedback(`${capitalized(scopeOf(exportParts))} er tom. Det er ingenting å laste ned.`, "error");
         return;
       }
       saveAsFile(datasetFileName(dataset), serializeDataset(dataset));
@@ -75,18 +90,31 @@ export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
     // Cleared so that choosing the same file again is noticed
     event.target.value = "";
     if (!file) return;
-    setChosen({ fileName: file.name, parsed: parseDataset(await file.text()) });
+    const parsed = parseDataset(await file.text());
+    setChosen({ fileName: file.name, parsed });
+    // Every part the file has content for is brought in, until the admin unticks one
+    if (parsed.ok) {
+      const inFile = countByPart(parsed.dataset.collections);
+      setImportParts(DATA_PARTS.filter((part) => inFile[part] > 0));
+    }
   };
 
+  const parsed = chosen?.parsed;
+  const inFile = parsed?.ok ? countByPart(parsed.dataset.collections) : null;
+  // What is brought in: the parts of the file the admin has left ticked
+  const selected = parsed?.ok ? { ...parsed.dataset, collections: keepParts(parsed.dataset.collections, importParts) } : null;
+  const selectedTotal = selected ? totalDocuments(selected) : 0;
+  const scope = scopeOf(importParts);
+
   /**
-   * The database is emptied only by an explicit yes, and with nothing in it there is nothing to
-   * ask about. The database itself is asked, not the counters on screen, which read zero while the
-   * page is still loading. If it cannot say, the question is put anyway: asking once too often
-   * costs a click, while not asking would mix the content unannounced.
+   * The database is emptied only by an explicit yes, and with nothing in the parts concerned there
+   * is nothing to ask about. The database itself is asked, not the counters on screen, which read
+   * zero while the page is still loading. If it cannot say, the question is put anyway: asking
+   * once too often costs a click, while not asking would mix the content unannounced.
    */
   const handleImportClicked = async () => {
     setWorking("check");
-    const hasContent = await databaseHasContent().catch(() => true);
+    const hasContent = await databaseHasContent(importParts).catch(() => true);
     setWorking(null);
     if (hasContent) setAsking(true);
     else await addDataset();
@@ -94,13 +122,13 @@ export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
 
   /** Copy, empty, bring in: the three steps of a yes, each named on screen while it runs. */
   const replaceWithDataset = async () => {
-    if (!chosen?.parsed.ok) return;
-    const { dataset } = chosen.parsed;
+    if (!selected) return;
     const describe = (error: unknown) => (error instanceof Error ? error.message : "ukjent feil");
     let copyNote = "";
     let emptied = false;
     setWorking("replace");
     try {
+      // The copy is of everything, also the part that is not being replaced
       setStep("Laster ned en sikkerhetskopi av det som ligger i databasen …");
       const backup = await exportDataset(`Sikkerhetskopi ${settings.churchName}`);
       if (totalDocuments(backup.dataset) > 0) {
@@ -109,34 +137,36 @@ export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
         copyNote = ` Sikkerhetskopien heter ${backupFile}.`;
       }
 
-      setStep("Sletter alt i databasen …");
-      const cleared = await clearDatabase();
+      setStep(`Sletter alt i ${scope} …`);
+      const cleared = await clearDatabase(importParts);
       if (cleared.failures.length > 0) {
+        const named = cleared.failures.map((f) => f.collection).filter(Boolean);
+        const what = named.length > 0 ? `${quoted(named)} kunne ikke slettes` : "Databasen kunne ikke leses, så ingenting er slettet";
         showFeedback(
-          `Databasen ble ikke tømt helt, og datasettet er ikke hentet inn. ${quoted(cleared.failures.map((f) => f.collection))} kunne ikke slettes: ${cleared.failures[0].message}.${copyNote}`,
+          `${capitalized(scope)} ble ikke tømt helt, og datasettet er ikke hentet inn. ${what}: ${cleared.failures[0].message}.${copyNote}`,
           "error"
         );
         return;
       }
       emptied = true;
 
-      setStep(`Henter inn «${dataset.name}» …`);
-      const result = await importDataset(dataset);
+      setStep(`Henter inn «${selected.name}» …`);
+      const result = await importDataset(selected);
       if (result.failures.length > 0) {
         showFeedback(
-          `Databasen er tømt, men datasettet ble ikke hentet inn i sin helhet. ${quoted(result.failures.map((f) => f.collection))} ble ikke lagret: ${result.failures[0].message}.${copyNote}`,
+          `${capitalized(scope)} er tømt, men datasettet ble ikke hentet inn i sin helhet. ${quoted(result.failures.map((f) => f.collection))} ble ikke lagret: ${result.failures[0].message}.${copyNote}`,
           "error"
         );
       } else {
         showFeedback(
-          `Databasen er tømt (${cleared.deleted} dokumenter slettet), og «${dataset.name}» er hentet inn (${result.total} dokumenter).${copyNote}`
+          `${capitalized(scope)} er tømt (${cleared.deleted} dokumenter slettet), og «${selected.name}» er hentet inn (${result.total} dokumenter).${copyNote}`
         );
         setChosen(null);
       }
     } catch (error) {
       showFeedback(
         emptied
-          ? `Databasen er tømt, men datasettet ble ikke hentet inn: ${describe(error)}.${copyNote}`
+          ? `${capitalized(scope)} er tømt, men datasettet ble ikke hentet inn: ${describe(error)}.${copyNote}`
           : copyNote
           ? `Slettingen ble avbrutt, og datasettet er ikke hentet inn: ${describe(error)}.${copyNote}`
           : `Sikkerhetskopien kunne ikke lages, så ingenting er slettet eller hentet inn: ${describe(error)}`,
@@ -151,19 +181,18 @@ export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
 
   /** Brings the dataset in on top of what is there. Nothing is deleted. */
   const addDataset = async () => {
-    if (!chosen?.parsed.ok) return;
-    const { dataset } = chosen.parsed;
+    if (!selected) return;
     setAsking(false);
     setWorking("import");
     try {
-      const result = await importDataset(dataset);
+      const result = await importDataset(selected);
       if (result.failures.length > 0) {
         showFeedback(
           `Datasettet ble ikke hentet inn i sin helhet. ${quoted(result.failures.map((f) => f.collection))} ble ikke lagret: ${result.failures[0].message}`,
           "error"
         );
       } else {
-        showFeedback(`Datasettet «${dataset.name}» er hentet inn (${result.total} dokumenter).`);
+        showFeedback(`Datasettet «${selected.name}» er hentet inn (${result.total} dokumenter).`);
         setChosen(null);
       }
     } catch (error) {
@@ -173,8 +202,6 @@ export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
     }
   };
 
-  const parsed = chosen?.parsed;
-
   return (
     <section className="p-5 sm:p-6 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-4">
       <div>
@@ -183,9 +210,10 @@ export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
           <span>Datasett</span>
         </h3>
         <p className="text-xs text-[var(--studio-muted)] mt-0.5 max-w-3xl leading-relaxed">
-          Et datasett er alt innholdet samlet i én fil: sider, nyheter, taler og innstillinger for nettsiden, og personer,
-          grupper, samlinger og oppgaver for appen. Last ned en fil for å ta vare på innholdet eller flytte det. Hent inn en
-          fil for å fylle nettsiden og appen med et annet innhold, for eksempel menighetens eget i stedet for demodataene.
+          Et datasett er innholdet samlet i én fil. Databasen har to deler som kan lastes ned og hentes inn hver for seg:
+          <strong className="text-[var(--studio-text)]"> nettsiden</strong> ({DATA_PART_CONTENTS.website}) og
+          <strong className="text-[var(--studio-text)]"> planleggeren</strong> ({DATA_PART_CONTENTS.planner}). Slik kan
+          menighetens egen nettside ligge inne mens planleggeren fylles med testpersoner, eller omvendt.
         </p>
       </div>
 
@@ -209,15 +237,29 @@ export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
                 className={studioInputFull}
               />
             </div>
+            <fieldset className="flex flex-wrap gap-x-4 gap-y-1.5">
+              <legend className="text-[11px] font-bold text-[var(--studio-muted)] mb-1.5">Ta med</legend>
+              {DATA_PARTS.map((part) => (
+                <label key={part} className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-[var(--studio-text)]">
+                  <input
+                    type="checkbox"
+                    checked={exportParts.includes(part)}
+                    onChange={() => setExportParts(toggle(exportParts, part))}
+                    className={checkboxClass}
+                  />
+                  <span>{DATA_PART_LABELS[part]}</span>
+                </label>
+              ))}
+            </fieldset>
             <p className="text-[11px] text-[var(--studio-muted)] leading-relaxed">
-              Filen inneholder alt, også navn, telefon og e-post til personene i registeret. Ta vare på den deretter. Bilder
+              Planleggeren inneholder navn, telefon og e-post til personene i registeret. Ta vare på filen deretter. Bilder
               som er lastet opp, ligger ikke i filen; den viser til dem der de er lagret.
             </p>
           </div>
           <button
             type="button"
             onClick={handleExport}
-            disabled={working !== null}
+            disabled={working !== null || exportParts.length === 0}
             className={`${studioPrimaryButton} px-4 py-2 text-xs flex items-center gap-2 self-start disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {working === "export" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
@@ -232,9 +274,9 @@ export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
               <span>Hent inn et datasett fra fil</span>
             </span>
             <p className="text-[11px] text-[var(--studio-muted)] leading-relaxed">
-              Har databasen innhold fra før, blir du spurt om den skal tømmes først. Det anbefales når du bytter innhold, så
-              gammelt og nytt ikke blandes. Svarer du nei, legges datasettet til det som ligger der, og det som finnes begge
-              steder, erstattes av filens utgave.
+              Du velger hvilke deler av filen som hentes inn. Har den delen av databasen innhold fra før, blir du spurt om
+              den skal tømmes først. Det anbefales når du bytter innhold, så gammelt og nytt ikke blandes. Den andre delen
+              røres ikke.
             </p>
           </div>
           <input
@@ -266,7 +308,7 @@ export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
         </p>
       )}
 
-      {chosen && parsed?.ok && (
+      {chosen && parsed?.ok && selected && inFile && (
         <div className="p-4 rounded-xl bg-[var(--studio-accent-bg)] border border-[var(--studio-accent-border)] space-y-3">
           <div>
             <p className="text-sm font-bold text-[var(--studio-text)]">{parsed.dataset.name}</p>
@@ -280,8 +322,29 @@ export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
             )}
           </div>
 
+          <fieldset className="flex flex-wrap gap-x-5 gap-y-1.5">
+            <legend className="text-[11px] font-bold text-[var(--studio-muted)] mb-1.5">Hent inn</legend>
+            {DATA_PARTS.map((part) => (
+              <label
+                key={part}
+                className={`flex items-center gap-2 text-xs font-semibold text-[var(--studio-text)] ${inFile[part] > 0 ? "cursor-pointer" : "opacity-60"}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={importParts.includes(part)}
+                  disabled={inFile[part] === 0 || working !== null}
+                  onChange={() => setImportParts(toggle(importParts, part))}
+                  className={checkboxClass}
+                />
+                <span>
+                  {DATA_PART_LABELS[part]} ({inFile[part] > 0 ? `${inFile[part]} dokumenter` : "ikke i filen"})
+                </span>
+              </label>
+            ))}
+          </fieldset>
+
           <ul className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {parsed.counts.map((entry) => (
+            {countDataset(selected).map((entry) => (
               <li
                 key={entry.collection}
                 className="px-3 py-2 rounded-lg bg-[var(--studio-surface)] border border-[var(--studio-border)]"
@@ -302,7 +365,7 @@ export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
             <button
               type="button"
               onClick={handleImportClicked}
-              disabled={working !== null}
+              disabled={working !== null || selectedTotal === 0}
               className={`${studioPrimaryButton} px-4 py-2 text-xs flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {working === "import" || working === "check" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
@@ -319,10 +382,14 @@ export const DatasetPanel: React.FC<DatasetPanelProps> = ({ showFeedback }) => {
           </div>
         </div>
       )}
-      {asking && parsed?.ok && (
+
+      {asking && selected && (
         <DatasetImportDialog
-          datasetName={parsed.dataset.name}
-          datasetTotal={parsed.total}
+          datasetName={selected.name}
+          datasetTotal={selectedTotal}
+          scope={scope}
+          scopeContents={importParts.map((part) => DATA_PART_CONTENTS[part]).join(", og ")}
+          untouched={importParts.length === 1 ? DATA_PART_LABELS[DATA_PARTS.find((part) => part !== importParts[0])!].toLowerCase() : undefined}
           step={step}
           onReplace={replaceWithDataset}
           onAdd={addDataset}

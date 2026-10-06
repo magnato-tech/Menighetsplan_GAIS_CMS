@@ -11,7 +11,7 @@ import {
   Table2,
 } from "lucide-react";
 import { StudioData, ShowFeedback } from "../studio";
-import { populateWithMockData } from "../../../services/databaseAdmin";
+import { populateDemoPersons } from "../../../services/databaseAdmin";
 import {
   matchesPersonSearch,
   nextSort,
@@ -39,7 +39,7 @@ export const PersonsTab: React.FC<PersonsTabProps> = ({ studio, showFeedback }) 
     if (isPopulating) return;
     setIsPopulating(true);
     try {
-      const result = await populateWithMockData();
+      const result = await populateDemoPersons();
       if (result.failures.length > 0) {
         showFeedback?.(`Fylling fullført med noen feil: ${result.failures[0].message}`, "error");
       } else {

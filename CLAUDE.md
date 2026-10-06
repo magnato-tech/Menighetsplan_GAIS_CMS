@@ -47,6 +47,7 @@ Kjør `npm run lint` og `npm test` før en endring regnes som ferdig.
 | `src/services/writeErrors.ts` | Melder mislykkede skrivinger til `WriteErrorBanner` |
 | `src/services/databaseAdmin.ts` | Fyll databasen med demodata / slett alt |
 | `src/utils/dataset.ts`, `src/services/datasetService.ts`, `src/components/admin/DatasetPanel.tsx` | Datasett: alt innholdet i databasen som én fil. Formatet og kontrollen av en fil, nedlasting og innhenting, og panelet under Database i admin. Databasen tømmes bare når admin svarer ja i `DatasetImportDialog.tsx`, og da tas en kopi først |
+| `src/utils/dataParts.ts` | De to delene av databasen, som fylles og tømmes hver for seg: nettsiden (sider, nyheter, taler, stab, innstillinger og arrangementer åpne for alle) og planleggeren (personer, grupper, roller, oppgaver, interne samlinger). Testdata skriver bare planleggeren (`testdataService.ts`); demo-nettsiden legges inn for seg (`DemoWebsiteCard.tsx`); datasett kan lastes ned, hentes inn og tømmes per del |
 | `src/utils/churchAnalytics.ts` | Alt Analysebord regner ut for en periode. `useAdminAnalytics` i `adminHooks.ts` kaller den, fanen ligger i `src/pages/admin/tabs/AnalyticsTab.tsx` med delene i `tabs/analytics/`. Modulene og rekkefølgen står i `src/utils/analyticsModules.ts` |
 | `src/utils/headcount.ts`, `src/services/headcounts.ts` | Oppmøtetall: hva som kan telles og hvordan skjemaet leses, og hvor tallene lagres |
 | `src/data/simulatedChurchLife.ts`, `src/services/simulationService.ts` | Simulert historikk for å prøve Analysebord, og skriving og fjerning av den |

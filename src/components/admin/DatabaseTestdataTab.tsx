@@ -42,6 +42,10 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
   // 2. En avkrysningsboks for 'Tøm eksisterende testdata' (standard valgt)
   const [clearExistingData, setClearExistingData] = useState<boolean>(true);
 
+  // Demo-samlingene med oppgaver er et eget valg, og står av: har menigheten hentet inn sine egne
+  // arrangementer, skal ikke demo-gudstjenester blande seg inn i kalenderen på nettsiden.
+  const [withGatherings, setWithGatherings] = useState<boolean>(false);
+
   // Operasjonstilstand
   const [isWorking, setIsWorking] = useState<boolean>(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
@@ -68,6 +72,7 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
         personCount: Math.max(32, personCount),
         groupCount: groupCount > 0 ? groupCount : 14,
         roleCount: roleCount > 0 ? roleCount : 14,
+        ...(withGatherings ? { gatheringCount: 19, taskCount: 24 } : {}),
       });
 
       if (result.failures.length > 0) {
@@ -75,8 +80,10 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
         setStatusMessage({ text: errorText, type: "error" });
         showFeedback?.(errorText, "error");
       } else {
-        const resetNote = clearExistingData ? "Eksisterende data ble nullstilt. " : "";
-        const successText = `${resetNote}Testdata er skrevet til Firestore: personer, grupper, samlinger, oppgaver og ${DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller.`;
+        const resetNote = clearExistingData ? "Tidligere testdata ble ryddet bort. " : "";
+        const successText = withGatherings
+          ? `${resetNote}Testdata er lagt inn: personer, grupper, demo-samlinger med oppgaver og ${DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller. Sidene, nyhetene, talene og innstillingene på nettsiden er ikke rørt.`
+          : `${resetNote}Testdata er lagt inn: personer, grupper og ${DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller. Nettsiden og de offentlige arrangementene er ikke rørt.`;
         setStatusMessage({ text: successText, type: "success" });
         showFeedback?.(successText, "success");
       }
@@ -109,7 +116,7 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
         label = "Testpersoner og tildelinger";
       } else if (type === "groups") {
         result = await deleteGroupsTestdata();
-        label = "Grupper, samlinger og oppgaver";
+        label = "Grupper, interne samlinger og oppgaver";
       } else if (type === "roles") {
         result = await deleteRolesTestdata();
         label = "Roller og oppgavetildelinger";
@@ -123,7 +130,7 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
         setStatusMessage({ text: err, type: "error" });
         showFeedback?.(err, "error");
       } else {
-        const success = `${label} ble slettet fra Firestore (${result.total} dokumenter). CMS-innhold er bevart.`;
+        const success = `${label} ble slettet (${result.total} dokumenter). Nettsiden og de offentlige arrangementene er bevart.`;
         setStatusMessage({ text: success, type: "success" });
         showFeedback?.(success, "success");
       }
@@ -148,7 +155,8 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
             <span>Database & Testdata</span>
           </h3>
           <p className="text-xs text-slate-400 mt-1">
-            Konfigurer mengder for testdata og fyll Firestore-databasen med 32 testpersoner fordelt på ulike grupper og lederroller.
+            Fyll planleggeren med testpersoner fordelt på grupper og lederroller. Nettsiden (sider, nyheter, taler, stab,
+            innstillinger og offentlige arrangementer) røres ikke herfra.
           </p>
         </div>
 
@@ -274,7 +282,7 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
             </div>
             <p className="text-[10px] text-indigo-300/90">
               Alle {DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller (Lyd, Kjøkken, Taler …) følger alltid med i
-              rollebiblioteket og kobles til oppgaver på samlinger.
+              rollebiblioteket. De kobles til oppgaver når demo-samlingene tas med.
             </p>
           </div>
         </div>
@@ -297,10 +305,31 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
             </span>
           </div>
           <p className="text-[11px] text-slate-400 leading-relaxed">
-            Sletter eksisterende testpersoner og tilhørende planleggergrupper fra Firestore før ny populering, slik at databasen forblir konsistent og fri for duplikater.
+            Sletter personer, grupper, interne samlinger, oppgaver, meldinger og oppmøte før ny fylling, så planleggeren
+            ikke får dobbelt opp.
             <span className="text-emerald-400 font-medium ml-1">
-              CMS-sider, artikler og taler bevares trygt.
+              Sider, nyheter, taler og innstillinger blir stående, og det gjør også offentlige arrangementer som er
+              hentet inn med et datasett.
             </span>
+          </p>
+        </label>
+      </div>
+
+      {/* Demo-samlinger er et eget valg (standard av) */}
+      <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-700/80 flex items-start gap-3 shadow-xs">
+        <input
+          id="ta-med-demo-samlinger"
+          type="checkbox"
+          checked={withGatherings}
+          onChange={(e) => setWithGatherings(e.target.checked)}
+          className="mt-0.5 w-4 h-4 rounded border-slate-600 bg-slate-800 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900 cursor-pointer accent-indigo-600"
+        />
+        <label htmlFor="ta-med-demo-samlinger" className="text-xs space-y-0.5 cursor-pointer">
+          <div className="font-bold text-slate-200">Ta med demo-samlinger og oppgaver</div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Legger også inn 19 demo-samlinger med oppgaver, tildelinger og oppmøte. Demo-gudstjenestene vises da i
+            kalenderen på nettsiden, sammen med arrangementene som ligger der fra før. La valget stå av når nettsiden har
+            menighetens egne arrangementer.
           </p>
         </label>
       </div>
@@ -338,7 +367,7 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
           )}
           <span>
             {isWorking && activeAction === "populate"
-              ? "Genererer og skriver 32 testpersoner til Firestore..."
+              ? "Legger inn testdata…"
               : "Populer database"}
           </span>
         </button>
@@ -355,7 +384,7 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
             )}
           </span>
           <span className="text-slate-400">
-            Inkluderer {DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller koblet til oppgaver på samlinger
+            Inkluderer {DEFAULT_VOLUNTEER_ROLE_NAMES.length} tjenesteroller{withGatherings ? " og 19 demo-samlinger" : ""}
           </span>
         </div>
       </div>
@@ -365,9 +394,9 @@ export const DatabaseTestdataTab: React.FC<DatabaseTestdataTabProps> = ({
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-slate-300 flex items-center gap-2">
             <Trash2 className="w-3.5 h-3.5 text-slate-400" />
-            <span>Målrettet sletting av testdata i Firestore</span>
+            <span>Målrettet sletting av testdata</span>
           </span>
-          <span className="text-[10px] text-slate-400 font-mono">CMS-sider bevares alltid</span>
+          <span className="text-[10px] text-slate-400">Nettsiden og offentlige arrangementer bevares alltid</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
           <button

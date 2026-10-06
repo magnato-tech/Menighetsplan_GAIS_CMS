@@ -2,6 +2,7 @@ import { collection, doc, getDocs, writeBatch } from "firebase/firestore";
 import { db } from "../firebase";
 import { ALL_COLLECTIONS, CMS_COLLECTIONS, CMS_SETTINGS_DOC_ID, COLLECTIONS } from "../data/collections";
 import { chunk } from "../utils/chunk";
+import { DATA_PARTS, documentsToDelete, keepParts, type DataPart } from "../utils/dataParts";
 import { buildDataset, type Dataset, type DatasetDocument } from "../utils/dataset";
 import { sanitizeForFirestore } from "../utils/firestoreData";
 import { HEADCOUNT_RECORD } from "./headcounts";
@@ -24,24 +25,27 @@ const KEPT_IN_SETTINGS: Record<string, string> = {
 const collectionOfMark = (recordType: unknown): string | undefined =>
   Object.keys(KEPT_IN_SETTINGS).find((name) => KEPT_IN_SETTINGS[name] === recordType);
 
-export interface ExportedDataset {
-  dataset: Dataset;
-  /** Collections the rules in force would not let us read. They are not in the dataset. */
-  unreadable: string[];
-}
+/** Where a collection named in a dataset is stored today. */
+const storedIn = (collectionName: string): string =>
+  collectionName in KEPT_IN_SETTINGS ? CMS_COLLECTIONS.SETTINGS : collectionName;
 
 const isPermissionDenied = (error: unknown): boolean => (error as { code?: unknown } | null)?.code === "permission-denied";
 
+interface DatabaseContents {
+  /** Every document, under the collection it belongs to (not the one it happens to be stored in). */
+  collections: Record<string, DatasetDocument[]>;
+  /** Collections the rules in force would not let us read. */
+  unreadable: string[];
+}
+
 /**
- * Everything in the database as one dataset. Uploaded images stay in the image store;
- * the dataset holds the references to them.
+ * Reads the whole database.
  *
  * The rules deployed on a project can be older than the app and turn away a collection the
- * app has since been given (see CLAUDE.md). Such a collection is left out and named, so the
- * caller can say that the file is not everything. Any other failure stops the export:
- * a file that silently lacks a collection would pass for a complete copy.
+ * app has since been given (see CLAUDE.md). Such a collection is left out and named. Any
+ * other failure is thrown: what is built on a half-read database would be wrong.
  */
-export async function exportDataset(name: string, description = "", now: Date = new Date()): Promise<ExportedDataset> {
+async function readDatabase(): Promise<DatabaseContents> {
   const collections: Record<string, DatasetDocument[]> = {};
   const unreadable: string[] = [];
   const add = (collectionName: string, document: DatasetDocument) => {
@@ -65,7 +69,29 @@ export async function exportDataset(name: string, description = "", now: Date = 
       else add(collectionName, { ...docSnap.data(), id: docSnap.id });
     }
   }
-  return { dataset: buildDataset(name, description, collections, now), unreadable };
+  return { collections, unreadable };
+}
+
+export interface ExportedDataset {
+  dataset: Dataset;
+  /** Collections the rules in force would not let us read. They are not in the dataset. */
+  unreadable: string[];
+}
+
+/**
+ * The database as one dataset: everything, or only the website or only the planner
+ * (see utils/dataParts.ts). Uploaded images stay in the image store; the dataset holds the
+ * references to them. A collection that cannot be read is named, so the caller can say that
+ * the file is not everything.
+ */
+export async function exportDataset(
+  name: string,
+  description = "",
+  now: Date = new Date(),
+  parts: readonly DataPart[] = DATA_PARTS
+): Promise<ExportedDataset> {
+  const { collections, unreadable } = await readDatabase();
+  return { dataset: buildDataset(name, description, keepParts(collections, parts), now), unreadable };
 }
 
 /** Where a document from a dataset is stored, and in what form. */
@@ -115,20 +141,12 @@ export async function importDataset(dataset: Dataset): Promise<TestdataServiceRe
 }
 
 /**
- * Whether the database holds anything the app can reach. Asked at the moment a dataset is
+ * Whether the given parts of the database hold anything. Asked at the moment a dataset is
  * about to be brought in, so the answer does not depend on what a screen has loaded so far.
  */
-export async function databaseHasContent(): Promise<boolean> {
-  for (const collectionName of ALL_COLLECTIONS) {
-    if (collectionName in KEPT_IN_SETTINGS) continue;
-    try {
-      const snapshot = await getDocs(collection(db, collectionName));
-      if (!snapshot.empty) return true;
-    } catch (error) {
-      if (!isPermissionDenied(error)) throw error;
-    }
-  }
-  return false;
+export async function databaseHasContent(parts: readonly DataPart[] = DATA_PARTS): Promise<boolean> {
+  const { collections } = await readDatabase();
+  return Object.keys(keepParts(collections, parts)).length > 0;
 }
 
 export interface ClearedDatabase {
@@ -137,27 +155,38 @@ export interface ClearedDatabase {
 }
 
 /**
- * Deletes every document the app can reach, so a dataset can take the place of what was there.
+ * Empties the given parts of the database, so a dataset can take the place of what was there.
+ * The other part is left alone; see documentsToDelete for what follows an event that goes.
  * There is no undo: the caller takes a copy first (see exportDataset).
  *
- * A collection the rules in force turn away is passed over, as in exportDataset: the app cannot
- * have stored anything there. Volunteer roles and headcounts go with cms_settings, where they
- * are kept. Any other failure is reported, and the caller must not go on as if the database were empty.
+ * If the database cannot be read in full, nothing is deleted: which documents belong to which
+ * part is only known when all of them are seen. A collection the rules in force turn away is
+ * passed over, as in exportDataset: the app cannot have stored anything there.
  */
-export async function clearDatabase(): Promise<ClearedDatabase> {
+export async function clearDatabase(parts: readonly DataPart[] = DATA_PARTS): Promise<ClearedDatabase> {
   const cleared: ClearedDatabase = { deleted: 0, failures: [] };
-  for (const collectionName of ALL_COLLECTIONS) {
-    if (collectionName in KEPT_IN_SETTINGS) continue;
+  let contents: DatabaseContents;
+  try {
+    contents = await readDatabase();
+  } catch (error) {
+    console.error("Datasett: databasen kunne ikke leses før tømming:", error);
+    cleared.failures.push({ collection: "", message: error instanceof Error ? error.message : String(error) });
+    return cleared;
+  }
+
+  const byCollection = new Map<string, string[]>();
+  for (const { collection: collectionName, id } of documentsToDelete(contents.collections, parts)) {
+    byCollection.set(collectionName, [...(byCollection.get(collectionName) ?? []), id]);
+  }
+  for (const [collectionName, ids] of byCollection) {
     try {
-      const snapshot = await getDocs(collection(db, collectionName));
-      for (const piece of chunk(snapshot.docs, BATCH_SIZE)) {
+      for (const piece of chunk(ids, BATCH_SIZE)) {
         const batch = writeBatch(db);
-        for (const docSnap of piece) batch.delete(docSnap.ref);
+        for (const id of piece) batch.delete(doc(db, storedIn(collectionName), id));
         await batch.commit();
       }
-      cleared.deleted += snapshot.docs.length;
+      cleared.deleted += ids.length;
     } catch (error) {
-      if (isPermissionDenied(error)) continue;
       console.error(`Datasett: sletting av ${collectionName} feilet:`, error);
       cleared.failures.push({
         collection: collectionName,

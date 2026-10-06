@@ -17,13 +17,16 @@ import { clearDatabase, databaseHasContent, exportDataset, importDataset } from 
 import { CMS_COLLECTIONS, COLLECTIONS } from "../src/data/collections";
 import { buildDataset, serializeDataset } from "../src/utils/dataset";
 
+const BOTH = ["website", "planner"];
+
 const dataset = buildDataset(
   "LMK_sett",
   "Innholdet fra den gamle nettsiden.",
   {
     [CMS_COLLECTIONS.PAGES]: [{ id: "page-forside" }, { id: "page-om-oss" }],
     [CMS_COLLECTIONS.SERMONS]: [{ id: "sermon-1" }],
-    [COLLECTIONS.GATHERINGS]: [{ id: "gathering-1" }],
+    // A group's own meeting is the planner's, so the file holds both parts
+    [COLLECTIONS.GATHERINGS]: [{ id: "gathering-1", type: "gruppesamling" }],
   },
   new Date("2026-10-06T12:00:00.000Z")
 );
@@ -63,7 +66,9 @@ describe("Datasett inn i en database som har innhold fra før", () => {
     expect(dialog.textContent).toContain("Slette databasen først?");
     expect(dialog.textContent).toContain("Anbefalt");
     expect(dialog.textContent).toContain("sikkerhetskopi");
-    expect(dialog.textContent).toContain("Alt i databasen slettes");
+    expect(dialog.textContent).toContain("Alt i databasen slettes: sider, nyheter");
+    expect(dialog.textContent).toContain("personer, grupper");
+    expect(dialog.textContent).not.toContain("røres ikke");
     expect(dialog.textContent).toContain("«LMK_sett» hentes inn (4 dokumenter)");
     expect(dialog.textContent).toContain("Svarer du nei, slettes ingenting");
     for (const service of [exportDataset, clearDatabase, importDataset]) expect(service).not.toHaveBeenCalled();
@@ -88,6 +93,8 @@ describe("Datasett inn i en database som har innhold fra før", () => {
       )
     );
     expect(order).toEqual(["kopi", "tøm", "hent inn"]);
+    expect(databaseHasContent).toHaveBeenCalledWith(BOTH);
+    expect(clearDatabase).toHaveBeenCalledWith(BOTH);
     expect(saved).toEqual(["sikkerhetskopi-lillesand-misjonskirke-2026-10-06.json"]);
     expect(vi.mocked(importDataset).mock.calls[0][0]).toEqual(dataset);
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -282,7 +289,7 @@ describe("Datasett-panelet i admin", () => {
     fireEvent.click(screen.getByRole("button", { name: "Last ned datasett" }));
 
     await waitFor(() => expect(showFeedback).toHaveBeenCalledWith("Datasettet «LMK_sett» er lastet ned (4 dokumenter)."));
-    expect(exportDataset).toHaveBeenCalledWith("Lillesand Misjonskirke");
+    expect(exportDataset).toHaveBeenCalledWith("Lillesand Misjonskirke", "", expect.any(Date), BOTH);
     expect(clicked).toEqual(["lmk-sett-2026-10-06.json"]);
     click.mockRestore();
   });
@@ -309,7 +316,7 @@ describe("Datasett-panelet i admin", () => {
     fireEvent.change(screen.getByLabelText("Navn på datasettet"), { target: { value: "  Før opprydding  " } });
     fireEvent.click(screen.getByRole("button", { name: "Last ned datasett" }));
 
-    await waitFor(() => expect(exportDataset).toHaveBeenCalledWith("Før opprydding"));
+    await waitFor(() => expect(exportDataset).toHaveBeenCalledWith("Før opprydding", "", expect.any(Date), BOTH));
     click.mockRestore();
   });
 
@@ -324,6 +331,110 @@ describe("Datasett-panelet i admin", () => {
     fireEvent.click(screen.getByRole("button", { name: "Last ned datasett" }));
     await waitFor(() => expect(showFeedback).toHaveBeenCalledWith(expect.stringContaining("Ingen tilgang"), "error"));
     expect(click).not.toHaveBeenCalled();
+    click.mockRestore();
+  });
+});
+
+describe("Datasett: nettsiden og planleggeren hver for seg", () => {
+  const importParts = () => within(screen.getByRole("group", { name: "Hent inn" }));
+  const exportParts = () => within(screen.getByRole("group", { name: "Ta med" }));
+  const box = (element: HTMLElement) => element as HTMLInputElement;
+
+  test("en fil med begge deler viser hva hver del har, og begge er krysset av", async () => {
+    renderPanel();
+    chooseFile("lmk-sett.json", serializeDataset(dataset));
+    await screen.findByText("LMK_sett");
+
+    expect(box(importParts().getByLabelText("Nettsiden (3 dokumenter)")).checked).toBe(true);
+    expect(box(importParts().getByLabelText("Planleggeren (1 dokumenter)")).checked).toBe(true);
+  });
+
+  test("uten kryss for planleggeren hentes bare nettsiden inn, og bare nettsiden tømmes", async () => {
+    vi.mocked(exportDataset).mockResolvedValue({ dataset: backup, unreadable: [] });
+    vi.mocked(clearDatabase).mockResolvedValue({ deleted: 37, failures: [] });
+    vi.mocked(importDataset).mockResolvedValue({ ...imported, total: 3 });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    renderPanel(141);
+    chooseFile("lmk-sett.json", serializeDataset(dataset));
+    fireEvent.click(await screen.findByLabelText("Planleggeren (1 dokumenter)"));
+    fireEvent.click(screen.getByRole("button", { name: "Hent inn datasettet" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(databaseHasContent).toHaveBeenCalledWith(["website"]);
+    expect(dialog.textContent).toContain("Slette nettsiden først?");
+    expect(dialog.textContent).toContain("Alt i nettsiden slettes: sider, nyheter, taler, stab, innstillinger og offentlige arrangementer.");
+    expect(dialog.textContent).toContain("«LMK_sett» hentes inn (3 dokumenter)");
+    expect(dialog.textContent).toContain("Planleggeren røres ikke.");
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Ja, slett og hent inn" }));
+    await waitFor(() =>
+      expect(showFeedback).toHaveBeenCalledWith(
+        "Nettsiden er tømt (37 dokumenter slettet), og «LMK_sett» er hentet inn (3 dokumenter). Sikkerhetskopien heter sikkerhetskopi-lillesand-misjonskirke-2026-10-06.json."
+      )
+    );
+    expect(clearDatabase).toHaveBeenCalledWith(["website"]);
+    // The copy is of everything, also the part that is left alone
+    expect(exportDataset).toHaveBeenCalledWith("Sikkerhetskopi Lillesand Misjonskirke");
+    const written = vi.mocked(importDataset).mock.calls[0][0];
+    expect(Object.keys(written.collections).sort()).toEqual([CMS_COLLECTIONS.PAGES, CMS_COLLECTIONS.SERMONS].sort());
+    click.mockRestore();
+  });
+
+  test("en del filen ikke har, kan ikke velges", async () => {
+    const websiteOnly = buildDataset("Bare nettsiden", "", { [CMS_COLLECTIONS.PAGES]: [{ id: "page-forside" }] });
+    vi.mocked(importDataset).mockResolvedValue({ ...imported, total: 1 });
+    renderPanel(0);
+    chooseFile("nettside.json", serializeDataset(websiteOnly));
+
+    const missing = box(await screen.findByLabelText("Planleggeren (ikke i filen)"));
+    expect(missing.disabled).toBe(true);
+    expect(missing.checked).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Hent inn datasettet" }));
+    await waitFor(() => expect(importDataset).toHaveBeenCalledTimes(1));
+    expect(databaseHasContent).toHaveBeenCalledWith(["website"]);
+  });
+
+  test("uten noen del valgt kan ingenting hentes inn eller lastes ned", async () => {
+    renderPanel();
+    chooseFile("lmk-sett.json", serializeDataset(dataset));
+    fireEvent.click(await screen.findByLabelText("Nettsiden (3 dokumenter)"));
+    fireEvent.click(screen.getByLabelText("Planleggeren (1 dokumenter)"));
+    expect((screen.getByRole("button", { name: "Hent inn datasettet" }) as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.click(exportParts().getByLabelText("Nettsiden"));
+    fireEvent.click(exportParts().getByLabelText("Planleggeren"));
+    expect((screen.getByRole("button", { name: "Last ned datasett" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  test("nedlasting av bare planleggeren ber om bare den, og en tom del gir ingen fil", async () => {
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    vi.mocked(exportDataset).mockResolvedValue({ dataset: buildDataset("Tom", "", {}), unreadable: [] });
+    renderPanel();
+    fireEvent.click(exportParts().getByLabelText("Nettsiden"));
+    fireEvent.click(screen.getByRole("button", { name: "Last ned datasett" }));
+
+    await waitFor(() => expect(showFeedback).toHaveBeenCalledWith("Planleggeren er tom. Det er ingenting å laste ned.", "error"));
+    expect(exportDataset).toHaveBeenCalledWith("Lillesand Misjonskirke", "", expect.any(Date), ["planner"]);
+    expect(click).not.toHaveBeenCalled();
+    click.mockRestore();
+  });
+
+  test("kan ikke databasen leses før tømming, sier meldingen at ingenting er slettet", async () => {
+    vi.mocked(exportDataset).mockResolvedValue({ dataset: backup, unreadable: [] });
+    vi.mocked(clearDatabase).mockResolvedValue({ deleted: 0, failures: [{ collection: "", message: "Ingen forbindelse" }] });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    renderPanel(141);
+    await startImport();
+    fireEvent.click(await screen.findByRole("button", { name: "Ja, slett og hent inn" }));
+
+    await waitFor(() =>
+      expect(showFeedback).toHaveBeenCalledWith(
+        "Databasen ble ikke tømt helt, og datasettet er ikke hentet inn. Databasen kunne ikke leses, så ingenting er slettet: Ingen forbindelse. Sikkerhetskopien heter sikkerhetskopi-lillesand-misjonskirke-2026-10-06.json.",
+        "error"
+      )
+    );
+    expect(importDataset).not.toHaveBeenCalled();
     click.mockRestore();
   });
 });

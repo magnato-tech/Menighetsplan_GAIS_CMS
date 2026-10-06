@@ -115,12 +115,34 @@ describe("DatabaseTestdataTab Component med testdataService", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Testdata er skrevet til Firestore: personer, grupper, samlinger, oppgaver og 15 tjenesteroller/i)
+        screen.getByText(/Testdata er lagt inn: personer, grupper og 15 tjenesteroller\. Nettsiden og de offentlige arrangementene er ikke rørt\./i)
       ).toBeDefined();
       expect(showFeedbackMock).toHaveBeenCalledWith(
         expect.stringContaining("15 tjenesteroller"),
         "success"
       );
+    });
+  });
+
+  test("demo-samlingene er et eget valg som står av, og følger bare med når det krysses av", async () => {
+    render(<DatabaseTestdataTab />);
+
+    const checkbox = screen.getByLabelText(/Ta med demo-samlinger og oppgaver/i) as HTMLInputElement;
+    expect(checkbox.checked).toBe(false);
+    fireEvent.click(checkbox);
+    fireEvent.click(screen.getByRole("button", { name: /Populer database/i }));
+
+    await waitFor(() => {
+      expect(testdataService.generateTestdata).toHaveBeenCalledWith({
+        personCount: 32,
+        groupCount: 14,
+        roleCount: 14,
+        gatheringCount: 19,
+        taskCount: 24,
+      });
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/demo-samlinger med oppgaver og 15 tjenesteroller/i)).toBeDefined();
     });
   });
 

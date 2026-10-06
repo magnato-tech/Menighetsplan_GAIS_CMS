@@ -4,6 +4,12 @@ import { AlertCircle, Loader2 } from "lucide-react";
 interface DatasetImportDialogProps {
   datasetName: string;
   datasetTotal: number;
+  /** What a yes empties: «databasen», «nettsiden» or «planleggeren». */
+  scope: string;
+  /** What that holds, e.g. «sider, nyheter, taler …». */
+  scopeContents: string;
+  /** The part a yes leaves alone, when only one part is brought in. */
+  untouched?: string;
   /** What is being done right now, shown while the work is under way. Null when nothing is. */
   step: string | null;
   onReplace: () => void;
@@ -11,14 +17,19 @@ interface DatasetImportDialogProps {
   onCancel: () => void;
 }
 
+const capitalized = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
 /**
- * Asked before a dataset is brought into a database that already holds content.
- * Bringing it in on top mixes the old with the new, so emptying the database first is
- * the recommended answer. The dialog says exactly what each answer does.
+ * Asked before a dataset is brought into a part of the database that already holds content.
+ * Bringing it in on top mixes the old with the new, so emptying first is the recommended
+ * answer. The dialog says exactly what each answer does, and what is left alone.
  */
 export const DatasetImportDialog: React.FC<DatasetImportDialogProps> = ({
   datasetName,
   datasetTotal,
+  scope,
+  scopeContents,
+  untouched,
   step,
   onReplace,
   onAdd,
@@ -39,15 +50,15 @@ export const DatasetImportDialog: React.FC<DatasetImportDialogProps> = ({
           </div>
           <div>
             <h4 id="dataset-import-title" className="text-base font-bold text-[var(--studio-text)]">
-              Slette databasen først?
+              Slette {scope} først?
             </h4>
             <p className="text-xs text-[var(--studio-warn)]">Anbefalt når du bytter innhold.</p>
           </div>
         </div>
 
         <p className="text-xs text-[var(--studio-muted)] leading-relaxed">
-          Databasen har innhold fra før. Hentes «{datasetName}» inn oppå det, blandes gammelt og nytt: menyen får faner fra
-          begge, og to sider kan få samme adresse.
+          {capitalized(scope)} har innhold fra før. Hentes «{datasetName}» inn oppå det, blandes gammelt og nytt: menyen kan
+          få faner fra begge, og to sider kan få samme adresse.
         </p>
 
         <div className="text-xs text-[var(--studio-muted)] leading-relaxed space-y-1.5">
@@ -55,12 +66,13 @@ export const DatasetImportDialog: React.FC<DatasetImportDialogProps> = ({
           <ol className="list-decimal pl-5 space-y-1">
             <li>En sikkerhetskopi av alt som ligger i databasen nå, lastes ned til maskinen din.</li>
             <li>
-              Alt i databasen slettes: sider, nyheter, taler og innstillinger, og personer, grupper, samlinger og oppgaver.
+              Alt i {scope} slettes: {scopeContents}.
             </li>
             <li>
               «{datasetName}» hentes inn ({datasetTotal} dokumenter).
             </li>
           </ol>
+          {untouched && <p>{capitalized(untouched)} røres ikke.</p>}
           <p>Slettingen kan bare gjøres om ved å hente inn sikkerhetskopien.</p>
           <p>Svarer du nei, slettes ingenting. Datasettet legges til det som ligger der.</p>
         </div>

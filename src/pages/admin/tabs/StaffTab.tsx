@@ -20,7 +20,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { ShowFeedback } from "../studio";
-import { populateWithMockData } from "../../../services/databaseAdmin";
+import { populateDemoPersons } from "../../../services/databaseAdmin";
 
 interface StaffTabProps {
   showFeedback: ShowFeedback;
@@ -38,7 +38,7 @@ export const StaffTab: React.FC<StaffTabProps> = ({ showFeedback }) => {
     if (isPopulating) return;
     setIsPopulating(true);
     try {
-      const result = await populateWithMockData();
+      const result = await populateDemoPersons();
       if (result.failures.length > 0) {
         showFeedback(`Fylling fullført med noen feil: ${result.failures[0].message}`, "error");
       } else {

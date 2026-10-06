@@ -6,6 +6,7 @@ import {
   clearTestdata,
   clearPlannerTestData,
   generateTestdata,
+  generateDemoWebsite,
   generate32TestPersons,
   deletePersonsTestdata,
   deleteGroupsTestdata,
@@ -50,26 +51,41 @@ function recordFailure(result: DatabaseAdminResult, collectionName: string, erro
   });
 }
 
+// The demo content comes in two parts that are filled apart from each other (see utils/dataParts.ts):
+// the planner (persons, groups, gatherings, tasks, roles) and the website (pages, news, sermons,
+// staff, settings). A congregation's own website can then stay while the planner gets test persons.
+
+const FULL_DEMO_PLANNER = { personCount: 32, groupCount: 14, gatheringCount: 19, taskCount: 24, roleCount: 14 };
+
+/** The demo persons, groups and roles. No gatherings, and nothing on the website. */
+export async function populateDemoPersons(): Promise<DatabaseAdminResult> {
+  return generateTestdata({ personCount: 32, groupCount: 14, roleCount: 14 });
+}
+
+/** The demo website: pages, news, sermons, staff and settings. Nothing in the planner. */
+export async function populateDemoWebsite(): Promise<DatabaseAdminResult> {
+  return generateDemoWebsite();
+}
+
 /**
- * Writes the full mock data set to Firestore. Documents with the same id are overwritten;
+ * Writes the full mock data set, planner and website both. Documents with the same id are overwritten;
  * other documents are left as they are. If clearPlannerFirst is set to true, planner test data is cleared first.
  */
 export async function populateWithMockData(options?: { clearPlannerFirst?: boolean }): Promise<DatabaseAdminResult> {
-  return populateCustomMockData(undefined, options);
+  const planner = await populateCustomMockData(FULL_DEMO_PLANNER, options);
+  const website = await generateDemoWebsite();
+  const failures = [...planner.failures, ...website.failures];
+  return {
+    success: failures.length === 0,
+    counts: { ...planner.counts, ...website.counts },
+    total: planner.total + website.total,
+    failures,
+  };
 }
 
-/** Fills the database with the full demo set: persons, groups, gatherings, tasks and tjenesteroller. */
+/** Fills the planner with the full demo set: persons, groups, gatherings, tasks and tjenesteroller. */
 export async function restoreFullMockDatabase(): Promise<DatabaseAdminResult> {
-  return populateCustomMockData(
-    {
-      personCount: 32,
-      groupCount: 14,
-      gatheringCount: 19,
-      taskCount: 24,
-      roleCount: 14,
-    },
-    { clearPlannerFirst: false }
-  );
+  return populateCustomMockData(FULL_DEMO_PLANNER, { clearPlannerFirst: false });
 }
 
 /**

@@ -54,6 +54,7 @@ const snapshot = () =>
           .map(([id, data]) => [id, Object.fromEntries(Object.entries(data).sort(([a], [b]) => a.localeCompare(b)))]),
       ])
   );
+const snapshotOf = (names: string[]) => JSON.stringify(names.map((name) => [name, [...(store.get(name)?.entries() ?? [])]]));
 const now = new Date("2026-10-06T12:00:00.000Z");
 
 beforeEach(() => {
@@ -202,14 +203,14 @@ describe("Datasett: last ned og hent inn", () => {
     expect(cleared).toEqual({ deleted: 5, failures: [] });
   });
 
-  test("en annen feil under tømming meldes, og resten slettes likevel", async () => {
+  test("kan ikke hele databasen leses, slettes ingenting", async () => {
+    // Which documents belong to which part is only known when all of them are seen
     failing.set(COLLECTIONS.GROUPS, "unavailable");
+    const before = snapshot();
     const cleared = await clearDatabase();
 
-    expect(cleared.failures).toEqual([{ collection: COLLECTIONS.GROUPS, message: "Lesing feilet: unavailable" }]);
-    expect(cleared.deleted).toBe(4);
-    expect(ids(COLLECTIONS.GROUPS)).toEqual(["group-lyd"]);
-    expect(ids(CMS_COLLECTIONS.PAGES)).toEqual([]);
+    expect(cleared).toEqual({ deleted: 0, failures: [{ collection: "", message: "Lesing feilet: unavailable" }] });
+    expect(snapshot()).toBe(before);
   });
 
   test("kopi, tømming og innhenting etter hverandre gir nøyaktig datasettets innhold", async () => {
@@ -262,5 +263,112 @@ describe("Datasett: last ned og hent inn", () => {
 
     expect(result.total).toBe(total);
     expect(snapshot()).toBe(before);
+  });
+});
+
+describe("Datasett: nettsiden og planleggeren hver for seg", () => {
+  const WEBSITE = ["website"] as const;
+  const PLANNER = ["planner"] as const;
+
+  beforeEach(() => {
+    // The website's own: an event open to everyone, and the group that only exists to own it
+    store.get(COLLECTIONS.GROUPS)!.set("group-kalender", { id: "group-kalender", name: "Felleskalender", memberIds: [], leaderIds: [] });
+    store.get(COLLECTIONS.GROUPS)!.set("group-hus", { id: "group-hus", name: "Husfellesskap", memberIds: ["p1"], leaderIds: ["p1"] });
+    store.set(COLLECTIONS.GATHERINGS, new Map<string, Record<string, unknown>>([
+      ["g1", { id: "g1", title: "Gudstjeneste", groupId: "group-kalender", type: "arrangement", visibility: "offentlig", isPublic: true }],
+      ["g-hus", { id: "g-hus", title: "Husmøte", groupId: "group-hus", type: "gruppesamling", visibility: "offentlig", isPublic: true }],
+      ["g-intern", { id: "g-intern", title: "Ledermøte", groupId: "group-hus", type: "arrangement", visibility: "intern", isPublic: false }],
+    ]));
+    store.set(COLLECTIONS.PERSONS, new Map([["p1", { id: "p1", name: "Kari" }]]));
+    store.set(COLLECTIONS.TASKS, new Map<string, Record<string, unknown>>([
+      ["t1", { id: "t1", gatheringId: "g1", title: "Lyd" }],
+      ["t-hus", { id: "t-hus", gatheringId: "g-hus", title: "Mat" }],
+    ]));
+    store.set(COLLECTIONS.ASSIGNMENTS, new Map<string, Record<string, unknown>>([
+      ["a1", { id: "a1", taskId: "t1", personId: "p1" }],
+      ["a-hus", { id: "a-hus", taskId: "t-hus", personId: "p1" }],
+    ]));
+    store.set(COLLECTIONS.GATHERING_ATTENDANCES, new Map<string, Record<string, unknown>>([
+      ["att1", { id: "att1", gatheringId: "g1", personId: "p1" }],
+      ["att-hus", { id: "att-hus", gatheringId: "g-hus", personId: "p1" }],
+    ]));
+  });
+
+  test("nettsiden er sidene, innstillingene, de åpne arrangementene og gruppen som bare eier dem", async () => {
+    const { dataset } = await exportDataset("Nettsiden", "", now, WEBSITE);
+
+    expect(Object.keys(dataset.collections).sort()).toEqual(
+      [CMS_COLLECTIONS.PAGES, CMS_COLLECTIONS.SETTINGS, COLLECTIONS.GATHERINGS, COLLECTIONS.GROUPS].sort()
+    );
+    expect(dataset.collections[COLLECTIONS.GATHERINGS].map((g) => g.id)).toEqual(["g1"]);
+    expect(dataset.collections[COLLECTIONS.GROUPS].map((g) => g.id)).toEqual(["group-kalender"]);
+    expect(dataset.collections[CMS_COLLECTIONS.SETTINGS].map((s) => s.id)).toEqual([CMS_SETTINGS_DOC_ID]);
+  });
+
+  test("planleggeren er resten, og de to delene er til sammen hele databasen", async () => {
+    const website = (await exportDataset("N", "", now, WEBSITE)).dataset;
+    const planner = (await exportDataset("P", "", now, PLANNER)).dataset;
+    const everything = (await exportDataset("Alt", "", now)).dataset;
+    const count = (dataset: Dataset) => Object.values(dataset.collections).reduce((sum, documents) => sum + documents.length, 0);
+
+    expect(planner.collections[COLLECTIONS.GATHERINGS].map((g) => g.id).sort()).toEqual(["g-hus", "g-intern"]);
+    expect(planner.collections[COLLECTIONS.GROUPS].map((g) => g.id).sort()).toEqual(["group-hus", "group-lyd"]);
+    expect(planner.collections[CMS_COLLECTIONS.PAGES]).toBeUndefined();
+    expect(planner.collections[CMS_COLLECTIONS.SETTINGS]).toBeUndefined();
+    expect(planner.collections[COLLECTIONS.VOLUNTEER_ROLES].map((r) => r.id)).toEqual(["role-lyd"]);
+    expect(count(website) + count(planner)).toBe(count(everything));
+  });
+
+  test("tømming av nettsiden lar planleggeren stå, og tar med det som hang på arrangementene", async () => {
+    const cleared = await clearDatabase(WEBSITE);
+
+    expect(cleared.failures).toEqual([]);
+    expect(ids(CMS_COLLECTIONS.PAGES)).toEqual([]);
+    expect(ids(COLLECTIONS.GATHERINGS)).toEqual(["g-hus", "g-intern"]);
+    expect(ids(COLLECTIONS.GROUPS)).toEqual(["group-hus", "group-lyd"]);
+    // The task, the assignment, the response and the headcount pointed at the event that went
+    expect(ids(COLLECTIONS.TASKS)).toEqual(["t-hus"]);
+    expect(ids(COLLECTIONS.ASSIGNMENTS)).toEqual(["a-hus"]);
+    expect(ids(COLLECTIONS.GATHERING_ATTENDANCES)).toEqual(["att-hus"]);
+    // Of what is kept in the settings collection, only the volunteer role is the planner's and unattached
+    expect(ids(CMS_COLLECTIONS.SETTINGS)).toEqual(["role-lyd"]);
+    expect(ids(COLLECTIONS.PERSONS)).toEqual(["p1"]);
+    expect(await databaseHasContent(WEBSITE)).toBe(false);
+    expect(await databaseHasContent(PLANNER)).toBe(true);
+  });
+
+  test("tømming av planleggeren lar nettsiden stå, med arrangementene og kalendergruppen", async () => {
+    const cleared = await clearDatabase(PLANNER);
+
+    expect(cleared.failures).toEqual([]);
+    expect(ids(CMS_COLLECTIONS.PAGES)).toEqual(["page-om-oss"]);
+    expect(ids(CMS_COLLECTIONS.SETTINGS)).toEqual([CMS_SETTINGS_DOC_ID]);
+    expect(ids(COLLECTIONS.GATHERINGS)).toEqual(["g1"]);
+    expect(ids(COLLECTIONS.GROUPS)).toEqual(["group-kalender"]);
+    for (const name of [COLLECTIONS.PERSONS, COLLECTIONS.TASKS, COLLECTIONS.ASSIGNMENTS, COLLECTIONS.GATHERING_ATTENDANCES]) {
+      expect(ids(name)).toEqual([]);
+    }
+    expect(await databaseHasContent(PLANNER)).toBe(false);
+    expect(await databaseHasContent(WEBSITE)).toBe(true);
+  });
+
+  test("nettsiden kan byttes mens planleggeren står: tøm, hent inn, og personene er der fortsatt", async () => {
+    const planner = snapshotOf([COLLECTIONS.PERSONS]);
+    await clearDatabase(WEBSITE);
+    await importDataset({
+      format: "menighetsplan-datasett",
+      version: 1,
+      name: "Egen nettside",
+      createdAt: now.toISOString(),
+      collections: {
+        [CMS_COLLECTIONS.PAGES]: [{ id: "page-visjon", slug: "visjon", title: "Visjon" }],
+        [COLLECTIONS.GATHERINGS]: [{ id: "arr-1", title: "Høstfest", groupId: "group-kalender", type: "arrangement", visibility: "offentlig", isPublic: true }],
+        [COLLECTIONS.GROUPS]: [{ id: "group-kalender", name: "Felleskalender", memberIds: [], leaderIds: [] }],
+      },
+    });
+
+    expect(ids(CMS_COLLECTIONS.PAGES)).toEqual(["page-visjon"]);
+    expect(ids(COLLECTIONS.GATHERINGS)).toEqual(["arr-1", "g-hus", "g-intern"]);
+    expect(snapshotOf([COLLECTIONS.PERSONS])).toBe(planner);
   });
 });
