@@ -1,6 +1,7 @@
 import React from "react";
 import { Images } from "lucide-react";
 import { MediaLibraryPanel } from "../../../components/admin/MediaLibraryPanel";
+import { StockImageGrid } from "../../../components/admin/StockImageGrid";
 import type { ShowFeedback } from "../studio";
 
 interface MediaTabProps {
@@ -17,10 +18,12 @@ export const MediaTab: React.FC<MediaTabProps> = () => {
         <div>
           <h1 className="text-xl font-black text-[var(--studio-text)] tracking-tight">Mediebibliotek</h1>
           <p className="text-xs text-[var(--studio-muted)]">
-            Last opp, søk og gjenbruk bilder på tvers av sider og moduler.
+            Bildene som følger med, og bildene dere har lastet opp selv. Alle kan brukes på tvers av sider og moduler.
           </p>
         </div>
       </div>
+
+      <StockImageGrid />
 
       <MediaLibraryPanel />
     </div>

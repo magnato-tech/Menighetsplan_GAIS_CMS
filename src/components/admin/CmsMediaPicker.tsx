@@ -12,6 +12,7 @@ import {
 import { CHURCH_HERO_PRESETS } from "../../utils/imageUpload";
 import { useResolvedMediaUrl } from "../../hooks/useMediaMap";
 import { MediaLibraryPanel } from "./MediaLibraryPanel";
+import { StockImageGrid } from "./StockImageGrid";
 
 interface CmsMediaPickerProps {
   label: string;
@@ -49,7 +50,8 @@ export const CmsMediaPicker: React.FC<CmsMediaPickerProps> = ({
       !trimmed.startsWith("http://") &&
       !trimmed.startsWith("https://") &&
       !trimmed.startsWith("data:") &&
-      !trimmed.startsWith("media:")
+      !trimmed.startsWith("media:") &&
+      !trimmed.startsWith("/bildebibliotek/")
     ) {
       setErrorMessage("Adressen må starte med https://, media: eller data:");
       return;
@@ -208,6 +210,16 @@ export const CmsMediaPicker: React.FC<CmsMediaPickerProps> = ({
                 <X className="w-4 h-4" />
               </button>
             </div>
+            {/* Bildene som følger med appen. De velges med adressen sin og trenger ikke bildelageret. */}
+            <StockImageGrid
+              selectedUrl={value}
+              onSelect={(url, image) => {
+                onChange(url);
+                // En tom beskrivelse fylles med bildets egen, så den ikke må skrives på nytt
+                if (onAltChange && !altValue.trim()) onAltChange(image.altText);
+                setShowLibrary(false);
+              }}
+            />
             <MediaLibraryPanel
               selectedRef={value}
               onSelect={(ref) => {
