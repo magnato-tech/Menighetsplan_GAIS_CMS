@@ -649,6 +649,48 @@ export const PageEditModal: React.FC<PageEditModalProps> = ({
           />
         </div>
 
+        {(editingPage.linkUrl === "/" || editingPage.id === "page-forside" || editingPage.slug === "forside") && (
+          <div className="space-y-2.5 p-3 rounded-xl bg-[var(--studio-row)] border border-[var(--studio-border)]">
+            <div>
+              <span className="text-xs font-semibold text-[var(--studio-text)] block">Flere toppbilder og bevegelse</span>
+              <p className="text-[11px] text-[var(--studio-muted)] leading-relaxed">
+                Med flere bilder toner toppen rolig fra det ene til det neste. Opptil tre bilder i alt.
+              </p>
+            </div>
+            {[0, 1].map((index) => (
+              <CmsMediaPicker
+                key={index}
+                label={`Toppbilde ${index + 2}`}
+                value={editingPage.heroImages?.[index] || ""}
+                onChange={(url) => {
+                  const next = [...(editingPage.heroImages || [])];
+                  next[index] = url;
+                  onUpdate({ heroImages: next.filter(Boolean) });
+                }}
+                decorative
+              />
+            ))}
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-[var(--studio-text)]">
+              <input
+                type="checkbox"
+                checked={editingPage.heroZoom !== false}
+                onChange={(e) => onUpdate({ heroZoom: e.target.checked })}
+                className="w-4 h-4 rounded text-indigo-600 bg-[var(--studio-panel-bg)] border-[var(--studio-border)] cursor-pointer"
+              />
+              <span>Rolig zoom på toppbildet</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-[var(--studio-text)]">
+              <input
+                type="checkbox"
+                checked={editingPage.heroMenuOverlay !== false}
+                onChange={(e) => onUpdate({ heroMenuOverlay: e.target.checked })}
+                className="w-4 h-4 rounded text-indigo-600 bg-[var(--studio-panel-bg)] border-[var(--studio-border)] cursor-pointer"
+              />
+              <span>Menyen ligger oppå toppbildet til man scroller</span>
+            </label>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">

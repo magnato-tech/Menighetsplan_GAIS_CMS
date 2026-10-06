@@ -103,3 +103,18 @@
   --studio-warn: #b45309;
   --studio-bad: #be123c;
 }
+
+/* The front page hero image starts a little enlarged and settles slowly (see HeroBackdrop.tsx). */
+@keyframes hero-zoom-out {
+  from { transform: scale(1.2); }
+  to { transform: scale(1); }
+}
+.hero-zoom {
+  animation: hero-zoom-out 20s ease-out both;
+}
+/* Visitors who have asked for less motion get a still image. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-zoom {
+    animation: none;
+  }
+}

@@ -45,6 +45,12 @@ export interface CmsPage {
   heroImage?: string;
   /** Optional screen-reader description for decorative hero; empty means alt="". */
   heroImageAlt?: string;
+  /** Up to two more hero images for the front page. With them the hero fades from one image to the next. */
+  heroImages?: string[];
+  /** Slow zoom out on the front page hero image. On unless switched off. */
+  heroZoom?: boolean;
+  /** The menu lies on top of the front page hero until the visitor scrolls. On unless switched off. */
+  heroMenuOverlay?: boolean;
   heroTitle?: string;
   heroCtaText?: string;
   heroCtaLink?: string;

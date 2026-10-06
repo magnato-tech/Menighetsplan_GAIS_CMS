@@ -126,6 +126,15 @@ describe("Sider", () => {
     await waitFor(() => expect(cms.current.pages.map((p) => p.title).sort()).toEqual(["Andre", "Første"]));
   });
 
+  test("Toppbildene og bryterne på forsiden lagres med siden", async () => {
+    const cms = mountProvider();
+    void cms.current.savePage({ title: "Forside", slug: "forside", linkUrl: "/", heroImage: "a.jpg", heroImages: ["b.jpg", "", "c.jpg", "d.jpg"], heroZoom: false });
+
+    await waitFor(() => expect(cms.current.pages).toHaveLength(1));
+    // Two more images at most, empty ones dropped; a switch nobody has touched is on
+    expect(cms.current.pages[0]).toMatchObject({ heroImages: ["b.jpg", "c.jpg"], heroZoom: false, heroMenuOverlay: true });
+  });
+
   test("En redigert side erstatter den gamle", async () => {
     seed(CMS_COLLECTIONS.PAGES, [page("om-oss", { title: "Om oss", linkUrl: "/lederskap" })]);
     const cms = mountProvider();

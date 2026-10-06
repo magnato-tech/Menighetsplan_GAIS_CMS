@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
 import { useFirebase } from "../../context/FirebaseDataContext";
@@ -21,6 +21,22 @@ export const PublicNavbar: React.FC = () => {
   const { currentUser } = useFirebase();
 
   const isAdmin = currentUser?.globalRole === "admin";
+
+  // On the front page the menu lies on top of the hero image, and turns into the usual white bar
+  // once the visitor scrolls or opens the menu. The page can switch this off (Page.heroMenuOverlay).
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  const homePage = pages.find((p) => p.slug === "" || p.linkUrl === "/");
+  const isPreview = /[?&](preview=true|embedded=1)/.test(location.search);
+  const onHero = location.pathname === "/" && Boolean(homePage?.heroImage) && homePage?.heroMenuOverlay !== false && !isPreview;
+  const overlay = onHero && !scrolled && !mobileMenuOpen;
+  const linkIdle = overlay ? "text-white/90 hover:text-white hover:bg-white/15" : "text-stone-600 hover:text-stone-900 hover:bg-stone-100/70";
+  const linkActive = overlay ? "text-white bg-white/20 font-bold" : "text-primary-900 bg-primary-50/80 font-bold";
 
   const toggleMobileSubmenu = (pageId: string) => {
     setOpenMobileSubmenus((prev) => ({
@@ -49,7 +65,14 @@ export const PublicNavbar: React.FC = () => {
   );
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200/80 shadow-xs transition-all">
+    <header
+      data-menu-on-hero={overlay ? "true" : undefined}
+      className={`${onHero ? "fixed inset-x-0" : "sticky"} top-0 z-50 border-b transition-colors duration-300 ${
+        overlay
+          ? "bg-gradient-to-b from-stone-950/75 to-transparent border-transparent"
+          : "bg-white/95 backdrop-blur-md border-stone-200/80 shadow-xs"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo & Brand Name */}
@@ -59,14 +82,14 @@ export const PublicNavbar: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-lg font-black tracking-tight text-slate-900 group-hover:text-primary-950 transition-colors">
+                <span className={`text-lg font-black tracking-tight transition-colors ${overlay ? "text-white" : "text-slate-900 group-hover:text-primary-950"}`}>
                   {settings.appName || "Menighetsplan"}
                 </span>
                 <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-primary-50 text-primary-700 border border-primary-200/60">
                   {settings.churchName}
                 </span>
               </div>
-              <p className="text-xs text-stone-500 hidden sm:block font-medium">
+              <p className={`text-xs hidden sm:block font-medium ${overlay ? "text-stone-200" : "text-stone-500"}`}>
                 {settings.tagline || "Varmt fellesskap. Enkel tjeneste."}
               </p>
             </div>
@@ -82,8 +105,8 @@ export const PublicNavbar: React.FC = () => {
                     to={item.targetUrl}
                     className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
                       item.isActive
-                        ? "text-primary-900 bg-primary-50/80 font-bold"
-                        : "text-stone-600 hover:text-stone-900 hover:bg-stone-100/70"
+                        ? linkActive
+                        : linkIdle
                     }`}
                   >
                     {item.page.title}
@@ -97,8 +120,8 @@ export const PublicNavbar: React.FC = () => {
                     to={item.targetUrl}
                     className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
                       item.isActive
-                        ? "text-primary-900 bg-primary-50/80 font-bold"
-                        : "text-stone-600 hover:text-stone-900 hover:bg-stone-100/70"
+                        ? linkActive
+                        : linkIdle
                     }`}
                   >
                     <span>{item.page.title}</span>
@@ -175,7 +198,7 @@ export const PublicNavbar: React.FC = () => {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-100"
+              className={`p-2 rounded-lg ${overlay ? "text-white hover:bg-white/15" : "text-stone-600 hover:text-stone-900 hover:bg-stone-100"}`}
               aria-label="Åpne meny"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

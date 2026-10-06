@@ -23,7 +23,9 @@ import {
 } from "../../utils/cmsLinks";
 
 import { usePreviewPageDraft } from "../../hooks/usePreviewPageDraft";
-import { useResolvedMediaUrl } from "../../hooks/useMediaMap";
+import { useMediaMap, useResolvedMediaUrl } from "../../hooks/useMediaMap";
+import { resolveMediaUrl } from "../../utils/media";
+import { HeroBackdrop } from "../../components/public/HeroBackdrop";
 
 import { Sparkles } from "lucide-react";
 
@@ -114,6 +116,13 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
 
 
   const heroImage = useResolvedMediaUrl(activePage?.heroImage);
+  const mediaById = useMediaMap();
+  // The main image and up to two more. With several, the hero fades from one to the next.
+  const heroImages = [heroImage, ...(activePage?.heroImages ?? []).map((value) => resolveMediaUrl(value, mediaById, "web"))]
+    .filter(Boolean)
+    .slice(0, 3);
+  // With the menu on top of the hero (see PublicNavbar.tsx), the headline is moved down clear of it
+  const menuOnHero = heroImages.length > 0 && activePage?.heroMenuOverlay !== false && !isPreviewMode && !isEmbedded;
   const heroImageAlt = activePage?.heroImageAlt?.trim() || "";
 
   const showPrimaryCta = activePage?.showHeroPrimaryCta !== false;
@@ -208,29 +217,13 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
 
         data-cms-preview-target={CMS_PREVIEW_TARGET_HERO}
 
-        className="relative overflow-hidden bg-gradient-to-b from-stone-900 via-primary-950 to-stone-900 text-white py-16 sm:py-24 lg:py-28 px-4 sm:px-6 lg:px-8"
+        className={`relative overflow-hidden bg-gradient-to-b from-stone-900 via-primary-950 to-stone-900 text-white py-16 sm:py-24 lg:py-28 px-4 sm:px-6 lg:px-8 ${
+          heroImages.length > 0 ? "min-h-[72vh] flex items-center" : ""
+        } ${menuOnHero ? "pt-32 sm:pt-40 lg:pt-44" : ""}`}
 
       >
 
-          {heroImage && (
-
-            <div className="absolute inset-0 z-0">
-
-              <img
-
-                src={heroImage}
-
-                alt={heroImageAlt}
-
-                className="w-full h-full object-cover"
-
-              />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-900/95 via-stone-900/70 to-stone-900/40" />
-
-            </div>
-
-          )}
+          <HeroBackdrop images={heroImages} alt={heroImageAlt} zoom={activePage?.heroZoom !== false} />
 
 
 
@@ -238,7 +231,7 @@ export const PublicHomePage: React.FC<PublicHomePageProps> = ({
 
 
 
-          <div className="relative z-10 max-w-5xl mx-auto text-center space-y-6">
+          <div className="relative z-10 w-full max-w-5xl mx-auto text-center space-y-6">
 
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-semibold text-accent-300">
 

@@ -161,7 +161,7 @@ export const PublicStaticPage: React.FC<PublicStaticPageProps> = ({
 
       {/* Hovedbilde (Hero Image) */}
       {heroImageSrc && (
-        <div className="w-full h-56 sm:h-72 md:h-96 rounded-2xl overflow-hidden border border-stone-200/80 shadow-xs relative bg-stone-100">
+        <div className="w-full h-40 sm:h-52 md:h-64 rounded-2xl overflow-hidden border border-stone-200/80 shadow-xs relative bg-stone-100">
           <img
             src={heroImageSrc}
             alt={heroImageAlt}
