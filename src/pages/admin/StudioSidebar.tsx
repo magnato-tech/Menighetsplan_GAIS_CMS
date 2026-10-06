@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
 import { useStockImageCount } from "../../hooks/useStockImageCount";
 import {
-  Globe,
   Calendar,
   FileText,
   ExternalLink,
@@ -17,8 +16,8 @@ import {
   LayoutDashboard,
   Newspaper,
   Sliders,
-  ChevronRight,
   Headphones,
+  User,
   Palette,
   Database,
   Badge,
@@ -119,6 +118,33 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
               <LayoutDashboard className="w-4 h-4" />
               <span>Oversikt & Dashboard</span>
             </button>
+
+            {/* The two ways out of the studio. Each is listed here only. */}
+            <div className="pt-2 pb-1 space-y-1.5 border-t border-[var(--studio-border)]">
+              <Link
+                to="/minside"
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-bg)] transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <User className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
+                  <span>Gå til Min Side</span>
+                </div>
+                <span className="text-[10px] text-[var(--studio-muted)]">Min profil</span>
+              </Link>
+
+              <Link
+                to="/"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-bg)] transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Åpne offentlig nettside</span>
+                </div>
+                <span className="text-[10px] text-[var(--studio-muted)]">Forside ↗</span>
+              </Link>
+            </div>
           </div>
 
           {/* Nav Section: Nettside & CMS */}
@@ -437,32 +463,8 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
           </div>
         </div>
 
-        {/* Sidebar Footer: the two ways out of the studio, always in view. Each is listed here only. */}
+        {/* Sidebar Footer: the look of the menu, and who is signed in */}
         <div className="p-4 border-t border-[var(--studio-border)] bg-[var(--studio-panel-bg)] space-y-2 text-xs">
-          <Link
-            to="/"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-between w-full px-3 py-2 rounded-lg bg-[var(--studio-bg)] hover:bg-[var(--studio-surface)] text-[var(--studio-accent-text)] font-semibold transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <Globe className="w-4 h-4" />
-              <span>Åpne offentlig nettside</span>
-            </div>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </Link>
-
-          <Link
-            to="/minside"
-            className="flex items-center justify-between w-full px-3 py-2 rounded-lg bg-[var(--studio-bg)] hover:bg-[var(--studio-surface)] text-amber-300 font-semibold transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <LayoutDashboard className="w-4 h-4" />
-              <span>Gå til Min Side</span>
-            </div>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-
           <StudioThemeToggle
             theme={sidebarTheme}
             onToggle={toggleSidebarTheme}

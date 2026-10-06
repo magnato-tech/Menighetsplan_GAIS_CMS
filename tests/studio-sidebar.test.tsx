@@ -52,7 +52,7 @@ afterEach(() => {
 });
 
 describe("Menyen i admin", () => {
-  test("veiene ut av admin står ett sted hver", () => {
+  test("veiene ut av admin står ett sted hver, øverst i menyen", () => {
     vi.mocked(listStockImages).mockResolvedValue(stockImages(0));
     const menu = renderMenu();
 
@@ -64,6 +64,18 @@ describe("Menyen i admin", () => {
     const myPage = menu.getAllByRole("link", { name: /Gå til Min Side/ });
     expect(myPage).toHaveLength(1);
     expect(myPage[0].getAttribute("href")).toBe("/minside");
+
+    // Right under the overview, ahead of the first menu item, and with nothing after the last one
+    const comesBefore = (first: Element, second: Element) =>
+      Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const overview = menu.getByRole("button", { name: "Oversikt & Dashboard" });
+    const firstItem = menu.getByRole("button", { name: /Sider & Innhold/ });
+    for (const link of [myPage[0], website[0]]) {
+      expect(comesBefore(overview, link)).toBe(true);
+      expect(comesBefore(link, firstItem)).toBe(true);
+    }
+    const lastItem = menu.getByRole("button", { name: "Analysebord" });
+    expect(menu.getAllByRole("link").every((link) => comesBefore(link, lastItem))).toBe(true);
   });
 
   test("Database og Testdata er ett menypunkt, ikke også en snarvei", () => {
