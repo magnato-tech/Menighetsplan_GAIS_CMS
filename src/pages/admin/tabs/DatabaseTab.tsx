@@ -12,6 +12,7 @@ import { DEFAULT_VOLUNTEER_ROLE_NAMES } from "../../../data/defaultVolunteerRole
 import { ShowFeedback, StudioData } from "../studio";
 import { DatabaseTestdataTab } from "../../../components/admin/DatabaseTestdataTab";
 import { SimulationPanel } from "../../../components/admin/SimulationPanel";
+import { DatasetPanel } from "../../../components/admin/DatasetPanel";
 import {
   Database,
   RefreshCw,
@@ -376,6 +377,9 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
           </div>
         </div>
       </section>
+
+      {/* Datasett: last ned alt innholdet som én fil, eller hent inn en slik fil */}
+      <DatasetPanel showFeedback={showFeedback} />
 
       {/* Seksjon 2: Populeringsvelger */}
       <section className="space-y-4">
