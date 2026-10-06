@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useCms } from "../../context/CmsContext";
+import { useStockImageCount } from "../../hooks/useStockImageCount";
 import {
   Globe,
   Calendar,
@@ -18,7 +19,6 @@ import {
   Sliders,
   ChevronRight,
   Headphones,
-  User,
   Palette,
   Database,
   Badge,
@@ -52,6 +52,8 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
   const { pages, media, news, sermons, staff, settings } = useCms();
   const urgentTasksCount = countUrgentTasks(adminTasks);
   const { sidebarTheme, toggleSidebarTheme } = useStudioAppearance();
+  // The media library shows the images that come with the app next to the uploaded ones
+  const mediaCount = media.filter((item) => item.status === "ready").length + useStockImageCount();
 
   return (
     <>
@@ -117,33 +119,6 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
               <LayoutDashboard className="w-4 h-4" />
               <span>Oversikt & Dashboard</span>
             </button>
-
-            {/* Quick Context Navigation */}
-            <div className="pt-2 pb-1 space-y-1.5 border-t border-[var(--studio-border)]">
-              <Link
-                to="/minside"
-                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-bg)] transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <User className="w-3.5 h-3.5 text-[var(--studio-icon)]" />
-                  <span>Gå til Min Side</span>
-                </div>
-                <span className="text-[10px] text-[var(--studio-muted)]">Min profil</span>
-              </Link>
-
-              <Link
-                to="/"
-                target="_blank"
-                rel="noreferrer"
-                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-bg)] transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Åpne offentlig nettside</span>
-                </div>
-                <span className="text-[10px] text-[var(--studio-muted)]">Forside ↗</span>
-              </Link>
-            </div>
           </div>
 
           {/* Nav Section: Nettside & CMS */}
@@ -243,7 +218,7 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
                 <span>Mediebibliotek</span>
               </div>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--studio-surface)] text-[var(--studio-muted)]">
-                {media.filter((item) => item.status === "ready").length}
+                {mediaCount}
               </span>
             </button>
 
@@ -462,11 +437,12 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
           </div>
         </div>
 
-        {/* Sidebar Footer / Quick Switchers */}
+        {/* Sidebar Footer: the two ways out of the studio, always in view. Each is listed here only. */}
         <div className="p-4 border-t border-[var(--studio-border)] bg-[var(--studio-panel-bg)] space-y-2 text-xs">
           <Link
             to="/"
             target="_blank"
+            rel="noreferrer"
             className="flex items-center justify-between w-full px-3 py-2 rounded-lg bg-[var(--studio-bg)] hover:bg-[var(--studio-surface)] text-[var(--studio-accent-text)] font-semibold transition-colors"
           >
             <div className="flex items-center gap-2">
@@ -486,22 +462,6 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
             </div>
             <ChevronRight className="w-3.5 h-3.5" />
           </Link>
-
-          <button
-            type="button"
-            onClick={() => onTabChange("database-admin")}
-            className={`flex items-center justify-between w-full px-3 py-2 rounded-lg font-semibold transition-colors cursor-pointer text-left ${
-              activeTab === "database-admin"
-                ? "bg-indigo-600 text-white"
-                : "bg-[var(--studio-bg)] hover:bg-[var(--studio-surface)] text-[var(--studio-muted)]"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Database className="w-4 h-4 text-[var(--studio-icon)]" />
-              <span>Database & Testdata</span>
-            </div>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
 
           <StudioThemeToggle
             theme={sidebarTheme}

@@ -189,16 +189,17 @@ const mediebibliotek: HelpArticle = {
   id: "mediebibliotek",
   title: "Mediebibliotek",
   layout: "wide",
-  formal: "Laste opp bilder og bruke dem på sider og i moduler, uten å forlate redigeringen.",
+  formal: "Bruke bildene som følger med, og laste opp egne, på sider og i moduler uten å forlate redigeringen.",
   hvor: "Sidemeny Mediebibliotek. Samme bibliotek åpnes fra bildevelgeren mens du redigerer en side.",
   steg: [
-    "Skriv Tittel i biblioteket, Standardtekst for skjermleser (påkrevd) og eventuelt emneord.",
+    "Øverst ligger Bilder som følger med. Søk etter for eksempel fellesskap, familie eller høst.",
+    "For å laste opp et eget bilde: skriv Tittel i biblioteket, Standardtekst for skjermleser (påkrevd) og eventuelt emneord.",
     "Trykk Velg fil og last opp.",
-    "I en side: trykk Bibliotek, velg bildet, og Bruk dette bildet. Eller lim inn en adresse med URL og Bruk, eller velg et ferdig kirkebilde.",
+    "I en side: trykk Bibliotek. Trykk på et bilde som følger med, eller velg et opplastet bilde og Bruk dette bildet. Eller lim inn en adresse med URL og Bruk, eller velg et ferdig kirkebilde.",
     "Bytt bilde og Fjern bilde endrer valget på siden. Arkiver og Slett permanent ligger i biblioteket.",
   ],
   knapper:
-    "Last opp nytt bilde, Vis arkiverte, Bruk dette bildet, Arkiver, Gjenopprett, Slett permanent, Bibliotek, URL, Kirkebilder, Bytt bilde, Fjern bilde.",
+    "Søk i bildene som følger med, Last opp nytt bilde, Vis arkiverte, Bruk dette bildet, Arkiver, Gjenopprett, Slett permanent, Bibliotek, URL, Kirkebilder, Bytt bilde, Fjern bilde.",
   etterLagring:
     "Bildet ligger i rutenettet og kan velges på sider. «Bildet kan ikke slettes fordi det brukes i innhold.» «Opplastingen feilet. Prøv igjen.» «Standardtekst for skjermleser er påkrevd ved opplasting.» «Adressen må starte med https://, media: eller data:».",
 };
