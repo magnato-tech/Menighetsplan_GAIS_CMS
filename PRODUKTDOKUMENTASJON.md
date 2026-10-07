@@ -1,6 +1,6 @@
 # Produktdokumentasjon: Menighetsplan
 
-> **Dokumentversjon:** 4.3 · **Sist oppdatert:** 2026-10-07
+> **Dokumentversjon:** 4.4 · **Sist oppdatert:** 2026-10-07
 > **Status:** Single Source of Truth (SSOT) for produktet. Dokumentet lever i kildekoden og oppdateres sammen med funksjonaliteten.
 > **Plattform:** React 19, TypeScript, Tailwind CSS 4, Cloud Firestore (`europe-west3`, Frankfurt), Express, PWA.
 > **Søsterdokumenter:** `ARKITEKTUR.md` (hvordan koden er bygget), `CLAUDE.md` (regler for kodeendringer), `INTEGRASJON-MENIGHETSPLAN.md` (kontrakten for det offentlige API-et).
@@ -71,7 +71,7 @@ En gruppeleder er den som står som leder eller nestleder i en gruppe. Administr
 
 ## 2. Adminpanelet (Admin Studio)
 
-Adminpanelet ligger på `/admin` og har én meny med to deler. Hver fane har sin egen adresse (`/admin?tab=…`), og et påbegynt utkast overlever et fanebytte.
+Adminpanelet ligger på `/admin` og har én meny med to deler. Hver fane har sin egen adresse (`/admin?tab=…`), og et påbegynt utkast overlever et fanebytte. Deler av panelet som ikke alle menigheter skal ha, er **moduler**: de slås på under **Moduler** og står først da i menyen (kapittel 2.6).
 
 ### 2.1 Planlegging – admin for webappen
 
@@ -83,8 +83,8 @@ Adminpanelet ligger på `/admin` og har én meny med to deler. Hver fane har sin
 | **Grupper & husfellesskap** | Oppretter grupper, setter leder og nestleder, kategori, møteplan og om gruppen vises på nettsiden | Levert |
 | **Personer & roller** | Holder personregisteret: kontaktinfo, rolle, politiattest, perioder personen er borte, og offentlig profil med samtykke | Levert |
 | Detaljsider | Samling med kjøreplan, oppgave, gruppe og person har hver sin side | Levert |
-| **Database & innstillinger** | Slår valgfrie moduler av og på, fyller databasen med demodata, simulerer et halvår med menighetsliv, sletter alt, tester API-et | Delvis: modulvalget lagres bare i nettleseren til den som endrer det |
-| **Analysebord** (menyseksjonen Innsikt, nederst) | Ser menighetens liv i tall for en periode, sammenlignet med perioden før: oppmøte, frivillighet og bemanning, grupper, personregisteret og nettsiden. Registrerer oppmøtetall og laster dem ned som regneark | Levert 5. oktober (kapittel 2.4) |
+| **Database & innstillinger** | Fyller databasen med demodata, simulerer et halvår med menighetsliv (vises når Analysebord er slått på), sletter alt, tester API-et | Levert |
+| **Analysebord** (del av modulen Analyse, kapittel 2.6) | Ser menighetens liv i tall for en periode, sammenlignet med perioden før: oppmøte, frivillighet og bemanning, grupper, personregisteret og nettsiden. Registrerer oppmøtetall og laster dem ned som regneark | Levert 5. oktober (kapittel 2.4) |
 
 ### 2.2 Nettside & CMS – admin for nettsiden
 
@@ -102,11 +102,12 @@ Adminpanelet ligger på `/admin` og har én meny med to deler. Hver fane har sin
 
 * Panelet er responsivt: fast meny på PC, uttrekksmeny på mobil.
 * En handling bekreftes med en melding som forsvinner av seg selv. En lagring som feiler, vises i et rødt banner og blir ikke stående som om den var lagret.
+* **Moduler** (under System & Database) viser hvilke moduler produktet har, og slår delene av dem av og på for hele menigheten (kapittel 2.6).
 * **Planlagt:** innlogging. I dag er `/admin` åpen, og aktiv bruker velges i en testbryter (kapittel 10).
 
 ### 2.4 Analysebord
 
-Analysebordet er siste fane i menyen, under **Innsikt**. Det samler det løsningen allerede vet om menighetens liv, slik at ledelsen kan se utviklingen og handle på den: hvem som trenger avlastning, hvilke roller som er vanskelige å bemanne, hvilke grupper som har stilnet, og hvor mange som kommer.
+Analysebordet er en del av modulen **Analyse**. Det står i menyen under **Analyse** når det er slått på (kapittel 2.6). Det samler det løsningen allerede vet om menighetens liv, slik at ledelsen kan se utviklingen og handle på den: hvem som trenger avlastning, hvilke roller som er vanskelige å bemanne, hvilke grupper som har stilnet, og hvor mange som kommer.
 
 **Prinsipper**
 
@@ -138,7 +139,7 @@ Analysebordet er siste fane i menyen, under **Innsikt**. Det samler det løsning
 **Simulert menighetsliv.** Under **Database og Testdata** kan administratoren fylle databasen med 12, 26 eller 52 uker tenkt historikk, bygget av personene, gruppene og rollene som finnes: gudstjenester med oppmøtetall, oppgaver med ja, nei og forfall, husfellesskap med svar, og meldinger. Alt er merket og fjernes med **Fjern simulert historikk** uten at noe annet berøres. En søndag som allerede har en gudstjeneste, får ikke en til.
 
 ### 2.5 Besøk på nettsiden
-Fanen **Besøk på nettsiden** ligger under **Innsikt**, etter Analysebord. Den viser hvor mye nettsiden brukes, hva som leses, når besøkene kommer og om de fører til noe, sammenlignet med like lang periode rett før. Perioden er siste 7 dager, 4 uker (standard), 3 måneder eller 12 måneder.
+**Besøk på nettsiden** er den andre delen av modulen **Analyse**. Den står i menyen under **Analyse**, etter Analysebord, når den er slått på (kapittel 2.6). Den viser hvor mye nettsiden brukes, hva som leses, når besøkene kommer og om de fører til noe, sammenlignet med like lang periode rett før. Perioden er siste 7 dager, 4 uker (standard), 3 måneder eller 12 måneder.
 
 **Prinsipper**
 
@@ -147,7 +148,7 @@ Fanen **Besøk på nettsiden** ligger under **Innsikt**, etter Analysebord. Den 
 * **Besøk, ikke personer.** Et besøk er én åpning av nettsiden. Kommer samme person tilbake senere, er det et nytt besøk. Nye og faste besøkende kan derfor ikke skilles. Det ville krevd at nettleseren huskes, og etter ekomloven § 3-15 (i kraft 1. januar 2025) krever det samtykke fra hver besøkende. Statistikk er ikke unntatt.
 * **Tid er et anslag.** Tid telles bare mens siden er synlig på skjermen, og høyst 30 minutter per visning. Det som er sett, sendes underveis (etter 5, 15, 30 og 60 sekunder, deretter hvert minutt), så en fane som lukkes, mister lite. Tid per visning er sekundene siden var synlig, delt på alle visningene av den.
 * **Bare ekte besøk.** Forhåndsvisninger i admin, sider vist i en ramme, søkeroboter, en kopi av nettsiden på utviklerens egen maskin og nettlesere som har bedt om å holdes utenfor, telles ikke. Min side og admin telles aldri.
-* **Menigheten bestemmer.** Tellingen står på til menigheten slår den av på bordet. Da telles ingenting før den slås på igjen.
+* **Menigheten bestemmer.** Nettsiden teller bare mens «Besøk på nettsiden» er slått på under Moduler (kapittel 2.6). Mens den er på, kan tellingen settes på vent på bordet. Da telles ingenting før den slås på igjen.
 
 **Hva bordet viser**
 
@@ -168,6 +169,35 @@ Fanen **Besøk på nettsiden** ligger under **Innsikt**, etter Analysebord. Den 
 **Eksempeltall.** Mens appen står i demo, kan bordet fylles med 26 uker eksempeltall, laget for sidene som finnes. De legges bare på dager der ingenting er telt, er merket, og fjernes med **Fjern eksempeltallene** uten at en telt dag røres. Bordet sier fra så lenge perioden inneholder eksempeltall.
 
 **Nullstilling.** **Nullstill besøkstallene** sletter alle tall, og er sperret i produksjon. Besøkstallene er ikke innhold: de følger ikke med i et datasett og tømmes ikke sammen med databasen. Når nettsiden byttes under **Velg menighet**, nullstilles de, siden de gjelder nettsiden som byttes ut.
+
+### 2.6 Moduler
+
+En **modul** er en del av produktet som en menighet enten har eller ikke har. Fanen **Moduler** (under System & Database) viser modulene og slår delene av dem av og på. Den er alltid i menyen.
+
+**Produktets tilleggsmoduler** (produkteiers liste 7. oktober 2026):
+
+| Modul | Status |
+|:---|:---|
+| **Analyse** | **Levert** som to deler med hver sin bryter: **Analysebord** (kapittel 2.4) og **Besøk på nettsiden** (kapittel 2.5) |
+| Givertjeneste, Utleie, Arrangement, Kommunikasjon, Skjemaer, AI-assistent | **Planlagt.** Står bare som navn på siden. Ingenting er bygget, og ingenting bygges før produkteier ber om det |
+
+Regnskap er ikke en egen modul. Givertjeneste og Utleie skal registrere inntekter og transaksjoner slik at de senere kan rapporteres og eksporteres til regnskap.
+
+**Slik virker det**
+
+* **Av til den er valgt.** En del er av til noen slår den på. En database der ingen har valgt, har alt av.
+* **Valget gjelder hele menigheten.** Det lagres i databasen, ikke i nettleseren, og alle som bruker admin, ser det samme.
+* **Av betyr borte, ikke slettet.** En del som er av, står ikke i menyen, og fanen tegnes ikke: den verken leser eller teller. Åpnes adressen likevel, sier siden at delen ikke er slått på, og viser veien til Moduler. Det som er registrert, blir stående, og er der når delen slås på igjen.
+* **Hver del for seg.** Å slå én del av eller på rører ikke de andre.
+* **Det som følger med.** Er «Besøk på nettsiden» av, teller ikke nettsiden besøk. Er «Analysebord» av, kan ikke oppmøtetall føres, og «Simulert historikk» under Database vises ikke.
+* **Ikke innhold.** Valget følger ikke med i et datasett, og verken «Velg menighet» eller tømming av nettsiden eller planleggeren endrer det. Bare «Slett alt i databasen» under Database fjerner det, sammen med alt annet, og da er alt av igjen.
+
+**Under arbeid.** Kalender og Meldinger er to brytere fra før modulene. De står nederst på siden, merket som uferdige: valget huskes bare i nettleseren, og de styrer foreløpig ikke noe innhold.
+
+**Ikke bygget ennå**
+
+* **Tilgang.** Siden skiller ikke mellom hva en menighet *har fått* og hva den *har slått på*: alle delene som finnes, kan slås på av den som er i admin. Tildeling av moduler per menighet, og nivåene under «Åpne produktvalg» (kapittel 14), krever innlogging og publiserte databaseregler.
+* **Flatene.** Moduler styrer i dag faner i admin og tellingen på nettsiden. Min side og den offentlige nettsiden har ingen deler som styres av en modul.
 
 ---
 
@@ -586,7 +616,7 @@ De tre flatene, Firestore-databasen, bemanningsmotoren, husfellesskap, gruppemel
 
 | Område | Levert |
 |:---|:---|
-| **Analysebord** | Ny fane under Innsikt nederst i menyen (kapittel 2.4). Utregningene er rene funksjoner med tester (`src/utils/churchAnalytics.ts`) |
+| **Analysebord** | Ny fane nederst i menyen (kapittel 2.4), fra 7. oktober en del av modulen Analyse. Utregningene er rene funksjoner med tester (`src/utils/churchAnalytics.ts`) |
 | **Oppmøtetall** | Ny datatype `GatheringHeadcount`, registreres og rettes fra bordet. Prøvd mot databasen i drift: lagres, leses tilbake og fjernes |
 | **Simulert menighetsliv** | Historikk for å prøve bordet, under Database og Testdata. Prøvd mot databasen i drift: 862 dokumenter skrevet, ingen dobling ved ny kjøring, alt fjernet igjen |
 | **Trenger oppfølging** | En oppgave på en samling som er over, telles ikke lenger som ubesatt i menyen og vises ikke under «Trenger oppfølging» eller «Venter på svar». «Alle oppgaver» viser fortsatt alt |
@@ -599,10 +629,19 @@ De tre flatene, Firestore-databasen, bemanningsmotoren, husfellesskap, gruppemel
 | Område | Levert |
 |:---|:---|
 | **Anonym telling** | Nettsiden teller sidevisninger, besøk, tid i visning, adresser uten side og handlinger, som summer per dag. Ingenting lagres hos den besøkende (kapittel 2.5). Reglene er rene funksjoner med tester (`src/utils/siteTraffic.ts`, `src/utils/visitTracker.ts`) |
-| **Bordet** | Ny fane **Besøk på nettsiden** under Innsikt: nøkkeltall, besøk over tid, mest besøkte sider, sider som aldri åpnes, hvor besøkene starter, adresser som ikke finnes, når besøkene kommer, og handlinger |
+| **Bordet** | Ny fane **Besøk på nettsiden**, fra samme dag en del av modulen Analyse: nøkkeltall, besøk over tid, mest besøkte sider, sider som aldri åpnes, hvor besøkene starter, adresser som ikke finnes, når besøkene kommer, og handlinger |
 | **Eksempeltall og nullstilling** | Eksempeltall for demonstrasjon, merket og fjernbare. Nullstilling er sperret i produksjon |
 | **Menighetens valg** | Tellingen kan slås av og på fra bordet. Den som redigerer nettsiden, kan holde sin egen nettleser utenfor |
 | **Analysebord** | «Besøk på nettsiden måles ikke» er erstattet av en lenke til det nye bordet |
+
+### Moduler (7. oktober 2026)
+
+| Område | Levert |
+|:---|:---|
+| **Styringen** | Én liste over produktets moduler og delene som kan slås på (`src/pages/admin/addons.ts`). Menyen, siden Moduler og sperren foran en fane tegnes fra den (kapittel 2.6) |
+| **Siden Moduler** | Kort med bryter for hver del av Analyse, de planlagte modulene som navn, og Kalender og Meldinger merket som uferdige |
+| **Analyse som modul** | Analysebord og Besøk på nettsiden er av til de slås på. Menyseksjonen heter Analyse (før: Innsikt) og vises bare når noe under den er på. Nettsiden teller besøk bare mens delen er på |
+| **Lagring** | Valget lagres for hele menigheten, ett felt per del, og er ikke en del av et datasett |
 
 ---
 
@@ -628,6 +667,7 @@ Sortert etter hvor mye de betyr for en menighet som skal ta løsningen i bruk.
 | 13 | Firebase-klienten lastes på første nettsidebesøk (~1,3 MB JavaScript utover CSS). Admin og Min side er skilt ut, men Firestore er felles datakilde for alle flater | Fase 4 |
 | 14 | Reglene i databasen i drift er eldre enn `firestore.rules`, og avviser nye samlinger (prøvd 5. oktober: `volunteer_roles` og `gatheringHeadcounts`). Tjenesteroller og oppmøtetall lagres derfor i `cms_settings`, merket med `recordType` | Fase 1 |
 | 15 | Besøkstallene kan endres og slettes av hvem som helst så lenge databasereglene er åpne, og de ligger i `cms_settings` til reglene er publisert. Med innlogging trenger de en egen samling der en besøkende bare kan legge til i dagens summer | Fase 1 |
+| 16 | Moduler kan slås av og på av hvem som helst med adgang til admin, og det finnes ikke noe skille mellom hva en menighet har fått tilgang til og hva den har slått på. Kalender og Meldinger husker valget bare i nettleseren | Fase 1 |
 
 ---
 
@@ -681,6 +721,7 @@ Hver endring typesjekkes, testes og bygges før den regnes som ferdig. Regler fl
 | Hvem teller oppmøtet | Administrator i etterkant, eller en egen rolle «Teller» på gudstjenesten som registrerer fra Min side | Start med administrator. Legg til rollen når tellingen skal gjøres samme dag av den som står i døra |
 | Hvem er «barn» i tellingen | Under konfirmasjonsalder, under 18, eller egen telling for barnekirken | Under konfirmasjonsalder (det står i registreringsvinduet). Bestemmes før tallene brukes i årsmeldingen |
 | Nye og faste besøkende, kilde og utstyr | Måles ikke, eller spør hver besøkende om samtykke til å huske nettleseren | Måles ikke. Besøk telles anonymt (avgjort 7. oktober 2026, kapittel 2.5). En samtykkeboks på en menighets nettside koster mer tillit enn tallene er verdt |
+| Nivåer og tilleggsmoduler | To nivåer (Menighetsplattform, gratis, og Menighetsplan, betalt) og sju tilleggsmoduler som hver slås på for seg | Foreslått av produkteier 7. oktober 2026. Styringen av moduler er bygget (kapittel 2.6). Nivåene er kartlagt, men ikke besluttet og ikke bygget |
 
 ---
 

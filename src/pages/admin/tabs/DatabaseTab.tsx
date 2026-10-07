@@ -16,6 +16,7 @@ import { DatasetPanel } from "../../../components/admin/DatasetPanel";
 import { ChurchPickerPanel } from "../../../components/admin/ChurchPickerPanel";
 import { OperatingModePanel } from "../../../components/admin/OperatingModePanel";
 import { useOperatingMode } from "../../../hooks/useOperatingMode";
+import { isAddonOn } from "../../../utils/addons";
 import {
   Database,
   RefreshCw,
@@ -32,7 +33,6 @@ import {
   Radio,
   Sliders,
   Check,
-  CalendarDays,
   Loader2,
   ShieldAlert,
 } from "lucide-react";
@@ -94,12 +94,9 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
     gatherings,
     tasks,
     assignments,
-    moduleConfig,
-    toggleKalender,
-    toggleMeldinger,
-  } = useFirebase();
+    } = useFirebase();
 
-  const { pages, news, sermons, staff } = useCms();
+  const { pages, news, sermons, staff, addons } = useCms();
 
   // In production nothing can be emptied from this tab. The services refuse on their own; the
   // buttons that only delete are also locked here, so the lock is seen before it is met.
@@ -296,8 +293,8 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
             <span>Database og Testdata</span>
           </h2>
           <p className="text-xs text-[var(--studio-muted)] mt-1 max-w-2xl leading-relaxed">
-            Administrer Firestore-databasen, fyll inn testdata for menigheten med egne glidebrytere eller ferdige pakker, styr moduler og
-            overvåk sanntidsstatus.
+            Administrer Firestore-databasen, fyll inn testdata for menigheten med egne glidebrytere eller ferdige pakker, og overvåk
+            sanntidsstatus.
           </p>
         </div>
 
@@ -687,89 +684,8 @@ export const DatabaseTab: React.FC<DatabaseTabProps> = ({ showFeedback }) => {
     )}
   </section>
 
-      {/* Simulert historikk for Analysebord */}
-      <SimulationPanel showFeedback={showFeedback} />
-
-      {/* Seksjon 3: Valgfrie Tilleggsmoduler (Kalender & Meldinger) */}
-      <section className="p-5 sm:p-6 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-4">
-        <div>
-          <h3 className="text-base font-bold text-[var(--studio-text)] flex items-center gap-2">
-            <CalendarDays className="w-4 h-4 text-emerald-400" />
-            <span>Valgfrie tilleggsmoduler</span>
-          </h3>
-          <p className="text-xs text-[var(--studio-muted)] mt-0.5">
-            Aktiver eller deaktiver tilleggsfunksjoner for menighetsplanleggeren.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-          {/* Kalendermodul */}
-          <div className="p-4 rounded-xl bg-[var(--studio-row)] border border-[var(--studio-border)] flex items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-[var(--studio-text)] text-sm">Kalendermodul</span>
-                <span
-                  className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
-                    moduleConfig.kalender === "on"
-                      ? "bg-emerald-950/80 text-emerald-400 border border-emerald-800/80"
-                      : "bg-[var(--studio-surface)] text-[var(--studio-muted)]"
-                  }`}
-                >
-                  {moduleConfig.kalender === "on" ? "PÅ" : "AV"}
-                </span>
-              </div>
-              <p className="text-xs text-[var(--studio-muted)]">
-                Felles kalenderoversikt for menighetens gudstjenester og aktiviteter.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={toggleKalender}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${
-                moduleConfig.kalender === "on"
-                  ? "bg-emerald-600 hover:bg-emerald-500 text-white"
-                  : "bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)]"
-              }`}
-            >
-              {moduleConfig.kalender === "on" ? "Slå av" : "Slå på"}
-            </button>
-          </div>
-
-          {/* Meldingsmodul */}
-          <div className="p-4 rounded-xl bg-[var(--studio-row)] border border-[var(--studio-border)] flex items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-[var(--studio-text)] text-sm">Meldingsmodul</span>
-                <span
-                  className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
-                    moduleConfig.meldinger === "on"
-                      ? "bg-[var(--studio-accent-bg)] text-[var(--studio-icon)] border border-[var(--studio-accent-border)]"
-                      : "bg-[var(--studio-surface)] text-[var(--studio-muted)]"
-                  }`}
-                >
-                  {moduleConfig.meldinger === "on" ? "PÅ" : "AV"}
-                </span>
-              </div>
-              <p className="text-xs text-[var(--studio-muted)]">
-                Intern meldingsflyt og kunngjøringer til frivillige team.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={toggleMeldinger}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${
-                moduleConfig.meldinger === "on"
-                  ? "bg-indigo-600 hover:bg-indigo-500 text-white"
-                  : "bg-[var(--studio-surface)] hover:bg-[var(--studio-hover)] text-[var(--studio-muted)]"
-              }`}
-            >
-              {moduleConfig.meldinger === "on" ? "Slå av" : "Slå på"}
-            </button>
-          </div>
-        </div>
-      </section>
+      {/* Simulert historikk for Analysebord: only while the board it is made for is turned on */}
+      {isAddonOn(addons, "analysebord") && <SimulationPanel showFeedback={showFeedback} />}
 
       {/* Seksjon 4: Offentlig API-endepunkt & Integrasjon */}
       <section className="p-5 sm:p-6 rounded-2xl bg-[var(--studio-surface)] border border-[var(--studio-border)] space-y-4">

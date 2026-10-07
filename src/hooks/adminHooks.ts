@@ -2,6 +2,7 @@ import { useMemo, useCallback, useEffect, useState } from "react";
 import { useFirebase } from "../context/FirebaseDataContext";
 import { useCms } from "../context/CmsContext";
 import { AnalyticsPeriodId, buildChurchAnalytics } from "../utils/churchAnalytics";
+import { visitCounting } from "../utils/siteTraffic";
 import { Task, Group, Gathering } from "../types";
 import { validateGathering } from "../utils/validation";
 import {
@@ -410,7 +411,8 @@ export function useAdminAnalytics(periodId: AnalyticsPeriodId) {
     setAnalyticsModuleHidden,
     showAllAnalyticsModules,
   } = useFirebase();
-  const { pages, news, sermons } = useCms();
+  const { pages, news, sermons, addons, settings } = useCms();
+  const websiteVisits = visitCounting(addons, settings);
 
   // The tab stays mounted once visited, so the clock is moved on every few minutes:
   // a service that has just ended then shows up as missing a count without a reload.
@@ -437,15 +439,18 @@ export function useAdminAnalytics(periodId: AnalyticsPeriodId) {
           pages,
           news,
           sermons,
+          websiteVisits,
         },
         periodId,
         now
       ),
-    [allPersons, groups, gatherings, tasks, assignments, attendances, headcounts, groupMessages, volunteerRoles, pages, news, sermons, periodId, now]
+    [allPersons, groups, gatherings, tasks, assignments, attendances, headcounts, groupMessages, volunteerRoles, pages, news, sermons, websiteVisits, periodId, now]
   );
 
   return {
     analytics,
+    /** Whether the website counts its visits, for what the board says about them. */
+    websiteVisits,
     registerHeadcount,
     removeHeadcount,
     /** The modules the person using the board has hidden. */

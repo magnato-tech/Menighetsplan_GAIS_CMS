@@ -18,6 +18,7 @@ import { isPagePublished } from "./menu";
 import { countSlots, isAcuteForfall } from "./staffing";
 import { parseIsoToDateAndTime } from "./dates";
 import { normalizeClock } from "./runSheet";
+import type { VisitCounting } from "./siteTraffic";
 
 // The analysis board (Analysebord): what the stored data says about the life of the
 // congregation over a period, compared with the period before. Every number is counted
@@ -88,6 +89,8 @@ export interface ChurchData {
   pages: CmsPage[];
   news: CmsNewsArticle[];
   sermons: CmsSermon[];
+  /** Whether visits to the website are counted (see utils/siteTraffic.ts). Not counted unless said. */
+  websiteVisits?: VisitCounting;
 }
 
 const timeOf = (iso: string | undefined): number => (iso ? new Date(iso).getTime() : NaN);
@@ -962,7 +965,8 @@ export function describeCoverage(
   attendance: AttendanceSummary,
   groups: GroupSummary,
   volunteers: VolunteerSummary,
-  staffing: FullStaffingSummary
+  staffing: FullStaffingSummary,
+  websiteVisits: VisitCounting = "off"
 ): CoverageNote[] {
   const worship = attendance.worship.length;
   const withTasks = staffing.gatherings;
@@ -1005,8 +1009,13 @@ export function describeCoverage(
     },
     {
       id: "nettside",
-      status: "ok",
-      text: "Besøk på nettsiden telles anonymt og vises på bordet «Besøk på nettsiden». Hvem de besøkende er, måles ikke.",
+      status: websiteVisits === "counted" ? "ok" : "missing",
+      text:
+        websiteVisits === "counted"
+          ? "Besøk på nettsiden telles anonymt og vises på bordet «Besøk på nettsiden». Hvem de besøkende er, måles ikke."
+          : websiteVisits === "paused"
+            ? "Tellingen av besøk på nettsiden er slått av. Den slås på igjen på bordet «Besøk på nettsiden»."
+            : "Besøk på nettsiden telles ikke. Det gjør modulen «Besøk på nettsiden», som slås på under Moduler.",
     },
   ];
 }
@@ -1046,7 +1055,7 @@ export function buildChurchAnalytics(data: ChurchData, periodId: AnalyticsPeriod
     groups,
     people: summarizePeople(data, now),
     content: summarizeContent(data, period),
-    coverage: describeCoverage(attendance, groups, volunteers, fullStaffing),
+    coverage: describeCoverage(attendance, groups, volunteers, fullStaffing, data.websiteVisits),
   };
 }
 

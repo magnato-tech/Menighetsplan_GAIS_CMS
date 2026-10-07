@@ -43,12 +43,14 @@ const showAllModules = vi.fn(() => ({ success: true }));
 const requestedPeriods: AnalyticsPeriodId[] = [];
 let hiddenModules: string[] = [];
 let canCustomize = true;
+let websiteVisits: "counted" | "paused" | "off" = "counted";
 
 vi.mock("../src/hooks/useAppHooks", () => ({
   useAdminAnalytics: (periodId: AnalyticsPeriodId) => {
     requestedPeriods.push(periodId);
     return {
-      analytics: buildChurchAnalytics(data, periodId, now),
+      analytics: buildChurchAnalytics({ ...data, websiteVisits }, periodId, now),
+      websiteVisits,
       registerHeadcount,
       removeHeadcount,
       hiddenModules,
@@ -66,6 +68,7 @@ afterEach(() => {
   vi.clearAllMocks();
   hiddenModules = [];
   canCustomize = true;
+  websiteVisits = "counted";
 });
 
 function renderTab() {
@@ -199,5 +202,27 @@ describe("Analysebord", () => {
     expect(onTabChange).toHaveBeenCalledWith("nettsidebesok");
     fireEvent.click(screen.getByRole("button", { name: "Database og Testdata" }));
     expect(onTabChange).toHaveBeenCalledWith("database-admin");
+  });
+
+  test("er modulen for besøk ikke slått på, sier bordet det og viser veien til Moduler", () => {
+    websiteVisits = "off";
+    const { onTabChange } = renderTab();
+
+    expect(screen.queryByText(/telles anonymt/)).toBeNull();
+    expect(screen.getAllByText(/Besøk på nettsiden telles ikke/).length).toBe(2);
+    // The board over the visits is not there to open while its module is off
+    expect(screen.queryByRole("button", { name: "Se besøk på nettsiden" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Åpne Moduler" }));
+    expect(onTabChange).toHaveBeenCalledWith("moduler");
+  });
+
+  test("er tellingen satt på vent, sier bordet det og leder til bordet der den slås på igjen", () => {
+    websiteVisits = "paused";
+    const { onTabChange } = renderTab();
+
+    expect(screen.queryByText(/telles anonymt/)).toBeNull();
+    expect(screen.getAllByText(/Tellingen av besøk på nettsiden er slått av/).length).toBe(2);
+    fireEvent.click(screen.getByRole("button", { name: "Se besøk på nettsiden" }));
+    expect(onTabChange).toHaveBeenCalledWith("nettsidebesok");
   });
 });

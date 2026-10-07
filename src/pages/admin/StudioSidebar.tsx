@@ -23,9 +23,10 @@ import {
   Badge,
   Images,
   CircleHelp,
-  ChartColumnBig,
-  MousePointerClick,
+  Puzzle,
 } from "lucide-react";
+import { countAddonsOn } from "../../utils/addons";
+import { STUDIO_ADDONS, addonMenuSections } from "./addons";
 import { StudioData, StudioTab, countUrgentTasks } from "./studio";
 import { prefetchStudioTab } from "./studioTabLoaders";
 import { useStudioAppearance } from "./studioAppearance";
@@ -49,7 +50,7 @@ interface StudioSidebarProps {
 
 export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab, onTabChange, sidebarOpen, onToggleSidebar }) => {
   const { currentUser, adminPersons, adminGroups, adminGatherings, adminTasks } = studio;
-  const { pages, media, news, sermons, staff, settings } = useCms();
+  const { pages, media, news, sermons, staff, settings, addons } = useCms();
   const urgentTasksCount = countUrgentTasks(adminTasks);
   const { sidebarTheme, toggleSidebarTheme } = useStudioAppearance();
   // The media library shows the images that come with the app next to the uploaded ones
@@ -440,42 +441,52 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
                 Firestore
               </span>
             </button>
+
+            <button
+              type="button"
+              {...tabPrefetchHandlers("moduler")}
+              onClick={() => onTabChange("moduler")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                activeTab === "moduler"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-bg)]"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Puzzle className="w-4 h-4 text-[var(--studio-icon)]" />
+                <span>Moduler</span>
+              </div>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--studio-surface)] text-[var(--studio-muted)]">
+                {countAddonsOn(addons)} av {STUDIO_ADDONS.length} på
+              </span>
+            </button>
           </div>
 
-          {/* Nav Section: Innsikt */}
-          <div className="space-y-1">
-            <div className="text-[10px] font-black uppercase tracking-wider text-[var(--studio-muted)] px-3 py-1">
-              Innsikt
+        {/* Nav sections from the add-ons that are on (see addons.ts). An add-on that is off is not in the menu. */}
+          {addonMenuSections(addons).map((section) => (
+            <div key={section.heading} className="space-y-1">
+              <div className="text-[10px] font-black uppercase tracking-wider text-[var(--studio-muted)] px-3 py-1">
+                {section.heading}
+              </div>
+
+              {section.entries.map((entry) => (
+                <button
+                  key={entry.tab}
+                  type="button"
+                  {...tabPrefetchHandlers(entry.tab)}
+                  onClick={() => onTabChange(entry.tab)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                    activeTab === entry.tab
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-bg)]"
+                  }`}
+                >
+                  <entry.icon className="w-4 h-4 text-[var(--studio-icon)]" />
+                  <span>{entry.label}</span>
+                </button>
+              ))}
             </div>
-
-            <button
-              type="button"
-              {...tabPrefetchHandlers("analyse")}
-              onClick={() => onTabChange("analyse")}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
-                activeTab === "analyse"
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-bg)]"
-              }`}
-            >
-              <ChartColumnBig className="w-4 h-4 text-[var(--studio-icon)]" />
-              <span>Analysebord</span>
-            </button>
-
-            <button
-              type="button"
-              {...tabPrefetchHandlers("nettsidebesok")}
-              onClick={() => onTabChange("nettsidebesok")}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
-                activeTab === "nettsidebesok"
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-bg)]"
-              }`}
-            >
-              <MousePointerClick className="w-4 h-4 text-[var(--studio-icon)]" />
-              <span>Besøk på nettsiden</span>
-            </button>
-          </div>
+          ))}
         </div>
 
         {/* Sidebar Footer: the look of the menu, and who is signed in */}

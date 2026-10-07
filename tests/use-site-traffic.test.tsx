@@ -21,6 +21,7 @@ const { cms } = vi.hoisted(() => ({
       countVisits?: boolean;
     },
     contentReady: true,
+    addons: { nettsidebesok: true } as { nettsidebesok?: boolean },
   },
 }));
 vi.mock("../src/context/CmsContext", () => ({ useCms: () => cms }));
@@ -54,6 +55,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2026-10-07T10:00:00.000Z"));
   cms.contentReady = true;
   cms.settings = { ...cms.settings, countVisits: undefined };
+  cms.addons = { nettsidebesok: true };
   localStorage.clear();
   setVisibility("visible");
   forgetVisit();
@@ -181,6 +183,27 @@ describe("Det som ikke er et besøk", () => {
 
     setOwnVisitsExcluded(false);
     expect(isVisitCounted()).toBe(true);
+  });
+
+  test("er modulen ikke slått på, telles verken besøk eller handlinger", () => {
+    cms.addons = {};
+    const { getByText, rerender } = open("/", <a href="tel:+4737270000">Ring oss</a>);
+    fireEvent.click(getByText("Ring oss"));
+    vi.advanceTimersByTime(60_000);
+    expect(siteTrafficRecorder.view).not.toHaveBeenCalled();
+    expect(siteTrafficRecorder.seconds).not.toHaveBeenCalled();
+    expect(recordTrafficAction).not.toHaveBeenCalled();
+
+    // The database answers that the module is on, or someone turns it on: the page in view is counted from then
+    cms.addons = { nettsidebesok: true };
+    rerender(
+      <Site path="/">
+        <a href="tel:+4737270000">Ring oss</a>
+      </Site>
+    );
+    fireEvent.click(getByText("Ring oss"));
+    expect(views()).toEqual([["/", { entry: true, second: false }]]);
+    expect(recordTrafficAction).toHaveBeenCalledTimes(1);
   });
 
   test("har menigheten slått tellingen av, telles verken besøk eller handlinger", () => {

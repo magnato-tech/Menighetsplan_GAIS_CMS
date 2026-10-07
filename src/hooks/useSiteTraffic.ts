@@ -4,7 +4,7 @@ import { recordTrafficAction, siteTrafficRecorder } from "../services/siteTraffi
 import { areOwnVisitsExcluded } from "../utils/ownVisits";
 import { readPreviewModeFlags } from "../utils/previewBridge";
 import { isPublicPath } from "../utils/routes";
-import { trafficActionForLink, trafficTarget } from "../utils/siteTraffic";
+import { trafficActionForLink, trafficTarget, visitCounting } from "../utils/siteTraffic";
 import { VisitTracker } from "../utils/visitTracker";
 
 // Counts the visits to the public website as they happen (see utils/siteTraffic.ts for what is
@@ -73,13 +73,14 @@ const sameFile = (a: string, b: string): boolean => {
 
 /** Starts the counting for the address shown. Called once, where the app knows which address that is. */
 export function useSiteTraffic(pathname: string): void {
-  const { pages, news, media, settings, sermons, contentReady } = useCms();
+  const { pages, news, media, settings, sermons, contentReady, addons } = useCms();
   const site = useMemo(() => ({ pages, news, media, settings }), [pages, news, media, settings]);
   const sermonsNow = useRef(sermons);
   sermonsNow.current = sermons;
 
-  // The congregation decides whether visits are counted at all. The answer is in the settings.
-  const counting = settings.countVisits !== false;
+  // The congregation decides whether visits are counted at all: the add-on has to be on, and the
+  // counting not paused. Until the database has said that the add-on is on, nothing is counted.
+  const counting = visitCounting(addons, settings) === "counted";
   const countingNow = useRef(counting);
   countingNow.current = counting;
 

@@ -11,6 +11,8 @@ import {
   reorderPages as reorderPagesInFirestore,
 } from "../services/firestore";
 import { reportWriteError } from "../services/writeErrors";
+import { saveAddonChoice, subscribeAddons } from "../services/addons";
+import type { AddonChoices, AddonId } from "../utils/addons";
 import { newId } from "../utils/id";
 import {
   CmsPage,
@@ -26,6 +28,9 @@ import { buildMediaVariantBlobs } from "../utils/imageVariants";
 import { uploadMediaVariants, deleteMediaStorageFiles } from "../services/mediaStorage";
 import { findMediaUsages } from "../utils/media";
 
+/** Whether the database has said which add-ons are on. */
+export type AddonsState = "loading" | "ready" | "failed";
+
 interface CmsContextValue {
   pages: CmsPage[];
   news: CmsNewsArticle[];
@@ -38,6 +43,13 @@ interface CmsContextValue {
    * copy kept in the browser. Until then, an address without a page may just not be loaded yet.
    */
   contentReady: boolean;
+  /**
+   * The add-ons that are on (see utils/addons.ts). None is on until the database has answered,
+   * and none is on if it could not be asked.
+   */
+  addons: AddonChoices;
+  addonsState: AddonsState;
+  setAddon: (id: AddonId, on: boolean) => Promise<boolean>;
   // Every write resolves to whether it reached Firestore. A failure is already shown to the user.
   savePage: (page: Partial<CmsPage> & { id?: string }) => Promise<boolean>;
   deletePage: (pageId: string) => Promise<boolean>;
@@ -172,6 +184,28 @@ function useCmsSettings(): CmsSettings {
   return settings;
 }
 
+/**
+ * Which add-ons are on. Nothing is kept in the browser for the next visit: a visitor's browser
+ * has no use for how the admin is set up, and an add-on must never be on by a guess.
+ */
+function useCmsAddons(): { addons: AddonChoices; addonsState: AddonsState } {
+  const [state, setState] = useState<{ addons: AddonChoices; addonsState: AddonsState }>({ addons: {}, addonsState: "loading" });
+
+  useEffect(
+    () =>
+      subscribeAddons(
+        (addons) => setState({ addons, addonsState: "ready" }),
+        (error) => {
+          onListenerError("addons")(error);
+          setState({ addons: {}, addonsState: "failed" });
+        }
+      ),
+    []
+  );
+
+  return state;
+}
+
 /** Waits for the server's answer, so an editor can stay open with what was typed if the save fails. */
 async function attempt(action: string, write: () => Promise<unknown>): Promise<boolean> {
   try {
@@ -185,6 +219,8 @@ async function attempt(action: string, write: () => Promise<unknown>): Promise<b
 
 // Each write builds the complete document, so a field left out in the editor gets its default
 const writes = {
+  setAddon: (id: AddonId, on: boolean) =>
+    attempt(on ? "slå på modulen" : "slå av modulen", () => saveAddonChoice(id, on)),
   savePage: (pageData: Partial<CmsPage> & { id?: string }) => {
     const resolvedParent =
       pageData.parentPageId !== undefined
@@ -319,6 +355,7 @@ export const CmsProvider: React.FC<{ children: React.ReactNode; publicPagesOnly?
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   );
   const settings = useCmsSettings();
+  const { addons, addonsState } = useCmsAddons();
   const contentReady = pagesAnswered && newsAnswered;
 
   const value: CmsContextValue = useMemo(
@@ -330,6 +367,8 @@ export const CmsProvider: React.FC<{ children: React.ReactNode; publicPagesOnly?
       media,
       settings,
       contentReady,
+      addons,
+      addonsState,
       ...writes,
       uploadMedia: async (file, meta) => {
         try {
@@ -411,7 +450,7 @@ export const CmsProvider: React.FC<{ children: React.ReactNode; publicPagesOnly?
       getNewsById: (id: string) => news.find((n) => n.id === id),
       getNewsBySlug: (slug: string) => news.find((n) => n.slug.toLowerCase() === slug.toLowerCase()),
     }),
-    [pages, news, sermons, staff, media, settings, contentReady]
+    [pages, news, sermons, staff, media, settings, contentReady, addons, addonsState]
   );
 
   return <CmsContext.Provider value={value}>{children}</CmsContext.Provider>;

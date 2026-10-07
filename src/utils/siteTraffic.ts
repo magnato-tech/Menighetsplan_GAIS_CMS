@@ -1,4 +1,5 @@
-import type { CmsSermon } from "../data/cmsData";
+import type { CmsSermon, CmsSettings } from "../data/cmsData";
+import { isAddonOn, type AddonChoices } from "./addons";
 import type { Change } from "./analyticsFormat";
 import { isPagePublished, pageUrl } from "./menu";
 import { isPublicPath } from "./routes";
@@ -22,6 +23,15 @@ import { seoForPath, type SiteContent } from "./siteSeo";
 // ---------- The day as stored ----------
 
 export const TRAFFIC_RECORD = "siteTraffic";
+
+/**
+ * Whether the website counts its visits. It does only while the add-on «Besøk på nettsiden» is
+ * on (see utils/addons.ts), and not while the congregation has paused the counting on the board.
+ */
+export type VisitCounting = "counted" | "paused" | "off";
+
+export const visitCounting = (addons: AddonChoices | undefined, settings: Pick<CmsSettings, "countVisits">): VisitCounting =>
+  !isAddonOn(addons, "nettsidebesok") ? "off" : settings.countVisits === false ? "paused" : "counted";
 export const TRAFFIC_DOC_PREFIX = "traffic-";
 export const trafficDocId = (date: string): string => `${TRAFFIC_DOC_PREFIX}${date}`;
 

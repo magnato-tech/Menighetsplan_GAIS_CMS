@@ -4,6 +4,7 @@ import { AlertTriangle, Globe2, ShieldCheck, XCircle } from "lucide-react";
 import type { AnalyticsPeriod, ContentSummary, PeopleSummary } from "../../../../utils/churchAnalytics";
 import { POLICE_CERTIFICATE_WARNING_DAYS } from "../../../../utils/churchAnalytics";
 import { describeChange } from "../../../../utils/analyticsFormat";
+import type { VisitCounting } from "../../../../utils/siteTraffic";
 import { AnalyticsSection, MiniStat } from "./AnalyticsSection";
 import type { Person } from "../../../../types";
 
@@ -16,8 +17,12 @@ interface RegisterAndWebsiteSectionProps {
   showWebsite: boolean;
   onHideRegister?: () => void;
   onHideWebsite?: () => void;
+  /** Whether the website counts its visits. The section says so, and leads to where it is decided. */
+  visits: VisitCounting;
   /** Opens the board over visits to the website. */
-  onOpenTraffic?: () => void;
+  onOpenTraffic: () => void;
+  /** Opens the page where the add-ons are turned on. */
+  onOpenAddons: () => void;
 }
 
 const link = "font-semibold text-[var(--studio-link)] hover:text-[var(--studio-link-hover)]";
@@ -44,7 +49,9 @@ export const RegisterAndWebsiteSection: React.FC<RegisterAndWebsiteSectionProps>
   showWebsite,
   onHideRegister,
   onHideWebsite,
+  visits,
   onOpenTraffic,
+  onOpenAddons,
 }) => {
   const { policeCertificates: certificates } = people;
   const newsChange = describeChange(content.newsPublished, content.previousNewsPublished);
@@ -122,12 +129,15 @@ export const RegisterAndWebsiteSection: React.FC<RegisterAndWebsiteSectionProps>
           </MiniStat>
         </div>
         <p className="text-[11px] text-[var(--studio-muted)]">
-          Besøk på nettsiden telles anonymt, uten å spore de besøkende.{" "}
-          {onOpenTraffic && (
-            <button type="button" onClick={onOpenTraffic} className={`${link} cursor-pointer`}>
-              Se besøk på nettsiden
-            </button>
-          )}
+          {visits === "counted"
+            ? "Besøk på nettsiden telles anonymt, uten å spore de besøkende."
+            : visits === "paused"
+              ? "Tellingen av besøk på nettsiden er slått av."
+              : "Besøk på nettsiden telles ikke. Det gjør modulen «Besøk på nettsiden»."}{" "}
+          {/* The board is only there while its add-on is on. Off, the way on goes through the add-ons. */}
+          <button type="button" onClick={visits === "off" ? onOpenAddons : onOpenTraffic} className={`${link} cursor-pointer`}>
+            {visits === "off" ? "Åpne Moduler" : "Se besøk på nettsiden"}
+          </button>
         </p>
       </AnalyticsSection>
       )}

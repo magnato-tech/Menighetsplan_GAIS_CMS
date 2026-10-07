@@ -35,8 +35,25 @@ function written(incoming: Row, existing?: Row): Row {
   return result;
 }
 
-const write = (ref: { name: string; id: string }, data: Row, options?: { merge?: boolean }) =>
+// Whoever follows a single document is told each time it is written or deleted
+const followers = new Set<{ name: string; id: string; tell: () => void }>();
+const tellFollowers = (ref: { name: string; id: string }) =>
+  followers.forEach((follower) => follower.name === ref.name && follower.id === ref.id && follower.tell());
+
+const write = (ref: { name: string; id: string }, data: Row, options?: { merge?: boolean }) => {
   table(ref.name).set(ref.id, written(data, options?.merge ? table(ref.name).get(ref.id) : undefined));
+  tellFollowers(ref);
+};
+const remove = (ref: { name: string; id: string }) => {
+  table(ref.name).delete(ref.id);
+  tellFollowers(ref);
+};
+
+function readOne(name: string, id: string) {
+  if (failing.has(name)) throw Object.assign(new Error(`Lesing feilet: ${failing.get(name)}`), { code: failing.get(name) });
+  const data = table(name).get(id);
+  return { id, exists: () => data !== undefined, data: () => data, metadata: { fromCache: false } };
+}
 
 // ---------- Asking for part of a collection ----------
 
@@ -84,28 +101,31 @@ export const firestoreMock = {
     const operations: (() => void)[] = [];
     return {
       set: (ref: { name: string; id: string }, data: Row, options?: { merge?: boolean }) => operations.push(() => write(ref, data, options)),
-      delete: (ref: { name: string; id: string }) => operations.push(() => table(ref.name).delete(ref.id)),
+      delete: (ref: { name: string; id: string }) => operations.push(() => remove(ref)),
       commit: async () => operations.forEach((operation) => operation()),
     };
   },
   /**
-   * Tells what is there now, once, and what goes wrong instead when the collection cannot be
-   * read. A single document is not followed: nothing a test here does depends on it.
+   * Tells what is there now, and what goes wrong instead when the collection cannot be read.
+   * A collection is told once. A single document is followed: each write to it is told too.
    */
-  onSnapshot: (source: Source, onNext: (snapshot: ReturnType<typeof read>) => void, onError?: (error: Error) => void) => {
+  onSnapshot: (source: Source, onNext: (snapshot: never) => void, onError?: (error: Error) => void) => {
     let following = true;
-    if (source.id === undefined) {
+    const tell = () =>
       queueMicrotask(() => {
         if (!following) return;
         try {
-          onNext(read(source));
+          onNext((source.id === undefined ? read(source) : readOne(source.name, source.id)) as never);
         } catch (error) {
           onError?.(error as Error);
         }
       });
-    }
+    const follower = source.id === undefined ? null : { name: source.name, id: source.id, tell };
+    if (follower) followers.add(follower);
+    tell();
     return () => {
       following = false;
+      if (follower) followers.delete(follower);
     };
   },
 };

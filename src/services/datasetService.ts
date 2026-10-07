@@ -5,6 +5,7 @@ import { chunk } from "../utils/chunk";
 import { DATA_PARTS, documentsToDelete, keepParts, type DataPart } from "../utils/dataParts";
 import { buildDataset, type Dataset, type DatasetDocument } from "../utils/dataset";
 import { sanitizeForFirestore } from "../utils/firestoreData";
+import { ADDONS_RECORD } from "../utils/addons";
 import { TRAFFIC_RECORD } from "../utils/siteTraffic";
 import { HEADCOUNT_RECORD } from "./headcounts";
 import { OPERATING_MODE_RECORD, ensureDeletionAllowed } from "./operatingMode";
@@ -19,6 +20,9 @@ const BATCH_SIZE = 400;
  * and headcounts.ts). A dataset names them as the collections they are, so a file made today
  * still fits the day they get collections of their own.
  */
+/** Marked documents in cms_settings that say how the app is set up or used, not what it contains. */
+const NOT_CONTENT = new Set<unknown>([OPERATING_MODE_RECORD, TRAFFIC_RECORD, ADDONS_RECORD]);
+
 const KEPT_IN_SETTINGS: Record<string, string> = {
   [COLLECTIONS.VOLUNTEER_ROLES]: VOLUNTEER_ROLE_RECORD,
   [COLLECTIONS.GATHERING_HEADCOUNTS]: HEADCOUNT_RECORD,
@@ -66,9 +70,10 @@ async function readDatabase(): Promise<DatabaseContents> {
     }
     for (const docSnap of snapshot.docs) {
       const { recordType, ...fields } = docSnap.data();
-      // Whether the app is in demo or production is not content, and neither are the visit counts:
-      // they are neither downloaded nor emptied here (see services/siteTraffic.ts)
-      if (collectionName === CMS_COLLECTIONS.SETTINGS && (recordType === OPERATING_MODE_RECORD || recordType === TRAFFIC_RECORD)) continue;
+      // Whether the app is in demo or production is not content, and neither are the visit counts
+      // or the choice of add-ons: they are neither downloaded nor emptied here (see
+      // services/siteTraffic.ts and services/addons.ts)
+      if (collectionName === CMS_COLLECTIONS.SETTINGS && NOT_CONTENT.has(recordType)) continue;
       const kept = collectionName === CMS_COLLECTIONS.SETTINGS ? collectionOfMark(recordType) : undefined;
       if (kept) add(kept, { ...fields, id: docSnap.id });
       else add(collectionName, { ...docSnap.data(), id: docSnap.id });

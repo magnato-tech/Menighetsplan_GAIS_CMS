@@ -226,6 +226,36 @@ describe("Innstillinger", () => {
   });
 });
 
+describe("Moduler", () => {
+  test("ingen modul er på før databasen har svart, og uten forbindelse er svaret ikke kjent", async () => {
+    const cms = mountProvider();
+    await pause(50);
+
+    expect(cms.current.addons).toEqual({});
+    expect(cms.current.addonsState).toBe("loading");
+  });
+
+  test("en modul som slås på, er på for den som følger med, og den andre er som den var", async () => {
+    seed(CMS_COLLECTIONS.SETTINGS, [{ id: "addons", recordType: "addons", on: { analysebord: true } }]);
+    const cms = mountProvider();
+    await waitFor(() => expect(cms.current.addonsState).toBe("ready"));
+    expect(cms.current.addons).toEqual({ analysebord: true });
+
+    void cms.current.setAddon("nettsidebesok", true);
+    await waitFor(() => expect(cms.current.addons).toEqual({ analysebord: true, nettsidebesok: true }));
+
+    void cms.current.setAddon("analysebord", false);
+    await waitFor(() => expect(cms.current.addons).toEqual({ nettsidebesok: true }));
+    expect(await stored(CMS_COLLECTIONS.SETTINGS, "addons")).toEqual({
+      id: "addons",
+      recordType: "addons",
+      on: { analysebord: false, nettsidebesok: true },
+    });
+    // The settings of the website are another document, and it is not touched
+    expect(await stored(CMS_COLLECTIONS.SETTINGS, CMS_SETTINGS_DOC_ID)).toBeUndefined();
+  });
+});
+
 describe("Feil", () => {
   test("En lagring databasen avviser svarer nei og meldes til brukeren", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});

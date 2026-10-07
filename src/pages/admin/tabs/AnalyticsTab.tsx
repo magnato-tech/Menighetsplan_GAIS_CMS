@@ -33,7 +33,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ showFeedback, onTabC
   const [periodId, setPeriodId] = useState<AnalyticsPeriodId>(DEFAULT_ANALYTICS_PERIOD);
   const [counting, setCounting] = useState<CountedGathering | null>(null);
   const [customizing, setCustomizing] = useState(false);
-  const { analytics, registerHeadcount, removeHeadcount, hiddenModules, canCustomize, setModuleHidden, showAllModules } =
+  const { analytics, websiteVisits, registerHeadcount, removeHeadcount, hiddenModules, canCustomize, setModuleHidden, showAllModules } =
     useAdminAnalytics(periodId);
   const { period } = analytics;
   const customizeButtonRef = useRef<HTMLButtonElement>(null);
@@ -120,7 +120,9 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ showFeedback, onTabC
           showWebsite={shown("nettside")}
           onHideRegister={hide("personregister")}
           onHideWebsite={hide("nettside")}
+          visits={websiteVisits}
           onOpenTraffic={() => onTabChange("nettsidebesok")}
+          onOpenAddons={() => onTabChange("moduler")}
         />
       )}
       {shown("datagrunnlag") && (

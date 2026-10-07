@@ -12,6 +12,8 @@ import { useTimedMessage } from "../../hooks/useTimedMessage";
 
 import { StudioSidebar } from "./StudioSidebar";
 
+import { AddonGate } from "./AddonGate";
+
 import { StudioTabErrorBoundary } from "../../components/StudioTabErrorBoundary";
 
 import { parseAdminDetailRoute } from "../../utils/adminStudioRoutes";
@@ -25,6 +27,8 @@ import { studioBg } from "./studioTheme";
 import {
 
   LazyAdminCmsPanel,
+
+  LazyAddonsTab,
 
   LazyAnalyticsTab,
   LazySiteTrafficTab,
@@ -123,7 +127,13 @@ function StudioTabPanel({ tab, activeTab, visited, children }: StudioTabPanelPro
 
       <StudioTabErrorBoundary>
 
-        <Suspense fallback={<TabLoadingPlaceholder />}>{children}</Suspense>
+        <Suspense fallback={<TabLoadingPlaceholder />}>
+
+          {/* A tab that belongs to an add-on is only drawn while the add-on is on */}
+
+          <AddonGate tab={tab}>{children}</AddonGate>
+
+        </Suspense>
 
       </StudioTabErrorBoundary>
 
@@ -175,7 +185,7 @@ function AdminStudioContent() {
 
   if (location.pathname === "/admin/settings") {
 
-    return <Navigate to="/admin?tab=database-admin" replace />;
+    return <Navigate to={studioTabUrl("moduler")} replace />;
 
   }
 
@@ -486,6 +496,12 @@ function AdminStudioContent() {
         </StudioTabPanel>
 
 
+
+        <StudioTabPanel tab="moduler" activeTab={activeTab} visited={visitedTabs.includes("moduler")}>
+
+          <LazyAddonsTab showFeedback={showFeedback} onTabChange={handleTabChange} />
+
+        </StudioTabPanel>
 
         <StudioTabPanel tab="analyse" activeTab={activeTab} visited={visitedTabs.includes("analyse")}>
 

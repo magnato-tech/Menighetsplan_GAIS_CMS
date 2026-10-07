@@ -12,6 +12,8 @@ const { cms } = vi.hoisted(() => ({
     // Two uploaded images ready for use, and one put away
     media: [{ status: "ready" }, { status: "ready" }, { status: "archived" }],
     settings: { churchName: "Lillesand Misjonskirke" },
+    // No module is on until a test turns one on
+    addons: {} as { analysebord?: boolean; nettsidebesok?: boolean },
   },
 }));
 vi.mock("../src/context/CmsContext", () => ({ useCms: () => cms }));
@@ -49,6 +51,7 @@ afterEach(() => {
   cleanup();
   vi.clearAllMocks();
   vi.restoreAllMocks();
+  cms.addons = {};
 });
 
 describe("Menyen i admin", () => {
@@ -74,7 +77,7 @@ describe("Menyen i admin", () => {
       expect(comesBefore(overview, link)).toBe(true);
       expect(comesBefore(link, firstItem)).toBe(true);
     }
-    const lastItem = menu.getByRole("button", { name: "Analysebord" });
+    const lastItem = menu.getByRole("button", { name: /Moduler/ });
     expect(menu.getAllByRole("link").every((link) => comesBefore(link, lastItem))).toBe(true);
   });
 
@@ -88,15 +91,44 @@ describe("Menyen i admin", () => {
     expect(onTabChange).toHaveBeenCalledWith("database-admin");
   });
 
-  test("Besøk på nettsiden står under Analysebord og åpner sin egen fane", () => {
+  test("en modul som ikke er slått på, står ikke i menyen", () => {
     vi.mocked(listStockImages).mockResolvedValue(stockImages(0));
     const menu = renderMenu();
 
+    expect(menu.queryByRole("button", { name: "Analysebord" })).toBeNull();
+    expect(menu.queryByRole("button", { name: "Besøk på nettsiden" })).toBeNull();
+    // Nor is the heading they would have stood under
+    expect(menu.queryByText("Analyse")).toBeNull();
+
+    const modules = menu.getByRole("button", { name: /Moduler/ });
+    expect(modules.textContent).toBe("Moduler0 av 2 på");
+    fireEvent.click(modules);
+    expect(onTabChange).toHaveBeenCalledWith("moduler");
+  });
+
+  test("en modul som er slått på, får sin plass i menyen, og den andre er fortsatt borte", () => {
+    vi.mocked(listStockImages).mockResolvedValue(stockImages(0));
+    cms.addons = { nettsidebesok: true };
+    const menu = renderMenu();
+
+    expect(menu.getByText("Analyse")).toBeTruthy();
+    expect(menu.queryByRole("button", { name: "Analysebord" })).toBeNull();
+    fireEvent.click(menu.getByRole("button", { name: "Besøk på nettsiden" }));
+    expect(onTabChange).toHaveBeenCalledWith("nettsidebesok");
+    expect(menu.getByRole("button", { name: /Moduler/ }).textContent).toBe("Moduler1 av 2 på");
+  });
+
+  test("med begge modulene på står de under én overskrift, Analysebord først", () => {
+    vi.mocked(listStockImages).mockResolvedValue(stockImages(0));
+    cms.addons = { analysebord: true, nettsidebesok: true };
+    const menu = renderMenu();
+
+    expect(menu.getAllByText("Analyse")).toHaveLength(1);
     const board = menu.getByRole("button", { name: "Analysebord" });
     const visits = menu.getByRole("button", { name: "Besøk på nettsiden" });
     expect(Boolean(board.compareDocumentPosition(visits) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
-    fireEvent.click(visits);
-    expect(onTabChange).toHaveBeenCalledWith("nettsidebesok");
+    fireEvent.click(board);
+    expect(onTabChange).toHaveBeenCalledWith("analyse");
   });
 
   test("ingenting i menyen står to ganger", () => {

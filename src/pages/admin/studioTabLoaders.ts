@@ -28,6 +28,7 @@ const TAB_LOADERS: Record<StudioTab, TabLoader> = {
   "planlegger-personer": namedTab(() => import("./tabs/PersonsTab"), "PersonsTab"),
   "planlegger-roller": namedTab(() => import("./tabs/RolesTab"), "RolesTab"),
   "database-admin": namedTab(() => import("./tabs/DatabaseTab"), "DatabaseTab"),
+  moduler: namedTab(() => import("./tabs/AddonsTab"), "AddonsTab"),
   analyse: namedTab(() => import("./tabs/AnalyticsTab"), "AnalyticsTab"),
   nettsidebesok: namedTab(() => import("./tabs/SiteTrafficTab"), "SiteTrafficTab"),
 };
@@ -52,5 +53,6 @@ export const LazyGroupsTab = lazy(TAB_LOADERS["planlegger-grupper"]);
 export const LazyPersonsTab = lazy(TAB_LOADERS["planlegger-personer"]);
 export const LazyRolesTab = lazy(TAB_LOADERS["planlegger-roller"]);
 export const LazyDatabaseTab = lazy(TAB_LOADERS["database-admin"]);
+export const LazyAddonsTab = lazy(TAB_LOADERS.moduler);
 export const LazyAnalyticsTab = lazy(TAB_LOADERS.analyse);
 export const LazySiteTrafficTab = lazy(TAB_LOADERS.nettsidebesok);
