@@ -151,7 +151,6 @@ describe("Det bordet viser", () => {
       views: { "/": 12, "/om-oss": 6, "/gammel-side": 2 },
       entries: { "/": 8, "/om-oss": 2 },
       seconds: { "/": 300, "/om-oss": 450 },
-      timed: { "/": 10, "/om-oss": 5 },
       hours: { 9: 15, 20: 5 },
       actions: { "kontakt-telefon": 2, "tale-avspilt": 3 },
       sermons: { "tale-1": 2, "tale-slettet": 1 },
@@ -163,13 +162,12 @@ describe("Det bordet viser", () => {
       views: { "/": 6, "/artikkel/nyhet-1": 4 },
       entries: { "/": 4, "/artikkel/nyhet-1": 2 },
       seconds: { "/": 150 },
-      timed: { "/": 5 },
       hours: { 12: 10 },
       actions: { "kontakt-epost": 1 },
       missing: { "/index.php": 1 },
     }),
     // The period before
-    day("2026-09-06", { visits: 8, deepVisits: 4, views: { "/": 10, "/kontakt": 2 }, seconds: { "/": 240 }, timed: { "/": 8 }, actions: { "kontakt-telefon": 5 } }),
+    day("2026-09-06", { visits: 8, deepVisits: 4, views: { "/": 10, "/kontakt": 2 }, seconds: { "/": 240 }, actions: { "kontakt-telefon": 5 } }),
     // Far too old to be part of anything
     day("2025-01-01", { visits: 500, views: { "/": 900 } }),
   ];
@@ -231,8 +229,9 @@ describe("Det bordet viser", () => {
 
   test("sidene står med tittel, visninger, andel, tid og hvor mange besøk som startet der", () => {
     expect(summary.pages.map((row) => row.address)).toEqual(["/", "/om-oss", "/artikkel/nyhet-1", "/gammel-side"]);
-    expect(summary.pages[0]).toEqual({ address: "/", title: "Forsiden", exists: true, views: 18, share: 18 / 30, entries: 12, secondsPerView: 30 });
-    expect(summary.pages[1]).toMatchObject({ title: "Om oss", views: 6, secondsPerView: 90 });
+    expect(summary.pages[0]).toEqual({ address: "/", title: "Forsiden", exists: true, views: 18, share: 18 / 30, entries: 12, secondsPerView: 25 });
+    // 450 seconds over all six views, also the one that left no seconds behind
+    expect(summary.pages[1]).toMatchObject({ title: "Om oss", views: 6, secondsPerView: 75 });
     // Opened, but never long enough in view for a time to be measured
     expect(summary.pages[2]).toMatchObject({ title: "Høstfest i kirken", exists: true, secondsPerView: null });
     // A page that was opened and has since been taken away is listed under its address

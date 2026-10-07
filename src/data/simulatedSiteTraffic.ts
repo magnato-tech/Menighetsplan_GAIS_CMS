@@ -91,9 +91,7 @@ export function simulateSiteTraffic(input: TrafficSimulationInput): TrafficDay[]
       if (value === 0) return;
       const address = opened[page];
       day.views[address] = value;
-      const timed = Math.max(1, Math.round(value * 0.85));
-      day.timed[address] = timed;
-      day.seconds[address] = Math.round(timed * secondsPerView[page] * between(0.85, 1.15));
+      day.seconds[address] = Math.max(1, Math.round(value * secondsPerView[page] * between(0.85, 1.15)));
     });
     spread(visits, entryWeights, random).forEach((value, page) => {
       // A visit can only start on a page that was opened that day

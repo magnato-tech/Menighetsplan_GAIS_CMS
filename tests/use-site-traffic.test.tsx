@@ -88,10 +88,10 @@ describe("Besøk på nettsiden telles mens de skjer", () => {
         <Site path="/" />
       </React.StrictMode>
     );
-    vi.advanceTimersByTime(10_000);
+    vi.advanceTimersByTime(5_000);
 
     expect(views()).toEqual([["/", { entry: true, second: false }]]);
-    expect(vi.mocked(siteTrafficRecorder.seconds).mock.calls.map(([, , seconds]) => seconds)).toEqual([10]);
+    expect(vi.mocked(siteTrafficRecorder.seconds).mock.calls.map(([, , seconds]) => seconds)).toEqual([5]);
   });
 
   test("ingenting telles før sidene er hentet, så en side som finnes, ikke tas for en adresse uten side", () => {
@@ -117,8 +117,8 @@ describe("Besøk på nettsiden telles mens de skjer", () => {
 
   test("tiden på en side sendes underveis, og når fanen ikke lenger er framme", () => {
     open("/");
-    vi.advanceTimersByTime(10_000);
-    expect(vi.mocked(siteTrafficRecorder.seconds).mock.calls.map(([address, , seconds, first]) => [address, seconds, first])).toEqual([["/", 10, true]]);
+    vi.advanceTimersByTime(5_000);
+    expect(vi.mocked(siteTrafficRecorder.seconds).mock.calls.map(([address, , seconds]) => [address, seconds])).toEqual([["/", 5]]);
 
     vi.advanceTimersByTime(4_000);
     setVisibility("hidden");
@@ -127,11 +127,8 @@ describe("Besøk på nettsiden telles mens de skjer", () => {
     setVisibility("visible");
     vi.advanceTimersByTime(16_000);
 
-    expect(vi.mocked(siteTrafficRecorder.seconds).mock.calls.map(([, , seconds, first]) => [seconds, first])).toEqual([
-      [10, true],
-      [4, false],
-      [16, false],
-    ]);
+    // Five seconds at the first mark, four when the tab was left, and six more up to the mark at fifteen
+    expect(vi.mocked(siteTrafficRecorder.seconds).mock.calls.map(([, , seconds]) => seconds)).toEqual([5, 4, 6]);
   });
 
   test("når den besøkende forlater siden, sendes det som er sett", () => {

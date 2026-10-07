@@ -30,10 +30,9 @@ describe("Eksempeltall for besøk på nettsiden", () => {
       expect(day.deepVisits).toBeLessThanOrEqual(day.visits);
       expect(sum(day.views)).toBeGreaterThanOrEqual(day.visits);
       for (const [address, entries] of Object.entries(day.entries)) expect(entries).toBeLessThanOrEqual(day.views[address]);
-      for (const [address, timed] of Object.entries(day.timed)) {
-        expect(timed).toBeLessThanOrEqual(day.views[address]);
-        expect(day.seconds[address]).toBeGreaterThan(0);
-      }
+      // A page that was opened was in view for a while, and no page was in view without being opened
+      expect(Object.keys(day.seconds).sort()).toEqual(Object.keys(day.views).sort());
+      for (const seconds of Object.values(day.seconds)) expect(seconds).toBeGreaterThan(0);
       expect(sum(day.sermons)).toBe(day.actions["tale-avspilt"] ?? 0);
     }
   });

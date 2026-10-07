@@ -58,12 +58,12 @@ describe("Besøk telles som summer per dag", () => {
   test("to besøkende legger til hver sin del, og ingen skriver over den andre", async () => {
     for (let visitor = 0; visitor < 2; visitor++) {
       siteTrafficRecorder.view("/", noon, { entry: true, second: false });
-      siteTrafficRecorder.seconds("/", noon, 12.4, true);
-      siteTrafficRecorder.seconds("/", noon, 20, false);
+      siteTrafficRecorder.seconds("/", noon, 12.4);
+      siteTrafficRecorder.seconds("/", noon, 20);
     }
     await landed();
 
-    expect(stored("2026-10-07")).toMatchObject({ visits: 2, views: { "/": 2 }, entries: { "/": 2 }, seconds: { "/": 64 }, timed: { "/": 2 } });
+    expect(stored("2026-10-07")).toMatchObject({ visits: 2, views: { "/": 2 }, entries: { "/": 2 }, seconds: { "/": 64 } });
   });
 
   test("dagen er den norske, også når klokka har passert midnatt bare i Norge", async () => {
@@ -94,8 +94,8 @@ describe("Besøk telles som summer per dag", () => {
   test("et navn databasen ikke tar imot, og en tid som ikke er en tid, telles ikke", async () => {
     siteTrafficRecorder.view("", noon, { entry: true, second: false });
     siteTrafficRecorder.view("__name__", noon, { entry: true, second: false });
-    siteTrafficRecorder.seconds("/", noon, 0, true);
-    siteTrafficRecorder.seconds("/", noon, Number.NaN, true);
+    siteTrafficRecorder.seconds("/", noon, 0);
+    siteTrafficRecorder.seconds("/", noon, Number.NaN);
     recordTrafficAction("tale-avspilt", noon, "__id__");
     await landed();
 

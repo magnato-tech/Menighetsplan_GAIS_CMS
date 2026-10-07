@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { MAX_SECONDS_PER_VIEW, VisitTracker, type TrafficRecorder } from "../src/utils/visitTracker";
 
-// What the tracker hands on, written down in order: "view /om-oss entry", "seconds /om-oss 12 first"
+// What the tracker hands on, written down in order: "view /om-oss entry", "seconds /om-oss 12"
 let recorded: string[] = [];
 const recorder: TrafficRecorder = {
   view: (address, _at, visit) => recorded.push(["view", address, visit.entry ? "entry" : "", visit.second ? "second" : ""].filter(Boolean).join(" ")),
-  seconds: (address, _at, seconds, first) => recorded.push(["seconds", address, seconds, first ? "first" : ""].filter(Boolean).join(" ")),
+  seconds: (address, _at, seconds) => recorded.push(`seconds ${address} ${seconds}`),
   missing: (address) => recorded.push(`missing ${address}`),
 };
 const page = (address: string) => ({ kind: "page" as const, address });
@@ -56,7 +56,7 @@ describe("Et besøk, side for side", () => {
     tracker.show(page("/"), 60 * SECOND);
 
     // The time on the front page is sent when it is left, and the front page is a new view, not a new visit
-    expect(recorded).toEqual(["view / entry", "seconds / 12 first", "view / second"]);
+    expect(recorded).toEqual(["view / entry", "seconds / 12", "view / second"]);
   });
 });
 
@@ -70,7 +70,7 @@ describe("Tiden en side er framme", () => {
     tracker.flush(10_400);
     tracker.flush(10_900);
     tracker.flush(31_000);
-    expect(recorded).toEqual(["view / entry", "seconds / 10 first", "seconds / 21"]);
+    expect(recorded).toEqual(["view / entry", "seconds / 10", "seconds / 21"]);
   });
 
   test("tiden på siden som forlates, sendes når neste side vises", () => {
@@ -79,7 +79,7 @@ describe("Tiden en side er framme", () => {
     tracker.show(page("/om-oss"), 7 * SECOND);
     tracker.flush(11 * SECOND);
 
-    expect(recorded).toEqual(["view / entry", "seconds / 7 first", "view /om-oss second", "seconds /om-oss 4 first"]);
+    expect(recorded).toEqual(["view / entry", "seconds / 7", "view /om-oss second", "seconds /om-oss 4"]);
   });
 
   test("tid teller bare mens siden er synlig", () => {
@@ -91,7 +91,7 @@ describe("Tiden en side er framme", () => {
     tracker.setVisible(true, 3605 * SECOND);
     tracker.flush(3608 * SECOND);
 
-    expect(recorded).toEqual(["view / entry", "seconds / 5 first", "seconds / 3"]);
+    expect(recorded).toEqual(["view / entry", "seconds / 5", "seconds / 3"]);
   });
 
   test("en side som åpnes i en fane som ikke er framme, får ingen tid før den vises", () => {
@@ -103,7 +103,7 @@ describe("Tiden en side er framme", () => {
 
     tracker.setVisible(true, 40 * SECOND);
     tracker.flush(46 * SECOND);
-    expect(recorded).toEqual(["view / entry", "seconds / 6 first"]);
+    expect(recorded).toEqual(["view / entry", "seconds / 6"]);
   });
 
   test("en side som blir stående framme, teller høyst en halv time", () => {
@@ -112,7 +112,7 @@ describe("Tiden en side er framme", () => {
     tracker.flush(5 * 3600 * SECOND);
     tracker.flush(6 * 3600 * SECOND);
 
-    expect(recorded).toEqual(["view / entry", `seconds / ${MAX_SECONDS_PER_VIEW} first`]);
+    expect(recorded).toEqual(["view / entry", `seconds / ${MAX_SECONDS_PER_VIEW}`]);
     expect(tracker.nextFlushInMs(6 * 3600 * SECOND)).toBeNull();
   });
 
@@ -121,14 +121,16 @@ describe("Tiden en side er framme", () => {
     expect(tracker.nextFlushInMs(0)).toBeNull();
 
     tracker.show(page("/"), 0);
-    expect(tracker.nextFlushInMs(0)).toBe(10 * SECOND);
-    expect(tracker.nextFlushInMs(4 * SECOND)).toBe(6 * SECOND);
-    expect(tracker.nextFlushInMs(10 * SECOND)).toBe(20 * SECOND);
+    // After 5, 15, 30 and 60 seconds, and then every minute
+    expect(tracker.nextFlushInMs(0)).toBe(5 * SECOND);
+    expect(tracker.nextFlushInMs(4 * SECOND)).toBe(1 * SECOND);
+    expect(tracker.nextFlushInMs(5 * SECOND)).toBe(10 * SECOND);
+    expect(tracker.nextFlushInMs(15 * SECOND)).toBe(15 * SECOND);
     expect(tracker.nextFlushInMs(30 * SECOND)).toBe(30 * SECOND);
     expect(tracker.nextFlushInMs(60 * SECOND)).toBe(60 * SECOND);
     expect(tracker.nextFlushInMs(150 * SECOND)).toBe(30 * SECOND);
     // Never so soon that the clock is asked again at once
-    expect(tracker.nextFlushInMs(9_990)).toBe(250);
+    expect(tracker.nextFlushInMs(4_990)).toBe(250);
 
     tracker.setVisible(false, 200 * SECOND);
     expect(tracker.nextFlushInMs(200 * SECOND)).toBeNull();

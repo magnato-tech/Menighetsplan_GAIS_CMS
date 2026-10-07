@@ -63,12 +63,9 @@ export const siteTrafficRecorder: TrafficRecorder = {
       ...(visit.second ? { deepVisits: increment(1) } : {}),
     });
   },
-  seconds(address, at, seconds, first) {
+  seconds(address, at, seconds) {
     if (!isKey(address) || !(seconds > 0)) return;
-    add(at, {
-      seconds: { [address]: increment(Math.round(seconds)) },
-      ...(first ? { timed: { [address]: increment(1) } } : {}),
-    });
+    add(at, { seconds: { [address]: increment(Math.round(seconds)) } });
   },
   missing(address, at) {
     if (!isKey(address)) return;

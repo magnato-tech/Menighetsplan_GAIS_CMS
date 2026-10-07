@@ -9,8 +9,8 @@ import type { TrafficTarget } from "./siteTraffic";
 export interface TrafficRecorder {
   /** A page is shown. `entry` when it is the first page of the visit, `second` when it is the second. */
   view(address: string, at: Date, visit: { entry: boolean; second: boolean }): void;
-  /** More seconds a page has been in view. `first` when they are the first seconds for this view. */
-  seconds(address: string, at: Date, seconds: number, first: boolean): void;
+  /** More seconds a page has been in view. */
+  seconds(address: string, at: Date, seconds: number): void;
   /** An address was asked for that no page answers to. */
   missing(address: string, at: Date): void;
 }
@@ -18,8 +18,12 @@ export interface TrafficRecorder {
 /** A page left open counts for half an hour at most, so a forgotten tab does not pass for reading. */
 export const MAX_SECONDS_PER_VIEW = 30 * 60;
 
-/** Seconds in view at which what has been seen so far is sent: early for short reads, then once a minute. */
-const FIRST_MARKS = [10, 30, 60];
+/**
+ * Seconds in view at which what has been seen so far is sent: early and often at first, then
+ * once a minute. What is seen after the last mark is sent when the page is left, but a tab that
+ * is closed does not always get to send it, so the marks decide how much a visit can lose.
+ */
+const FIRST_MARKS = [5, 15, 30, 60];
 
 interface PageInView {
   address: string;
@@ -80,7 +84,7 @@ export class VisitTracker {
     const seconds = Math.min(MAX_SECONDS_PER_VIEW, Math.floor(page.visibleMs / 1000));
     const unsent = seconds - page.sentSeconds;
     if (unsent < 1) return;
-    this.recorder.seconds(page.address, new Date(nowMs), unsent, page.sentSeconds === 0);
+    this.recorder.seconds(page.address, new Date(nowMs), unsent);
     page.sentSeconds = seconds;
   }
 

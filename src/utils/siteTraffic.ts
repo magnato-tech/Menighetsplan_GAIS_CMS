@@ -39,9 +39,8 @@ export interface TrafficDay {
   views: Counts;
   /** Visits that started at the address. */
   entries: Counts;
-  /** Seconds the address was in view, summed, and how many views those seconds come from. */
+  /** Seconds the address was in view, summed. */
   seconds: Counts;
-  timed: Counts;
   /** Page views per hour of the day, "0" to "23". */
   hours: Counts;
   /** Presses per action (see TRAFFIC_ACTIONS). */
@@ -61,7 +60,6 @@ export const emptyTrafficDay = (date: string): TrafficDay => ({
   views: {},
   entries: {},
   seconds: {},
-  timed: {},
   hours: {},
   actions: {},
   sermons: {},
@@ -90,7 +88,6 @@ export function parseTrafficDay(data: Record<string, unknown> | undefined): Traf
     views: counts(data.views),
     entries: counts(data.entries),
     seconds: counts(data.seconds),
-    timed: counts(data.timed),
     hours: counts(data.hours),
     actions: counts(data.actions),
     sermons: counts(data.sermons),
@@ -272,6 +269,7 @@ export interface TrafficPageRow {
   /** This page's share of all page views. */
   share: number;
   entries: number;
+  /** The seconds the page was in view, divided by its views. Null when no time was measured. */
   secondsPerView: number | null;
 }
 
@@ -378,7 +376,6 @@ export function summarizeTraffic(days: TrafficDay[], site: TrafficSite, periodId
   const views: Counts = {};
   const entries: Counts = {};
   const seconds: Counts = {};
-  const timed: Counts = {};
   const missing: Counts = {};
   const sermonPlays: Counts = {};
   const actionCounts: Counts = {};
@@ -388,7 +385,6 @@ export function summarizeTraffic(days: TrafficDay[], site: TrafficSite, periodId
     addInto(views, day.views);
     addInto(entries, day.entries);
     addInto(seconds, day.seconds);
-    addInto(timed, day.timed);
     addInto(missing, day.missing);
     addInto(sermonPlays, day.sermons);
     addInto(actionCounts, day.actions);
@@ -409,7 +405,9 @@ export function summarizeTraffic(days: TrafficDay[], site: TrafficSite, periodId
       views: pageViews,
       share: totals.views > 0 ? pageViews / totals.views : 0,
       entries: entries[address] ?? 0,
-      secondsPerView: timed[address] > 0 ? (seconds[address] ?? 0) / timed[address] : null,
+      // Every view counts, also the ones too short to leave any seconds behind. Leaving them out
+      // would make a page that most visitors leave at once look like one they stay on.
+      secondsPerView: seconds[address] > 0 ? seconds[address] / pageViews : null,
     }))
     .sort((a, b) => b.views - a.views || a.title.localeCompare(b.title, "nb"));
 
