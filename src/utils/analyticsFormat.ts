@@ -68,13 +68,15 @@ export function formatDaysAgo(iso: string | null, now: number): string {
 
 /**
  * Clean axis ticks from zero up past the largest value: 0, 25, 50, 75, 100.
- * At most six ticks, on steps of 1, 2, 2.5 or 5 times a power of ten.
+ * At most six ticks, on steps of 1, 2, 2.5 or 5 times a power of ten. What the charts count
+ * comes in whole numbers (people, visits), so a step is always a whole number too: an axis
+ * never shows half a visit.
  */
 export function chartTicks(max: number): number[] {
   if (!(max > 0)) return [0];
   const rough = max / 4;
-  const power = Math.pow(10, Math.floor(Math.log10(rough)));
-  const step = [1, 2, 2.5, 5, 10].map((f) => f * power).find((s) => max / s <= 5) ?? 10 * power;
+  const power = Math.max(1, Math.pow(10, Math.floor(Math.log10(rough))));
+  const step = [1, 2, 2.5, 5, 10].map((f) => f * power).filter(Number.isInteger).find((s) => max / s <= 5) ?? 10 * power;
   const ticks: number[] = [];
   for (let value = 0; value < max + step; value += step) {
     ticks.push(Math.round(value * 100) / 100);

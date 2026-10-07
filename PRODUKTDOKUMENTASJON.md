@@ -156,7 +156,7 @@ Fanen **Besøk på nettsiden** ligger under **Innsikt**, etter Analysebord. Den 
 | Nøkkeltall | Besøk, sidevisninger, sider per besøk, tid per besøk, andel besøk med bare én side | Hvert tall sammenlignes med perioden før, når noe ble telt da. Sider per besøk: sidevisninger delt på besøk. Tid per besøk: alle sekunder i visning delt på besøk |
 | Besøk over tid | Én søyle per dag (opptil 4 uker), per uke (3 måneder) eller per fire uker (12 måneder) | En dag uten besøk har ingen søyle |
 | Mest besøkte sider | Tittel, visninger, andel, tid per visning og hvor mange besøk som startet der | Én side har én adresse: `/Om-oss/`, `/side/om-oss` og `/nettside/om-oss` telles sammen. En side som er fjernet, står med adressen og «Finnes ikke lenger» |
-| Sider som aldri åpnes | Publiserte sider uten én visning i perioden | Kladder, planlagte sider og menypunkter som bare leder videre, er ikke med |
+| Sider som aldri åpnes | Publiserte sider uten én visning i perioden | Kladder, planlagte sider og menypunkter som bare leder videre, er ikke med. To sider med samme adresse står én gang |
 | Hvor besøkene starter | Siden et besøk begynner på | Den første siden som vises etter at nettsiden er åpnet |
 | Adresser som ikke finnes | Adresser noen har prøvd å åpne, uten at det finnes en side | Samme regel som for titler og søkemotorer (`seoForPath`). Viser døde lenker, særlig etter flytting fra en gammel nettside |
 | Når kommer besøkene? | Sidevisninger per ukedag og time, og den travleste timen | Norsk tid, uansett hvor den besøkendes klokke står |

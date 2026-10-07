@@ -246,6 +246,16 @@ describe("Det bordet viser", () => {
     ]);
   });
 
+  test("to sider med samme adresse står én gang, for det er adressen som åpnes", () => {
+    const twice: TrafficSite = { ...site, pages: [...site.pages, page("p-kontakt-2", "kontakt", "Kontakt oss"), page("p-om-2", "om-oss", "Om menigheten")] };
+
+    // The second contact page adds no row, and the second "Om oss" is not missed: its address was opened
+    expect(summarizeTraffic(days, twice, "4w", now).neverOpened).toEqual([
+      { address: "/gi", title: "Gi en gave" },
+      { address: "/kontakt", title: "Kontakt" },
+    ]);
+  });
+
   test("inngangssidene og adressene uten side står med de mest brukte først", () => {
     expect(summary.entryPages).toEqual([
       { address: "/", title: "Forsiden", entries: 12, share: 0.75 },

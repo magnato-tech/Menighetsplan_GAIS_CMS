@@ -411,12 +411,15 @@ export function summarizeTraffic(days: TrafficDay[], site: TrafficSite, periodId
     }))
     .sort((a, b) => b.views - a.views || a.title.localeCompare(b.title, "nb"));
 
-  // A page that only sends the visitor on to another address has no views of its own to miss
-  const neverOpened = site.pages
-    .filter((page) => isPagePublished(page, now) && !page.linkUrl)
-    .map((page) => ({ address: trafficAddress(pageUrl(page)), title: page.title }))
-    .filter((page) => !views[page.address])
-    .sort((a, b) => a.title.localeCompare(b.title, "nb"));
+  // A page that only sends the visitor on to another address has no views of its own to miss.
+  // Two pages that share an address are one row: it is the address that is opened, or never is.
+  const unopened = new Map<string, { address: string; title: string }>();
+  for (const page of site.pages) {
+    if (!isPagePublished(page, now) || page.linkUrl) continue;
+    const address = trafficAddress(pageUrl(page));
+    if (!views[address] && !unopened.has(address)) unopened.set(address, { address, title: page.title });
+  }
+  const neverOpened = [...unopened.values()].sort((a, b) => a.title.localeCompare(b.title, "nb"));
 
   let busiest: TrafficSummary["busiest"] = null;
   rhythm.forEach((hours, weekday) =>

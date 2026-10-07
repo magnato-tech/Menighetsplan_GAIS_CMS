@@ -35,5 +35,8 @@ describe("Aksene på analysebordet", () => {
   assert(chartTicks(123).join(",") === "0,25,50,75,100,125", "123 gir runde steg på 25 til over største verdi");
   assert(chartTicks(100).join(",") === "0,20,40,60,80,100", "100 gir steg på 20 og slutter på 100");
   assert(chartTicks(7).join(",") === "0,2,4,6,8", "Små tall gir små, hele steg");
+  assert(chartTicks(1).join(",") === "0,1", "Ett besøk gir ikke kvarte besøk på aksen");
+  assert(chartTicks(2).join(",") === "0,1,2", "To gir hele steg, ikke halve");
+  assert(chartTicks(12).join(",") === "0,5,10,15", "Tolv gir steg på fem, ikke på to og en halv");
   assert(chartTicks(980).every((t, i, all) => i === 0 || t > all[i - 1]) && chartTicks(980).length <= 6, "Aldri flere enn seks merker, stigende");
 });
