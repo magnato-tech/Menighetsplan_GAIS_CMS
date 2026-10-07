@@ -1005,8 +1005,8 @@ export function describeCoverage(
     },
     {
       id: "nettside",
-      status: "missing",
-      text: "Besøk på nettsiden måles ikke. Løsningen har ingen sporing av besøkende.",
+      status: "ok",
+      text: "Besøk på nettsiden telles anonymt og vises på bordet «Besøk på nettsiden». Hvem de besøkende er, måles ikke.",
     },
   ];
 }

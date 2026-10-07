@@ -89,6 +89,17 @@ describe("Lesing", () => {
     await waitFor(() => expect(cms.current.settings.churchName).toBe("Testkirken"));
   });
 
+  test("Innholdet regnes som hentet først når både sidene og nyhetene har svart", async () => {
+    seed(CMS_COLLECTIONS.PAGES, [page("om-oss")]);
+    const cms = mountProvider();
+    await waitFor(() => expect(ids(cms.current.pages)).toEqual(["om-oss"]));
+    // Uten nett sier en tom samling ingenting om hva som finnes, så nyhetene har ikke svart ennå
+    expect(cms.current.contentReady).toBe(false);
+
+    seed(CMS_COLLECTIONS.NEWS, [article("ny", "2026-09-01T10:00:00.000Z")]);
+    await waitFor(() => expect(cms.current.contentReady).toBe(true));
+  });
+
   test("Uten nett beholdes kopien i nettleseren i stedet for en tom side", async () => {
     localStorage.setItem(PAGES_CACHE, JSON.stringify([page("lagret-fra-sist")]));
     const cms = mountProvider();

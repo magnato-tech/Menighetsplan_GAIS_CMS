@@ -120,6 +120,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ showFeedback, onTabC
           showWebsite={shown("nettside")}
           onHideRegister={hide("personregister")}
           onHideWebsite={hide("nettside")}
+          onOpenTraffic={() => onTabChange("nettsidebesok")}
         />
       )}
       {shown("datagrunnlag") && (

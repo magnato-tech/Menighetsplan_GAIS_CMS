@@ -193,7 +193,10 @@ describe("Analysebord", () => {
 
   test("datagrunnlaget sier hva som ikke er målt, og lenker til testdata", () => {
     const { onTabChange } = renderTab();
-    expect(screen.getAllByText(/Besøk på nettsiden måles ikke/).length).toBeGreaterThan(0);
+    // Visits are counted, on a board of their own, and the board says so in both places
+    expect(screen.getAllByText(/Besøk på nettsiden telles anonymt/).length).toBe(2);
+    fireEvent.click(screen.getByRole("button", { name: "Se besøk på nettsiden" }));
+    expect(onTabChange).toHaveBeenCalledWith("nettsidebesok");
     fireEvent.click(screen.getByRole("button", { name: "Database og Testdata" }));
     expect(onTabChange).toHaveBeenCalledWith("database-admin");
   });

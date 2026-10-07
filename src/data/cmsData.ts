@@ -259,6 +259,11 @@ export interface CmsSettings {
     decidedAt?: string;
     notes?: string;
   }[];
+  /**
+   * Whether visits to the website are counted (see utils/siteTraffic.ts). Counted unless the
+   * congregation has turned it off; a settings document from before the choice existed counts.
+   */
+  countVisits?: boolean;
 }
 
 export const initialLeadershipDecisions = [

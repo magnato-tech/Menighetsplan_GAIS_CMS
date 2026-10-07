@@ -10,6 +10,7 @@ import { initialCmsPages } from "../src/data/cmsData";
 import { switchWebsite } from "../src/services/churchSwitch";
 import { PRODUCTION_LOCK_MESSAGE, setOperatingMode } from "../src/services/operatingMode";
 import { loadPreviousSetup, readPreviousSetupInfo } from "../src/services/previousSetup";
+import * as siteTraffic from "../src/services/siteTraffic";
 import { buildDataset } from "../src/utils/dataset";
 
 const open = { type: "arrangement", visibility: "offentlig", isPublic: true };
@@ -57,8 +58,13 @@ describe("Velg menighet: nettsiden byttes, planleggeren står", () => {
     const steps: string[] = [];
     const result = await switchWebsite({ kind: "dataset", dataset: sogne }, (step) => steps.push(step), now);
 
-    expect(result).toEqual({ keptPrevious: true, deleted: 4, imported: 5 });
-    expect(steps).toEqual(["Lagrer nettsiden slik den er nå …", "Sletter nettsiden …", "Henter inn den nye nettsiden …"]);
+    expect(result).toEqual({ keptPrevious: true, deleted: 4, imported: 5, countsReset: true });
+    expect(steps).toEqual([
+      "Lagrer nettsiden slik den er nå …",
+      "Sletter nettsiden …",
+      "Henter inn den nye nettsiden …",
+      "Nullstiller besøkstallene …",
+    ]);
     expect(ids(CMS_COLLECTIONS.PAGES)).toEqual(["sogne-forside", "sogne-om"]);
     expect(store.get(CMS_COLLECTIONS.SETTINGS)!.get(CMS_SETTINGS_DOC_ID)).toEqual({ churchName: "Søgne Misjonskirke" });
     expect(ids(COLLECTIONS.GATHERINGS)).toEqual(["sogne-arr-1"]);
@@ -99,8 +105,28 @@ describe("Velg menighet: nettsiden byttes, planleggeren står", () => {
     store.get(COLLECTIONS.GROUPS)!.delete("lmk-kalender");
     const result = await switchWebsite({ kind: "dataset", dataset: sogne }, undefined, now);
 
-    expect(result).toEqual({ keptPrevious: false, deleted: 0, imported: 5 });
+    expect(result).toEqual({ keptPrevious: false, deleted: 0, imported: 5, countsReset: true });
     expect(readPreviousSetupInfo()).toBeNull();
+  });
+
+  test("besøkstallene gjelder nettsiden som byttes ut, og nullstilles med den", async () => {
+    const visits = { recordType: "siteTraffic", date: "2026-10-06", visits: 12, views: { "/": 20 } };
+    store.get(CMS_COLLECTIONS.SETTINGS)!.set("traffic-2026-10-06", visits);
+    const result = await switchWebsite({ kind: "dataset", dataset: sogne }, undefined, now);
+
+    expect(result.countsReset).toBe(true);
+    expect(ids(CMS_COLLECTIONS.SETTINGS)).toEqual([CMS_SETTINGS_DOC_ID, "role-lyd"].sort());
+    // They are not kept with the website that was, either: it is the pages that can be brought back
+    expect(JSON.stringify(loadPreviousSetup())).not.toContain("siteTraffic");
+  });
+
+  test("kan ikke besøkstallene nullstilles, står byttet likevel, og det sies fra", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(siteTraffic, "clearSiteTraffic").mockRejectedValueOnce(new Error("Ingen forbindelse"));
+    const result = await switchWebsite({ kind: "dataset", dataset: sogne }, undefined, now);
+
+    expect(result).toEqual({ keptPrevious: true, deleted: 4, imported: 5, countsReset: false });
+    expect(ids(CMS_COLLECTIONS.PAGES)).toEqual(["sogne-forside", "sogne-om"]);
   });
 
   test("i produksjon byttes ingenting: ikke lagret, ikke slettet, ikke hentet inn", async () => {

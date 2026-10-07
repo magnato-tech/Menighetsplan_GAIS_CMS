@@ -88,6 +88,17 @@ describe("Menyen i admin", () => {
     expect(onTabChange).toHaveBeenCalledWith("database-admin");
   });
 
+  test("Besøk på nettsiden står under Analysebord og åpner sin egen fane", () => {
+    vi.mocked(listStockImages).mockResolvedValue(stockImages(0));
+    const menu = renderMenu();
+
+    const board = menu.getByRole("button", { name: "Analysebord" });
+    const visits = menu.getByRole("button", { name: "Besøk på nettsiden" });
+    expect(Boolean(board.compareDocumentPosition(visits) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+    fireEvent.click(visits);
+    expect(onTabChange).toHaveBeenCalledWith("nettsidebesok");
+  });
+
   test("ingenting i menyen står to ganger", () => {
     vi.mocked(listStockImages).mockResolvedValue(stockImages(0));
     const menu = renderMenu();

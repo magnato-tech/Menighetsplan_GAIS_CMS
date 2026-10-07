@@ -37,7 +37,7 @@ beforeEach(() => {
   vi.mocked(listDemoSets).mockResolvedValue(sets);
   vi.mocked(loadDemoSet).mockResolvedValue(sogne);
   vi.mocked(readPreviousSetupInfo).mockReturnValue(null);
-  vi.mocked(switchWebsite).mockResolvedValue({ keptPrevious: true, deleted: 187, imported: 215 });
+  vi.mocked(switchWebsite).mockResolvedValue({ keptPrevious: true, deleted: 187, imported: 215, countsReset: true });
 });
 
 afterEach(() => {
@@ -102,6 +102,21 @@ describe("Velg menighet i admin", () => {
     expect(select.value).toBe("");
   });
 
+  test("spørsmålet sier at besøkstallene nullstilles, og meldingen sier fra hvis de ikke ble det", async () => {
+    vi.mocked(switchWebsite).mockResolvedValue({ keptPrevious: true, deleted: 187, imported: 215, countsReset: false });
+    const select = await renderPanel();
+    await choose(select, "Søgne Misjonskirke");
+    fireEvent.click(swapButton());
+    expect(screen.getByRole("dialog").textContent).toContain("Besøkstallene nullstilles, siden de gjelder nettsiden som byttes ut.");
+    fireEvent.click(screen.getByRole("button", { name: "Ja, bytt nettside" }));
+
+    await waitFor(() =>
+      expect(showFeedback).toHaveBeenCalledWith(
+        expect.stringContaining("Planleggeren er ikke rørt. Besøkstallene ble ikke nullstilt; det kan gjøres fra bordet «Besøk på nettsiden».")
+      )
+    );
+  });
+
   test("demo-menigheten og forrige oppsett velges på samme måte", async () => {
     vi.mocked(readPreviousSetupInfo).mockReturnValue(previousInfo);
     vi.mocked(loadPreviousSetup).mockReturnValue({ ...previousInfo, dataset: lillesand });
@@ -129,7 +144,7 @@ describe("Velg menighet i admin", () => {
     vi.mocked(switchWebsite).mockImplementation(async (_source, onStep) => {
       onStep?.("Sletter nettsiden …");
       await new Promise<void>((resolve) => (finish = resolve));
-      return { keptPrevious: true, deleted: 187, imported: 215 };
+      return { keptPrevious: true, deleted: 187, imported: 215, countsReset: true };
     });
     const select = await renderPanel();
     await choose(select, "Søgne Misjonskirke");

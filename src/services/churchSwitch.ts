@@ -4,6 +4,7 @@ import { totalDocuments, type Dataset } from "../utils/dataset";
 import { clearDatabase, exportDataset, importDataset } from "./datasetService";
 import { ensureDeletionAllowed } from "./operatingMode";
 import { savePreviousSetup } from "./previousSetup";
+import { clearSiteTraffic } from "./siteTraffic";
 import { generateDemoWebsite } from "./testdataService";
 
 // «Velg menighet»: swaps the website for another congregation's, for a demonstration. The
@@ -18,6 +19,8 @@ export interface WebsiteSwitchResult {
   keptPrevious: boolean;
   deleted: number;
   imported: number;
+  /** Whether the visit counts were reset. They are about the website that was replaced. */
+  countsReset: boolean;
 }
 
 const WEBSITE = ["website"] as const;
@@ -28,9 +31,11 @@ const churchNameOf = (dataset: Dataset): string => {
 };
 
 /**
- * Keeps the website as the previous setup, empties it, and puts the new one in, in that order.
- * A step that fails stops the rest: nothing is deleted before the website is kept, and nothing
- * is put in on top of a website that was not emptied. `onStep` is told what is being done.
+  * Keeps the website as the previous setup, empties it, puts the new one in, and resets the
+ * visit counts, in that order. A step that fails stops the rest: nothing is deleted before the
+ * website is kept, and nothing is put in on top of a website that was not emptied. The counts
+ * are the exception: the swap stands even if they could not be reset. `onStep` is told what
+ * is being done.
  */
 export async function switchWebsite(
   source: WebsiteSource,
@@ -62,5 +67,15 @@ export async function switchWebsite(
       }`
     );
   }
-  return { keptPrevious, deleted: cleared.deleted, imported: written.total };
+  // The visits counted so far were to the website that is gone. A new website starts from nothing.
+  onStep("Nullstiller besøkstallene …");
+  let countsReset = true;
+  try {
+    await clearSiteTraffic();
+  } catch (error) {
+    // The website is swapped all the same; the counts can be reset from the board
+    console.error("Besøkstallene ble ikke nullstilt:", error);
+    countsReset = false;
+  }
+  return { keptPrevious, deleted: cleared.deleted, imported: written.total, countsReset };
 }

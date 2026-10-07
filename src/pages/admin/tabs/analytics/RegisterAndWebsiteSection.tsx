@@ -16,6 +16,8 @@ interface RegisterAndWebsiteSectionProps {
   showWebsite: boolean;
   onHideRegister?: () => void;
   onHideWebsite?: () => void;
+  /** Opens the board over visits to the website. */
+  onOpenTraffic?: () => void;
 }
 
 const link = "font-semibold text-[var(--studio-link)] hover:text-[var(--studio-link-hover)]";
@@ -42,6 +44,7 @@ export const RegisterAndWebsiteSection: React.FC<RegisterAndWebsiteSectionProps>
   showWebsite,
   onHideRegister,
   onHideWebsite,
+  onOpenTraffic,
 }) => {
   const { policeCertificates: certificates } = people;
   const newsChange = describeChange(content.newsPublished, content.previousNewsPublished);
@@ -119,7 +122,12 @@ export const RegisterAndWebsiteSection: React.FC<RegisterAndWebsiteSectionProps>
           </MiniStat>
         </div>
         <p className="text-[11px] text-[var(--studio-muted)]">
-          Besøk på nettsiden måles ikke. Løsningen har ingen sporing av besøkende.
+          Besøk på nettsiden telles anonymt, uten å spore de besøkende.{" "}
+          {onOpenTraffic && (
+            <button type="button" onClick={onOpenTraffic} className={`${link} cursor-pointer`}>
+              Se besøk på nettsiden
+            </button>
+          )}
         </p>
       </AnalyticsSection>
       )}

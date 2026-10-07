@@ -72,7 +72,7 @@ export const ChurchPickerPanel: React.FC<ChurchPickerPanelProps> = ({ mode, show
       showFeedback(
         `Nettsiden er byttet til «${chosenName}» (${result.imported} dokumenter).${
           result.keptPrevious ? " Den som var, ligger som «Forrige oppsett» i listen." : ""
-        } Planleggeren er ikke rørt.`
+        } Planleggeren er ikke rørt.${result.countsReset ? "" : " Besøkstallene ble ikke nullstilt; det kan gjøres fra bordet «Besøk på nettsiden»."}`
       );
       setChoice("");
     } catch (error) {
@@ -191,6 +191,7 @@ export const ChurchPickerPanel: React.FC<ChurchPickerPanelProps> = ({ mode, show
                 Planleggeren røres ikke, men oppgaver og oppmøte som hang på arrangementene som slettes, går med og
                 kommer ikke tilbake med «Forrige oppsett».
               </p>
+              <p>Besøkstallene nullstilles, siden de gjelder nettsiden som byttes ut.</p>
             </div>
 
             {working && (

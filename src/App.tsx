@@ -5,6 +5,7 @@ import { CmsProvider, useCms } from "./context/CmsContext";
 import { SITE_THEME_CLASS, getThemeCssVariables } from "./utils/themeUtils";
 import { isAdminStudioPath, isMinSidePath, isPublicPath } from "./utils/routes";
 import { PreviewQueryPersist } from "./components/public/PreviewQueryPersist";
+import { useSiteTraffic } from "./hooks/useSiteTraffic";
 import { EmbeddedPreviewGuard } from "./components/public/EmbeddedPreviewGuard";
 import { PreviewBridgeNotifier } from "./components/public/PreviewBridgeNotifier";
 import { IframeInternalRouteBlock } from "./components/public/IframeInternalRouteBlock";
@@ -69,6 +70,8 @@ function AppContent() {
   const { settings } = useCms();
   const themeVariables = useMemo(() => getThemeCssVariables(settings?.theme), [settings?.theme]);
   useSiteSeo(location.pathname);
+  // Visits to the public website are counted, anonymously. Min side and admin are not counted.
+  useSiteTraffic(location.pathname);
 
   const isAdminStudio = isAdminStudioPath(location.pathname);
   const isMinSideRoute = isMinSidePath(location.pathname);

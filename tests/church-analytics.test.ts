@@ -247,7 +247,7 @@ describe("Analysebord", () => {
   const note = (id: string) => coverage.find((c) => c.id === id)!;
   assert(note("oppmote").status === "partial" && note("oppmote").text.includes("2 av 3"), "Datagrunnlaget sier hvor mange gudstjenester som er talt");
   assert(note("svar").text.includes("ikke hvem som kom"), "Svar på samlinger skilles fra oppmøte");
-  assert(note("nettside").status === "missing", "Besøk på nettsiden sies å ikke være målt");
+  assert(note("nettside").status === "ok", "Besøk på nettsiden telles, på sitt eget bord");
 
   // 10. Nothing is made up when the database is empty
   const empty = buildChurchAnalytics(

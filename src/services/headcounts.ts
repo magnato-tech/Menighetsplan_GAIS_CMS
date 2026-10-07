@@ -1,4 +1,4 @@
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db, handleFirestoreError, OperationType } from "../firebase";
 import { CMS_COLLECTIONS } from "../data/collections";
 import type { GatheringHeadcount } from "../types";
@@ -28,7 +28,8 @@ export function isHeadcountRecord(data: { recordType?: unknown }): boolean {
 
 export function subscribeHeadcounts(onChange: (counts: GatheringHeadcount[]) => void): () => void {
   return onSnapshot(
-    collection(db, CMS_COLLECTIONS.SETTINGS),
+    // Only the headcounts are asked for: the collection also holds the visit counts, which change with every visit
+    query(collection(db, CMS_COLLECTIONS.SETTINGS), where("recordType", "==", HEADCOUNT_RECORD)),
     (snapshot) => {
       const counts = snapshot.docs
         .map((d) => ({ id: d.id, ...d.data() }) as GatheringHeadcount & { recordType?: string })

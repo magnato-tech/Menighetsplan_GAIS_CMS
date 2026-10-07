@@ -5,6 +5,7 @@ import { chunk } from "../utils/chunk";
 import { DATA_PARTS, documentsToDelete, keepParts, type DataPart } from "../utils/dataParts";
 import { buildDataset, type Dataset, type DatasetDocument } from "../utils/dataset";
 import { sanitizeForFirestore } from "../utils/firestoreData";
+import { TRAFFIC_RECORD } from "../utils/siteTraffic";
 import { HEADCOUNT_RECORD } from "./headcounts";
 import { OPERATING_MODE_RECORD, ensureDeletionAllowed } from "./operatingMode";
 import type { TestdataServiceResult } from "./testdataService";
@@ -65,8 +66,9 @@ async function readDatabase(): Promise<DatabaseContents> {
     }
     for (const docSnap of snapshot.docs) {
       const { recordType, ...fields } = docSnap.data();
-      // Whether the app is in demo or production is not content: it is neither downloaded nor emptied
-      if (collectionName === CMS_COLLECTIONS.SETTINGS && recordType === OPERATING_MODE_RECORD) continue;
+      // Whether the app is in demo or production is not content, and neither are the visit counts:
+      // they are neither downloaded nor emptied here (see services/siteTraffic.ts)
+      if (collectionName === CMS_COLLECTIONS.SETTINGS && (recordType === OPERATING_MODE_RECORD || recordType === TRAFFIC_RECORD)) continue;
       const kept = collectionName === CMS_COLLECTIONS.SETTINGS ? collectionOfMark(recordType) : undefined;
       if (kept) add(kept, { ...fields, id: docSnap.id });
       else add(collectionName, { ...docSnap.data(), id: docSnap.id });

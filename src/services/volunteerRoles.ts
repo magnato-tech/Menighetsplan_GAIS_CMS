@@ -1,4 +1,4 @@
-import { collection, doc, onSnapshot, writeBatch } from "firebase/firestore";
+import { collection, doc, onSnapshot, query, where, writeBatch } from "firebase/firestore";
 import { db, handleFirestoreError, OperationType } from "../firebase";
 import { CMS_COLLECTIONS } from "../data/collections";
 import { buildInitialVolunteerRoles } from "../data/defaultVolunteerRoles";
@@ -23,7 +23,8 @@ export function volunteerRoleFields(role: VolunteerRole): VolunteerRole & { reco
 
 export function subscribeVolunteerRoles(onChange: (roles: VolunteerRole[]) => void): () => void {
   return onSnapshot(
-    collection(db, CMS_COLLECTIONS.SETTINGS),
+    // Only the roles are asked for: the collection also holds the visit counts, which change with every visit
+    query(collection(db, CMS_COLLECTIONS.SETTINGS), where("recordType", "==", VOLUNTEER_ROLE_RECORD)),
     (snapshot) => {
       const roles = snapshot.docs
         .map((d) => ({ id: d.id, ...d.data() }) as VolunteerRole & { recordType?: string })

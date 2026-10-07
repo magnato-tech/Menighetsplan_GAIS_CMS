@@ -33,6 +33,11 @@ interface CmsContextValue {
   staff: CmsStaffMember[];
   media: CmsMedia[];
   settings: CmsSettings;
+  /**
+   * Whether the pages and the news have been received from the database, and are not only the
+   * copy kept in the browser. Until then, an address without a page may just not be loaded yet.
+   */
+  contentReady: boolean;
   // Every write resolves to whether it reached Firestore. A failure is already shown to the user.
   savePage: (page: Partial<CmsPage> & { id?: string }) => Promise<boolean>;
   deletePage: (pageId: string) => Promise<boolean>;
@@ -100,16 +105,18 @@ const latestDateFirst = (a: { date: string }, b: { date: string }) =>
   new Date(b.date).getTime() - new Date(a.date).getTime();
 
 /**
- * A CMS collection as Firestore has it, starting from the copy kept in the browser.
- * A write shows up here through the listener; nothing else changes the list.
+ * A CMS collection as Firestore has it, starting from the copy kept in the browser, and
+ * whether Firestore has answered yet. A write shows up here through the listener; nothing
+ * else changes the list.
  */
 function useCmsCollection<T>(
   name: string,
   storageKey: string,
   compare?: (a: T, b: T) => number,
   filterPublishedOnly = false
-): T[] {
+): [T[], boolean] {
   const [items, setItems] = useState<T[]>(() => readCache<T[]>(storageKey) ?? []);
+  const [answered, setAnswered] = useState(false);
 
   useEffect(() => {
     let isFirst = true;
@@ -128,12 +135,12 @@ function useCmsCollection<T>(
         if (compare) list.sort(compare);
         setItems(list);
         writeCache(storageKey, list);
+        setAnswered(true);
       },
       onListenerError(name)
     );
   }, [name, storageKey, compare]);
-
-  return items;
+  return [items, answered];
 }
 
 /** The site settings. The built-in defaults apply for as long as no settings document exists. */
@@ -297,21 +304,22 @@ export const CmsProvider: React.FC<{ children: React.ReactNode; publicPagesOnly?
   children,
   publicPagesOnly = false,
 }) => {
-  const pages = useCmsCollection<CmsPage>(
+  const [pages, pagesAnswered] = useCmsCollection<CmsPage>(
     CMS_COLLECTIONS.PAGES,
     publicPagesOnly ? STORAGE_KEYS.pagesPublic : STORAGE_KEYS.pages,
     undefined,
     publicPagesOnly
   );
-  const news = useCmsCollection<CmsNewsArticle>(CMS_COLLECTIONS.NEWS, STORAGE_KEYS.news, newestFirst);
-  const sermons = useCmsCollection<CmsSermon>(CMS_COLLECTIONS.SERMONS, STORAGE_KEYS.sermons, latestDateFirst);
-  const staff = useCmsCollection<CmsStaffMember>(CMS_COLLECTIONS.STAFF, STORAGE_KEYS.staff);
-  const media = useCmsCollection<CmsMedia>(
+  const [news, newsAnswered] = useCmsCollection<CmsNewsArticle>(CMS_COLLECTIONS.NEWS, STORAGE_KEYS.news, newestFirst);
+  const [sermons] = useCmsCollection<CmsSermon>(CMS_COLLECTIONS.SERMONS, STORAGE_KEYS.sermons, latestDateFirst);
+  const [staff] = useCmsCollection<CmsStaffMember>(CMS_COLLECTIONS.STAFF, STORAGE_KEYS.staff);
+  const [media] = useCmsCollection<CmsMedia>(
     CMS_COLLECTIONS.MEDIA,
     STORAGE_KEYS.media,
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   );
   const settings = useCmsSettings();
+  const contentReady = pagesAnswered && newsAnswered;
 
   const value: CmsContextValue = useMemo(
     () => ({
@@ -321,6 +329,7 @@ export const CmsProvider: React.FC<{ children: React.ReactNode; publicPagesOnly?
       staff,
       media,
       settings,
+      contentReady,
       ...writes,
       uploadMedia: async (file, meta) => {
         try {
@@ -402,7 +411,7 @@ export const CmsProvider: React.FC<{ children: React.ReactNode; publicPagesOnly?
       getNewsById: (id: string) => news.find((n) => n.id === id),
       getNewsBySlug: (slug: string) => news.find((n) => n.slug.toLowerCase() === slug.toLowerCase()),
     }),
-    [pages, news, sermons, staff, media, settings]
+    [pages, news, sermons, staff, media, settings, contentReady]
   );
 
   return <CmsContext.Provider value={value}>{children}</CmsContext.Provider>;

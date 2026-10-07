@@ -1,6 +1,6 @@
 # Produktdokumentasjon: Menighetsplan
 
-> **Dokumentversjon:** 4.2 · **Sist oppdatert:** 2026-10-05
+> **Dokumentversjon:** 4.3 · **Sist oppdatert:** 2026-10-07
 > **Status:** Single Source of Truth (SSOT) for produktet. Dokumentet lever i kildekoden og oppdateres sammen med funksjonaliteten.
 > **Plattform:** React 19, TypeScript, Tailwind CSS 4, Cloud Firestore (`europe-west3`, Frankfurt), Express, PWA.
 > **Søsterdokumenter:** `ARKITEKTUR.md` (hvordan koden er bygget), `CLAUDE.md` (regler for kodeendringer), `INTEGRASJON-MENIGHETSPLAN.md` (kontrakten for det offentlige API-et).
@@ -114,7 +114,7 @@ Analysebordet er siste fane i menyen, under **Innsikt**. Det samler det løsning
 * **Perioden styrer alt.** Siste 4 uker, 3 måneder (standard) eller 12 måneder (52 hele uker). Hvert tall sammenlignes med like lang periode rett før. Det som er et øyeblikksbilde (tilhørighet, personregisteret), sammenlignes ikke.
 * **Svar er ikke oppmøte.** «Kommer» sier hvem som planla å komme. Oppmøtetallet sier hvem som kom. De vises hver for seg.
 * **Personer navngis bare der administratoren skal handle:** avlastning, ubrukte frivillige, personer uten gruppe og politiattester. Alt annet er tall.
-* **Ingen sporing av besøkende.** Besøk på nettsiden måles ikke, og det står på bordet.
+* **Ingen sporing av besøkende.** Besøk på nettsiden telles anonymt, på et eget bord (kapittel 2.5). Hvem de besøkende er, måles ikke.
 
 **Hva bordet viser**
 
@@ -129,13 +129,45 @@ Analysebordet er siste fane i menyen, under **Innsikt**. Det samler det løsning
 | Frivillighet og bemanning | Forfall (akutte under 48 timer), avslag, svartid (median), de neste fire ukene, hvor ofte hver har stått på, roller som er vanskeligst å bemanne, «Kan trenge avlastning», «Ikke brukt i perioden» | Avlastning: har stått på minst like mange samlinger som halvparten av ukene i perioden, og minst tre. Ikke brukt: medlem av en tjenestegruppe uten oppgave i perioden |
 | Grupper og fellesskap | Antall grupper per kategori, nye medlemskap, meldinger, samlinger og svar per gruppe, sist aktiv, personer uten gruppe | Stille gruppe: verken samling eller melding de siste 30 dagene |
 | Personregisteret | Personer, administratorer, stab, offentlige profiler med samtykke, borte i dag, politiattester som er utløpt eller går ut innen 60 dager | Øyeblikksbilde |
-| Nettsiden | Nyheter publisert, taler lagt ut (med opptak), sider publisert, kladder og planlagte | Besøk måles ikke |
+| Nettsiden | Nyheter publisert, taler lagt ut (med opptak), sider publisert, kladder og planlagte | Besøk telles på bordet «Besøk på nettsiden» (kapittel 2.5) |
 
 **Tilpass bordet.** Bordet er delt i moduler: nøkkeltall, oppmøte, bemanning per arrangement, flere oppgaver på samme samling, oppgaver og aktiviteter per måned, hver enkelt, frivillighet, grupper, personregisteret, nettsiden og datagrunnlag. Hver administrator kan skjule moduler med øyet på modulen eller under **Tilpass bordet**, og ta dem tilbake med **Vis alle**. Valget lagres på den aktive brukeren (`analyticsHiddenModules`). Til innlogging er på plass, deler alle som bruker samme bruker i testbryteren, samme valg. Det som lagres er hva som er skjult, så en ny modul vises for alle til de selv skjuler den.
 
 **Oppmøtetall.** Administratoren trykker på en søyle eller **Registrer** og skriver inn voksne, barn og en valgfri merknad. Ett tall per samling: en ny telling erstatter den gamle, og den kan fjernes. Bare samlinger som er holdt, ikke er avlyst og ikke er gruppesamlinger, kan telles. **Last ned CSV** gir dato, samling, type, voksne, barn, totalt og merknad, klar for årsmeldingen.
 
 **Simulert menighetsliv.** Under **Database og Testdata** kan administratoren fylle databasen med 12, 26 eller 52 uker tenkt historikk, bygget av personene, gruppene og rollene som finnes: gudstjenester med oppmøtetall, oppgaver med ja, nei og forfall, husfellesskap med svar, og meldinger. Alt er merket og fjernes med **Fjern simulert historikk** uten at noe annet berøres. En søndag som allerede har en gudstjeneste, får ikke en til.
+
+### 2.5 Besøk på nettsiden
+Fanen **Besøk på nettsiden** ligger under **Innsikt**, etter Analysebord. Den viser hvor mye nettsiden brukes, hva som leses, når besøkene kommer og om de fører til noe, sammenlignet med like lang periode rett før. Perioden er siste 7 dager, 4 uker (standard), 3 måneder eller 12 måneder.
+
+**Prinsipper**
+
+* **Nettsiden teller selv, anonymt.** Den vet hvilken side som vises, når, hvor lenge, og hvilke av dens egne knapper som trykkes. Bare summer per dag lagres.
+* **Ingenting lagres hos den besøkende.** Tellingen bruker ikke informasjonskapsler og lagrer ingenting i nettleseren. Den lagrer ingenting om den besøkende eller utstyret: ikke hvor de kom fra, ikke skjermstørrelse, ikke nettleser. Nettleserens navn ses bare på for å kjenne igjen søkeroboter, og lagres ikke.
+* **Besøk, ikke personer.** Et besøk er én åpning av nettsiden. Kommer samme person tilbake senere, er det et nytt besøk. Nye og faste besøkende kan derfor ikke skilles. Det ville krevd at nettleseren huskes, og etter ekomloven § 3-15 (i kraft 1. januar 2025) krever det samtykke fra hver besøkende. Statistikk er ikke unntatt.
+* **Tid er et anslag.** Tid telles bare mens siden er synlig på skjermen, og høyst 30 minutter per visning. Det som er sett, sendes underveis (etter 10, 30 og 60 sekunder, deretter hvert minutt), så en fane som lukkes, mister lite.
+* **Bare ekte besøk.** Forhåndsvisninger i admin, sider vist i en ramme, søkeroboter, en kopi av nettsiden på utviklerens egen maskin og nettlesere som har bedt om å holdes utenfor, telles ikke. Min side og admin telles aldri.
+* **Menigheten bestemmer.** Tellingen står på til menigheten slår den av på bordet. Da telles ingenting før den slås på igjen.
+
+**Hva bordet viser**
+
+| Del | Innhold | Definisjon |
+|:---|:---|:---|
+| Nøkkeltall | Besøk, sidevisninger, sider per besøk, tid per besøk, andel besøk med bare én side | Hvert tall sammenlignes med perioden før, når noe ble telt da. Sider per besøk: sidevisninger delt på besøk. Tid per besøk: alle sekunder i visning delt på besøk |
+| Besøk over tid | Én søyle per dag (opptil 4 uker), per uke (3 måneder) eller per fire uker (12 måneder) | En dag uten besøk har ingen søyle |
+| Mest besøkte sider | Tittel, visninger, andel, tid per visning og hvor mange besøk som startet der | Én side har én adresse: `/Om-oss/`, `/side/om-oss` og `/nettside/om-oss` telles sammen. En side som er fjernet, står med adressen og «Finnes ikke lenger» |
+| Sider som aldri åpnes | Publiserte sider uten én visning i perioden | Kladder, planlagte sider og menypunkter som bare leder videre, er ikke med |
+| Hvor besøkene starter | Siden et besøk begynner på | Den første siden som vises etter at nettsiden er åpnet |
+| Adresser som ikke finnes | Adresser noen har prøvd å åpne, uten at det finnes en side | Samme regel som for titler og søkemotorer (`seoForPath`). Viser døde lenker, særlig etter flytting fra en gammel nettside |
+| Når kommer besøkene? | Sidevisninger per ukedag og time, og den travleste timen | Norsk tid, uansett hvor den besøkendes klokke står |
+| Fører besøket til noe? | Trykk på telefonnummer og e-postadresse, abonnement på kalenderen, avspilte taler, mest leste nyheter og mest avspilte taler | En lydfil telles når den spilles, én gang per avspilling. En tale i Spotify eller video telles der den åpnes |
+| Slik telles besøkene | Hva tallene bygger på og hva som ikke måles, og de to bryterne **Tell besøk på nettsiden** og **Ikke tell besøk fra denne nettleseren** | Den første gjelder alle besøkende og lagres i innstillingene (`countVisits`): menigheten kan slå tellingen av, og tallene som er telt, blir stående. Den andre huskes i nettleseren til den som redigerer nettsiden |
+
+**Måles ikke:** hvem de besøkende er, nye og faste besøkende, hvor de kommer fra (søk, Facebook), og hva slags utstyr de bruker. Alt dette krever at noe om den besøkende lagres, hos den besøkende eller hos menigheten.
+
+**Eksempeltall.** Mens appen står i demo, kan bordet fylles med 26 uker eksempeltall, laget for sidene som finnes. De legges bare på dager der ingenting er telt, er merket, og fjernes med **Fjern eksempeltallene** uten at en telt dag røres. Bordet sier fra så lenge perioden inneholder eksempeltall.
+
+**Nullstilling.** **Nullstill besøkstallene** sletter alle tall, og er sperret i produksjon. Besøkstallene er ikke innhold: de følger ikke med i et datasett og tømmes ikke sammen med databasen. Når nettsiden byttes under **Velg menighet**, nullstilles de, siden de gjelder nettsiden som byttes ut.
 
 ---
 
@@ -562,6 +594,18 @@ De tre flatene, Firestore-databasen, bemanningsmotoren, husfellesskap, gruppemel
 | **Tilpass bordet** | Hver administrator velger hvilke moduler som vises. Valget lagres på personen. Prøvd mot databasen i drift |
 
 ---
+### Besøk på nettsiden (7. oktober 2026)
+
+| Område | Levert |
+|:---|:---|
+| **Anonym telling** | Nettsiden teller sidevisninger, besøk, tid i visning, adresser uten side og handlinger, som summer per dag. Ingenting lagres hos den besøkende (kapittel 2.5). Reglene er rene funksjoner med tester (`src/utils/siteTraffic.ts`, `src/utils/visitTracker.ts`) |
+| **Bordet** | Ny fane **Besøk på nettsiden** under Innsikt: nøkkeltall, besøk over tid, mest besøkte sider, sider som aldri åpnes, hvor besøkene starter, adresser som ikke finnes, når besøkene kommer, og handlinger |
+| **Eksempeltall og nullstilling** | Eksempeltall for demonstrasjon, merket og fjernbare. Nullstilling er sperret i produksjon |
+| **Menighetens valg** | Tellingen kan slås av og på fra bordet. Den som redigerer nettsiden, kan holde sin egen nettleser utenfor |
+| **Analysebord** | «Besøk på nettsiden måles ikke» er erstattet av en lenke til det nye bordet |
+
+---
+
 
 ## 13. Kjente mangler
 
@@ -583,6 +627,7 @@ Sortert etter hvor mye de betyr for en menighet som skal ta løsningen i bruk.
 | 12 | Medlemmet kan ikke oppgi grunn for et forfall, og lederen ser den ikke | Fase 3 |
 | 13 | Firebase-klienten lastes på første nettsidebesøk (~1,3 MB JavaScript utover CSS). Admin og Min side er skilt ut, men Firestore er felles datakilde for alle flater | Fase 4 |
 | 14 | Reglene i databasen i drift er eldre enn `firestore.rules`, og avviser nye samlinger (prøvd 5. oktober: `volunteer_roles` og `gatheringHeadcounts`). Tjenesteroller og oppmøtetall lagres derfor i `cms_settings`, merket med `recordType` | Fase 1 |
+| 15 | Besøkstallene kan endres og slettes av hvem som helst så lenge databasereglene er åpne, og de ligger i `cms_settings` til reglene er publisert. Med innlogging trenger de en egen samling der en besøkende bare kan legge til i dagens summer | Fase 1 |
 
 ---
 
@@ -635,7 +680,7 @@ Hver endring typesjekkes, testes og bygges før den regnes som ferdig. Regler fl
 | Bildelagring | Firebase Storage, eller en ekstern bildetjeneste | Firebase Storage. Samme prosjekt, samme regler |
 | Hvem teller oppmøtet | Administrator i etterkant, eller en egen rolle «Teller» på gudstjenesten som registrerer fra Min side | Start med administrator. Legg til rollen når tellingen skal gjøres samme dag av den som står i døra |
 | Hvem er «barn» i tellingen | Under konfirmasjonsalder, under 18, eller egen telling for barnekirken | Under konfirmasjonsalder (det står i registreringsvinduet). Bestemmes før tallene brukes i årsmeldingen |
-| Besøk på nettsiden | Ingen måling, eller enkel telling uten informasjonskapsler og uten persondata | Ingen måling til innlogging og regler er på plass. Da kan en telling per side og uke vurderes |
+| Nye og faste besøkende, kilde og utstyr | Måles ikke, eller spør hver besøkende om samtykke til å huske nettleseren | Måles ikke. Besøk telles anonymt (avgjort 7. oktober 2026, kapittel 2.5). En samtykkeboks på en menighets nettside koster mer tillit enn tallene er verdt |
 
 ---
 

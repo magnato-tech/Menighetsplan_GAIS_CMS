@@ -224,6 +224,8 @@ export const PublicSermonsPage: React.FC = () => {
                     {sermon.spotifyUrl && (
                       <button
                         type="button"
+                        // Counted as a played sermon when the player is opened, not when it is closed again
+                        data-besok-tale={isSpotifyOpen ? undefined : sermon.id}
                         onClick={() => setOpenSpotifyId(isSpotifyOpen ? null : sermon.id)}
                         className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition-colors cursor-pointer ${
                           isSpotifyOpen
@@ -258,6 +260,7 @@ export const PublicSermonsPage: React.FC = () => {
                         href={sermon.videoUrl}
                         target="_blank"
                         rel="noreferrer"
+                        data-besok-tale={sermon.id}
                         className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-semibold text-xs flex items-center gap-1.5 transition-colors"
                       >
                         <Video className="w-3.5 h-3.5 text-rose-600" />

@@ -1,10 +1,13 @@
-// An in-memory stand-in for Firestore: enough of the API for reading a collection and writing
-// in batches, so a test sees exactly what a service reads and stores. Used like this:
+// An in-memory stand-in for Firestore: enough of the API for reading a collection, asking for
+// part of it, writing in batches, and adding to sums, so a test sees exactly what a service
+// reads and stores. Used like this:
 //
 //   vi.mock("firebase/firestore", async () => (await import("./helpers/memoryFirestore")).firestoreMock);
 //   import { store, failing } from "./helpers/memoryFirestore";
 
-export const store = new Map<string, Map<string, Record<string, unknown>>>();
+type Row = Record<string, unknown>;
+
+export const store = new Map<string, Map<string, Row>>();
 /** Collections that cannot be read, with the error code Firestore gives. */
 export const failing = new Map<string, string>();
 
@@ -13,24 +16,98 @@ const table = (name: string) => {
   return store.get(name)!;
 };
 
+// ---------- Adding to a sum, and writing into what is there ----------
+
+const INCREMENT = "__increment";
+const isIncrement = (value: unknown): value is { [INCREMENT]: number } =>
+  !!value && typeof value === "object" && INCREMENT in (value as object);
+const isMap = (value: unknown): value is Row => !!value && typeof value === "object" && !Array.isArray(value) && !isIncrement(value);
+
+/** What is stored when `incoming` is written. With `existing`, as Firestore merges: maps field by field, sums added to. */
+function written(incoming: Row, existing?: Row): Row {
+  const result: Row = existing ? { ...existing } : {};
+  for (const [key, value] of Object.entries(incoming)) {
+    const before = existing?.[key];
+    if (isIncrement(value)) result[key] = (typeof before === "number" ? before : 0) + value[INCREMENT];
+    else if (isMap(value)) result[key] = written(value, existing && isMap(before) ? before : undefined);
+    else result[key] = value;
+  }
+  return result;
+}
+
+const write = (ref: { name: string; id: string }, data: Row, options?: { merge?: boolean }) =>
+  table(ref.name).set(ref.id, written(data, options?.merge ? table(ref.name).get(ref.id) : undefined));
+
+// ---------- Asking for part of a collection ----------
+
+interface Condition {
+  field: string | { documentId: true };
+  op: "==" | ">=" | "<=" | ">" | "<";
+  value: unknown;
+}
+interface Source {
+  name: string;
+  id?: string;
+  conditions?: Condition[];
+}
+
+function matches(id: string, data: Row, conditions: Condition[] = []): boolean {
+  return conditions.every(({ field, op, value }) => {
+    const actual = typeof field === "string" ? data[field] : id;
+    if (op === "==") return actual === value;
+    if (actual === undefined || actual === null) return false;
+    const [a, b] = [actual as string | number, value as string | number];
+    return op === ">=" ? a >= b : op === "<=" ? a <= b : op === ">" ? a > b : a < b;
+  });
+}
+
+function read({ name, conditions }: Source) {
+  if (failing.has(name)) throw Object.assign(new Error(`Lesing feilet: ${failing.get(name)}`), { code: failing.get(name) });
+  const docs = [...table(name).entries()]
+    .filter(([id, data]) => matches(id, data, conditions))
+    .map(([id, data]) => ({ id, ref: { name, id }, data: () => data }));
+  return { docs, size: docs.length, empty: docs.length === 0, metadata: { fromCache: false } };
+}
+
 export const firestoreMock = {
-  collection: (_db: unknown, name: string) => ({ name }),
+  collection: (_db: unknown, name: string): Source => ({ name }),
   doc: (_db: unknown, name: string, id: string) => ({ name, id }),
-  getDocs: async ({ name }: { name: string }) => {
-    if (failing.has(name)) throw Object.assign(new Error(`Lesing feilet: ${failing.get(name)}`), { code: failing.get(name) });
-    const docs = [...table(name).entries()].map(([id, data]) => ({ id, ref: { name, id }, data: () => data }));
-    return { docs, size: docs.length, empty: docs.length === 0 };
+  documentId: () => ({ documentId: true as const }),
+  where: (field: Condition["field"], op: Condition["op"], value: unknown): Condition => ({ field, op, value }),
+  query: (source: Source, ...conditions: Condition[]): Source => ({ ...source, conditions: [...(source.conditions ?? []), ...conditions] }),
+  increment: (amount: number) => ({ [INCREMENT]: amount }),
+  getDocs: async (source: Source) => read(source),
+  setDoc: async (ref: { name: string; id: string }, data: Row, options?: { merge?: boolean }) => {
+    write(ref, data, options);
   },
   writeBatch: () => {
     const operations: (() => void)[] = [];
     return {
-      set: (ref: { name: string; id: string }, data: Record<string, unknown>) => operations.push(() => table(ref.name).set(ref.id, data)),
+      set: (ref: { name: string; id: string }, data: Row, options?: { merge?: boolean }) => operations.push(() => write(ref, data, options)),
       delete: (ref: { name: string; id: string }) => operations.push(() => table(ref.name).delete(ref.id)),
       commit: async () => operations.forEach((operation) => operation()),
     };
   },
-  // Only reached through modules a service imports for their constants
-  onSnapshot: () => () => {},
+  /**
+   * Tells what is there now, once, and what goes wrong instead when the collection cannot be
+   * read. A single document is not followed: nothing a test here does depends on it.
+   */
+  onSnapshot: (source: Source, onNext: (snapshot: ReturnType<typeof read>) => void, onError?: (error: Error) => void) => {
+    let following = true;
+    if (source.id === undefined) {
+      queueMicrotask(() => {
+        if (!following) return;
+        try {
+          onNext(read(source));
+        } catch (error) {
+          onError?.(error as Error);
+        }
+      });
+    }
+    return () => {
+      following = false;
+    };
+  },
 };
 
 export const ids = (name: string) => [...(store.get(name)?.keys() ?? [])].sort();

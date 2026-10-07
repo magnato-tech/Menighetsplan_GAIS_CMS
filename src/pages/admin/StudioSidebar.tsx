@@ -24,6 +24,7 @@ import {
   Images,
   CircleHelp,
   ChartColumnBig,
+  MousePointerClick,
 } from "lucide-react";
 import { StudioData, StudioTab, countUrgentTasks } from "./studio";
 import { prefetchStudioTab } from "./studioTabLoaders";
@@ -459,6 +460,20 @@ export const StudioSidebar: React.FC<StudioSidebarProps> = ({ studio, activeTab,
             >
               <ChartColumnBig className="w-4 h-4 text-[var(--studio-icon)]" />
               <span>Analysebord</span>
+            </button>
+
+            <button
+              type="button"
+              {...tabPrefetchHandlers("nettsidebesok")}
+              onClick={() => onTabChange("nettsidebesok")}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                activeTab === "nettsidebesok"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-[var(--studio-muted)] hover:text-[var(--studio-text)] hover:bg-[var(--studio-bg)]"
+              }`}
+            >
+              <MousePointerClick className="w-4 h-4 text-[var(--studio-icon)]" />
+              <span>Besøk på nettsiden</span>
             </button>
           </div>
         </div>

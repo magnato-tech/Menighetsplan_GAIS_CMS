@@ -20,6 +20,7 @@ export const STUDIO_TABS = [
   "planlegger-roller",
   "database-admin",
   "analyse",
+  "nettsidebesok",
 ] as const;
 
 export type StudioTab = (typeof STUDIO_TABS)[number];

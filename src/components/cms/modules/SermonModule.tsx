@@ -74,6 +74,8 @@ export const SermonModule: React.FC<SermonModuleProps> = ({
           <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
             <button
               type="button"
+              // A sound file says itself when it plays. An embedded player does not, so it is counted where it is opened
+              data-besok-tale={!isPlayingSermon && !latestSermon.audioUrl ? latestSermon.id : undefined}
               onClick={() => setIsPlayingSermon(!isPlayingSermon)}
               className="px-4 py-2 rounded-xl bg-accent-400 hover:bg-accent-300 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-xs"
             >
@@ -145,6 +147,8 @@ export const SermonModule: React.FC<SermonModuleProps> = ({
           <div className="shrink-0 flex flex-wrap sm:flex-nowrap md:flex-col gap-2.5">
             <button
               type="button"
+              // A sound file says itself when it plays. An embedded player does not, so it is counted where it is opened
+              data-besok-tale={!isPlayingSermon && !latestSermon.audioUrl ? latestSermon.id : undefined}
               onClick={() => setIsPlayingSermon(!isPlayingSermon)}
               className="px-5 py-3 rounded-xl bg-accent-400 hover:bg-accent-300 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
             >
